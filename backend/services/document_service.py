@@ -259,6 +259,59 @@ class DocumentService:
                 # Mark this file as modified
                 modified_files.add(para_file)
             
+            # AUTO-FIT LOGIC: Adjust margins if text has grown significantly
+            # Calculate total text length
+            original_len = 0
+            for para, _ in all_paragraphs:
+                for t in para.findall('.//w:t', namespaces):
+                    if t.text:
+                        original_len += len(t.text)
+            
+            tailored_len = sum(len(str(t)) for t in full_text_items)
+            
+            # If tailored text is > 5% longer, try to squeeze margins
+            if tailored_len > original_len * 1.05:
+                # Determine reduction amount based on growth
+                ratio = tailored_len / original_len
+                # Max reduction = 720 twips (0.5 inch)
+                # 10% growth -> 360 twips (0.25 inch)
+                # 20% growth -> 720 twips
+                reduction = int(min(720, (ratio - 1.0) * 10 * 360))
+                
+                # Check section properties (usually last element in body)
+                sect_pr = root.find('.//w:body/w:sectPr', namespaces)
+                if sect_pr is not None:
+                    pg_mar = sect_pr.find('w:pgMar', namespaces)
+                    if pg_mar is not None:
+                        # Get current margins (default 1440 = 1 inch)
+                        # We prioritize top/bottom reduction
+                        top = int(pg_mar.get(f'{{{namespaces["w"]}}}top', 1440))
+                        bottom = int(pg_mar.get(f'{{{namespaces["w"]}}}bottom', 1440))
+                        left = int(pg_mar.get(f'{{{namespaces["w"]}}}left', 1440))
+                        right = int(pg_mar.get(f'{{{namespaces["w"]}}}right', 1440))
+                        
+                        # Reduce Top/Bottom first
+                        new_top = max(720, top - reduction)
+                        new_bottom = max(720, bottom - reduction)
+                        
+                        # Reduce Left/Right only if needed (growth > 15%)
+                        if ratio > 1.15:
+                            reduction_lr = int(min(720, (ratio - 1.15) * 10 * 360))
+                            new_left = max(720, left - reduction_lr)
+                            new_right = max(720, right - reduction_lr)
+                        else:
+                            new_left = left
+                            new_right = right
+                            
+                        # Apply new margins
+                        pg_mar.set(f'{{{namespaces["w"]}}}top', str(new_top))
+                        pg_mar.set(f'{{{namespaces["w"]}}}bottom', str(new_bottom))
+                        pg_mar.set(f'{{{namespaces["w"]}}}left', str(new_left))
+                        pg_mar.set(f'{{{namespaces["w"]}}}right', str(new_right))
+                        
+                        print(f"   ℹ️  Auto-fitting: Reduced margins (T/B: {top}->{new_top}, L/R: {left}->{new_left})")
+                        modified_files.add(document_xml_path)
+
             # Write all modified XML files back
             for file_path in modified_files:
                 if file_path == document_xml_path:
