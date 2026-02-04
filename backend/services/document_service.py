@@ -53,15 +53,7 @@ class DocumentService:
         
         current_section = None
         
-        # Process headers first (important for contact info)
-        for section in doc.sections:
-            if section.header:
-                for para in section.header.paragraphs:
-                    text = para.text.strip()
-                    if text:
-                        resume_data["full_text"].append(text)
-        
-        # Then process main document paragraphs
+        # Only process main document paragraphs (headers/footers are preserved automatically)
         for para in doc.paragraphs:
             text = para.text.strip()
             
@@ -168,31 +160,11 @@ class DocumentService:
                         if item:
                             full_text_items.append(str(item))
             
-            # Collect all paragraph elements from both headers and main document
+            # Collect all paragraph elements from main document ONLY
+            # We explicitly SKIP headers/footers to preserve contact info/name
             all_paragraphs = []
-            header_trees = {}  # Track header trees by file path
             
-            # Process headers first (header1.xml, header2.xml, etc.)
-            word_dir = os.path.join(temp_dir, 'word')
-            header_files = sorted([f for f in os.listdir(word_dir) if f.startswith('header') and f.endswith('.xml')])
-            
-            for header_file in header_files:
-                header_path = os.path.join(word_dir, header_file)
-                header_tree = etree.parse(header_path, parser)
-                header_trees[header_path] = header_tree  # Save the tree
-                header_root = header_tree.getroot()
-                header_paragraphs = header_root.findall('.//w:p', namespaces)
-                
-                for para in header_paragraphs:
-                    text_content = ''
-                    for t_elem in para.findall('.//w:t', namespaces):
-                        if t_elem.text:
-                            text_content += t_elem.text
-                    
-                    if text_content.strip():
-                        all_paragraphs.append((para, header_path))
-            
-            # Then process main document paragraphs
+            # Process main document paragraphs
             paragraphs = root.findall('.//w:p', namespaces)
             for para in paragraphs:
                 text_content = ''
@@ -206,13 +178,13 @@ class DocumentService:
             # Check if counts match
             if len(all_paragraphs) != len(full_text_items):
                 print(f"⚠️  Warning: XML paragraph count mismatch!")
-                print(f"   Original: {len(all_paragraphs)} paragraphs (headers + body)")
+                print(f"   Original: {len(all_paragraphs)} paragraphs (body only)")
                 print(f"   AI Generated: {len(full_text_items)} text items")
                 print(f"   Falling back to standard method.")
                 # Fall back
                 self.create_docx_preserve_formatting(original_file_path, resume_data, output_path)
                 return
-            
+             
             # Track which files have been modified
             modified_files = set()
             
@@ -278,8 +250,6 @@ class DocumentService:
             for file_path in modified_files:
                 if file_path == document_xml_path:
                     tree.write(file_path, xml_declaration=True, encoding='UTF-8', standalone=True)
-                elif file_path in header_trees:
-                    header_trees[file_path].write(file_path, xml_declaration=True, encoding='UTF-8', standalone=True)
             
             # Repackage as DOCX
             with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as docx:
