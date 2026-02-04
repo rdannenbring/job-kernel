@@ -198,8 +198,20 @@ class DocumentService:
                 if not text_runs:
                     continue
                 
+                # Identify runs that actually contain text elements
+                text_bearing_runs = []
+                for run in text_runs:
+                    t_elems = run.findall('.//w:t', namespaces)
+                    if t_elems:
+                        text_bearing_runs.append((run, t_elems))
+                
+                if not text_bearing_runs:
+                    # If no existing text runs (maybe just a shape?), try to find ANY run to add text to
+                    # or create a new run (complex), but typically we are replacing text so there should be text
+                    continue
+                
                 # Check for colon pattern (bold before colon, normal after)
-                has_colon_pattern = ':' in sanitized_text and len(text_runs) > 1
+                has_colon_pattern = ':' in sanitized_text and len(text_bearing_runs) > 1
                 
                 if has_colon_pattern:
                     # Split at colon
@@ -208,40 +220,41 @@ class DocumentService:
                         label_part = parts[0] + ':'
                         content_part = parts[1]
                         
-                        # Update first run with label
-                        first_t = text_runs[0].find('.//w:t', namespaces)
-                        if first_t is not None:
-                            first_t.text = label_part
+                        # Update first text run with label
+                        run, t_elems = text_bearing_runs[0]
+                        if t_elems:
+                            t_elems[0].text = label_part
+                            # Clear extra text tags in this run if any
+                            for t in t_elems[1:]:
+                                t.text = ""
                         
-                        # Clear other runs except the second one
-                        for i, run in enumerate(text_runs):
-                            t_elem = run.find('.//w:t', namespaces)
-                            if t_elem is not None:
-                                if i == 1:
-                                    t_elem.text = content_part
-                                elif i > 1:
-                                    t_elem.text = ""
+                        # Update second text run with content
+                        run, t_elems = text_bearing_runs[1]
+                        if t_elems:
+                            t_elems[0].text = content_part
+                            for t in t_elems[1:]:
+                                t.text = ""
+                        
+                        # Clear remaining text runs
+                        for run, t_elems in text_bearing_runs[2:]:
+                            for t in t_elems:
+                                t.text = ""
                     else:
-                        # Couldn't split, use first run only
-                        first_t = text_runs[0].find('.//w:t', namespaces)
-                        if first_t is not None:
-                            first_t.text = sanitized_text
-                        # Clear others
-                        for run in text_runs[1:]:
-                            t_elem = run.find('.//w:t', namespaces)
-                            if t_elem is not None:
-                                t_elem.text = ""
-                else:
-                    # Simple case: put all text in first run
-                    first_t = text_runs[0].find('.//w:t', namespaces)
-                    if first_t is not None:
-                        first_t.text = sanitized_text
+                        # Fallback to simple
+                        has_colon_pattern = False
+                
+                if not has_colon_pattern:
+                    # Simple case: put all text in first text-bearing run
+                    run, t_elems = text_bearing_runs[0]
+                    if t_elems:
+                        t_elems[0].text = sanitized_text
+                        for t in t_elems[1:]:
+                            t.text = ""
                     
-                    # Clear other runs
-                    for run in text_runs[1:]:
-                        t_elem = run.find('.//w:t', namespaces)
-                        if t_elem is not None:
-                            t_elem.text = ""
+                    # Clear all other text-bearing runs
+                    for run, t_elems in text_bearing_runs[1:]:
+                        for t in t_elems:
+                            t.text = ""
                 
                 # Mark this file as modified
                 modified_files.add(para_file)
