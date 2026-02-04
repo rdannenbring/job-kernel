@@ -280,7 +280,7 @@ class DocumentService:
                         arcname = os.path.relpath(file_path, temp_dir)
                         docx.write(file_path, arcname)
             
-            print(f"✓ Successfully updated {len(text_paragraphs)} paragraphs with XML-level preservation")
+            print(f"✓ Successfully updated {len(all_paragraphs)} paragraphs with XML-level preservation")
     
     def create_docx_preserve_formatting(self, original_file_path: str, resume_data: Dict[str, Any], output_path: str):
         """
