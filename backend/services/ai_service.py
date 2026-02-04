@@ -90,21 +90,19 @@ class AIService:
         1. **MAINTAIN EXACT STRUCTURE**: Return the SAME number of sections as the input
         2. **MAINTAIN EXACT ITEM COUNT**: Each section must have the SAME number of content items as the original
         3. **PRESERVE SECTION TITLES**: Keep section titles identical (e.g., "EXPERIENCE", "EDUCATION", "SKILLS")
-        4. **PRESERVE CONTACT INFO**: The first 4-5 items in 'full_text' are contact information (name, email, LinkedIn, address, etc.) - DO NOT MODIFY THESE AT ALL. Keep them exactly as they are.
-        5. **MODIFY CONTENT ONLY**: Only change the text content of professional experience/skills items, not the structure or contact info
-        6. Keep all dates, company names, and job titles unchanged
-        7. Emphasize relevant experience by rewording bullet points to highlight matching skills
-        8. Add relevant keywords from the job description naturally into existing bullet points
-        9. Do NOT add new bullet points or sections
-        10. Do NOT remove bullet points or sections
-        11. Do NOT fabricate experience or skills
+        4. **MODIFY CONTENT ONLY**: Only change the text content of professional experience/skills items, not the structure
+        5. Keep all dates, company names, and job titles unchanged
+        6. Emphasize relevant experience by rewording bullet points to highlight matching skills
+        7. Add relevant keywords from the job description naturally into existing bullet points
+        8. Do NOT add new bullet points or sections
+        9. Do NOT remove bullet points or sections
+        10. Do NOT fabricate experience or skills
         
         STRUCTURE REQUIREMENT:
         - If the original has 3 sections with [2, 5, 3] items respectively, return 3 sections with [2, 5, 3] items
         - Each content item in the output should correspond 1-to-1 with an item in the input
         - CRITICAL: Preserve the 'full_text' array with EXACTLY the same number of items ({len(resume_data.get('full_text', []))})
         - The 'full_text' array contains the resume paragraphs in order - update the text but keep the same count
-        - The first 4-5 items in 'full_text' are contact details - NEVER modify these
         
         Return the tailored resume in the EXACT SAME JSON structure as the input, with only the text content modified.
         Include a "summary" field with a brief explanation of changes made.
