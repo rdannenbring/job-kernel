@@ -74,11 +74,28 @@ class AIService:
         # First, analyze the job
         job_analysis = await self.analyze_job_description(job_description)
         
+        # Prepare data for AI - EXCLUDING contact info (first 4 items) to protect it
+        # This creates a "virtual air gap" for the header
+        full_text = resume_data.get("full_text", [])
+        
+        # Assume first 4 items are contact info (Name, Email, LinkedIn, Address)
+        if len(full_text) > 4:
+            contact_header = full_text[:4]
+            body_text = full_text[4:]
+            
+            # Create a localized copy of resume data for the AI
+            ai_input_data = resume_data.copy()
+            ai_input_data["full_text"] = body_text
+        else:
+            contact_header = []
+            body_text = full_text
+            ai_input_data = resume_data
+            
         prompt = f"""
         You are an expert resume writer. Tailor the following resume to match the job description.
         
-        ORIGINAL RESUME:
-        {json.dumps(resume_data, indent=2)}
+        ORIGINAL RESUME CONTENT (Header/Contact Info removed for protection):
+        {json.dumps(ai_input_data, indent=2)}
         
         JOB DESCRIPTION:
         {job_description}
@@ -101,7 +118,7 @@ class AIService:
         STRUCTURE REQUIREMENT:
         - If the original has 3 sections with [2, 5, 3] items respectively, return 3 sections with [2, 5, 3] items
         - Each content item in the output should correspond 1-to-1 with an item in the input
-        - CRITICAL: Preserve the 'full_text' array with EXACTLY the same number of items ({len(resume_data.get('full_text', []))})
+        - CRITICAL: Preserve the 'full_text' array with EXACTLY the same number of items ({len(body_text)})
         - The 'full_text' array contains the resume paragraphs in order - update the text but keep the same count
         
         Return the tailored resume in the EXACT SAME JSON structure as the input, with only the text content modified.
@@ -120,6 +137,19 @@ class AIService:
             )
             
             tailored_resume = json.loads(response.choices[0].message.content)
+            
+            # RECOMBINE: Add the protected contact info back
+            if contact_header:
+                tailored_body = tailored_resume.get("full_text", [])
+                
+                # Check for item count mismatch
+                if len(tailored_body) != len(body_text):
+                    print(f"⚠️ Warning: AI returned {len(tailored_body)} items, expected {len(body_text)}")
+                    # We might want to force fit or align here, but usually it works if prompt is obeyed
+                
+                # Prepend the original contact header
+                tailored_resume["full_text"] = contact_header + tailored_body
+                
             return tailored_resume
             
         except Exception as e:
