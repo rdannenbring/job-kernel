@@ -133,7 +133,7 @@ async def tailor_resume(
         output_path = f"outputs/{output_filename}"
         
         # Use XML-preserving generation
-        document_service.create_docx_preserve_formatting(
+        document_service.create_docx_with_xml_preservation(
             file_path,
             tailored_resume_data,
             output_path
@@ -148,7 +148,6 @@ async def tailor_resume(
             "message": "Resume tailored successfully",
             "files": {
                 "docx": f"/api/download/{base_name}_tailored.docx",
-                "pdf": f"/api/download/{base_name}_tailored.pdf",
                 "txt": f"/api/download/{base_name}_tailored.txt"
             },
             "preview": tailored_resume_data.get("summary", "Resume tailored successfully")

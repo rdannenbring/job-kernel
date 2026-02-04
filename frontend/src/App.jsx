@@ -315,22 +315,24 @@ function App() {
               <span>Your resume has been optimized for this job posting</span>
             </div>
 
-            {/* PDF Preview Section */}
-            <div className="pdf-preview-section mb-4">
-              <h3 className="mb-2" style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-                📋 Preview Your Tailored Resume
-              </h3>
-              <div className="pdf-preview-container">
-                <iframe
-                  src={`${API_URL}${result.files.pdf}#toolbar=0&navpanes=0&scrollbar=0`}
-                  className="pdf-preview-frame"
-                  title="Resume Preview"
-                />
+            {/* PDF Preview Section - Only show if PDF is available */}
+            {result.files.pdf && (
+              <div className="pdf-preview-section mb-4">
+                <h3 className="mb-2" style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                  📋 Preview Your Tailored Resume
+                </h3>
+                <div className="pdf-preview-container">
+                  <iframe
+                    src={`${API_URL}${result.files.pdf}#toolbar=0&navpanes=0&scrollbar=0`}
+                    className="pdf-preview-frame"
+                    title="Resume Preview"
+                  />
+                </div>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                  💡 Tip: Review your resume above before downloading
+                </p>
               </div>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                💡 Tip: Review your resume above before downloading
-              </p>
-            </div>
+            )}
 
             <h3 className="mb-2" style={{ fontSize: '1.25rem', fontWeight: 600 }}>
               Download Formats
@@ -346,14 +348,16 @@ function App() {
                 <div className="download-card-subtitle">.docx format</div>
               </div>
 
-              <div
-                className="download-card"
-                onClick={() => handleDownload('pdf')}
-              >
-                <div className="download-card-icon">📑</div>
-                <div className="download-card-title">PDF</div>
-                <div className="download-card-subtitle">.pdf format</div>
-              </div>
+              {result.files.pdf && (
+                <div
+                  className="download-card"
+                  onClick={() => handleDownload('pdf')}
+                >
+                  <div className="download-card-icon">📑</div>
+                  <div className="download-card-title">PDF</div>
+                  <div className="download-card-subtitle">.pdf format</div>
+                </div>
+              )}
 
               <div
                 className="download-card"
