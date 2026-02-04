@@ -268,7 +268,7 @@ function App() {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={isProcessing || !resumeFile}
+                  disabled={isProcessing || (!resumeFile && !useDefaultResume)}
                 >
                   {isProcessing ? (
                     <>
@@ -282,7 +282,7 @@ function App() {
                     </>
                   )}
                 </button>
-                {(resumeFile || jobDescription || jobUrl) && (
+                {(resumeFile || useDefaultResume || jobDescription || jobUrl) && (
                   <button
                     type="button"
                     className="btn btn-secondary"

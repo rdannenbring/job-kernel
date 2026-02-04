@@ -106,17 +106,15 @@ async def tailor_resume(
         final_job_description = job_description
         if job_url:
             print(f"Scraping job from: {job_url}")
-            scraped_data = await scraper_service.scrape_job(job_url)
-            if scraped_data:
-                # validation: ensure we got actual text
-                scraped_text = scraped_data.get("description", "")
+            try:
+                scraped_text = await scraper_service.scrape_job_description(job_url)
                 if scraped_text:
                     if final_job_description:
                          final_job_description += "\n\n" + scraped_text
                     else:
                         final_job_description = scraped_text
-            else:
-                 print("Warning: Scraper returned no data")
+            except Exception as e:
+                 print(f"Warning: Scraper failed: {e}")
 
         if not final_job_description:
             raise HTTPException(status_code=400, detail="No job description provided (text or URL)")
@@ -149,11 +147,11 @@ async def tailor_resume(
         return {
             "message": "Resume tailored successfully",
             "files": {
-                "docx": f"/api/download/{base_filename}_tailored.docx",
-                "pdf": f"/api/download/{base_filename}_tailored.pdf",
-                "txt": f"/api/download/{base_filename}_tailored.txt"
+                "docx": f"/api/download/{base_name}_tailored.docx",
+                "pdf": f"/api/download/{base_name}_tailored.pdf",
+                "txt": f"/api/download/{base_name}_tailored.txt"
             },
-            "preview": tailored_content.get("summary", "Resume tailored successfully")
+            "preview": tailored_resume_data.get("summary", "Resume tailored successfully")
         }
         
     except Exception as e:
