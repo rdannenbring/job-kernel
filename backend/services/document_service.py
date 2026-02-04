@@ -144,7 +144,8 @@ class DocumentService:
                 'wp': 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing',
                 'wp14': 'http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing',
                 'wps': 'http://schemas.microsoft.com/office/word/2010/wordprocessingShape',
-                'a': 'http://schemas.openxmlformats.org/drawingml/2006/main'
+                'a': 'http://schemas.openxmlformats.org/drawingml/2006/main',
+                'mc': 'http://schemas.openxmlformats.org/markup-compatibility/2006'
             }
             
             # Get full text from resume data
@@ -203,10 +204,24 @@ class DocumentService:
                 # Identify runs that actually contain text elements
                 text_bearing_runs = []
                 for run in text_runs:
-                    # Check if run contains drawing/object - if so, skip it to preserve the shape
+                    # Check if run contains drawing/object/alternateContent - if so, skip it to preserve the shape
+                    has_drawing = False
+                    
+                    # check direct namespace matches
                     if (run.find('.//w:drawing', namespaces) is not None or 
                         run.find('.//w:pict', namespaces) is not None or 
-                        run.find('.//w:object', namespaces) is not None):
+                        run.find('.//w:object', namespaces) is not None or
+                        run.find('.//mc:AlternateContent', namespaces) is not None):
+                        has_drawing = True
+                    
+                    # Fallback: Check tag names for anything suspicious not caught by namespace
+                    if not has_drawing:
+                        for child in run.iter():
+                            if 'drawing' in child.tag.lower() or 'pict' in child.tag.lower():
+                                has_drawing = True
+                                break
+                                
+                    if has_drawing:
                         continue
 
                     t_elems = run.findall('.//w:t', namespaces)
