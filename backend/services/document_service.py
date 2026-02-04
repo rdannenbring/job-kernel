@@ -203,6 +203,12 @@ class DocumentService:
                 # Identify runs that actually contain text elements
                 text_bearing_runs = []
                 for run in text_runs:
+                    # Check if run contains drawing/object - if so, skip it to preserve the shape
+                    if (run.find('.//w:drawing', namespaces) is not None or 
+                        run.find('.//w:pict', namespaces) is not None or 
+                        run.find('.//w:object', namespaces) is not None):
+                        continue
+
                     t_elems = run.findall('.//w:t', namespaces)
                     if t_elems:
                         text_bearing_runs.append((run, t_elems))
