@@ -92,8 +92,8 @@ async def tailor_resume(
             "txt": f"outputs/{base_filename}_tailored.txt"
         }
         
-        # Create DOCX with preserved formatting from original
-        document_service.create_docx_preserve_formatting(
+        # Create DOCX with XML-level preservation (preserves shapes, backgrounds, all formatting)
+        document_service.create_docx_with_xml_preservation(
             resume_path, 
             tailored_content, 
             output_files["docx"]
