@@ -48,63 +48,105 @@ async def root():
     }
 
 
+import json
+
+# Load config if exists
+CONFIG_PATH = "config.json"
+def get_config():
+    if os.path.exists(CONFIG_PATH):
+        with open(CONFIG_PATH, 'r') as f:
+            return json.load(f)
+    return {}
+
+@app.get("/api/config")
+async def get_app_config():
+    """Return application configuration including defaults"""
+    return get_config()
+
+
 @app.post("/api/tailor-resume")
 async def tailor_resume(
-    resume: UploadFile = File(...),
+    resume: Optional[UploadFile] = File(None),
     job_description: Optional[str] = Form(None),
-    job_url: Optional[str] = Form(None)
+    job_url: Optional[str] = Form(None),
+    use_default_resume: bool = Form(False)
 ):
     """
     Tailor a resume based on a job description.
     Accepts either job_description text or job_url to scrape.
+    Supports using a default local resume file for testing.
     """
     try:
-        # Validate inputs
-        if not job_description and not job_url:
-            raise HTTPException(
-                status_code=400,
-                detail="Either job_description or job_url must be provided"
-            )
+        # Handle Resume Source
+        config = get_config()
+        file_path = None
+        original_filename = "resume.docx"
         
-        # Save uploaded resume
-        resume_path = f"uploads/{resume.filename}"
-        with open(resume_path, "wb") as buffer:
-            shutil.copyfileobj(resume.file, buffer)
-        
-        # Get job description from URL if provided
+        if use_default_resume and config.get("default_resume_path"):
+            # Use local default file
+            default_path = config["default_resume_path"]
+            if not os.path.exists(default_path):
+                raise HTTPException(status_code=404, detail=f"Default resume not found at {default_path}")
+            
+            # Copy to uploads folder to normalize processing
+            original_filename = os.path.basename(default_path)
+            file_path = f"uploads/{original_filename}"
+            shutil.copy2(default_path, file_path)
+            
+        elif resume:
+            # Use uploaded file
+            original_filename = resume.filename
+            file_path = f"uploads/{original_filename}"
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(resume.file, buffer)
+        else:
+            raise HTTPException(status_code=400, detail="No resume provided. Upload a file or use default.")
+
+        # Handle Job Description Source
+        final_job_description = job_description
         if job_url:
-            job_description = await scraper_service.scrape_job_description(job_url)
+            print(f"Scraping job from: {job_url}")
+            scraped_data = await scraper_service.scrape_job(job_url)
+            if scraped_data:
+                # validation: ensure we got actual text
+                scraped_text = scraped_data.get("description", "")
+                if scraped_text:
+                    if final_job_description:
+                         final_job_description += "\n\n" + scraped_text
+                    else:
+                        final_job_description = scraped_text
+            else:
+                 print("Warning: Scraper returned no data")
+
+        if not final_job_description:
+            raise HTTPException(status_code=400, detail="No job description provided (text or URL)")
+            
+        print(f"Processing resume: {original_filename}")
         
-        # Parse the resume
-        resume_data = document_service.parse_docx(resume_path)
+        # 1. Parse Resume
+        resume_data = document_service.parse_docx(file_path)
         
-        # Use AI to analyze job and tailor resume
-        tailored_content = await ai_service.tailor_resume(
-            resume_data=resume_data,
-            job_description=job_description
+        # 2. Tailor with AI
+        tailored_resume_data = await ai_service.tailor_resume(resume_data, final_job_description)
+        
+        # 3. Generate Output
+        base_name = os.path.splitext(original_filename)[0]
+        output_filename = f"{base_name}_tailored.docx"
+        output_path = f"outputs/{output_filename}"
+        
+        # Use XML-preserving generation
+        document_service.create_docx_preserve_formatting(
+            file_path,
+            tailored_resume_data,
+            output_path
         )
         
-        # Generate output files
-        base_filename = os.path.splitext(resume.filename)[0]
-        output_files = {
-            "docx": f"outputs/{base_filename}_tailored.docx",
-            "pdf": f"outputs/{base_filename}_tailored.pdf",
-            "txt": f"outputs/{base_filename}_tailored.txt"
-        }
-        
-        # Create DOCX with XML-level preservation (preserves shapes, backgrounds, all formatting)
-        document_service.create_docx_with_xml_preservation(
-            resume_path, 
-            tailored_content, 
-            output_files["docx"]
-        )
-        
-        # Create PDF and TXT (these use basic formatting)
-        document_service.create_pdf(tailored_content, output_files["pdf"])
-        document_service.create_txt(tailored_content, output_files["txt"])
+        # Also save PDF for preview
+        pdf_filename = f"{base_name}_tailored.pdf"
+        # We don't have a converter, but we'll return the docx filename so the frontend can download it
+        # If we had libreoffice, we'd convert here.
         
         return {
-            "success": True,
             "message": "Resume tailored successfully",
             "files": {
                 "docx": f"/api/download/{base_filename}_tailored.docx",

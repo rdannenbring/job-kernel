@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './index.css'
 
 const API_URL = 'http://localhost:8000'
@@ -13,6 +13,22 @@ function App() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [useDefaultResume, setUseDefaultResume] = useState(false)
+  const [configDefaults, setConfigDefaults] = useState({})
+
+  useEffect(() => {
+    // Fetch config on mount
+    fetch(`${API_URL}/api/config`)
+      .then(res => res.json())
+      .then(data => {
+        setConfigDefaults(data)
+        if (data.default_job_url) {
+            setJobUrl(data.default_job_url)
+            setInputMode('url')
+        }
+      })
+      .catch(err => console.error("Failed to load config", err))
+  }, [])
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0]
@@ -49,8 +65,8 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!resumeFile) {
-      setError('Please upload a resume')
+    if (!resumeFile && !useDefaultResume) {
+      setError('Please upload a resume or use the default one')
       return
     }
 
@@ -70,7 +86,12 @@ function App() {
 
     try {
       const formData = new FormData()
-      formData.append('resume', resumeFile)
+      
+      if (useDefaultResume) {
+        formData.append('use_default_resume', 'true')
+      } else if (resumeFile) {
+        formData.append('resume', resumeFile)
+      }
       
       if (inputMode === 'text') {
         formData.append('job_description', jobDescription)
@@ -152,8 +173,29 @@ function App() {
             </h2>
 
             <form onSubmit={handleSubmit}>
+              {/* Default Resume Option */}
+              {configDefaults.default_resume_path && (
+                  <div className="form-group mb-4">
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                          <input 
+                              type="checkbox" 
+                              checked={useDefaultResume} 
+                              onChange={(e) => {
+                                  setUseDefaultResume(e.target.checked)
+                                  if (e.target.checked) setResumeFile(null)
+                              }}
+                              className="form-checkbox h-5 w-5 text-blue-600"
+                          />
+                          <span className="text-gray-700 font-medium">Use Default Resume for Testing</span>
+                      </label>
+                      <div className="text-xs text-gray-500 ml-7 mt-1">
+                          path: {configDefaults.default_resume_path}
+                      </div>
+                  </div>
+              )}
+
               {/* Resume Upload */}
-              <div className="form-group">
+              <div className={`form-group ${useDefaultResume ? 'opacity-50 pointer-events-none' : ''}`}>
                 <label className="form-label">Upload Your Resume (.docx)</label>
                 <div
                   className={`file-upload ${isDragging ? 'drag-over' : ''}`}
@@ -172,6 +214,7 @@ function App() {
                     type="file"
                     accept=".docx"
                     onChange={handleFileSelect}
+                    disabled={useDefaultResume}
                   />
                 </div>
                 {resumeFile && (
