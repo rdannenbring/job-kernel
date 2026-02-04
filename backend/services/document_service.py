@@ -168,20 +168,14 @@ class DocumentService:
             all_paragraphs = []
             
             # Process main document paragraphs
-            paragraphs = root.findall('.//w:p', namespaces)
-            for para in paragraphs:
-                # Check if paragraph is inside a table
-                is_in_table = False
-                parent = para.getparent()
-                while parent is not None:
-                    if parent.tag.endswith('tbl'):
-                        is_in_table = True
-                        break
-                    parent = parent.getparent()
-                
-                if is_in_table:
-                    continue
+            # STRICTLY match python-docx behavior: Only direct children of w:body
+            body = root.find('w:body', namespaces)
+            if body is not None:
+                paragraphs = body.findall('w:p', namespaces)
+            else:
+                paragraphs = []
 
+            for para in paragraphs:
                 text_content = ''
                 for t_elem in para.findall('.//w:t', namespaces):
                     if t_elem.text:
@@ -195,9 +189,9 @@ class DocumentService:
                 print(f"⚠️  Warning: XML paragraph count mismatch!")
                 print(f"   Original: {len(all_paragraphs)} paragraphs (body only)")
                 print(f"   AI Generated: {len(full_text_items)} text items")
-                print(f"   Falling back to standard method.")
-                # Fall back
-                self.create_docx_preserve_formatting(original_file_path, resume_data, output_path)
+                print(f"   Proceeding with XML preservation anyway (safest option for shapes).")
+                # DO NOT FALL BACK - The fallback method destroys shapes
+                # self.create_docx_preserve_formatting(original_file_path, resume_data, output_path)
                 return
              
             # Track which files have been modified
