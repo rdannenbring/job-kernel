@@ -259,6 +259,69 @@ class DocumentService:
                 # Mark this file as modified
                 modified_files.add(para_file)
             
+            # RESIZE HEADER BACKGROUND SHAPE LOGIC
+            # Goal: Make the grey box cover the header text and end halfway to "EXECUTIVE SUMMARY"
+            # 1. Find the index of "EXECUTIVE SUMMARY"
+            exec_summary_idx = -1
+            for i, text in enumerate(full_text_items):
+                if "EXECUTIVE SUMMARY" in str(text).upper():
+                    exec_summary_idx = i
+                    break
+            
+            if exec_summary_idx > 0:
+                # 2. Calculate "visual units" for all paragraphs before Exec Summary
+                # Heuristic: 1 line ≈ 85 chars. Paragraph gap ≈ 0.8 line height.
+                total_visual_lines = 0.0
+                header_text_items = full_text_items[:exec_summary_idx]
+                
+                for text in header_text_items:
+                    clean_text = str(text).strip()
+                    if not clean_text: 
+                        continue
+                    
+                    # Estimate wrapped lines (min 1)
+                    lines = max(1, math.ceil(len(clean_text) / 85.0))
+                    total_visual_lines += lines
+                    # Add spacing for paragraph gap
+                    total_visual_lines += 0.8
+                
+                # Add a little extra padding at the bottom (gap to Exec Summary)
+                total_visual_lines += 0.5
+                
+                # 3. Convert to EMUs (English Metric Units)
+                # Calibrated baseline: 2.36M EMUs for ~11 visual line units -> ~215,000 per unit
+                estimated_height = int(total_visual_lines * 215000)
+                
+                # 4. Update the drawing object in the XML
+                # Look for <wp:anchor ...> <wp:extent cy="...">
+                # namespaces are needed
+                drawings = root.findall('.//wp:anchor', namespaces)
+                updated_shape = False
+                for drawing in drawings:
+                    # Check if this is likely the background shape (usually locked/behindDoc)
+                    # or just the first/largest one.
+                    # Or check extent: huge width, specific height range
+                    extent = drawing.find('wp:extent', namespaces)
+                    if extent is not None:
+                        current_cx = int(extent.get('cx', 0))
+                        # Width > 6 inches (5.4M EMUs) -> likely full width header
+                        if current_cx > 5000000:
+                            # Update extent height
+                            extent.set('cy', str(estimated_height))
+                            
+                            # Also need to update the inner shape extent if present
+                            # <a:graphic> ... <a:xfrm> <a:ext cx="..." cy="...">
+                            graphic = drawing.find('.//a:graphic', namespaces)
+                            if graphic is not None:
+                                xfrm_ext = graphic.find('.//a:xfrm/a:ext', namespaces)
+                                if xfrm_ext is not None:
+                                    xfrm_ext.set('cy', str(estimated_height))
+                            
+                            updated_shape = True
+                            print(f"   ℹ️  Auto-resize: Header Shape height adjusted to {estimated_height} EMUs (~{total_visual_lines:.1f} lines)")
+                            modified_files.add(document_xml_path)
+                            break
+            
             # AUTO-FIT LOGIC: Adjust margins if text has grown significantly
             # Calculate total text length
             original_len = 0
