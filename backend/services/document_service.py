@@ -170,6 +170,18 @@ class DocumentService:
             # Process main document paragraphs
             paragraphs = root.findall('.//w:p', namespaces)
             for para in paragraphs:
+                # Check if paragraph is inside a table
+                is_in_table = False
+                parent = para.getparent()
+                while parent is not None:
+                    if parent.tag.endswith('tbl'):
+                        is_in_table = True
+                        break
+                    parent = parent.getparent()
+                
+                if is_in_table:
+                    continue
+
                 text_content = ''
                 for t_elem in para.findall('.//w:t', namespaces):
                     if t_elem.text:
