@@ -143,7 +143,8 @@ class DocumentService:
                 'v': 'urn:schemas-microsoft-com:vml',
                 'wp': 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing',
                 'wp14': 'http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing',
-                'wps': 'http://schemas.microsoft.com/office/word/2010/wordprocessingShape'
+                'wps': 'http://schemas.microsoft.com/office/word/2010/wordprocessingShape',
+                'a': 'http://schemas.openxmlformats.org/drawingml/2006/main'
             }
             
             # Get full text from resume data

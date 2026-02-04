@@ -128,10 +128,21 @@ async def download_file(filename: str):
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
     
+    # Determine media type and disposition based on file extension
+    media_type = "application/octet-stream"
+    content_disposition_type = "attachment"
+    
+    if filename.lower().endswith(".pdf"):
+        media_type = "application/pdf"
+        content_disposition_type = "inline"
+    elif filename.lower().endswith(".docx"):
+        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    
     return FileResponse(
         path=file_path,
         filename=filename,
-        media_type="application/octet-stream"
+        media_type=media_type,
+        content_disposition_type=content_disposition_type
     )
 
 
