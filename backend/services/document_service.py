@@ -13,6 +13,7 @@ import shutil
 import os
 from lxml import etree
 import tempfile
+import math
 
 
 class DocumentService:
