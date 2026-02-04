@@ -8,6 +8,11 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from typing import Dict, Any, List
 import json
 import re
+import zipfile
+import shutil
+import os
+from lxml import etree
+import tempfile
 
 
 class DocumentService:
@@ -101,6 +106,151 @@ class DocumentService:
                 })
         
         return resume_data
+    
+    def create_docx_with_xml_preservation(self, original_file_path: str, resume_data: Dict[str, Any], output_path: str):
+        """
+        Create a DOCX file using XML-level manipulation to preserve ALL elements including shapes and backgrounds.
+        This works by manipulating the document.xml directly without using python-docx's save method.
+        """
+        # DOCX files are ZIP archives containing XML files
+        # Extract, modify XML, and repackage
+        
+        # Create a temporary directory for extraction
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Extract the original DOCX
+            with zipfile.ZipFile(original_file_path, 'r') as zip_ref:
+                zip_ref.extractall(temp_dir)
+            
+            # Path to the main document XML
+            document_xml_path = os.path.join(temp_dir, 'word', 'document.xml')
+            
+            # Parse the XML
+            parser = etree.XMLParser(remove_blank_text=False)
+            tree = etree.parse(document_xml_path, parser)
+            root = tree.getroot()
+            
+            # Define namespaces
+            namespaces = {
+                'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
+                'w14': 'http://schemas.microsoft.com/office/word/2010/wordml',
+                'wpc': 'http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas',
+                'cx': 'http://schemas.microsoft.com/office/drawing/2014/chartex',
+                'mc': 'http://schemas.openxmlformats.org/markup-compatibility/2006',
+                'o': 'urn:schemas-microsoft-com:office:office',
+                'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+                'v': 'urn:schemas-microsoft-com:vml',
+                'wp': 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing',
+                'wp14': 'http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing',
+                'wps': 'http://schemas.microsoft.com/office/word/2010/wordprocessingShape'
+            }
+            
+            # Get full text from resume data
+            full_text_items = resume_data.get("full_text", [])
+            
+            if not full_text_items:
+                # Fallback
+                full_text_items = []
+                for section in resume_data.get("sections", []):
+                    if section.get("type") == "table":
+                        continue
+                    if section.get("title"):
+                        full_text_items.append(section["title"])
+                    for item in section.get("content", []):
+                        if item:
+                            full_text_items.append(str(item))
+            
+            # Find all text paragraphs (w:p elements)
+            paragraphs = root.findall('.//w:p', namespaces)
+            
+            # Filter to non-empty paragraphs
+            text_paragraphs = []
+            for para in paragraphs:
+                # Get all text runs
+                text_content = ''
+                for t_elem in para.findall('.//w:t', namespaces):
+                    if t_elem.text:
+                        text_content += t_elem.text
+                
+                if text_content.strip():
+                    text_paragraphs.append(para)
+            
+            # Check if counts match
+            if len(text_paragraphs) != len(full_text_items):
+                print(f"⚠️  Warning: XML paragraph count mismatch!")
+                print(f"   Original: {len(text_paragraphs)} paragraphs")
+                print(f"   AI Generated: {len(full_text_items)} text items")
+                print(f"   Falling back to standard method.")
+                # Fall back
+                self.create_docx_preserve_formatting(original_file_path, resume_data, output_path)
+                return
+            
+            # Update each paragraph's text
+            for para, new_text in zip(text_paragraphs, full_text_items):
+                sanitized_text = self.sanitize_text(str(new_text))
+                
+                # Find all text runs in this paragraph
+                text_runs = para.findall('.//w:r', namespaces)
+                
+                if not text_runs:
+                    continue
+                
+                # Check for colon pattern (bold before colon, normal after)
+                has_colon_pattern = ':' in sanitized_text and len(text_runs) > 1
+                
+                if has_colon_pattern:
+                    # Split at colon
+                    parts = sanitized_text.split(':', 1)
+                    if len(parts) == 2:
+                        label_part = parts[0] + ':'
+                        content_part = parts[1]
+                        
+                        # Update first run with label
+                        first_t = text_runs[0].find('.//w:t', namespaces)
+                        if first_t is not None:
+                            first_t.text = label_part
+                        
+                        # Clear other runs except the second one
+                        for i, run in enumerate(text_runs):
+                            t_elem = run.find('.//w:t', namespaces)
+                            if t_elem is not None:
+                                if i == 1:
+                                    t_elem.text = content_part
+                                elif i > 1:
+                                    t_elem.text = ""
+                    else:
+                        # Couldn't split, use first run only
+                        first_t = text_runs[0].find('.//w:t', namespaces)
+                        if first_t is not None:
+                            first_t.text = sanitized_text
+                        # Clear others
+                        for run in text_runs[1:]:
+                            t_elem = run.find('.//w:t', namespaces)
+                            if t_elem is not None:
+                                t_elem.text = ""
+                else:
+                    # Simple case: put all text in first run
+                    first_t = text_runs[0].find('.//w:t', namespaces)
+                    if first_t is not None:
+                        first_t.text = sanitized_text
+                    
+                    # Clear other runs
+                    for run in text_runs[1:]:
+                        t_elem = run.find('.//w:t', namespaces)
+                        if t_elem is not None:
+                            t_elem.text = ""
+            
+            # Write the modified XML back
+            tree.write(document_xml_path, xml_declaration=True, encoding='UTF-8', standalone=True)
+            
+            # Repackage as DOCX
+            with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as docx:
+                for folder_name, subfolders, filenames in os.walk(temp_dir):
+                    for filename in filenames:
+                        file_path = os.path.join(folder_name, filename)
+                        arcname = os.path.relpath(file_path, temp_dir)
+                        docx.write(file_path, arcname)
+            
+            print(f"✓ Successfully updated {len(text_paragraphs)} paragraphs with XML-level preservation")
     
     def create_docx_preserve_formatting(self, original_file_path: str, resume_data: Dict[str, Any], output_path: str):
         """
