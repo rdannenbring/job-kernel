@@ -53,6 +53,15 @@ class DocumentService:
         
         current_section = None
         
+        # Process headers first (important for contact info)
+        for section in doc.sections:
+            if section.header:
+                for para in section.header.paragraphs:
+                    text = para.text.strip()
+                    if text:
+                        resume_data["full_text"].append(text)
+        
+        # Then process main document paragraphs
         for para in doc.paragraphs:
             text = para.text.strip()
             
