@@ -288,7 +288,8 @@ class DocumentService:
                     total_visual_lines += 0.8
                 
                 # Add a little extra padding at the bottom (gap to Exec Summary)
-                total_visual_lines += 0.5
+                # Adjusted to 1.25 to hit the visual center of the gap
+                total_visual_lines += 1.25
                 
                 # 3. Convert to EMUs (English Metric Units)
                 # Calibrated baseline: 2.36M EMUs for ~11 visual line units -> ~215,000 per unit
