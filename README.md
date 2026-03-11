@@ -1,24 +1,25 @@
-# Resume Automation Application
+# JobKernel
 
-Automatically tailor your resume to match job descriptions while maintaining your original formatting and style.
+AI-powered job application manager — track applications, tailor resumes, generate cover letters, and stay organized throughout your job search.
 
+---
 
-## 🚨 FOR AI AGENTS & DEVELOPERS
+## 🚨 For AI Agents & Developers
 
-**PLEASE USE DOCKER FOR DEVELOPMENT**
+**PLEASE USE DOCKER FOR DEVELOPMENT.**
 
-To ensure a consistent environment and avoid dependency issues, please run the application using the provided Docker setup script:
+All dependencies are managed inside Docker containers. Do not run `pip install` or `npm install` locally unless specifically debugging a local environment issue.
 
 ```bash
 ./start-docker.sh
 ```
 
-**Do not try to run `pip install` or `npm install` locally unless specifically debugging local environment issues.** All dependencies are managed within the Docker containers.
+| Container | Name |
+|-----------|------|
+| Backend (FastAPI) | `jobapplicationautomator-backend-1` |
+| Frontend (Vite/React) | `jobapplicationautomator-frontend-1` |
 
-- **Backend Container**: `jobapplicationautomator-backend-1`
-- **Frontend Container**: `jobapplicationautomator-frontend-1`
-
-To run commands inside the backend (e.g., to install new packages temporarily):
+To run a command inside the backend container:
 ```bash
 docker exec -it jobapplicationautomator-backend-1 pip install <package_name>
 ```
@@ -27,113 +28,120 @@ docker exec -it jobapplicationautomator-backend-1 pip install <package_name>
 
 ## Features
 
-- 📄 **Resume Upload**: Support for Word (.docx) format
-- 🎯 **Job Description Input**: Paste text or provide a URL to scrape
-- 🤖 **AI-Powered Tailoring**: Intelligently modify your resume to highlight relevant experience
-- 📥 **Multi-Format Export**: Download as DOCX, PDF, or TXT
-- 📊 **History Tracking**: View and download previously tailored resumes
-- 🎨 **Format Preservation**: Maintains your original resume styling
+- 📋 **Application Tracking** — Kanban, list & table views with drag-and-drop status updates
+- 📄 **Resume Tailoring** — AI rewrites your resume to match each job description, preserving formatting
+- ✉️ **Cover Letter Generation** — AI-drafted cover letters with one click
+- 🗂️ **Archiving** — Archive applications instead of deleting them; toggle archived view on the dashboard
+- 🏢 **Company Logos** — Upload logos per application; displayed in all dashboard views
+- 🔌 **Browser Extension** — Clip job listings directly from LinkedIn and other job boards
+- 👤 **Profile Management** — Store contact info, resume data, documents, and preferences
+- 📊 **Analytics** — Visual breakdown of your application pipeline
+
+---
 
 ## Tech Stack
 
-### Frontend
-- React with Vite
-- Modern, responsive UI
-- File upload and preview
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React, Vite, Tailwind CSS |
+| Backend | Python, FastAPI, SQLAlchemy, SQLite |
+| AI | Google Gemini (configurable) |
+| Document Processing | `python-docx`, `BeautifulSoup4` |
+| Extension | Chrome Manifest V3 |
 
-### Backend
-- Python FastAPI
-- OpenAI API for intelligent resume tailoring
-- Document processing libraries
-
-### Document Processing
-- `python-docx` - Word document manipulation
-- `ReportLab` - PDF generation
-- `BeautifulSoup4` - Web scraping for job URLs
+---
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+ and npm
-- Python 3.9+
-- OpenAI API key (or similar AI service)
 
-### Installation
+- [Docker](https://www.docker.com/) & Docker Compose
+- A [Google AI Studio](https://aistudio.google.com/) API key (Gemini)
 
-1. **Clone and setup**:
+### 1. Clone the repository
+
 ```bash
-cd /home/rdannenbring/Development/JobApplicationAutomator
+git clone https://github.com/rdannenbring/job-kernel.git
+cd job-kernel
 ```
 
-2. **Frontend Setup**:
+### 2. Configure the backend
+
+`backend/config.json` is **not** committed to the repo (it contains your API key). Create it from the provided template:
+
 ```bash
-cd frontend
-npm install
-npm run dev
+cp backend/config.example.json backend/config.json
 ```
 
-3. **Backend Setup**:
+Then open `backend/config.json` and fill in your values:
+
+```json
+{
+    "default_resume_path": "/mnt/resume/YourResume.docx",
+    "ai_config": {
+        "provider": "gemini",
+        "model": "gemini-2.5-flash",
+        "api_key": "YOUR_GEMINI_API_KEY_HERE"
+    },
+    ...
+}
+```
+
+> **Where to get a Gemini API key:** Visit [aistudio.google.com](https://aistudio.google.com), sign in, and create a new API key under **Get API key**.
+>
+> ⚠️ **Never commit `config.json` to git.** It is listed in `.gitignore` for this reason. If you accidentally expose a key, revoke it immediately at [aistudio.google.com](https://aistudio.google.com) and generate a new one.
+
+### 3. Start the application
+
 ```bash
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python main.py
+./start-docker.sh
 ```
 
-4. **Environment Variables**:
-Create a `.env` file in the backend directory:
-```
-OPENAI_API_KEY=your_api_key_here
-```
+The app will be available at **http://localhost:5173**.
 
-## Usage
-
-1. Open the web application (default: http://localhost:5173)
-2. Upload your base resume (.docx format)
-3. Input job description (paste text or provide URL)
-4. Click "Tailor Resume"
-5. Preview the tailored resume
-6. Download in your preferred format (DOCX, PDF, or TXT)
+---
 
 ## Project Structure
 
 ```
-JobApplicationAutomator/
-├── frontend/           # React + Vite frontend
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   └── App.jsx
-│   └── package.json
-├── backend/           # Python FastAPI backend
-│   ├── main.py
-│   ├── services/
-│   │   ├── ai_service.py
-│   │   ├── document_service.py
-│   │   └── scraper_service.py
+job-kernel/
+├── backend/
+│   ├── main.py                  # FastAPI app & all API endpoints
+│   ├── config.json              # ⚠️ Local only — never committed
+│   ├── config.example.json      # ✅ Safe template — copy to config.json
 │   ├── requirements.txt
-│   └── uploads/
+│   └── services/
+│       ├── ai_service.py        # Gemini integration
+│       ├── database_service.py  # SQLite ORM & migrations
+│       ├── document_service.py  # Resume/cover letter DOCX generation
+│       └── scraper_service.py   # Job URL scraping
+├── frontend/
+│   ├── src/
+│   │   ├── pages/               # Dashboard, Profile, ApplicationDetail, etc.
+│   │   ├── components/          # Sidebar, Layout, shared UI
+│   │   └── App.jsx              # Root component & routing
+│   └── index.html
+├── extension/                   # Chrome browser extension
+│   ├── manifest.json
+│   ├── sidepanel.html/js/css
+│   ├── content.js
+│   └── background.js
+├── resources/
+│   └── images/logos/            # Brand assets
+├── start-docker.sh
 └── README.md
 ```
 
-## How It Works
-
-1. **Upload**: Your resume is uploaded and parsed to extract structure and content
-2. **Job Analysis**: AI analyzes the job description to identify key requirements, skills, and keywords
-3. **Tailoring**: AI intelligently modifies your resume to:
-   - Highlight relevant experience
-   - Add keyword optimization
-   - Reorder or emphasize skills matching the job
-   - Maintain your original formatting
-4. **Export**: Generate the tailored resume in multiple formats
+---
 
 ## Privacy & Security
 
-- All processing happens locally on your machine
-- Your resume data is never stored permanently (unless you choose to save it)
-- API keys are stored locally in environment variables
+- All data is processed and stored **locally on your machine** — nothing is sent to external servers except AI API calls (Gemini)
+- `config.json` and the SQLite database (`*.db`) are excluded from version control via `.gitignore`
+- Resume files are stored in `backend/uploads/` — also excluded from version control
+
+---
 
 ## License
 
-MIT License - For personal use
+MIT License — For personal use
