@@ -25,7 +25,6 @@
         </svg>
         <h1>Job Automator</h1>
       </div>
-      <p class="subtitle">Capture &amp; process job listings seamlessly.</p>
     </header>
 
     <!-- Loading overlay -->
@@ -49,6 +48,12 @@
 
     <main class="form-container">
       <form id="job-form">
+
+        <!-- Job Title row -->
+        <div class="form-group" style="margin-bottom:0.75rem">
+          <label for="title">Job Title</label>
+          <input type="text" id="title" name="title" required />
+        </div>
 
         <!-- ── Company + Logo row ─────────────────── -->
         <div class="company-row">
@@ -75,11 +80,7 @@
             <input type="file" id="logo-file-input" accept="image/*" style="display:none" />
           </div>
 
-          <div class="company-fields">
-            <div class="form-group" style="margin-bottom:0.75rem">
-              <label for="title">Job Title</label>
-              <input type="text" id="title" name="title" required />
-            </div>
+          <div class="company-fields" style="width: 100%;">
             <div class="form-group" style="margin-bottom:0">
               <label for="company">Company</label>
               <input type="text" id="company" name="company" required />
@@ -148,13 +149,14 @@
             </label>
             <label for="relocation" class="switch-label">Relocation</label>
           </div>
-          <div class="form-group half">
-            <label for="interestLevel">Interest Level</label>
-            <select id="interestLevel" name="interestLevel">
-              <option value="High">High 🔥</option>
-              <option value="Medium" selected>Medium ⭐</option>
-              <option value="Low">Low 🧊</option>
-            </select>
+          <div class="form-group half" style="flex: 2;">
+            <label>Interest Level</label>
+            <div class="toggle-group" id="interest-toggles">
+              <button type="button" class="toggle-btn" data-value="Low">★</button>
+              <button type="button" class="toggle-btn" data-value="Medium">★★</button>
+              <button type="button" class="toggle-btn" data-value="High">★★★</button>
+            </div>
+            <input type="hidden" id="interestLevel" name="interestLevel" value="" />
           </div>
         </div>
 
@@ -179,14 +181,16 @@
     </main>
 
     <footer class="footer-actions">
-      <button type="button" id="btn-save" class="btn btn-secondary">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-        Save Listing
-      </button>
-      <button type="button" id="btn-process" class="btn btn-primary">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-        Process Immediately
-      </button>
+      <div class="footer-btn-row">
+        <button type="button" id="btn-save" class="btn btn-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Save
+        </button>
+        <button type="button" id="btn-process" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          Process Now
+        </button>
+      </div>
       <div id="status-message" class="status-message"></div>
     </footer>
   </div>

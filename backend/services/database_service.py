@@ -14,9 +14,10 @@ class Application(Base):
     id = Column(Integer, primary_key=True)
     job_title = Column(String)
     company = Column(String)
+    company_logo = Column(Text)   # base64 or URL
     job_url = Column(String)
     job_description = Column(Text)
-    status = Column(String, default='Applied')
+    status = Column(String, default='Saved')
     date_saved = Column(String) # Storing ISO format string
     original_resume_path = Column(String)
     tailored_resume_path = Column(String)
@@ -27,6 +28,13 @@ class Application(Base):
     date_posted = Column(String)
     deadline = Column(String)
     apply_url = Column(String)
+    job_type = Column(String)
+    location_type = Column(String)
+    location = Column(String)
+    relocation = Column(String)   # 'true'/'false'
+    interest_level = Column(String)
+    remarks = Column(Text)
+    is_archived = Column(String, default='false')  # 'true'/'false'
     
     # New fields for AI insights
     resume_changes_summary = Column(Text) # JSON list/string
@@ -115,6 +123,14 @@ class DatabaseService:
         migrations = [
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS deadline TEXT",
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS apply_url TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS company_logo TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS job_type TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS location_type TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS location TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS relocation TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS interest_level TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS remarks TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS is_archived TEXT DEFAULT 'false'",
             "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS base_resume_path TEXT",
             "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS long_form_resume_path TEXT",
             "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS additional_docs TEXT",
@@ -154,6 +170,7 @@ class DatabaseService:
             new_app = Application(
                 job_title=data.get('job_title', 'Unknown Role'),
                 company=data.get('company', 'Unknown Company'),
+                company_logo=data.get('company_logo', ''),
                 job_url=data.get('job_url', ''),
                 job_description=data.get('job_description', ''),
                 date_saved=datetime.now().isoformat(),
@@ -166,6 +183,12 @@ class DatabaseService:
                 date_posted=data.get('date_posted', ''),
                 deadline=data.get('deadline', ''),
                 apply_url=data.get('apply_url', ''),
+                job_type=data.get('job_type', ''),
+                location_type=data.get('location_type', ''),
+                location=data.get('location', ''),
+                relocation=str(data.get('relocation', False)),
+                interest_level=data.get('interest_level', ''),
+                remarks=data.get('remarks', ''),
                 resume_changes_summary=json.dumps(data.get('resume_changes_summary', [])),
                 cover_letter_changes_summary=json.dumps(data.get('cover_letter_changes_summary', []))
             )
@@ -186,6 +209,18 @@ class DatabaseService:
             return False
         finally:
             session.close()
+
+    def update_application_logo(self, app_id: int, company_logo: str) -> bool:
+        session = self.Session()
+        try:
+            app = session.query(Application).filter(Application.id == app_id).first()
+            if app:
+                app.company_logo = company_logo
+                session.commit()
+                return True
+            return False
+        finally:
+            session.close()
         
     def get_applications(self) -> List[Dict[str, Any]]:
         session = self.Session()
@@ -199,6 +234,7 @@ class DatabaseService:
                     "id": app.id,
                     "job_title": app.job_title,
                     "company": app.company,
+                    "company_logo": app.company_logo,
                     "job_url": app.job_url,
                     "job_description": app.job_description,
                     "status": app.status,
@@ -211,8 +247,15 @@ class DatabaseService:
                     "date_posted": app.date_posted,
                     "deadline": app.deadline,
                     "apply_url": app.apply_url,
+                    "job_type": app.job_type,
+                    "location_type": app.location_type,
+                    "location": app.location,
+                    "relocation": app.relocation,
+                    "interest_level": app.interest_level,
+                    "remarks": app.remarks,
                     "resume_changes_summary": app.resume_changes_summary,
-                    "cover_letter_changes_summary": app.cover_letter_changes_summary
+                    "cover_letter_changes_summary": app.cover_letter_changes_summary,
+                    "is_archived": app.is_archived or 'false',
                 })
             return result
         finally:
@@ -252,6 +295,38 @@ class DatabaseService:
             
             print("DEBUG: No match found.")
             return None
+        finally:
+            session.close()
+
+    def delete_application(self, app_id: int) -> bool:
+        """Delete an application record by ID."""
+        session = self.Session()
+        try:
+            app = session.query(Application).filter(Application.id == app_id).first()
+            if not app:
+                return False
+            session.delete(app)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def archive_application(self, app_id: int, archived: bool) -> bool:
+        """Set the archived flag on an application."""
+        session = self.Session()
+        try:
+            app = session.query(Application).filter(Application.id == app_id).first()
+            if not app:
+                return False
+            app.is_archived = 'true' if archived else 'false'
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
         finally:
             session.close()
 

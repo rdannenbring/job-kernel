@@ -2,16 +2,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Dashboard.css';
 
+const DASH_STORAGE_KEY = 'dashboard_state';
+
+function loadDashState() {
+    try {
+        const raw = sessionStorage.getItem(DASH_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+}
+
 const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate }) => {
-    const [viewMode, setViewMode] = useState('kanban');
+    const saved = loadDashState();
+    const [viewMode, setViewMode] = useState(saved.viewMode || 'kanban');
     const [draggedOverCol, setDraggedOverCol] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [sortBy, setSortBy] = useState('newest');
-    const [filterStatuses, setFilterStatuses] = useState([]);
+    const [searchTerm, setSearchTerm] = useState(saved.searchTerm || '');
+    const [sortBy, setSortBy] = useState(saved.sortBy || 'newest');
+    const [filterStatuses, setFilterStatuses] = useState(saved.filterStatuses || []);
+    const [showArchived, setShowArchived] = useState(saved.showArchived || false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef(null);
     const [isSortOpen, setIsSortOpen] = useState(false);
     const sortRef = useRef(null);
+
+    // Persist state to sessionStorage whenever it changes
+    useEffect(() => {
+        sessionStorage.setItem(DASH_STORAGE_KEY, JSON.stringify({ viewMode, searchTerm, sortBy, filterStatuses, showArchived }));
+    }, [viewMode, searchTerm, sortBy, filterStatuses, showArchived]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -51,7 +67,10 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate }) => {
     };
 
     const processedApps = [...apps].filter(app => {
-        const matchesSearch = (app.job_title || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+        const archived = app.is_archived === 'true';
+        if (!showArchived && archived) return false;
+        if (showArchived && !archived) return false;
+        const matchesSearch = (app.job_title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                               (app.company || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesFilter = filterStatuses.length === 0 ? true : filterStatuses.includes(getStatusText(app.status));
         return matchesSearch && matchesFilter;
@@ -225,7 +244,22 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate }) => {
                             )}
                         </div>
                     </div>
-                    <div className="text-sm text-slate-400">Showing {processedApps.length} of {apps.length}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {/* Archived toggle */}
+                        <button
+                            onClick={() => setShowArchived(v => !v)}
+                            title={showArchived ? 'Back to active jobs' : 'View archived jobs'}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                                showArchived
+                                    ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:border-white/20'
+                            }`}
+                        >
+                            <span className="material-symbols-outlined text-[16px]">{showArchived ? 'inventory_2' : 'archive'}</span>
+                            {showArchived ? 'Archived' : 'Archive'}
+                        </button>
+                        <div className="text-sm text-slate-400">Showing {processedApps.length} of {apps.filter(a => showArchived ? a.is_archived === 'true' : a.is_archived !== 'true').length}</div>
+                    </div>
                 </div>
 
                 {/* Active Filters Display */}
@@ -299,8 +333,11 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate }) => {
                                 onClick={() => onViewApp(app)}
                                 className="glass-card p-4 rounded-xl flex flex-col gap-3 cursor-pointer shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
                                 <div className="flex justify-between items-start">
-                                    <div className="size-10 rounded-lg bg-white/10 p-2 border border-white/10 flex items-center justify-center">
-                                        <span className="material-symbols-outlined text-white">corporate_fare</span>
+                                    <div className="size-10 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                                        {app.company_logo
+                                            ? <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'white', padding: '2px' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'block'; }} />
+                                            : null}
+                                        <span className="material-symbols-outlined text-white" style={{ display: app.company_logo ? 'none' : 'block' }}>corporate_fare</span>
                                     </div>
                                     <span className={`text-[10px] px-2 py-0.5 rounded-full ${getStatusStyle(app.status)}`}>{getStatusText(app.status)}</span>
                                 </div>
@@ -327,8 +364,11 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate }) => {
         {processedApps.map(app => (
             <div key={app.id} onClick={() => onViewApp(app)} className="glass-card p-6 rounded-2xl flex flex-col sm:flex-row gap-6 cursor-pointer group">
                 <div className="flex items-start gap-4 flex-1">
-                    <div className="size-12 rounded-xl bg-white/5 border border-white/10 p-2.5 flex items-center justify-center shrink-0">
-                        <span className="material-symbols-outlined text-white text-xl">corporate_fare</span>
+                    <div className="size-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+                        {app.company_logo
+                            ? <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'white', padding: '3px' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'block'; }} />
+                            : null}
+                        <span className="material-symbols-outlined text-white text-xl" style={{ display: app.company_logo ? 'none' : 'block' }}>corporate_fare</span>
                     </div>
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-3">
@@ -369,8 +409,11 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate }) => {
                     <tr key={app.id} className="glass-row group cursor-pointer" onClick={() => onViewApp(app)}>
                         <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-lg bg-white/5 border border-white/10 p-2 flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-white">corporate_fare</span>
+                                <div className="size-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                                    {app.company_logo
+                                        ? <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'white', padding: '2px' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'block'; }} />
+                                        : null}
+                                    <span className="material-symbols-outlined text-white" style={{ display: app.company_logo ? 'none' : 'block' }}>corporate_fare</span>
                                 </div>
                                 <span className="font-bold text-slate-100">{app.company || 'Unknown'}</span>
                             </div>

@@ -631,6 +631,12 @@ function injectFloatingButton() {
 
 // Listen for panel state changes broadcast from the background
 if (isExtValid()) {
+  try {
+    // On fresh page load, the side panel is never open — reset stale storage.
+    // This ensures the chevron icon always reflects true state from the start.
+    chrome.storage.local.set({ isPanelOpen: false });
+  } catch(e) {}
+
   chrome.runtime.onMessage.addListener((message) => {
     if (message.action === 'panel_state_changed') {
       const btn = document.getElementById('job-automator-btn');

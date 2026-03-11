@@ -10,6 +10,9 @@ const Settings = () => {
         base_url: '',
         api_key: ''
     });
+    const [uiConfig, setUiConfig] = useState({
+        font_size: 14.5
+    });
     const [availableModels, setAvailableModels] = useState([]);
     const [prompts, setPrompts] = useState({});
     const [loading, setLoading] = useState(false);
@@ -61,6 +64,12 @@ const Settings = () => {
             if (data.ai_config) {
                 setAiConfig(prev => ({ ...prev, ...data.ai_config }));
             }
+            if (data.ui_config) {
+                setUiConfig(prev => ({ ...prev, ...data.ui_config }));
+                if (data.ui_config.font_size) {
+                    document.documentElement.style.fontSize = `${data.ui_config.font_size}px`;
+                }
+            }
             if (data.prompts) {
                 setPrompts(data.prompts);
             }
@@ -78,6 +87,7 @@ const Settings = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ai_config: aiConfig,
+                    ui_config: uiConfig,
                     prompts: prompts
                 })
             });
@@ -214,17 +224,50 @@ const Settings = () => {
                         </div>
                     </div>
 
-                    <div className="card" style={{ opacity: 0.7, marginBottom: '1.5rem' }}>
+                    <div className="card" style={{ marginBottom: '1.5rem' }}>
                         <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             🎨 Appearance
-                            <span style={{ fontSize: '0.7rem', background: '#f59e0b', color: 'black', padding: '2px 6px', borderRadius: '4px' }}>COMING SOON</span>
                         </h3>
+                        
                         <div className="form-group">
-                            <label className="form-label">Theme</label>
+                            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span>UI Scale (Font Size)</span>
+                                <span>{uiConfig.font_size}px</span>
+                            </label>
+                            <input
+                                type="range"
+                                min="12"
+                                max="18"
+                                step="0.5"
+                                value={uiConfig.font_size}
+                                onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    setUiConfig({ ...uiConfig, font_size: val });
+                                    document.documentElement.style.fontSize = `${val}px`;
+                                }}
+                                style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--primary-light)' }}
+                            />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                                <span>Smaller</span>
+                                <span>Default</span>
+                                <span>Larger</span>
+                            </div>
+                        </div>
+
+                        <div className="form-group" style={{ opacity: 0.7 }}>
+                            <label className="form-label">
+                                Theme <span style={{ fontSize: '0.7rem', background: '#f59e0b', color: 'black', padding: '2px 6px', borderRadius: '4px', marginLeft: '0.5rem' }}>COMING SOON</span>
+                            </label>
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 <button className="btn btn-primary" disabled>Dark</button>
                                 <button className="btn btn-secondary" disabled>Light</button>
                             </div>
+                        </div>
+
+                        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                            <button className="btn btn-primary" onClick={saveConfig} disabled={loading}>
+                                {loading ? 'Saving...' : 'Save Appearance'}
+                            </button>
                         </div>
                     </div>
                 </>
