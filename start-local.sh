@@ -40,6 +40,22 @@ echo ""
 echo "🌐 Frontend: http://localhost:5173"
 echo "🔧 Backend API: http://localhost:8000"
 echo ""
+# Check status
+echo "📊 Service Status:"
+echo "----------------"
+if ps -p $BACKEND_PID > /dev/null; then
+   echo "✅ Backend  (PID $BACKEND_PID): Running"
+else
+   echo "❌ Backend  (PID $BACKEND_PID): Stopped (Check logs!)"
+   wait $BACKEND_PID 2>/dev/null
+fi
+
+if ps -p $FRONTEND_PID > /dev/null; then
+   echo "✅ Frontend (PID $FRONTEND_PID): Running"
+else
+   echo "❌ Frontend (PID $FRONTEND_PID): Stopped"
+fi
+echo ""
 echo "Press Ctrl+C to stop both servers"
 echo ""
 

@@ -9,7 +9,7 @@ class ScraperService:
     async def scrape_job_description(self, url: str) -> str:
         """
         Scrape job description from a URL.
-        Attempts to extract the main job description text from common job sites.
+        Attempts to extract the main job description text from common job sites with a Jina Reader fallback.
         """
         try:
             headers = {
@@ -64,7 +64,20 @@ class ScraperService:
             
             return job_text
             
-        except requests.exceptions.RequestException as e:
-            raise ValueError(f"Failed to fetch URL: {str(e)}")
-        except Exception as e:
-            raise ValueError(f"Failed to parse job description: {str(e)}")
+        except Exception as standard_error:
+            print(f"Standard scraping failed: {standard_error}. Falling back to Jina API.")
+            try:
+                # Fallback to r.jina.ai for robust scraping and markdown extraction
+                jina_url = f"https://r.jina.ai/{url}"
+                jina_headers = {'User-Agent': 'Mozilla/5.0'}
+                
+                jina_response = requests.get(jina_url, headers=jina_headers, timeout=15)
+                jina_response.raise_for_status()
+                
+                if jina_response.text and len(jina_response.text) > 50:
+                    return jina_response.text
+                else:
+                    raise ValueError("Jina API yielded too little or no text.")
+                
+            except Exception as jina_error:
+                raise ValueError(f"Failed to parse job description via standard and Jina fallback methods. (Standard: {standard_error}) (Jina: {jina_error})")

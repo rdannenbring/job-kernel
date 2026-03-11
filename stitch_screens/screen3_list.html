@@ -1,0 +1,257 @@
+<html class="dark" lang="en"><head>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/></head><body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">&lt;!DOCTYPE html&gt;
+
+
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Job Tracker List Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#256af4",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#0a0f18",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-hover:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(37, 106, 244, 0.3);
+            box-shadow: 0 0 20px rgba(37, 106, 244, 0.1);
+        }
+    </style>
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-72 bg-slate-900/50 dark:bg-background-dark/50 border-r border-slate-200 dark:border-slate-800 flex flex-col h-full shrink-0">
+<div class="p-6 flex flex-col gap-8 h-full">
+<!-- Logo -->
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined">track_changes</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-white text-base font-bold leading-none">JobTracker Pro</h1>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium">Premium SaaS</p>
+</div>
+</div>
+<!-- Nav Items -->
+<nav class="flex flex-col gap-1 flex-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary group" href="#">
+<span class="material-symbols-outlined text-[22px]">dashboard</span>
+<span class="text-sm font-semibold">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">work</span>
+<span class="text-sm font-semibold">My Jobs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">chat</span>
+<span class="text-sm font-semibold">Messages</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">leaderboard</span>
+<span class="text-sm font-semibold">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mt-auto" href="#">
+<span class="material-symbols-outlined text-[22px]">settings</span>
+<span class="text-sm font-semibold">Settings</span>
+</a>
+</nav>
+<!-- CTA -->
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+<span>New Application</span>
+</button>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto bg-slate-50 dark:bg-background-dark relative">
+<!-- Background Decoration -->
+<div class="absolute top-0 right-0 -z-10 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full"></div>
+<div class="max-w-6xl mx-auto px-8 py-8">
+<!-- Header -->
+<div class="flex flex-wrap items-center justify-between gap-6 mb-8">
+<div>
+<h2 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Dashboard</h2>
+<p class="text-slate-500 dark:text-slate-400 mt-1">Track and manage your career progress</p>
+</div>
+<!-- View Toggle -->
+<div class="glass p-1 rounded-xl flex items-center gap-1">
+<button class="px-5 py-2 text-sm font-bold text-slate-500 dark:text-slate-400 rounded-lg hover:text-slate-900 dark:hover:text-white transition-all">
+                            Board
+                        </button>
+<button class="px-5 py-2 text-sm font-bold bg-primary text-white rounded-lg shadow-sm">
+                            List
+                        </button>
+</div>
+</div>
+<!-- Search & Filters -->
+<div class="flex flex-wrap items-center gap-4 mb-8">
+<div class="flex-1 min-w-[300px]">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full glass rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-primary/50 border-none outline-none text-slate-900 dark:text-white placeholder:text-slate-500" placeholder="Search roles, companies, or locations..." type="text"/>
+</div>
+</div>
+<button class="glass px-4 py-3 rounded-xl flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
+<span class="material-symbols-outlined text-primary">filter_list</span>
+<span>All Status</span>
+<span class="material-symbols-outlined text-xs">expand_more</span>
+</button>
+<button class="glass px-4 py-3 rounded-xl flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-semibold text-sm">
+<span class="material-symbols-outlined text-primary">sort</span>
+<span>Recent</span>
+<span class="material-symbols-outlined text-xs">expand_more</span>
+</button>
+</div>
+<!-- Application List -->
+<div class="space-y-4 pb-12">
+<!-- Application Card 1 -->
+<div class="glass glass-hover rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center gap-6 transition-all cursor-pointer">
+<div class="w-14 h-14 rounded-xl bg-black flex items-center justify-center shrink-0 border border-white/10">
+<img alt="Netflix Logo" class="w-10 h-10 object-contain rounded-md" data-alt="Netflix company logo in high quality" src="https://lh3.googleusercontent.com/aida-public/AB6AXuANIDUJAw0CGYrS5_Dt3fbnVfWAWkWTx1AfEiUr0KLtL2Oj1UnYCmX_kLC2Tewmj_K8Fytge7ReWeAnVx8FapYHNKbnKe3Rq0cM64W_0hZ0ohtfoNf8PG4BJskyiSxebbvn9AgaQpV5rSfgMwi1uNRxAAvol5E4GGEQiLk0da5ql6UVntAmFaSD469G5IvPEdnkjWX8rVpDKhXcY9UZs7C0Am7ScnYLIPSROGQdkYGuOIys5GEHwibFdRhCJculOiEN-qPFj903f4k"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-3 mb-1">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white truncate">Senior Product Designer</h3>
+<span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-orange-500/10 text-orange-500 border border-orange-500/20">Interviewing</span>
+</div>
+<div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-sm text-slate-500 dark:text-slate-400">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">corporate_fare</span> Netflix</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">payments</span> $180k - $240k</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">calendar_today</span> Applied 3 days ago</span>
+</div>
+<p class="mt-3 text-sm text-slate-400 dark:text-slate-500 line-clamp-2 leading-relaxed italic">
+                                "Completed second round with the Design Director. Focused on portfolio deep-dive and system thinking exercises. Next up: Culture fit."
+                            </p>
+</div>
+<div class="flex items-center gap-3 shrink-0 ml-auto self-start md:self-center">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Application Card 2 -->
+<div class="glass glass-hover rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center gap-6 transition-all cursor-pointer">
+<div class="w-14 h-14 rounded-xl bg-white flex items-center justify-center shrink-0 border border-slate-200 dark:border-white/10 overflow-hidden">
+<img alt="Airbnb Logo" class="w-14 h-14 object-cover" data-alt="Airbnb company logo colorful version" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgxoETKX4rQ9NaZ-imKpcX0F9ttTq2lvoQRY-5UzQzjBaJ27uw8Sqe4Rg72QyUmeWy2bs-srKQww8SWOAp-UM_jBnbdNE6BkJeUbRkx-L13LeqJ9Za_x14XTiomzNJqt06dDKpf8urRYspw4fkxKiMOyaR0pwJ3zHVUluFvqGT85qCyNBU0mr25GIo-Px-upjNMAlu6uaxBrmTrXY7curJ5wmPOHUt9IrvO4T0-UARgO2LHToj5yzMo4_QT9s-V2ROB28iXJOc12w"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-3 mb-1">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white truncate">Staff UI Engineer</h3>
+<span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">Applied</span>
+</div>
+<div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-sm text-slate-500 dark:text-slate-400">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">corporate_fare</span> Airbnb</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">payments</span> $210k - $265k</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">calendar_today</span> Applied 1 week ago</span>
+</div>
+<p class="mt-3 text-sm text-slate-400 dark:text-slate-500 line-clamp-2 leading-relaxed">
+                                Role involves building the next generation of the internal design system tooling. Mentioned experience with WebGL and React Server Components.
+                            </p>
+</div>
+<div class="flex items-center gap-3 shrink-0 ml-auto self-start md:self-center">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Application Card 3 -->
+<div class="glass glass-hover rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center gap-6 transition-all cursor-pointer">
+<div class="w-14 h-14 rounded-xl bg-[#000000] flex items-center justify-center shrink-0 border border-white/10">
+<img alt="Stripe Logo" class="w-10 h-10 object-contain" data-alt="Stripe minimalist logo icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALxGg0YlfQq72iWOcIsh_Mi0nUgZXfdFWYqQH1nniRGTnI5vJFlS51TEnNVIM2iUqRjzFyUQb2z3O5GvRaQPyTMy8Gs-l1N5rRWy5Lw3se5r8dc51rRGYj6-yoTC0iA0jRbCQ2DB34TX1fF2dh_r9XXgDkzVHrXph_YlxugzAB-rW0Lc8roIs9hdrpCwJBhLxnm35zChD8ydsIPu-csz3Jv0GBUWeJNvUQh_jDmiOG6RSfa8YXbOQXYKAFFVGsDNgOMW7HGgiwCgU"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-3 mb-1">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white truncate">Senior Frontend Lead</h3>
+<span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Offer Received</span>
+</div>
+<div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-sm text-slate-500 dark:text-slate-400">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">corporate_fare</span> Stripe</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">payments</span> $230k - $280k</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">calendar_today</span> Applied 2 weeks ago</span>
+</div>
+<p class="mt-3 text-sm text-slate-400 dark:text-slate-500 line-clamp-2 leading-relaxed italic">
+                                "Received verbal offer! Waiting for the formal package details including RSU structure. Team seems incredibly sharp."
+                            </p>
+</div>
+<div class="flex items-center gap-3 shrink-0 ml-auto self-start md:self-center">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Application Card 4 -->
+<div class="glass glass-hover rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center gap-6 transition-all cursor-pointer">
+<div class="w-14 h-14 rounded-xl bg-[#0061FF] flex items-center justify-center shrink-0 border border-white/10">
+<img alt="Dropbox Logo" class="w-10 h-10 object-contain" data-alt="Dropbox logo glyph in white on blue" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCY7JZLjs9pTZoz6tSpl7hwjW5hcWft_KSmheLUBUe0EOz_K063T5BV8o0O-j_BOxRFQ5Bkg2cUFsWdKYF2ZWSYQC5GtpyYRGuLEzsAo688vcDK86fPUE4ldYptr1Ibv8B99b3HtShJGfPCfJOJ47GqtvLAAZvd5zZPvZI-tMMGOgDGngA9noBeqfx874ffoBuh8tPCsHmLdPaVecakH8Pvy4qpCRWbnscc4vqdTWCyNFgmLK1VMI8WFvPW9kWN1U-KwgdBLFdsB80"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-3 mb-1">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white truncate">Product Designer II</h3>
+<span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-500/10 text-slate-500 border border-slate-500/20">Archived</span>
+</div>
+<div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-sm text-slate-500 dark:text-slate-400">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">corporate_fare</span> Dropbox</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">payments</span> $160k - $190k</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">calendar_today</span> Applied 3 weeks ago</span>
+</div>
+<p class="mt-3 text-sm text-slate-400 dark:text-slate-500 line-clamp-2 leading-relaxed">
+                                Application closed by recruiter. Decided to move forward with candidates possessing more direct SaaS cloud storage experience.
+                            </p>
+</div>
+<div class="flex items-center gap-3 shrink-0 ml-auto self-start md:self-center">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Application Card 5 -->
+<div class="glass glass-hover rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center gap-6 transition-all cursor-pointer">
+<div class="w-14 h-14 rounded-xl bg-white flex items-center justify-center shrink-0 border border-white/10 overflow-hidden">
+<img alt="Google Logo" class="w-10 h-10 object-contain" data-alt="Google colorful logo icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChmEpXnIhIpQaMmwKYyBnj6B4Bg3hg5U85T2xnTrEo9wAnKLQnJJIdGjMJ1vueoy708oYkJFmQcdm-5al7JtZHDfj7IDRrEvNZBH5lfckUueYyCE4Wcvq6-KWt1lHzcDjsmKa2BGLEQ7-yCS6zpFD7PU0CnqixXZDT2x6furHfiMkJK4mkLzjdFEs9P1_S-AZyM6GA__tQURKiPOLHolTTEhGzsOxuTDGE8ZFN6b9kAp0LAyMTqhZ3Qcln-Ex8U2Y68F1Juaq0CEc"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-3 mb-1">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white truncate">Creative Technologist</h3>
+<span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-orange-500/10 text-orange-500 border border-orange-500/20">Interviewing</span>
+</div>
+<div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-sm text-slate-500 dark:text-slate-400">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">corporate_fare</span> Google</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">payments</span> $190k - $250k</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs">calendar_today</span> Applied 5 days ago</span>
+</div>
+<p class="mt-3 text-sm text-slate-400 dark:text-slate-500 line-clamp-2 leading-relaxed italic">
+                                "Technical screening passed. Coding interview scheduled for Friday morning. Reviewing Canvas and Web Animations APIs."
+                            </p>
+</div>
+<div class="flex items-center gap-3 shrink-0 ml-auto self-start md:self-center">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

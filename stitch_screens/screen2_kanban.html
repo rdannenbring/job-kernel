@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>JobTracker Kanban Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#256af4",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#0a0c12",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(37, 106, 244, 0.4);
+        }
+        .bg-glow {
+            background: radial-gradient(circle at 50% 50%, rgba(37, 106, 244, 0.15) 0%, transparent 50%);
+        }
+        .bg-glow-secondary {
+            background: radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 40%);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen relative overflow-hidden">
+<div class="fixed inset-0 pointer-events-none">
+<div class="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-glow"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-glow-secondary"></div>
+</div>
+<div class="relative flex h-screen w-full overflow-hidden">
+<aside class="w-64 glass-panel border-r border-slate-200/10 hidden md:flex flex-col z-20">
+<div class="p-6 flex flex-col gap-8 h-full">
+<div class="flex items-center gap-3">
+<div class="bg-primary rounded-lg p-2 flex items-center justify-center">
+<span class="material-symbols-outlined text-white">work</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-slate-100 text-lg font-bold leading-none">JobTracker</h1>
+<p class="text-slate-400 text-xs mt-1">Premium SaaS</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 flex-1">
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary border border-primary/20">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-semibold">Dashboard</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined">calendar_today</span>
+<p class="text-sm font-medium">Calendar</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined">group</span>
+<p class="text-sm font-medium">Contacts</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium">Settings</p>
+</div>
+</nav>
+<div class="mt-auto glass-card p-4 rounded-xl flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+<img alt="User Avatar" class="w-full h-full" data-alt="Profile avatar of a male designer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXHUmiojzDqypdLc1XbWDu3-9x2340YZyf2BsHEqgpE9X_YfU9aA3cRA0rG3fCYZlxt4gLEyRQjkW7XlNJICveKoD0XkQM0ZtBdfCvOx1atQh81zPPpNCSMxRA6JZigh0iokUYLC2BYM4Cq3ZfCOYtqWUyS8da6BNIlRMfuK5jSzZ_3SBoCfPfUgMpM34bwY-CUX73d7ErscEjoEkNoIYy6HlBZWuTIdCtL_KT03gKXNQPdnPQQ9tOfvorvA_zXhc1aWkwUxi32rA"/>
+</div>
+<div class="flex flex-col">
+<p class="text-xs font-bold text-slate-100">Alex Rivera</p>
+<p class="text-[10px] text-slate-400">Pro Plan</p>
+</div>
+<span class="material-symbols-outlined text-slate-500 ml-auto text-lg">logout</span>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
+<header class="flex items-center justify-between px-8 py-4 border-b border-slate-200/10 glass-panel">
+<div class="flex items-center gap-6 flex-1">
+<h2 class="text-xl font-bold tracking-tight text-slate-100">Dashboard</h2>
+<div class="hidden lg:flex items-center bg-white/5 rounded-lg p-1 border border-white/10">
+<button class="px-4 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors">List</button>
+<button class="px-4 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors">Table</button>
+<button class="px-4 py-1.5 text-sm font-semibold text-white bg-primary rounded-md shadow-lg shadow-primary/20">Kanban</button>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-200 w-64 placeholder:text-slate-500" placeholder="Search applications..." type="text"/>
+</div>
+<button class="size-10 flex items-center justify-center rounded-lg glass-card text-slate-300">
+<span class="material-symbols-outlined text-lg">notifications</span>
+</button>
+<button class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">add</span>
+<span>Add Job</span>
+</button>
+</div>
+</header>
+<div class="p-6 flex items-center justify-between">
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-3 py-1.5 glass-card rounded-lg text-sm text-slate-300">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+                        Filter
+                    </button>
+<button class="flex items-center gap-2 px-3 py-1.5 glass-card rounded-lg text-sm text-slate-300">
+<span class="material-symbols-outlined text-lg">sort</span>
+                        Sort
+                    </button>
+</div>
+<div class="text-sm text-slate-400">
+                    Showing 24 total applications
+                </div>
+</div>
+<div class="flex-1 overflow-x-auto p-6 pt-0">
+<div class="flex gap-6 h-full min-w-max">
+<div class="w-72 flex flex-col gap-4">
+<div class="flex items-center justify-between px-2">
+<h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+<span class="size-2 rounded-full bg-slate-500"></span>
+                                Saved <span class="text-xs font-normal ml-1 opacity-50">(4)</span>
+</h3>
+<button class="text-slate-500 hover:text-slate-300"><span class="material-symbols-outlined">more_horiz</span></button>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto">
+<div class="glass-card p-4 rounded-xl flex flex-col gap-3 cursor-pointer">
+<div class="flex justify-between items-start">
+<div class="size-10 rounded-lg bg-white/10 p-2 border border-white/10 flex items-center justify-center">
+<img alt="Spotify" class="w-full h-full object-contain" data-alt="Spotify company logo icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDf-uGtTpHoYWrLOfaGZhrhRQLIPJOkRmgLZooXP9KpTZ9XYbQuWN7sC8KEQV3VkulRPjs4Mf7qA1V-ui-KS8JaK61580pgtY2pIk6BTcbVYrwt9YtFlxrmyt8NCan_ZE4bn7Yi9cinPBpp-UAEitlzp8q1IdNWXBI4zFdb5sOgFSq0__kIjYe2LnN-sP8RHC6_PZbidqgdKZBZKOqwT9g-TtdhCREs88PE6AFXaSKMfUMwJTYJT0vZAUVW-IAsZnaZxvILiIDG30o"/>
+</div>
+<span class="text-[10px] bg-white/10 text-slate-300 px-2 py-0.5 rounded-full">2d ago</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-slate-100">Product Designer</h4>
+<p class="text-xs text-slate-400">Spotify • Stockholm</p>
+</div>
+<div class="flex items-center justify-between border-t border-white/5 pt-3">
+<span class="text-xs font-bold text-primary">$140k - $170k</span>
+<span class="material-symbols-outlined text-slate-500 text-sm">bookmark</span>
+</div>
+</div>
+</div>
+</div>
+<div class="w-72 flex flex-col gap-4">
+<div class="flex items-center justify-between px-2">
+<h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+<span class="size-2 rounded-full bg-amber-500"></span>
+                                Generated <span class="text-xs font-normal ml-1 opacity-50">(2)</span>
+</h3>
+<button class="text-slate-500 hover:text-slate-300"><span class="material-symbols-outlined">more_horiz</span></button>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto">
+<div class="glass-card p-4 rounded-xl flex flex-col gap-3 cursor-pointer">
+<div class="flex justify-between items-start">
+<div class="size-10 rounded-lg bg-white/10 p-2 border border-white/10 flex items-center justify-center text-amber-500">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<span class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">AI Ready</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-slate-100">Interaction Lead</h4>
+<p class="text-xs text-slate-400">Airbnb • Remote</p>
+</div>
+<div class="flex items-center justify-between border-t border-white/5 pt-3">
+<span class="text-xs font-bold text-primary">$165k</span>
+<div class="flex -space-x-2">
+<div class="size-6 rounded-full border-2 border-background-dark bg-slate-700"></div>
+<div class="size-6 rounded-full border-2 border-background-dark bg-slate-600"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="w-72 flex flex-col gap-4">
+<div class="flex items-center justify-between px-2">
+<h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+<span class="size-2 rounded-full bg-blue-500"></span>
+                                Applied <span class="text-xs font-normal ml-1 opacity-50">(8)</span>
+</h3>
+<button class="text-slate-500 hover:text-slate-300"><span class="material-symbols-outlined">more_horiz</span></button>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto">
+<div class="glass-card p-4 rounded-xl flex flex-col gap-3 cursor-pointer">
+<div class="flex justify-between items-start">
+<div class="size-10 rounded-lg bg-white/10 p-2 border border-white/10 flex items-center justify-center">
+<img alt="Meta" class="w-full h-full object-contain" data-alt="Meta company logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbzh-ZmPpgVMd9yTrdEtlGN2OmTGY2YR75hPWYcbpvQLGFa7nCe-76vi5ZAw-Zn6Fomuw1lwMzJxSsDokQqLSHiLLLvM_Bpzyya0_S0LFu754-0nZ5v7eBFNEMHfDypsXvCIpa7hR9Q0g_xl8PK84Pck2eMRTCDdpDX4i3essoXpZiUVVLQ3qMU_VLdAnIzcY_CAlnMA7-pA07Q_pCbk0y8hu6kELCXo3anq5hlghvOvwCwQqSx7NeqSiNJ_0IkB_J0eCZwEV6NII"/>
+</div>
+<span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">Reviewing</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-slate-100">Product Manager</h4>
+<p class="text-xs text-slate-400">Meta • Menlo Park</p>
+</div>
+<div class="flex items-center justify-between border-t border-white/5 pt-3">
+<span class="text-xs font-bold text-primary">$210k</span>
+<span class="text-[10px] text-slate-500">Applied Oct 12</span>
+</div>
+</div>
+</div>
+</div>
+<div class="w-72 flex flex-col gap-4">
+<div class="flex items-center justify-between px-2">
+<h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+<span class="size-2 rounded-full bg-purple-500"></span>
+                                Interviewing <span class="text-xs font-normal ml-1 opacity-50">(3)</span>
+</h3>
+<button class="text-slate-500 hover:text-slate-300"><span class="material-symbols-outlined">more_horiz</span></button>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto">
+<div class="glass-card p-4 rounded-xl flex flex-col gap-3 cursor-pointer ring-1 ring-primary/40 bg-white/10 shadow-xl shadow-primary/5">
+<div class="flex justify-between items-start">
+<div class="size-10 rounded-lg bg-white/10 p-2 border border-white/10 flex items-center justify-center">
+<img alt="Google" class="w-full h-full object-contain" data-alt="Google colorful logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBu_86mQeir4oARGSig9BmuTJ4ZiLH5EQgHUmruQsAoD4Mnl2ZQO6Zsrfqt_XNktE2NQPO2WJYjWNROr2PU3QZtEV5ZgVcX6gmBqrZmULbaUNM_zUd7FWYAewW8rKieAylmM_GL_70NQDFXTaXLRlCRxlarNGPU2t_DHXecfil7BBIN17ZJoT-hYC1hcO4Upe5tdzz3qOk2hHX8DmcyGLmwcEkmV5xXzgdvAaH6psHlQb2bfHCFwPGzexU2Zcte2QMuADsQyNskjXc"/>
+</div>
+<span class="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">Round 3</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-slate-100">Senior UX Designer</h4>
+<p class="text-xs text-slate-400">Google • Mountain View</p>
+</div>
+<div class="flex items-center justify-between border-t border-white/5 pt-3">
+<span class="text-xs font-bold text-primary">$180k</span>
+<div class="flex items-center gap-1 text-[10px] text-purple-400">
+<span class="material-symbols-outlined text-[12px]">schedule</span>
+                                        Tomorrow, 2:00 PM
+                                    </div>
+</div>
+</div>
+<div class="glass-card p-4 rounded-xl flex flex-col gap-3 cursor-pointer">
+<div class="flex justify-between items-start">
+<div class="size-10 rounded-lg bg-white/10 p-2 border border-white/10 flex items-center justify-center">
+<img alt="Stripe" class="w-full h-full object-contain" data-alt="Stripe logo icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfxSrLJapq_5FANGrAb_s6SmO7vTGWq8ya95-155v0SDaMwanHICBuf-mjsWv0B5m3TeAx4QsRxhlFwM3raG4UcwuOKxQpv6YdYWZmz7GzjprJp6d_xHhpigk5ywUSTBva2uPakqoyb9OOIrV2ghMO3sx-4udW379INCj9qUJPHkpcj0Gpo77XaaTtLqDvbzTKLI4CwgWgiqqx0deOLDs_SgA4jNxBd7dk_vjbllqWGSFGm8DUqxqCcOGpHh5PW8muepqSFVIKX-c"/>
+</div>
+<span class="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">Round 1</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-slate-100">Staff UI Engineer</h4>
+<p class="text-xs text-slate-400">Stripe • Remote</p>
+</div>
+<div class="flex items-center justify-between border-t border-white/5 pt-3">
+<span class="text-xs font-bold text-primary">$195k</span>
+<span class="text-[10px] text-slate-500">Applied Oct 05</span>
+</div>
+</div>
+</div>
+</div>
+<div class="w-72 flex flex-col gap-4">
+<div class="flex items-center justify-between px-2">
+<h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+<span class="size-2 rounded-full bg-emerald-500"></span>
+                                Accepted <span class="text-xs font-normal ml-1 opacity-50">(1)</span>
+</h3>
+<button class="text-slate-500 hover:text-slate-300"><span class="material-symbols-outlined">more_horiz</span></button>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto">
+<div class="glass-card p-4 rounded-xl border-emerald-500/20 bg-emerald-500/5">
+<div class="flex justify-between items-start">
+<div class="size-10 rounded-lg bg-white/10 p-2 border border-white/10 flex items-center justify-center">
+<img alt="Vercel" class="w-full h-full object-contain" data-alt="Vercel triangle logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaFVq-945wFSFeO_7cqHrYqghjm5XzSN_IOANrQeBa83F2jV4ptbXn86LXfx8S30cxwvHTF_szYFXf_FDoPdhMFtsbeuMmrL2ehP5D3y9e4O_V8_vUewnO-6CE2UDFBDDxX6TeDY08XxfVelYSK7I1hXQ6Ki4_Vbiz8TG8SpCSmlZ3abmRaTYZxgMVFjU7DAOV0XOdaEy3v6SECzn33SQEPlMKBAIHNCGvn18YerNxcLcAJ95JQCgYR69ZLRrBkouO6xNHzPVx-Yk"/>
+</div>
+<span class="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold">Offer Received</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-slate-100">Design System Lead</h4>
+<p class="text-xs text-slate-400">Vercel • San Francisco</p>
+</div>
+<div class="flex items-center justify-between border-t border-white/5 pt-3">
+<span class="text-xs font-bold text-emerald-400">$220k + Equity</span>
+<span class="material-symbols-outlined text-emerald-500">verified</span>
+</div>
+</div>
+</div>
+</div>
+<div class="w-72 flex flex-col gap-4 opacity-60">
+<div class="flex items-center justify-between px-2">
+<h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+<span class="size-2 rounded-full bg-rose-500"></span>
+                                Rejected <span class="text-xs font-normal ml-1 opacity-50">(2)</span>
+</h3>
+<button class="text-slate-500 hover:text-slate-300"><span class="material-symbols-outlined">more_horiz</span></button>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto">
+<div class="glass-card p-4 rounded-xl flex flex-col gap-3 cursor-pointer grayscale">
+<div class="flex justify-between items-start">
+<div class="size-10 rounded-lg bg-white/10 p-2 border border-white/10 flex items-center justify-center">
+<img alt="Uber" class="w-full h-full object-contain" data-alt="Uber company logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWGJNNpDIv4DX4-cWi3Zj-Li8Y9yoyeiPhxJ3ihRNejnOB94xC6PBhwWI3qTp8IUwZKBn2DWEfK099A4hAbsNcpUjlWUcMcvt4W9CsrTo5r8iJ6FEnchxX0oWabJUZgyQfy4tAeyL5BripgDyPEk2en8QaCDKoFdoZipm2y6seqpukIPnQYHWKsV2B6OkMtcEXx0Itty11bgYIDH-D_J_IQwE3G3Dxzfgij8i6Tz2jXKHuIJrJCTWjAhufZu8V9Q7h0uJEecrNkqg"/>
+</div>
+<span class="text-[10px] bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded-full">Rejected</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-slate-400">Senior UX Researcher</h4>
+<p class="text-xs text-slate-500">Uber • Amsterdam</p>
+</div>
+<div class="flex items-center justify-between border-t border-white/5 pt-3">
+<span class="text-xs font-bold text-slate-600">$130k</span>
+<span class="text-[10px] text-slate-600">Ended Oct 01</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

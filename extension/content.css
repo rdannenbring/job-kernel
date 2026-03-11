@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.job-automator-floating-btn {
+  position: fixed;
+  top: 50%;
+  margin-top: -26px;
+  right: 0px;
+  width: 52px;
+  height: 52px;
+  border-radius: 26px 0 0 26px; /* flat on the right edge */
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: white;
+  box-shadow: 0 6px 24px rgba(5, 150, 105, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2147483647;
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+  font-family: 'Inter', sans-serif;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-right: none;
+  user-select: none;
+  animation: bounce 2s cubic-bezier(0.28, 0.84, 0.42, 1) infinite;
+}
+
+/* ── When the side panel IS open, swap to a slightly different tint ─────── */
+.job-automator-floating-btn.panel-open {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  box-shadow: 0 6px 24px rgba(4, 120, 87, 0.55);
+  animation: none; /* stop floating when panel is pinned open */
+}
+
+/* Tooltip */
+.job-automator-floating-btn::after {
+  content: attr(title);
+  position: absolute;
+  right: calc(100% + 10px);
+  background: #1f2937;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.job-automator-floating-btn:hover {
+  transform: scale(1.08) translateY(-3px);
+  box-shadow: 0 10px 32px rgba(5, 150, 105, 0.6);
+  animation: none;
+}
+
+.job-automator-floating-btn.panel-open:hover {
+  box-shadow: 0 10px 32px rgba(4, 120, 87, 0.7);
+}
+
+.job-automator-floating-btn:hover::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.job-automator-floating-btn:active {
+  transform: scale(0.96) !important;
+}
+
+.job-automator-floating-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s ease;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  45% { transform: translateY(-12px); }
+  60% { transform: translateY(0); }
+  75% { transform: translateY(-6px); }
+  85% { transform: translateY(0); }
+}
