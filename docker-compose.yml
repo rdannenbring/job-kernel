@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: jobapp_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: 
+      context: ./backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/jobapp_db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./backend:/app  # Hot reload logic support if uvicorn --reload used (optional)
+      - ./backend/outputs:/app/outputs
+      - ./backend/uploads:/app/uploads
+      # Mount local resume folder so container can see it
+      - /home/rdannenbring/Documents/Rob/Job Search:/mnt/resume
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
