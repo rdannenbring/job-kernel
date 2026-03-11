@@ -156,7 +156,12 @@ function NewApplication({ onComplete }) {
                 if (checkRes.ok) {
                     const checkData = await checkRes.json()
                     if (checkData.exists) {
-                        setDuplicateApp(checkData)
+                        // Support new API format: { exists: true, application: {...} }
+                        const appData = checkData.application || checkData
+                        setDuplicateApp({
+                            job_title: appData.job_title,
+                            application_id: appData.id || checkData.application_id,
+                        })
                         return // STOP here and wait for user choice
                     }
                 }

@@ -266,8 +266,38 @@ class DatabaseService:
         # Remove whitespace and trailing slash
         return url.strip().rstrip('/')
 
+    def _app_to_dict(self, app) -> Dict[str, Any]:
+        """Convert an Application ORM object to a dict."""
+        return {
+            "id": app.id,
+            "job_title": app.job_title,
+            "company": app.company,
+            "company_logo": app.company_logo,
+            "job_url": app.job_url,
+            "apply_url": app.apply_url,
+            "job_description": app.job_description,
+            "status": app.status,
+            "date_saved": app.date_saved,
+            "salary_range": app.salary_range,
+            "date_posted": app.date_posted,
+            "deadline": app.deadline,
+            "job_type": app.job_type,
+            "location_type": app.location_type,
+            "location": app.location,
+            "relocation": app.relocation,
+            "interest_level": app.interest_level,
+            "remarks": app.remarks,
+            "original_resume_path": app.original_resume_path,
+            "tailored_resume_path": app.tailored_resume_path,
+            "cover_letter_path": app.cover_letter_path,
+            "cover_letter_text": app.cover_letter_text,
+            "resume_changes_summary": app.resume_changes_summary,
+            "cover_letter_changes_summary": app.cover_letter_changes_summary,
+            "is_archived": app.is_archived or 'false',
+        }
+
     def get_application_by_url(self, url: str) -> Dict[str, Any]:
-        """Check if an application with this URL already exists."""
+        """Check if an application with this URL already exists. Returns full application data."""
         if not url: return None
         
         normalized_url = self.normalize_url(url)
@@ -275,26 +305,63 @@ class DatabaseService:
         
         session = self.Session()
         try:
-            # We fetch all (or limit) and check in python if exact query fails?
-            # Or just normalize all stored URLs?
-            # Ideally, we should store normalized URLs, but for now let's iterate.
-            # Warning: checks all apps. Fine for small scale.
-            
             # First try exact match
             app = session.query(Application).filter(Application.job_url == url).first()
             if app:
                 print(f"DEBUG: Exact match found: {app.id}")
-                return {"id": app.id, "job_title": app.job_title}
+                return self._app_to_dict(app)
                 
             # Fallback: check normalized
             all_apps = session.query(Application).all()
             for app in all_apps:
                 if self.normalize_url(app.job_url) == normalized_url:
                     print(f"DEBUG: Fuzzy match found: {app.id}")
-                    return {"id": app.id, "job_title": app.job_title}
+                    return self._app_to_dict(app)
             
             print("DEBUG: No match found.")
             return None
+        finally:
+            session.close()
+
+    def get_application_by_id(self, app_id: int) -> Dict[str, Any]:
+        """Get a single application by its ID."""
+        session = self.Session()
+        try:
+            app = session.query(Application).filter(Application.id == app_id).first()
+            if not app:
+                return None
+            return self._app_to_dict(app)
+        finally:
+            session.close()
+
+    def update_application(self, app_id: int, data: Dict[str, Any]) -> bool:
+        """Update an existing application's fields."""
+        session = self.Session()
+        try:
+            app = session.query(Application).filter(Application.id == app_id).first()
+            if not app:
+                return False
+            if 'job_title' in data: app.job_title = data['job_title']
+            if 'company' in data: app.company = data['company']
+            if 'company_logo' in data: app.company_logo = data['company_logo']
+            if 'job_url' in data: app.job_url = data['job_url']
+            if 'apply_url' in data: app.apply_url = data['apply_url']
+            if 'job_description' in data: app.job_description = data['job_description']
+            if 'salary_range' in data: app.salary_range = data['salary_range']
+            if 'date_posted' in data: app.date_posted = data['date_posted']
+            if 'deadline' in data: app.deadline = data['deadline']
+            if 'job_type' in data: app.job_type = data['job_type']
+            if 'location_type' in data: app.location_type = data['location_type']
+            if 'location' in data: app.location = data['location']
+            if 'relocation' in data: app.relocation = str(data['relocation'])
+            if 'interest_level' in data: app.interest_level = data['interest_level']
+            if 'remarks' in data: app.remarks = data['remarks']
+            if 'status' in data: app.status = data['status']
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
         finally:
             session.close()
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logoImg from '../../assets/jobkernel-logo-dark.png';
 
 const Sidebar = ({ currentScreen, setScreen }) => {
     const [collapsed, setCollapsed] = useState(false);
@@ -33,20 +34,23 @@ const Sidebar = ({ currentScreen, setScreen }) => {
                 {/* Logo + collapse toggle */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', justifyContent: collapsed ? 'center' : 'space-between' }}>
                     {!collapsed && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', overflow: 'hidden' }}>
-                            <div style={{ width: '2.2rem', height: '2.2rem', borderRadius: '0.6rem', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>track_changes</span>
-                            </div>
-                            <div>
-                                <h1 style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 800, margin: 0, lineHeight: 1, whiteSpace: 'nowrap' }}>JobTracker Pro</h1>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', fontWeight: 500, margin: 0, marginTop: '2px', whiteSpace: 'nowrap' }}>Premium SaaS</p>
-                            </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
+                            <img
+                                src={logoImg}
+                                alt="JobKernel logo"
+                                style={{ width: '2.4rem', height: '2.4rem', objectFit: 'contain', flexShrink: 0 }}
+                            />
+                            <h1 style={{ margin: 0, lineHeight: 1, whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif", letterSpacing: '-0.02em', fontSize: '1.05rem' }}>
+                                <span style={{ fontWeight: 700, color: '#e2e8f0' }}>Job</span><span style={{ fontWeight: 400, color: '#5BA4B5' }}>Kernel</span>
+                            </h1>
                         </div>
                     )}
                     {collapsed && (
-                        <div style={{ width: '2.2rem', height: '2.2rem', borderRadius: '0.6rem', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>track_changes</span>
-                        </div>
+                        <img
+                            src={logoImg}
+                            alt="JobKernel logo"
+                            style={{ width: '2.2rem', height: '2.2rem', objectFit: 'contain' }}
+                        />
                     )}
                     {!collapsed && (
                         <button onClick={() => setCollapsed(true)} title="Collapse sidebar" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}
