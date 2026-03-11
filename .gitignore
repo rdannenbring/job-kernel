@@ -38,3 +38,7 @@ Thumbs.db
 # Build artifacts
 build/
 *.egg-info/
+
+# Secrets / local config — never commit these
+backend/config.json
+backend/*.db

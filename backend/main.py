@@ -637,6 +637,32 @@ async def save_application(request: ApplicationSaveRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/applications/{app_id}")
+async def get_application(app_id: int):
+    """Get a single application by ID."""
+    try:
+        app_data = database_service.get_application_by_id(app_id)
+        if app_data:
+            return app_data
+        raise HTTPException(status_code=404, detail="Application not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/applications/{app_id}")
+async def update_application(app_id: int, request: ApplicationSaveRequest):
+    """Update an existing application's fields."""
+    try:
+        success = database_service.update_application(app_id, request.dict(exclude_unset=True))
+        if success:
+            return {"message": "Application updated", "id": app_id}
+        raise HTTPException(status_code=404, detail="Application not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/applications")
 async def get_applications():
     try:
@@ -738,11 +764,11 @@ async def download_file(filename: str):
 
 @app.get("/api/check-job-url")
 async def check_job_url(url: str):
-    """Check if a job URL has already been processed."""
+    """Check if a job URL has already been processed. Returns full application data if found."""
     try:
         app_data = database_service.get_application_by_url(url)
         if app_data:
-            return {"exists": True, "application_id": app_data['id'], "job_title": app_data['job_title']}
+            return {"exists": True, "application": app_data}
         return {"exists": False}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

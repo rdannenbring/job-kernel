@@ -484,3 +484,163 @@ input:checked + .slider:before { transform: translateX(20px); }
 .status-message.show { opacity: 1; }
 .status-message.success { color: var(--success); }
 .status-message.error { color: var(--error); }
+
+/* ── Already Saved Banner ─────────────────────────────────────────────────── */
+.saved-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.08) 100%);
+  border-bottom: 1px solid rgba(16,185,129,0.25);
+  border-top: 1px solid rgba(16,185,129,0.15);
+  animation: bannerSlide 0.3s ease;
+}
+
+@keyframes bannerSlide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.saved-banner-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(16,185,129,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+}
+
+.saved-banner-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-banner-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary-light);
+  line-height: 1.2;
+  margin-bottom: 0.2rem;
+}
+
+.saved-banner-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.saved-banner-status-label {
+  color: var(--text-muted);
+}
+
+.saved-banner-status {
+  font-weight: 600;
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.07);
+  padding: 0.05rem 0.45rem;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.saved-banner-sep {
+  color: var(--text-muted);
+}
+
+.saved-banner-link {
+  color: var(--primary-light);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+.saved-banner-link:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+/* ── Field diff indicator ─────────────────────────────────────────────────── */
+.field-diff-wrapper {
+  position: relative;
+}
+
+.field-has-diff input,
+.field-has-diff select,
+.field-has-diff textarea {
+  background: rgba(251, 191, 36, 0.1) !important;
+  border-color: rgba(251, 191, 36, 0.45) !important;
+}
+
+.field-diff-badge {
+  position: absolute;
+  top: 50%;
+  right: 0.45rem;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f59e0b;
+  color: #1a1a1a;
+  font-size: 0.6rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  letter-spacing: 0;
+  line-height: 1;
+  cursor: help;
+}
+
+/* For textareas: pin to top-right */
+.field-has-diff.textarea-group .field-diff-badge {
+  top: 0.55rem;
+  transform: none;
+}
+
+/* ── Read-only field state ─────────────────────────────────────────────────── */
+.form-readonly input,
+.form-readonly select,
+.form-readonly textarea {
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+  cursor: default;
+}
+
+.form-readonly .toggle-btn {
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.form-readonly .logo-zone {
+  pointer-events: none;
+  cursor: default;
+}
+
+.form-readonly label {
+  opacity: 0.7;
+}
+
+.readonly-notice {
+  display: none;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.78rem;
+  color: #fca5a5;
+  text-align: center;
+}
+
+.form-readonly .readonly-notice {
+  display: block;
+}

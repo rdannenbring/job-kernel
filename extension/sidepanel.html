@@ -41,16 +41,38 @@
             <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
           </svg>
         </div>
-        <p class="loading-title">Detecting New Job</p>
-        <p class="loading-subtitle">Reading the job listing&hellip;</p>
+        <p class="loading-title" id="loading-title">Detecting New Job</p>
+        <p class="loading-subtitle" id="loading-subtitle">Reading the job listing&hellip;</p>
       </div>
     </div>
+
+    <!-- Already saved banner -->
+    <div class="saved-banner" id="saved-banner" style="display:none">
+      <div class="saved-banner-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div class="saved-banner-content">
+        <div class="saved-banner-title">Already saved to JobKernel</div>
+        <div class="saved-banner-meta">
+          <span class="saved-banner-status-label">Status:</span>
+          <span class="saved-banner-status" id="saved-banner-status"></span>
+          <span class="saved-banner-sep">·</span>
+          <a class="saved-banner-link" id="saved-banner-link" href="#" target="_blank">View in app →</a>
+        </div>
+      </div>
+    </div>
+
 
     <main class="form-container">
       <form id="job-form">
 
+        <!-- Read-only notice (shown when status prevents editing) -->
+        <div class="readonly-notice" id="readonly-notice">
+          This application is in a status that does not allow editing.
+        </div>
+
         <!-- Job Title row -->
-        <div class="form-group" style="margin-bottom:0.75rem">
+        <div class="form-group field-diff-wrapper" data-field="title" style="margin-bottom:0.75rem">
           <label for="title">Job Title</label>
           <input type="text" id="title" name="title" required />
         </div>
@@ -81,7 +103,7 @@
           </div>
 
           <div class="company-fields" style="width: 100%;">
-            <div class="form-group" style="margin-bottom:0">
+            <div class="form-group field-diff-wrapper" data-field="company" style="margin-bottom:0">
               <label for="company">Company</label>
               <input type="text" id="company" name="company" required />
             </div>
@@ -89,32 +111,32 @@
         </div>
 
         <!-- URL & Date -->
-        <div class="form-group">
+        <div class="form-group field-diff-wrapper" data-field="link">
           <label for="link">Job Link</label>
           <input type="url" id="link" name="link" required />
         </div>
-        <div class="form-group">
+        <div class="form-group field-diff-wrapper" data-field="applyLink">
           <label for="applyLink">Apply Link</label>
           <input type="url" id="applyLink" name="applyLink" placeholder="External ATS application URL" />
         </div>
         <div class="form-row">
-          <div class="form-group half">
+          <div class="form-group half field-diff-wrapper" data-field="datePosted">
             <label for="datePosted">Date Posted</label>
             <input type="date" id="datePosted" name="datePosted" />
           </div>
-          <div class="form-group half">
+          <div class="form-group half field-diff-wrapper" data-field="deadline">
             <label for="deadline">Deadline</label>
             <input type="date" id="deadline" name="deadline" />
           </div>
         </div>
-        <div class="form-group">
+        <div class="form-group field-diff-wrapper" data-field="salaryRange">
           <label for="salaryRange">Salary Range</label>
           <input type="text" id="salaryRange" name="salaryRange" placeholder="e.g. $100k – $120k" />
         </div>
 
         <!-- Job Details -->
         <div class="form-row">
-          <div class="form-group half">
+          <div class="form-group half field-diff-wrapper" data-field="jobType">
             <label for="jobType">Job Type</label>
             <select id="jobType" name="jobType">
               <option value="">— Unknown —</option>
@@ -124,7 +146,7 @@
               <option value="Internship">Internship</option>
             </select>
           </div>
-          <div class="form-group half">
+          <div class="form-group half field-diff-wrapper" data-field="locationType">
             <label for="locationType">Location Type</label>
             <select id="locationType" name="locationType">
               <option value="">— Unknown —</option>
@@ -135,7 +157,7 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group field-diff-wrapper" data-field="location">
           <label for="location">Location</label>
           <input type="text" id="location" name="location" placeholder="City, State, Country" />
         </div>
@@ -160,13 +182,13 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group field-diff-wrapper textarea-group" data-field="remarks">
           <label for="remarks">Remarks</label>
           <textarea id="remarks" name="remarks" rows="2" placeholder="Any personal notes about this role…"></textarea>
         </div>
 
         <!-- Job Description (collapsible) -->
-        <div class="form-group collapsible">
+        <div class="form-group collapsible field-diff-wrapper textarea-group" data-field="description">
           <button type="button" class="collapse-btn" id="toggle-desc">
             <span>View Job Description</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" class="chevron" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -180,15 +202,16 @@
       </form>
     </main>
 
+
     <footer class="footer-actions">
       <div class="footer-btn-row">
         <button type="button" id="btn-save" class="btn btn-secondary">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-          Save
+          <span id="btn-save-label">Save</span>
         </button>
         <button type="button" id="btn-process" class="btn btn-primary">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-          Process Now
+          <span id="btn-process-label">Process Now</span>
         </button>
       </div>
       <div id="status-message" class="status-message"></div>
