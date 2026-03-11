@@ -1,0 +1,298 @@
+/* Process Visualizer Container - Dark Mode Tech Theme */
+.process-visualizer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  border-radius: 1rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  min-height: 450px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  color: white;
+}
+
+/* Progress Text */
+.process-status {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #fff;
+  margin-top: 2.5rem;
+  text-align: center;
+  z-index: 10;
+  min-height: 3rem;
+  text-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+  letter-spacing: 0.5px;
+}
+
+.process-substatus {
+  font-size: 1.1rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+  height: 1.5rem;
+  font-weight: 500;
+}
+
+/* --- Stage 1: Ingestion (Warp Tunnel) --- */
+.stage-ingestion {
+  position: relative;
+  height: 220px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 500px;
+}
+
+.ingestion-portal {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 4px dashed rgba(59, 130, 246, 0.5);
+  position: absolute;
+  animation: rotatePortal 4s infinite linear;
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+}
+
+.ingestion-portal::after {
+  content: '';
+  position: absolute;
+  top: -10px; left: -10px; right: -10px; bottom: -10px;
+  border-radius: 50%;
+  border: 2px solid rgba(96, 165, 250, 0.3);
+  animation: rotatePortal 6s infinite reverse linear;
+}
+
+.doc-flying {
+  font-size: 4rem;
+  position: absolute;
+  animation: suckIn 1.5s infinite ease-in;
+  filter: drop-shadow(0 0 10px white);
+  z-index: 2;
+}
+
+/* --- Stage 2: Analysis (Data Grid) --- */
+.stage-analysis {
+  display: flex;
+  gap: 3rem;
+  align-items: center;
+  /* background: rgba(0,0,0,0.2); */
+  padding: 1rem;
+  border-radius: 1rem;
+  position: relative;
+}
+
+.analysis-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+}
+
+.analysis-icon-circle {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2.5rem;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+  position: relative;
+}
+
+.analysis-label {
+  margin-top: 1rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #bfdbfe;
+  letter-spacing: 1px;
+}
+
+.scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: #60a5fa;
+  box-shadow: 0 0 15px #60a5fa;
+  animation: scanVertical 1.5s infinite ease-in-out;
+  border-radius: 2px;
+}
+
+.binary-stream {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: monospace;
+  color: #3b82f6;
+  font-weight: bold;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  overflow: hidden;
+}
+
+/* --- Stage 3: AI Neural Net --- */
+.stage-ai {
+  position: relative;
+  height: 220px;
+  width: 220px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.neural-network {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  animation: pulseNetwork 2s infinite;
+}
+
+.brain-core {
+  font-size: 5rem;
+  z-index: 5;
+  filter: drop-shadow(0 0 30px rgba(168, 85, 247, 0.6)); /* Purple glow */
+  animation: floatBrain 3s infinite ease-in-out;
+}
+
+.synapse {
+  position: absolute;
+  background: linear-gradient(90deg, transparent, #a855f7, transparent);
+  height: 2px;
+  width: 100px;
+  top: 50%;
+  left: 50%;
+  transform-origin: left center;
+}
+
+/* --- Stage 4: Construction (Matrix/Laser Printer) --- */
+.stage-construction {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.construction-doc {
+  background: white;
+  width: 160px;
+  height: 220px;
+  border-radius: 4px;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.4); /* Glowing doc */
+  position: relative;
+  overflow: hidden;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transform: rotateX(10deg);
+}
+
+.construction-beam {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: #ef4444; /* Red laser */
+  box-shadow: 0 0 15px #ef4444, 0 0 30px #ef4444;
+  z-index: 10;
+  animation: laserPrint 2s infinite linear;
+}
+
+.text-block-appear {
+  background: #cbd5e1;
+  height: 6px;
+  border-radius: 2px;
+  animation: fadeInBlock 0.3s forwards;
+  opacity: 0;
+}
+
+/* --- Particle Background --- */
+.particles-bg {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bg-dot {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.1;
+  animation: twinkle 4s infinite ease-in-out;
+}
+
+/* --- Keyframes --- */
+@keyframes rotatePortal {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes suckIn {
+  0% { transform: scale(1) translateY(40px); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: scale(0.1) translateY(-80px); opacity: 0; }
+}
+
+@keyframes scanVertical {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+@keyframes floatBrain {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-10px) scale(1.05); }
+}
+
+@keyframes laserPrint {
+  0% { top: 0; opacity: 0; }
+  5% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+@keyframes fadeInBlock {
+  to { opacity: 1; }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.5); }
+}
+
+/* Transition Animation */
+.fade-in-scale {
+  animation: fadeInScale 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+}

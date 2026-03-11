@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Automator</title>
+  <link rel="stylesheet" href="sidepanel.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <defs>
+            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#10b981" />
+              <stop offset="100%" stop-color="#059669" />
+            </linearGradient>
+          </defs>
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2h11A2.5 2.5 0 0 1 20 4.5v15a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 19.5z" />
+          <path d="M8 7h8" />
+          <path d="M8 11h8" />
+          <path d="M8 15h6" />
+        </svg>
+        <h1>Job Automator</h1>
+      </div>
+      <p class="subtitle">Capture &amp; process job listings seamlessly.</p>
+    </header>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loading-overlay" aria-hidden="true">
+      <div class="loading-content">
+        <div class="loading-spinner">
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="url(#spinner-gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <defs>
+              <linearGradient id="spinner-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#10b981" />
+                <stop offset="100%" stop-color="#059669" />
+              </linearGradient>
+            </defs>
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+          </svg>
+        </div>
+        <p class="loading-title">Detecting New Job</p>
+        <p class="loading-subtitle">Reading the job listing&hellip;</p>
+      </div>
+    </div>
+
+    <main class="form-container">
+      <form id="job-form">
+
+        <!-- ── Company + Logo row ─────────────────── -->
+        <div class="company-row">
+          <div class="logo-zone" id="logo-zone" title="Click to upload a logo">
+            <!-- Scraped or uploaded company logo -->
+            <img id="company-logo-img" class="company-logo-img" src="" alt="Company logo" style="display:none" />
+            <!-- Placeholder when no logo is available -->
+            <div id="company-logo-placeholder" class="company-logo-placeholder">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="15" rx="2"/>
+                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                <line x1="12" y1="12" x2="12" y2="16"/>
+                <line x1="10" y1="14" x2="14" y2="14"/>
+              </svg>
+            </div>
+            <button type="button" id="logo-edit-btn" class="logo-edit-btn" title="Upload logo">
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+            <input type="file" id="logo-file-input" accept="image/*" style="display:none" />
+          </div>
+
+          <div class="company-fields">
+            <div class="form-group" style="margin-bottom:0.75rem">
+              <label for="title">Job Title</label>
+              <input type="text" id="title" name="title" required />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="company">Company</label>
+              <input type="text" id="company" name="company" required />
+            </div>
+          </div>
+        </div>
+
+        <!-- URL & Date -->
+        <div class="form-group">
+          <label for="link">Job Link</label>
+          <input type="url" id="link" name="link" required />
+        </div>
+        <div class="form-group">
+          <label for="applyLink">Apply Link</label>
+          <input type="url" id="applyLink" name="applyLink" placeholder="External ATS application URL" />
+        </div>
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="datePosted">Date Posted</label>
+            <input type="date" id="datePosted" name="datePosted" />
+          </div>
+          <div class="form-group half">
+            <label for="deadline">Deadline</label>
+            <input type="date" id="deadline" name="deadline" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="salaryRange">Salary Range</label>
+          <input type="text" id="salaryRange" name="salaryRange" placeholder="e.g. $100k – $120k" />
+        </div>
+
+        <!-- Job Details -->
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="jobType">Job Type</label>
+            <select id="jobType" name="jobType">
+              <option value="">— Unknown —</option>
+              <option value="Full-time">Full-time</option>
+              <option value="Part-time">Part-time</option>
+              <option value="Contract">Contract</option>
+              <option value="Internship">Internship</option>
+            </select>
+          </div>
+          <div class="form-group half">
+            <label for="locationType">Location Type</label>
+            <select id="locationType" name="locationType">
+              <option value="">— Unknown —</option>
+              <option value="On-site">On-site</option>
+              <option value="Remote">Remote</option>
+              <option value="Hybrid">Hybrid</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="location">Location</label>
+          <input type="text" id="location" name="location" placeholder="City, State, Country" />
+        </div>
+
+        <!-- Preferences -->
+        <div class="form-row align-center">
+          <div class="form-group checkbox-group half">
+            <label class="switch">
+              <input type="checkbox" id="relocation" name="relocation" />
+              <span class="slider round"></span>
+            </label>
+            <label for="relocation" class="switch-label">Relocation</label>
+          </div>
+          <div class="form-group half">
+            <label for="interestLevel">Interest Level</label>
+            <select id="interestLevel" name="interestLevel">
+              <option value="High">High 🔥</option>
+              <option value="Medium" selected>Medium ⭐</option>
+              <option value="Low">Low 🧊</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="remarks">Remarks</label>
+          <textarea id="remarks" name="remarks" rows="2" placeholder="Any personal notes about this role…"></textarea>
+        </div>
+
+        <!-- Job Description (collapsible) -->
+        <div class="form-group collapsible">
+          <button type="button" class="collapse-btn" id="toggle-desc">
+            <span>View Job Description</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" class="chevron" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="collapse-content" id="desc-container">
+            <textarea id="description" name="description" rows="14"></textarea>
+          </div>
+        </div>
+      </form>
+    </main>
+
+    <footer class="footer-actions">
+      <button type="button" id="btn-save" class="btn btn-secondary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        Save Listing
+      </button>
+      <button type="button" id="btn-process" class="btn btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        Process Immediately
+      </button>
+      <div id="status-message" class="status-message"></div>
+    </footer>
+  </div>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Job Tracker Table Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#256af4",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#0a0c12",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+        .glass-row {
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s ease;
+        }
+        .glass-row:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-1px);
+        }
+        .bg-glow {
+            background: radial-gradient(circle at 50% 50%, rgba(37, 106, 244, 0.15) 0%, transparent 50%);
+        }
+        .bg-glow-secondary {
+            background: radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 40%);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen relative overflow-hidden">
+<div class="fixed inset-0 pointer-events-none">
+<div class="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-glow"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-glow-secondary"></div>
+</div>
+<div class="relative flex h-screen w-full overflow-hidden">
+<aside class="w-64 glass-panel border-r border-slate-200/10 hidden md:flex flex-col z-20">
+<div class="p-6 flex flex-col gap-8 h-full">
+<div class="flex items-center gap-3">
+<div class="bg-primary rounded-lg p-2 flex items-center justify-center">
+<span class="material-symbols-outlined text-white">work</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-slate-100 text-lg font-bold leading-none">JobTracker</h1>
+<p class="text-slate-400 text-xs mt-1">Premium SaaS</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 flex-1">
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary border border-primary/20">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-semibold">Dashboard</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">calendar_today</span>
+<p class="text-sm font-medium">Calendar</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">group</span>
+<p class="text-sm font-medium">Contacts</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium">Settings</p>
+</div>
+</nav>
+<div class="mt-auto glass-card p-4 rounded-xl flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXHUmiojzDqypdLc1XbWDu3-9x2340YZyf2BsHEqgpE9X_YfU9aA3cRA0rG3fCYZlxt4gLEyRQjkW7XlNJICveKoD0XkQM0ZtBdfCvOx1atQh81zPPpNCSMxRA6JZigh0iokUYLC2BYM4Cq3ZfCOYtqWUyS8da6BNIlRMfuK5jSzZ_3SBoCfPfUgMpM34bwY-CUX73d7ErscEjoEkNoIYy6HlBZWuTIdCtL_KT03gKXNQPdnPQQ9tOfvorvA_zXhc1aWkwUxi32rA"/>
+</div>
+<div class="flex flex-col">
+<p class="text-xs font-bold text-slate-100">Alex Rivera</p>
+<p class="text-[10px] text-slate-400">Pro Plan</p>
+</div>
+<span class="material-symbols-outlined text-slate-500 ml-auto text-lg cursor-pointer hover:text-slate-300">logout</span>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
+<header class="flex items-center justify-between px-8 py-4 border-b border-slate-200/10 glass-panel">
+<div class="flex items-center gap-6 flex-1">
+<h2 class="text-xl font-bold tracking-tight text-slate-100">Dashboard</h2>
+<div class="hidden lg:flex items-center bg-white/5 rounded-lg p-1 border border-white/10">
+<button class="px-4 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors">List</button>
+<button class="px-4 py-1.5 text-sm font-semibold text-white bg-primary rounded-md shadow-lg shadow-primary/20">Table</button>
+<button class="px-4 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors">Kanban</button>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-200 w-64 placeholder:text-slate-500" placeholder="Search applications..." type="text"/>
+</div>
+<button class="size-10 flex items-center justify-center rounded-lg glass-card text-slate-300 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-lg">notifications</span>
+</button>
+<button class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">add</span>
+<span>Add Job</span>
+</button>
+</div>
+</header>
+<div class="px-8 py-6 flex items-center justify-between">
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 glass-card rounded-lg text-sm font-medium text-slate-300 hover:border-primary/40">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+                        Filter
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 glass-card rounded-lg text-sm font-medium text-slate-300 hover:border-primary/40">
+<span class="material-symbols-outlined text-lg">sort</span>
+                        Sort
+                    </button>
+</div>
+<div class="text-sm text-slate-400 font-medium">
+<span class="text-slate-200">24</span> total applications
+                </div>
+</div>
+<div class="flex-1 overflow-auto px-8 pb-8">
+<div class="glass-panel rounded-2xl overflow-hidden border border-white/10">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-white/5 border-b border-white/10">
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Company</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Job Title</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Salary</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Date Applied</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Status</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<tr class="glass-row group cursor-pointer">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-lg bg-white/5 border border-white/10 p-2 flex items-center justify-center overflow-hidden">
+<img alt="Meta" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbzh-ZmPpgVMd9yTrdEtlGN2OmTGY2YR75hPWYcbpvQLGFa7nCe-76vi5ZAw-Zn6Fomuw1lwMzJxSsDokQqLSHiLLLvM_Bpzyya0_S0LFu754-0nZ5v7eBFNEMHfDypsXvCIpa7hR9Q0g_xl8PK84Pck2eMRTCDdpDX4i3essoXpZiUVVLQ3qMU_VLdAnIzcY_CAlnMA7-pA07Q_pCbk0y8hu6kELCXo3anq5hlghvOvwCwQqSx7NeqSiNJ_0IkB_J0eCZwEV6NII"/>
+</div>
+<span class="font-bold text-slate-100">Meta</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-medium text-slate-300 group-hover:text-primary transition-colors">Product Designer</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-bold text-primary">$210,000</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm text-slate-400">Oct 12, 2023</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                        Reviewing
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-500 hover:text-slate-200"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<tr class="glass-row group cursor-pointer">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-lg bg-white/5 border border-white/10 p-2 flex items-center justify-center overflow-hidden">
+<img alt="Apple" class="w-full h-full object-contain grayscale invert" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAH7J6A_fTF9YvF0cItK_dBscFJqCa5B7nn6NbsQUQOhPiLost3VMcdrreOrbvOyZpVYjsi1E50GA2s6TVt1c-YSWyDfzr0-rucNGZo6BChiguElV4r8tHaN9c0zepBJpAB6Nhk30sxjFx-FNEnYiwa8sTBM5AX6651RDYTSx5XfJp-rVXghnb_ndTY9esEjq97NbHt8OISWJuRNeeEPGB7DDYBzEwq7O8dWtCBQvd9zu_2dRuCuKpIEYBzyZt8nzX5uNb5VQVb-8o"/>
+</div>
+<span class="font-bold text-slate-100">Apple</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-medium text-slate-300 group-hover:text-primary transition-colors">Lead Developer</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-bold text-primary">$195,000</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm text-slate-400">Oct 10, 2023</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                        Interviewing
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-500 hover:text-slate-200"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<tr class="glass-row group cursor-pointer">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-lg bg-white/5 border border-white/10 p-2 flex items-center justify-center overflow-hidden">
+<img alt="Google" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBu_86mQeir4oARGSig9BmuTJ4ZiLH5EQgHUmruQsAoD4Mnl2ZQO6Zsrfqt_XNktE2NQPO2WJYjWNROr2PU3QZtEV5ZgVcX6gmBqrZmULbaUNM_zUd7FWYAewW8rKieAylmM_GL_70NQDFXTaXLRlCRxlarNGPU2t_DHXecfil7BBIN17ZJoT-hYC1hcO4Upe5tdzz3qOk2hHX8DmcyGLmwcEkmV5xXzgdvAaH6psHlQb2bfHCFwPGzexU2Zcte2QMuADsQyNskjXc"/>
+</div>
+<span class="font-bold text-slate-100">Google</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-medium text-slate-300 group-hover:text-primary transition-colors">Senior UX Designer</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-bold text-primary">$180,000</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm text-slate-400">Oct 08, 2023</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                        Interviewing
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-500 hover:text-slate-200"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<tr class="glass-row group cursor-pointer bg-emerald-500/5">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-lg bg-white/5 border border-white/10 p-2 flex items-center justify-center overflow-hidden">
+<img alt="Vercel" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaFVq-945wFSFeO_7cqHrYqghjm5XzSN_IOANrQeBa83F2jV4ptbXn86LXfx8S30cxwvHTF_szYFXf_FDoPdhMFtsbeuMmrL2ehP5D3y9e4O_V8_vUewnO-6CE2UDFBDDxX6TeDY08XxfVelYSK7I1hXQ6Ki4_Vbiz8TG8SpCSmlZ3abmRaTYZxgMVFjU7DAOV0XOdaEy3v6SECzn33SQEPlMKBAIHNCGvn18YerNxcLcAJ95JQCgYR69ZLRrBkouO6xNHzPVx-Yk"/>
+</div>
+<span class="font-bold text-slate-100">Vercel</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-medium text-slate-300 group-hover:text-primary transition-colors">Design System Lead</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-bold text-primary">$220,000</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm text-slate-400">Sep 28, 2023</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                        Accepted
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-500 hover:text-slate-200"><span class="material-symbols-outlined text-emerald-500">verified</span></button>
+</td>
+</tr>
+<tr class="glass-row group cursor-pointer opacity-70">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3 grayscale">
+<div class="size-10 rounded-lg bg-white/5 border border-white/10 p-2 flex items-center justify-center overflow-hidden">
+<img alt="Uber" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWGJNNpDIv4DX4-cWi3Zj-Li8Y9yoyeiPhxJ3ihRNejnOB94xC6PBhwWI3qTp8IUwZKBn2DWEfK099A4hAbsNcpUjlWUcMcvt4W9CsrTo5r8iJ6FEnchxX0oWabJUZgyQfy4tAeyL5BripgDyPEk2en8QaCDKoFdoZipm2y6seqpukIPnQYHWKsV2B6OkMtcEXx0Itty11bgYIDH-D_J_IQwE3G3Dxzfgij8i6Tz2jXKHuIJrJCTWjAhufZu8V9Q7h0uJEecrNkqg"/>
+</div>
+<span class="font-bold text-slate-400">Uber</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-medium text-slate-500 group-hover:text-primary transition-colors">Senior UX Researcher</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-bold text-slate-500">$130,000</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm text-slate-600">Sep 20, 2023</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                        Rejected
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-600 hover:text-slate-400"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<tr class="glass-row group cursor-pointer">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-lg bg-white/5 border border-white/10 p-2 flex items-center justify-center overflow-hidden">
+<img alt="Stripe" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfxSrLJapq_5FANGrAb_s6SmO7vTGWq8ya95-155v0SDaMwanHICBuf-mjsWv0B5m3TeAx4QsRxhlFwM3raG4UcwuOKxQpv6YdYWZmz7GzjprJp6d_xHhpigk5ywUSTBva2uPakqoyb9OOIrV2ghMO3sx-4udW379INCj9qUJPHkpcj0Gpo77XaaTtLqDvbzTKLI4CwgWgiqqx0deOLDs_SgA4jNxBd7dk_vjbllqWGSFGm8DUqxqCcOGpHh5PW8muepqSFVIKX-c"/>
+</div>
+<span class="font-bold text-slate-100">Stripe</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-medium text-slate-300 group-hover:text-primary transition-colors">Staff UI Engineer</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm font-bold text-primary">$195,000</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm text-slate-400">Oct 05, 2023</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                        Reviewing
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-500 hover:text-slate-200"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

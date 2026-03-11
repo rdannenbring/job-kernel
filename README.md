@@ -2,6 +2,29 @@
 
 Automatically tailor your resume to match job descriptions while maintaining your original formatting and style.
 
+
+## 🚨 FOR AI AGENTS & DEVELOPERS
+
+**PLEASE USE DOCKER FOR DEVELOPMENT**
+
+To ensure a consistent environment and avoid dependency issues, please run the application using the provided Docker setup script:
+
+```bash
+./start-docker.sh
+```
+
+**Do not try to run `pip install` or `npm install` locally unless specifically debugging local environment issues.** All dependencies are managed within the Docker containers.
+
+- **Backend Container**: `jobapplicationautomator-backend-1`
+- **Frontend Container**: `jobapplicationautomator-frontend-1`
+
+To run commands inside the backend (e.g., to install new packages temporarily):
+```bash
+docker exec -it jobapplicationautomator-backend-1 pip install <package_name>
+```
+
+---
+
 ## Features
 
 - 📄 **Resume Upload**: Support for Word (.docx) format
