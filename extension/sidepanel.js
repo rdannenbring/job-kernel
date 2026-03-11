@@ -84,6 +84,21 @@ document.addEventListener('DOMContentLoaded', () => {
   logoImg.addEventListener('click', () => logoFileInput.click());
   logoPlaceholder.addEventListener('click', () => logoFileInput.click());
 
+  // ── Interest level toggles ────────────────────────────────────────────────
+  const toggleBtns = document.querySelectorAll('.toggle-btn');
+  const interestInput = document.getElementById('interestLevel');
+
+  toggleBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      // Remove active from all
+      toggleBtns.forEach(b => b.classList.remove('active'));
+      // Add active to clicked
+      btn.classList.add('active');
+      // Update hidden input
+      interestInput.value = btn.dataset.value;
+    });
+  });
+
   // ── Populate form from scraped data ──────────────────────────────────────
   const loadData = () => {
     chrome.storage.local.get(['latestJobData'], (result) => {
@@ -198,33 +213,40 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          job_title: data.title,
-          company: data.company,
-          job_url: data.link,
-          apply_url: data.applyLink,
+          job_title:      data.title,
+          company:        data.company,
+          company_logo:   data.companyLogo,
+          job_url:        data.link,
+          apply_url:      data.applyLink,
           job_description: data.description,
-          salary_range: data.salaryRange,
-          date_posted: data.datePosted,
-          deadline: data.deadline,
+          salary_range:   data.salaryRange,
+          date_posted:    data.datePosted,
+          deadline:       data.deadline,
+          job_type:       data.jobType,
+          location_type:  data.locationType,
+          location:       data.location,
+          relocation:     data.relocation,
+          interest_level: data.interestLevel,
+          remarks:        data.remarks,
         }),
       });
 
       if (res.ok) {
-        showStatus('Job listing saved successfully!', 'success');
+        showStatus('Saved!', 'success');
         chrome.storage.local.remove('latestJobData');
       } else {
         const err = await res.json();
-        showStatus(err.detail || 'Failed to save application', 'error');
+        showStatus(err.detail || 'Failed to save', 'error');
       }
     } catch (e) {
       showStatus('Connection error. Is the backend running?', 'error');
     } finally {
       btnSave.disabled = false;
-      btnSave.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>Save Listing`;
+      btnSave.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Save`;
     }
   });
 
-  // ── Process Immediately ───────────────────────────────────────────────────
+  // ── Process ───────────────────────────────────────────────────────────────
   btnProcess.addEventListener('click', () => {
     if (!form.checkValidity()) { form.reportValidity(); return; }
     const data = getFormData();

@@ -186,8 +186,72 @@ const PreviewModal = ({ file, onClose }) => {
 };
 
 
-const ApplicationDetail = ({ app, onBack, onStatusUpdate }) => {
+const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate }) => {
     const [previewFile, setPreviewFile] = React.useState(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+    const [deleting, setDeleting] = React.useState(false);
+    const [isArchived, setIsArchived] = React.useState(app.is_archived === 'true');
+    const [archiving, setArchiving] = React.useState(false);
+    const [logoUrl, setLogoUrl] = React.useState(app.company_logo || null);
+    const logoInputRef = React.useRef(null);
+
+    const handleArchive = async (archive) => {
+        setArchiving(true);
+        try {
+            const res = await fetch(`${API_URL}/api/applications/${app.id}/archive`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ archived: archive }),
+            });
+            if (res.ok) {
+                setIsArchived(archive);
+                if (onArchive) onArchive(app.id, archive);
+            } else {
+                alert('Failed to update archive status.');
+            }
+        } catch {
+            alert('Error updating archive status.');
+        } finally {
+            setArchiving(false);
+        }
+    };
+
+    const handleLogoUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            const dataUrl = ev.target.result;
+            setLogoUrl(dataUrl);
+            // Persist to backend
+            try {
+                await fetch(`${API_URL}/api/applications/${app.id}/logo`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ company_logo: dataUrl }),
+                });
+            } catch (err) {
+                console.warn('Logo save failed', err);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleDelete = async () => {
+        setDeleting(true);
+        try {
+            const res = await fetch(`${API_URL}/api/applications/${app.id}`, { method: 'DELETE' });
+            if (res.ok) {
+                onDelete(app.id);
+            } else {
+                alert('Failed to delete application. Please try again.');
+            }
+        } catch {
+            alert('Error deleting application.');
+        } finally {
+            setDeleting(false);
+        }
+    };
 
     const handlePreview = async (type, path) => {
         if (!path) return;
@@ -233,22 +297,153 @@ const ApplicationDetail = ({ app, onBack, onStatusUpdate }) => {
 
     return (
         <div style={{ padding: '3rem', maxWidth: '1000px', width: '100%', height: '100%', overflowY: 'auto' }}>
-            <button
-                onClick={onBack}
-                style={{
-                    background: 'none', border: 'none', color: 'var(--text-secondary)',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                    marginBottom: '1.5rem', padding: 0
-                }}
-            >
-                ← Back to Dashboard
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <button
+                    onClick={onBack}
+                    style={{
+                        background: 'none', border: 'none', color: 'var(--text-secondary)',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: 0
+                    }}
+                >
+                    ← Back to Dashboard
+                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    {/* Archive / Unarchive button */}
+                    <button
+                        onClick={() => handleArchive(!isArchived)}
+                        disabled={archiving}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '0.4rem',
+                            padding: '0.4rem 0.9rem', borderRadius: '0.5rem',
+                            background: isArchived ? 'rgba(245,158,11,0.15)' : 'rgba(100,116,139,0.15)',
+                            border: isArchived ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(100,116,139,0.3)',
+                            color: isArchived ? '#fbbf24' : 'var(--text-secondary)',
+                            cursor: archiving ? 'not-allowed' : 'pointer',
+                            fontSize: '0.85rem', fontWeight: 500, transition: 'all 0.2s',
+                            opacity: archiving ? 0.7 : 1,
+                        }}
+                        onMouseEnter={e => { if (!archiving) { e.currentTarget.style.background = isArchived ? 'rgba(245,158,11,0.25)' : 'rgba(100,116,139,0.25)'; }}}
+                        onMouseLeave={e => { e.currentTarget.style.background = isArchived ? 'rgba(245,158,11,0.15)' : 'rgba(100,116,139,0.15)'; }}
+                    >
+                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>{isArchived ? 'unarchive' : 'archive'}</span>
+                        {isArchived ? 'Unarchive' : 'Archive'}
+                    </button>
+                    {/* Delete button */}
+                    <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '0.4rem',
+                            padding: '0.4rem 0.9rem', borderRadius: '0.5rem',
+                            background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                            color: '#f87171', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500,
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.2)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.5)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; }}
+                    >
+                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>delete</span>
+                        Delete
+                    </button>
+                </div>
+            </div>
+
+            {/* Archived banner */}
+            {isArchived && (
+                <div style={{
+                    display: 'flex', alignItems: 'center', gap: '0.6rem',
+                    padding: '0.6rem 1rem', marginBottom: '1.25rem',
+                    background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)',
+                    borderRadius: '0.6rem', color: '#fbbf24', fontSize: '0.875rem',
+                }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>archive</span>
+                    This application is archived. It won’t appear in your main dashboard view.
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 9999, backdropFilter: 'blur(6px)'
+                }}>
+                    <div style={{
+                        background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem',
+                        border: '1px solid rgba(239,68,68,0.3)', maxWidth: '440px', width: '90%',
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                            <span className="material-symbols-outlined" style={{ color: '#f87171', fontSize: '1.5rem' }}>warning</span>
+                            <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Delete Application?</h2>
+                        </div>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+                            This will permanently delete <strong>{app.job_title}</strong> at <strong>{app.company}</strong>.
+                            This action cannot be undone.
+                        </p>
+                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                style={{
+                                    padding: '0.5rem 1.2rem', background: 'transparent',
+                                    border: '1px solid var(--border-color)', color: 'var(--text-secondary)',
+                                    borderRadius: '0.5rem', cursor: 'pointer'
+                                }}
+                            >Cancel</button>
+                            <button
+                                onClick={handleDelete}
+                                disabled={deleting}
+                                style={{
+                                    padding: '0.5rem 1.2rem', background: '#ef4444',
+                                    border: 'none', color: 'white', borderRadius: '0.5rem',
+                                    cursor: deleting ? 'not-allowed' : 'pointer', fontWeight: 600,
+                                    opacity: deleting ? 0.7 : 1
+                                }}
+                            >{deleting ? 'Deleting...' : 'Yes, Delete'}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <header style={{ marginBottom: '3rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                    <div>
-                        <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem', lineHeight: '1.2' }}>{app.job_title}</h1>
-                        <div style={{ fontSize: '1.5rem', color: 'var(--text-secondary)' }}>{app.company}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        {/* Clickable logo zone — click to upload a new one */}
+                        <div
+                            onClick={() => logoInputRef.current?.click()}
+                            title="Click to upload a logo"
+                            style={{
+                                width: '72px', height: '72px', borderRadius: '12px', flexShrink: 0,
+                                background: logoUrl ? 'white' : 'rgba(255,255,255,0.05)',
+                                padding: logoUrl ? '6px' : '0',
+                                border: '1px dashed var(--border-color)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', overflow: 'hidden', position: 'relative',
+                                transition: 'border-color 0.2s',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
+                            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
+                        >
+                            {logoUrl
+                                ? <img src={logoUrl} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={() => setLogoUrl(null)} />
+                                : <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '2rem' }}>add_photo_alternate</span>
+                            }
+                            {/* Hover overlay */}
+                            <div style={{
+                                position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                opacity: 0, transition: 'opacity 0.2s',
+                            }}
+                                onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                                onMouseLeave={e => e.currentTarget.style.opacity = 0}
+                            >
+                                <span className="material-symbols-outlined" style={{ color: 'white', fontSize: '1.25rem' }}>edit</span>
+                            </div>
+                        </div>
+                        <input type="file" ref={logoInputRef} accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
+                        <div>
+                            <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem', lineHeight: '1.2' }}>{app.job_title}</h1>
+                            <div style={{ fontSize: '1.5rem', color: 'var(--text-secondary)' }}>{app.company}</div>
+                        </div>
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>

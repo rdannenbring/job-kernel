@@ -134,7 +134,7 @@ const Profile = () => {
     // Document viewer state
     const [viewingDoc, setViewingDoc] = useState(null); // { filename, url }
 
-    // Navigation guard for unsaved changes
+    // Navigation guard for unsaved changes (tab/window close)
     useEffect(() => {
         const handleBeforeUnload = (e) => {
             if (isDirty) {
@@ -142,9 +142,13 @@ const Profile = () => {
                 e.returnValue = ''; // Required for Chrome
             }
         };
-
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isDirty]);
+
+    // Keep App-level router in sync with our dirty state
+    useEffect(() => {
+        if (window.__setProfileDirty) window.__setProfileDirty(isDirty);
     }, [isDirty]);
 
     // Track scroll for sticky header styling

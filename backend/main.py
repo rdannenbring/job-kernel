@@ -18,10 +18,14 @@ load_dotenv()
 app = FastAPI(title="Resume Automator API")
 
 # CORS middleware for local development
+# We also need to allow requests from the Chrome extension's side panel,
+# which runs at a chrome-extension:// origin. Since FastAPI doesn't support
+# prefix wildcards, allow_origins=["*"] is safe here because the server only
+# listens on localhost and is never exposed to the internet.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,  # must be False when allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -51,6 +55,7 @@ class RefineCoverLetterRequest(BaseModel):
 class ApplicationSaveRequest(BaseModel):
     job_title: Optional[str] = "Unknown Role"
     company: Optional[str] = "Unknown Company"
+    company_logo: Optional[str] = ""
     job_url: Optional[str] = ""
     apply_url: Optional[str] = ""
     job_description: Optional[str] = ""
@@ -62,6 +67,12 @@ class ApplicationSaveRequest(BaseModel):
     salary_range: Optional[str] = ""
     date_posted: Optional[str] = ""
     deadline: Optional[str] = ""
+    job_type: Optional[str] = ""
+    location_type: Optional[str] = ""
+    location: Optional[str] = ""
+    relocation: Optional[bool] = False
+    interest_level: Optional[str] = ""
+    remarks: Optional[str] = ""
     resume_changes_summary: Optional[list] = []
     cover_letter_changes_summary: Optional[list] = []
 
@@ -647,7 +658,54 @@ async def update_application_status(app_id: int, request: StatusUpdateRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete("/api/applications/{app_id}")
+async def delete_application(app_id: int):
+    try:
+        success = database_service.delete_application(app_id)
+        if success:
+            return {"message": "Application deleted successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="Application not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class LogoUpdateRequest(BaseModel):
+    company_logo: Optional[str] = ""
+
+@app.patch("/api/applications/{app_id}/logo")
+async def update_application_logo(app_id: int, request: LogoUpdateRequest):
+    try:
+        success = database_service.update_application_logo(app_id, request.company_logo)
+        if success:
+            return {"message": "Logo updated"}
+        else:
+            raise HTTPException(status_code=404, detail="Application not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class ArchiveRequest(BaseModel):
+    archived: bool
+
+@app.patch("/api/applications/{app_id}/archive")
+async def archive_application(app_id: int, request: ArchiveRequest):
+    try:
+        success = database_service.archive_application(app_id, request.archived)
+        if success:
+            action = "archived" if request.archived else "unarchived"
+            return {"message": f"Application {action} successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="Application not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/download/{filename}")
+
 async def download_file(filename: str):
     """
     Download a tailored resume file.
