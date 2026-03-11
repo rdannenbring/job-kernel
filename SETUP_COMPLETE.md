@@ -84,7 +84,7 @@ JobApplicationAutomator/
 
 3. **Start the application**:
    ```bash
-   ./start.sh
+   ./start-local.sh
    ```
 
 #### Using the Application:
@@ -164,7 +164,7 @@ Using OpenAI's GPT-4o-mini model:
 1. **Add your OpenAI API key** to `backend/.env`
 
 2. **Test the application**:
-   - Start it with `./start.sh`
+   - Start it with `./start-local.sh`
    - Try uploading a sample resume
    - Use a real job description
    - Download and review the tailored version
@@ -216,7 +216,7 @@ Using OpenAI's GPT-4o-mini model:
 
 **You just need to**:
 1. Add your OpenAI API key to `backend/.env`
-2. Run `./start.sh`
+2. Run `./start-local.sh`
 3. Open `http://localhost:5173`
 4. Start tailoring resumes!
 
