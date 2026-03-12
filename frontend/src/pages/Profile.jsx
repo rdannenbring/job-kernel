@@ -64,17 +64,18 @@ const CollapsibleCard = ({ title, defaultExpanded = false, onAdd, addTitle, chil
                             className="btn-secondary"
                             title={addTitle || "Add"}
                             style={{
-                                padding: '0.4rem',
+                                padding: '0',
                                 width: '30px',
                                 height: '30px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 borderRadius: '50%',
-                                fontSize: '1.2rem',
                                 lineHeight: '1'
                             }}
-                        >+</button>
+                        >
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>add</span>
+                        </button>
                     )}
                     <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '1.2rem', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s ease' }}>
                         expand_more
@@ -109,6 +110,7 @@ const Profile = () => {
         preferences: { max_commute: '', work_setting: '', expected_salary: '' },
         base_resume_path: null,
         long_form_resume_path: null,
+        additional_docs: [],
     });
     const [extractedData, setExtractedData] = useState(null);
     const [selectedFields, setSelectedFields] = useState({});
@@ -127,7 +129,6 @@ const Profile = () => {
     const [pendingProfileImportFile, setPendingProfileImportFile] = useState(null);
 
     // Additional docs state
-    const [additionalDocs, setAdditionalDocs] = useState([]);
     const [uploadingAdditionalDoc, setUploadingAdditionalDoc] = useState(false);
     const additionalDocsInputRef = useRef(null);
 
@@ -195,8 +196,8 @@ const Profile = () => {
                         preferences: data.preferences || { max_commute: '', work_setting: '', expected_salary: '' },
                         base_resume_path: data.base_resume_path || null,
                         long_form_resume_path: data.long_form_resume_path || null,
+                        additional_docs: data.additional_docs || [],
                     }));
-                    setAdditionalDocs(data.additional_docs || []);
                 }
             }
         } catch (e) {
@@ -272,7 +273,10 @@ const Profile = () => {
             } catch { showNotification(`Error uploading ${file.name}`, 'error'); }
         }
         if (results.length > 0) {
-            setAdditionalDocs(prev => [...prev, ...results]);
+            setFormData(prev => ({
+                ...prev,
+                additional_docs: [...(prev.additional_docs || []), ...results]
+            }));
             showNotification(`${results.length} document${results.length > 1 ? 's' : ''} uploaded.`, 'success');
         }
         setUploadingAdditionalDoc(false);
@@ -283,7 +287,10 @@ const Profile = () => {
         try {
             const res = await fetch(`${API_URL}/api/profile/additional-doc?path=${encodeURIComponent(path)}`, { method: 'DELETE' });
             if (res.ok) {
-                setAdditionalDocs(prev => prev.filter(d => d.path !== path));
+                setFormData(prev => ({
+                    ...prev,
+                    additional_docs: (prev.additional_docs || []).filter(d => d.path !== path)
+                }));
                 showNotification('Document removed.', 'info');
             }
         } catch { showNotification('Error removing document.', 'error'); }
@@ -536,7 +543,10 @@ const Profile = () => {
                 transition: 'all 0.3s ease'
             }}>
                 <div>
-                    <h1 style={{ fontSize: isSticky ? '1.5rem' : '2rem', marginBottom: isSticky ? 0 : '0.5rem', transition: 'all 0.3s ease' }}>👤 User Profile</h1>
+                    <h1 style={{ fontSize: isSticky ? '1.5rem' : '2rem', marginBottom: isSticky ? 0 : '0.5rem', transition: 'all 0.3s ease', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: isSticky ? '1.8rem' : '2.4rem' }}>person</span>
+                        User Profile
+                    </h1>
                     <p style={{ color: 'var(--text-secondary)', display: isSticky ? 'none' : 'block' }}>Manage your contact info for cover letters.</p>
                 </div>
 
@@ -549,7 +559,8 @@ const Profile = () => {
                             color: 'var(--text-primary)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'
                         }}
                     >
-                        {scanning ? 'Scanning...' : '📥 Import from Resume'}
+                        <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>download</span>
+                        {scanning ? 'Scanning...' : 'Import from Resume'}
                     </button>
                     <input
                         type="file"
@@ -673,7 +684,7 @@ const Profile = () => {
                                                                                 style={{ background: 'transparent', border: 'none', color: 'var(--error)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.8 }}
                                                                                 title="Remove Entry"
                                                                             >
-                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>delete</span>
                                                                             </button>
                                                                         </div>
 
@@ -770,13 +781,15 @@ const Profile = () => {
 
 
             {/* ===== RESUMES + DOCS — SINGLE ROW ===== */}
-            <CollapsibleSection title="My Documents" icon="📎" defaultExpanded={true}>
+            <CollapsibleSection title="My Documents" icon={<span className="material-symbols-outlined">attach_file</span>} defaultExpanded={true}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
 
                 {/* ── Base Resume ── */}
                 <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: 'rgba(37,99,235,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', flexShrink: 0 }}>📄</div>
+                        <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: 'rgba(37,99,235,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary-light)' }}>description</span>
+                        </div>
                         <div>
                             <h3 style={{ fontSize: '0.95rem', margin: 0, color: 'var(--primary-light)', fontWeight: 600 }}>Base Resume</h3>
                             <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>Standard, general-purpose</p>
@@ -787,14 +800,16 @@ const Profile = () => {
                         const short = fname.length > 18 ? fname.slice(0, 15) + '…' : fname;
                         return (
                             <div title={fname} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem', background: 'rgba(37,99,235,0.07)', border: '1px solid rgba(37,99,235,0.18)', borderRadius: '6px' }}>
-                                <span style={{ fontSize: '0.95rem', flexShrink: 0 }}>📄</span>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--primary-light)', flexShrink: 0 }}>description</span>
                                 <span onClick={() => openDocViewer(formData.base_resume_path, fname)} style={{ fontSize: '0.78rem', color: 'var(--primary-light)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline' }}>{short}</span>
-                                <button onClick={() => handleDeleteResume('base')} title="Remove" style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '0.8rem', flexShrink: 0, padding: '0 2px', lineHeight: 1 }}>✕</button>
+                                <button onClick={() => handleDeleteResume('base')} title="Remove" style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0, padding: '0 2px' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>close</span>
+                                </button>
                             </div>
                         );
                     })() : (
                         <div onClick={() => baseResumeInputRef.current?.click()} style={{ border: '2px dashed rgba(37,99,235,0.2)', borderRadius: '8px', padding: '1.1rem', textAlign: 'center', cursor: 'pointer', flex: 1, transition: 'border-color 0.2s, background 0.2s' }} onMouseOver={e => { e.currentTarget.style.borderColor='rgba(37,99,235,0.5)'; e.currentTarget.style.background='rgba(37,99,235,0.05)'; }} onMouseOut={e => { e.currentTarget.style.borderColor='rgba(37,99,235,0.2)'; e.currentTarget.style.background='transparent'; }}>
-                            <div style={{ fontSize: '1.4rem', marginBottom: '0.25rem' }}>⬆️</div>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: 'rgba(37,99,235,0.5)', marginBottom: '0.25rem', display: 'block' }}>upload</span>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0 }}>Click to upload (.docx)</p>
                         </div>
                     )}
@@ -804,7 +819,9 @@ const Profile = () => {
                 {/* ── Long-Form Resume ── */}
                 <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', flexShrink: 0 }}>📋</div>
+                        <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#a78bfa' }}>assignment</span>
+                        </div>
                         <div>
                             <h3 style={{ fontSize: '0.95rem', margin: 0, color: '#a78bfa', fontWeight: 600 }}>Long-Form Resume</h3>
                             <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>Extended detail &amp; history</p>
@@ -815,14 +832,16 @@ const Profile = () => {
                         const short = fname.length > 18 ? fname.slice(0, 15) + '…' : fname;
                         return (
                             <div title={fname} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem', background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.18)', borderRadius: '6px' }}>
-                                <span style={{ fontSize: '0.95rem', flexShrink: 0 }}>📋</span>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: '#a78bfa', flexShrink: 0 }}>assignment</span>
                                 <span onClick={() => openDocViewer(formData.long_form_resume_path, fname)} style={{ fontSize: '0.78rem', color: '#a78bfa', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline' }}>{short}</span>
-                                <button onClick={() => handleDeleteResume('long_form')} title="Remove" style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '0.8rem', flexShrink: 0, padding: '0 2px', lineHeight: 1 }}>✕</button>
+                                <button onClick={() => handleDeleteResume('long_form')} title="Remove" style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0, padding: '0 2px' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>close</span>
+                                </button>
                             </div>
                         );
                     })() : (
                         <div onClick={() => longFormResumeInputRef.current?.click()} style={{ border: '2px dashed rgba(139,92,246,0.2)', borderRadius: '8px', padding: '1.1rem', textAlign: 'center', cursor: 'pointer', flex: 1, transition: 'border-color 0.2s, background 0.2s' }} onMouseOver={e => { e.currentTarget.style.borderColor='rgba(139,92,246,0.5)'; e.currentTarget.style.background='rgba(139,92,246,0.05)'; }} onMouseOut={e => { e.currentTarget.style.borderColor='rgba(139,92,246,0.2)'; e.currentTarget.style.background='transparent'; }}>
-                            <div style={{ fontSize: '1.4rem', marginBottom: '0.25rem' }}>⬆️</div>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: 'rgba(139,92,246,0.5)', marginBottom: '0.25rem', display: 'block' }}>upload</span>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0 }}>Click to upload (.docx)</p>
                         </div>
                     )}
@@ -833,32 +852,39 @@ const Profile = () => {
                 <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                            <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: 'rgba(20,184,166,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', flexShrink: 0 }}>🗂️</div>
+                            <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: 'rgba(20,184,166,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#2dd4bf' }}>folder</span>
+                            </div>
                             <div>
                                 <h3 style={{ fontSize: '0.95rem', margin: 0, color: '#2dd4bf', fontWeight: 600 }}>AI Context Docs</h3>
                                 <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>Bios, assessments, press releases…</p>
                             </div>
                         </div>
-                        <button onClick={() => additionalDocsInputRef.current?.click()} disabled={uploadingAdditionalDoc} title="Add documents" style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)', color: '#2dd4bf', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, lineHeight: 1 }}>+</button>
+                        <button onClick={() => additionalDocsInputRef.current?.click()} disabled={uploadingAdditionalDoc} title="Add documents" style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)', color: '#2dd4bf', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, lineHeight: 1 }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>add</span>
+                        </button>
                         <input type="file" multiple accept=".docx,.pdf,.txt,.doc" ref={additionalDocsInputRef} style={{ display: 'none' }} onChange={(e) => handleAdditionalDocUpload(e.target.files)} />
                     </div>
 
-                    {additionalDocs.length === 0 ? (
+                    {formData.additional_docs.length === 0 ? (
                         <div onClick={() => additionalDocsInputRef.current?.click()} style={{ border: '2px dashed rgba(20,184,166,0.2)', borderRadius: '8px', padding: '1.1rem', textAlign: 'center', cursor: 'pointer', flex: 1, transition: 'border-color 0.2s, background 0.2s' }} onMouseOver={e => { e.currentTarget.style.borderColor='rgba(20,184,166,0.5)'; e.currentTarget.style.background='rgba(20,184,166,0.04)'; }} onMouseOut={e => { e.currentTarget.style.borderColor='rgba(20,184,166,0.2)'; e.currentTarget.style.background='transparent'; }}>
-                            <div style={{ fontSize: '1.4rem', marginBottom: '0.25rem' }}>📂</div>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0 }}>Click to add docs (.pdf, .docx, .txt)</p>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: 'rgba(20,184,166,0.4)', marginBottom: '0.4rem', display: 'block' }}>upload_file</span>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>No documents yet. Click to upload certifications, awards, or projects.</p>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', overflowY: 'auto', maxHeight: '160px' }}>
-                            {additionalDocs.map((doc, i) => {
+                            {formData.additional_docs.map((doc, i) => {
                                 const ext = doc.filename.split('.').pop().toLowerCase();
-                                const icon = ext === 'pdf' ? '📕' : ext === 'txt' ? '📝' : '📄';
                                 const short = doc.filename.length > 18 ? doc.filename.slice(0, 15) + '…' : doc.filename;
                                 return (
                                     <div key={i} title={doc.filename} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem', background: 'rgba(20,184,166,0.07)', border: '1px solid rgba(20,184,166,0.18)', borderRadius: '6px' }}>
-                                        <span style={{ fontSize: '0.95rem', flexShrink: 0 }}>{icon}</span>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: '#2dd4bf', flexShrink: 0 }}>
+                                            {ext === 'pdf' ? 'picture_as_pdf' : 'description'}
+                                        </span>
                                         <span onClick={() => openDocViewer(doc.path, doc.filename)} style={{ fontSize: '0.78rem', color: '#2dd4bf', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline' }}>{short}</span>
-                                        <button onClick={() => handleDeleteAdditionalDoc(doc.path)} title="Remove" style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '0.8rem', flexShrink: 0, padding: '0 2px', lineHeight: 1 }}>✕</button>
+                                        <button onClick={() => handleDeleteAdditionalDoc(doc.path)} title="Remove" style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0, padding: '0 2px' }}>
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>close</span>
+                                        </button>
                                     </div>
                                 );
                             })}
@@ -869,7 +895,7 @@ const Profile = () => {
             </CollapsibleSection>
 
             {/* Preferences Section */}
-            <CollapsibleSection title="Preferences" icon="⚙️" defaultExpanded={true}>
+            <CollapsibleSection title="Preferences" icon={<span className="material-symbols-outlined">settings</span>} defaultExpanded={true}>
                 <section className="card">
                     <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: 'var(--primary-light)', fontWeight: 600 }}>Job Preferences</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
@@ -929,12 +955,18 @@ const Profile = () => {
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', zIndex: 9999, display: 'flex', flexDirection: 'column', backdropFilter: 'blur(8px)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card)', flexShrink: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <span style={{ fontSize: '1.2rem' }}>📄</span>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.4rem' }}>description</span>
                             <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>{viewingDoc.filename}</span>
                         </div>
                         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                            <a href={viewingDoc.url} download={viewingDoc.filename} style={{ padding: '0.4rem 0.9rem', background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', color: 'var(--primary-light)', borderRadius: '6px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 500 }}>⬇ Download</a>
-                            <button onClick={() => setViewingDoc(null)} style={{ padding: '0.4rem 0.9rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>✕ Close</button>
+                            <a href={viewingDoc.url} download={viewingDoc.filename} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.9rem', background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', color: 'var(--primary-light)', borderRadius: '6px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 500 }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>download</span>
+                                Download
+                            </a>
+                            <button onClick={() => setViewingDoc(null)} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.9rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>close</span>
+                                Close
+                            </button>
                         </div>
                     </div>
                     <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -951,31 +983,43 @@ const Profile = () => {
             {showResumeTypeDialog && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)' }}>
                     <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border-color)', maxWidth: '500px', width: '90%', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)' }}>
-                        <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>💡 Save as Resume?</h2>
+                        <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                            <span className="material-symbols-outlined" style={{ color: 'var(--primary-light)' }}>lightbulb</span>
+                            Save as Resume?
+                        </h2>
                         <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '0.95rem' }}>You don't have any resumes saved yet. Would you like to save this file as your <strong>Base Resume</strong> or your <strong>Long-Form Resume</strong>?</p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                            <button className="btn btn-primary" style={{ justifyContent: 'center' }} onClick={async () => {
+                            <button className="btn btn-primary" style={{ justifyContent: 'center', gap: '0.5rem' }} onClick={async () => {
                                 setShowResumeTypeDialog(false);
                                 const file = pendingImportFile.current;
                                 pendingImportFile.current = null;
                                 await handleResumeUpload(file, 'base');
                                 if (isProfileEmpty()) { setPendingProfileImportFile(file); setShowImportProfileDialog(true); }
                                 else await runProfileScan(file);
-                            }}>📄 Save as Base Resume &amp; Import Profile</button>
-                            <button className="btn btn-primary" style={{ justifyContent: 'center', background: 'rgba(139,92,246,0.8)' }} onClick={async () => {
+                            }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>description</span>
+                                Save as Base Resume &amp; Import Profile
+                            </button>
+                            <button className="btn btn-primary" style={{ justifyContent: 'center', background: 'rgba(139,92,246,0.8)', gap: '0.5rem' }} onClick={async () => {
                                 setShowResumeTypeDialog(false);
                                 const file = pendingImportFile.current;
                                 pendingImportFile.current = null;
                                 await handleResumeUpload(file, 'long_form');
                                 if (isProfileEmpty()) { setPendingProfileImportFile(file); setShowImportProfileDialog(true); }
                                 else await runProfileScan(file);
-                            }}>📋 Save as Long-Form Resume &amp; Import Profile</button>
-                            <button className="btn btn-secondary" style={{ justifyContent: 'center' }} onClick={async () => {
+                            }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>assignment</span>
+                                Save as Long-Form Resume &amp; Import Profile
+                            </button>
+                            <button className="btn btn-secondary" style={{ justifyContent: 'center', gap: '0.5rem' }} onClick={async () => {
                                 setShowResumeTypeDialog(false);
                                 const file = pendingImportFile.current;
                                 pendingImportFile.current = null;
                                 await runProfileScan(file);
-                            }}>🔍 Just Import Profile Data (Don't Save File)</button>
+                            }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>search</span>
+                                Just Import Profile Data (Don't Save File)
+                            </button>
                             <button style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.5rem' }} onClick={() => { setShowResumeTypeDialog(false); pendingImportFile.current = null; }}>Cancel</button>
                         </div>
                     </div>
@@ -986,15 +1030,21 @@ const Profile = () => {
             {showImportProfileDialog && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)' }}>
                     <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border-color)', maxWidth: '480px', width: '90%', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)' }}>
-                        <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>📥 Import Profile Data?</h2>
+                        <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                            <span className="material-symbols-outlined" style={{ color: 'var(--primary-light)' }}>download</span>
+                            Import Profile Data?
+                        </h2>
                         <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6', fontSize: '0.95rem' }}>Your profile looks empty. Would you like the AI to scan this resume and auto-populate your profile with your name, contact info, skills, and experience?</p>
                         <div style={{ display: 'flex', gap: '0.75rem' }}>
-                            <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={async () => {
+                            <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', gap: '0.4rem' }} onClick={async () => {
                                 setShowImportProfileDialog(false);
                                 const file = pendingProfileImportFile;
                                 setPendingProfileImportFile(null);
                                 await runProfileScan(file);
-                            }}>✨ Yes, Import Profile</button>
+                            }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>auto_awesome</span>
+                                Yes, Import Profile
+                            </button>
                             <button className="btn btn-secondary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => { setShowImportProfileDialog(false); setPendingProfileImportFile(null); }}>No Thanks</button>
                         </div>
                     </div>
@@ -1002,7 +1052,7 @@ const Profile = () => {
             )}
 
             {/* Profile Section */}
-            <CollapsibleSection title="Base Profile Information" icon="👤" defaultExpanded={true}>
+            <CollapsibleSection title="Base Profile Information" icon={<span className="material-symbols-outlined">person</span>} defaultExpanded={true}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
 
                 {/* Left Column: Personal + Address */}
@@ -1100,7 +1150,9 @@ const Profile = () => {
                             </InputGroup>
                             <InputGroup label="Portfolio / Website" style={{ marginBottom: 0 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-                                    <span style={{ padding: '0.8rem 1rem', color: 'var(--text-muted)', borderRight: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minWidth: '45px', textAlign: 'center' }}>🌐</span>
+                                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.8rem 1rem', color: 'var(--text-muted)', borderRight: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minWidth: '45px', textAlign: 'center' }}>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>language</span>
+                                    </span>
                                     <input
                                         name="website_url" value={formData.website_url} onChange={handleChange}
                                         className="input-premium"
@@ -1127,16 +1179,19 @@ const Profile = () => {
                                             onChange={(e) => handleArrayItemUpdate('social_links', i, 'url', e.target.value)}
                                             style={{ flex: 1, padding: '0.8rem', border: 'none', background: 'transparent' }}
                                         />
-                                        <button onClick={() => removeArrayItem('social_links', i)} style={{ padding: '0 0.8rem', background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '1.2rem' }} title="Remove Link">×</button>
+                                        <button onClick={() => removeArrayItem('social_links', i)} style={{ padding: '0 0.8rem', background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Remove Link">
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>close</span>
+                                        </button>
                                     </div>
                                 </InputGroup>
                             ))}
                             <button
                                 onClick={() => addArrayItem('social_links', { name: '', url: '' })}
                                 className="btn-secondary"
-                                style={{ marginTop: '0.5rem', alignSelf: 'flex-start', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                                style={{ marginTop: '0.5rem', alignSelf: 'flex-start', padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
                             >
-                                + Add Custom Link
+                                <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>add</span>
+                                Add Custom Link
                             </button>
                         </div>
                     </section>
@@ -1145,7 +1200,7 @@ const Profile = () => {
             </CollapsibleSection>
 
             {/* Resume Data Section (Skills, Experience, etc.) */}
-            <CollapsibleSection title="Resume Data" icon="📄" defaultExpanded={true}>
+            <CollapsibleSection title="Resume Data" icon={<span className="material-symbols-outlined">description</span>} defaultExpanded={true}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
 
                 {/* Skills Section */}
@@ -1196,9 +1251,10 @@ const Profile = () => {
                                 )}
                                 <span
                                     onClick={(e) => { e.stopPropagation(); removeArrayItem('skills', i); }}
+                                    className="material-symbols-outlined"
                                     style={{ cursor: 'pointer', opacity: 0.6, fontSize: '1.1rem', fontWeight: 'bold' }}
                                     title="Delete Skill"
-                                >×</span>
+                                >close</span>
                             </span>
                         ))}
                     </div>
@@ -1217,7 +1273,7 @@ const Profile = () => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                                     <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-light)', textTransform: 'uppercase' }}>Experience #{i + 1}</span>
                                     <button onClick={() => removeArrayItem('experiences', i)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }} title="Delete">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>delete</span>
                                     </button>
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -1262,7 +1318,7 @@ const Profile = () => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                                     <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-light)', textTransform: 'uppercase' }}>Education #{i + 1}</span>
                                     <button onClick={() => removeArrayItem('educations', i)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }} title="Delete">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>delete</span>
                                     </button>
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -1303,7 +1359,7 @@ const Profile = () => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                                     <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-light)' }}>CERTIFICATE #{i + 1}</span>
                                     <button onClick={() => removeArrayItem('certificates', i)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }} title="Delete">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>delete</span>
                                     </button>
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -1331,7 +1387,7 @@ const Profile = () => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                                     <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-light)' }}>ENTRY #{i + 1}</span>
                                     <button onClick={() => removeArrayItem('other', i)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }} title="Delete">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>delete</span>
                                     </button>
                                 </div>
                                 <input className="input-premium" placeholder="Title (e.g. Languages, Projects)" value={item.title} onChange={(e) => handleArrayItemUpdate('other', i, 'title', e.target.value)} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }} />

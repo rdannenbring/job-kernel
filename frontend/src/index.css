@@ -8,16 +8,21 @@
   --secondary: hsl(271, 76%, 53%);
   --accent: hsl(176, 68%, 64%);
 
-  /* Backgrounds */
   --bg-primary: #0a0f18;
   --bg-secondary: rgba(255, 255, 255, 0.02);
   --bg-tertiary: rgba(255, 255, 255, 0.05);
   --bg-card: rgba(255, 255, 255, 0.03);
+  --bg-sidebar: rgba(15, 23, 42, 0.6);
+  --bg-input: var(--bg-tertiary);
+  --bg-overlay: rgba(0, 0, 0, 0.85);
+  --border-color-card: rgba(255, 255, 255, 0.05);
+  --border-color-input: rgba(255, 255, 255, 0.08);
 
   /* Text */
   --text-primary: #ffffff;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
+  --text-brand: #e2e8f0;
 
   /* Status Colors */
   --success: #10b981;
@@ -44,6 +49,39 @@
   --transition-base: 250ms ease;
   --transition-slow: 350ms ease;
 }
+
+/* Light Theme Variables */
+:root[data-theme="light"] {
+  --bg-primary: #edf2f7; /* Darker slate background for better card contrast */
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #e2e8f0;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --bg-input: #ffffff;
+  --bg-overlay: rgba(15, 23, 42, 0.4);
+  --border-color-card: rgba(15, 23, 42, 0.12); /* Slightly stronger border */
+  --border-color-input: rgba(15, 23, 42, 0.15);
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-brand: #2D3E50;
+
+  --success: #059669;
+  --warning: #d97706;
+  --error: #dc2626;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 6px 12px -2px rgba(0, 0, 0, 0.08), 0 3px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 15px 35px -5px rgba(0, 0, 0, 0.1), 0 10px 15px -10px rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 25px rgba(37, 106, 244, 0.25);
+}
+
+.logo-dark { display: block; }
+.logo-light { display: none; }
+
+:root[data-theme="light"] .logo-dark { display: none; }
+:root[data-theme="light"] .logo-light { display: block; }
 
 * {
   margin: 0;
@@ -145,7 +183,7 @@ body::before {
   border-radius: var(--radius-lg);
   padding: 2rem;
   box-shadow: var(--shadow-md);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color-card);
   transition: all var(--transition-base);
   animation: fadeInUp 0.6s ease 0.4s both;
 }
@@ -194,8 +232,8 @@ body::before {
 .form-select {
   width: 100%;
   padding: 0.875rem 1rem;
-  background: var(--bg-tertiary);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color-input);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-family: inherit;
@@ -780,4 +818,8 @@ body::before {
 /* Material Symbols Adjust */
 .material-symbols-outlined {
   vertical-align: middle;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

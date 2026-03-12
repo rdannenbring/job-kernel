@@ -1,5 +1,6 @@
 import React from 'react';
 import CustomDropdown from '../components/CustomDropdown';
+import InterestStars from '../components/InterestStars';
 
 // Use same env logic or passed prop
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -118,8 +119,9 @@ const PreviewModal = ({ file, onClose }) => {
     return (
         <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1000, padding: '2rem'
+            background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000, padding: '2rem',
+            backdropFilter: 'blur(4px)'
         }} onClick={onClose}>
             <div style={{
                 background: 'var(--bg-card)', width: '100%', maxWidth: '800px', height: '85vh',
@@ -142,9 +144,12 @@ const PreviewModal = ({ file, onClose }) => {
                         <button onClick={() => handleDownload('pdf')} className="btn-modal">PDF</button>
                         <button onClick={() => handleDownload('txt')} className="btn-modal">TXT</button>
                         <button onClick={onClose} style={{
-                            background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.5rem',
-                            cursor: 'pointer', marginLeft: '1rem', lineHeight: 1
-                        }}>×</button>
+                            background: 'none', border: 'none', color: 'var(--text-muted)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', marginLeft: '1rem'
+                        }}>
+                            <span className="material-symbols-outlined">close</span>
+                        </button>
                     </div>
                 </div>
 
@@ -186,14 +191,332 @@ const PreviewModal = ({ file, onClose }) => {
 };
 
 
-const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate }) => {
+// ─── Logo Picker Modal ───────────────────────────────────────────────────────
+const LogoPickerModal = ({ companyName, onSelect, onClose }) => {
+    const [tab, setTab] = React.useState('search'); // 'search' | 'url' | 'upload'
+    const [query, setQuery] = React.useState(companyName || '');
+    const [results, setResults] = React.useState([]);
+    const [searching, setSearching] = React.useState(false);
+    const [urlValue, setUrlValue] = React.useState('');
+    const [urlError, setUrlError] = React.useState('');
+    const fileInputRef = React.useRef(null);
+    const debounceRef = React.useRef(null);
+
+    // Auto-search when component mounts with a company name
+    React.useEffect(() => {
+        if (companyName) {
+            performSearch(companyName);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const performSearch = async (searchQuery) => {
+        if (!searchQuery.trim()) { setResults([]); return; }
+        setSearching(true);
+        try {
+            // Use Clearbit autocomplete search
+            const res = await fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(searchQuery)}`);
+            if (res.ok) {
+                const data = await res.json();
+                // data is an array of { name, domain, logo }
+                setResults((data || []).slice(0, 12));
+            } else {
+                setResults([]);
+            }
+        } catch {
+            setResults([]);
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const handleQueryChange = (e) => {
+        const val = e.target.value;
+        setQuery(val);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => performSearch(val), 400);
+    };
+
+    const handleSelectResult = (domain) => {
+        // Use Google Favicon API
+        const url = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+        onSelect(url);
+    };
+
+    const handleUrlSubmit = () => {
+        if (!urlValue.trim()) { setUrlError('Please enter an image URL.'); return; }
+        try { new URL(urlValue); } catch { setUrlError('Please enter a valid URL.'); return; }
+        onSelect(urlValue.trim());
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => onSelect(ev.target.result);
+        reader.readAsDataURL(file);
+    };
+
+    const tabStyle = (t) => ({
+        padding: '0.5rem 1.2rem',
+        borderRadius: '0.4rem',
+        border: 'none',
+        cursor: 'pointer',
+        fontSize: '0.85rem',
+        fontWeight: 600,
+        transition: 'all 0.2s',
+        background: tab === t ? 'var(--primary)' : 'transparent',
+        color: tab === t ? 'white' : 'var(--text-secondary)',
+    });
+
+    return (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', zIndex: 9999, backdropFilter: 'blur(8px)',
+            padding: '1rem',
+        }} onClick={onClose}>
+            <div style={{
+                background: 'var(--bg-card)', borderRadius: '1rem', width: '100%',
+                maxWidth: '560px', boxShadow: '0 30px 60px -12px rgba(0,0,0,0.8)',
+                border: '1px solid var(--border-color)', overflow: 'hidden',
+            }} onClick={e => e.stopPropagation()}>
+
+                {/* Modal Header */}
+                <div style={{
+                    padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    background: 'var(--bg-secondary)',
+                }}>
+                    <div>
+                        <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Set Company Logo</h3>
+                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Choose how you'd like to add a logo</p>
+                    </div>
+                    <button onClick={onClose} style={{
+                        background: 'none', border: 'none', color: 'var(--text-muted)',
+                        cursor: 'pointer', padding: '0.25rem',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                {/* Tabs */}
+                <div style={{ display: 'flex', gap: '0.25rem', padding: '0.75rem 1.25rem', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
+                    <button style={tabStyle('search')} onClick={() => setTab('search')}>
+                        <span className="material-symbols-outlined" style={{ marginRight: '0.4rem', fontSize: '1.2rem', verticalAlign: 'middle' }}>search</span>Search Logos
+                    </button>
+                    <button style={tabStyle('url')} onClick={() => setTab('url')}>
+                        <span className="material-symbols-outlined" style={{ marginRight: '0.4rem', fontSize: '1.2rem', verticalAlign: 'middle' }}>link</span>Paste URL
+                    </button>
+                    <button style={tabStyle('upload')} onClick={() => setTab('upload')}>
+                        <span className="material-symbols-outlined" style={{ marginRight: '0.4rem', fontSize: '1.2rem', verticalAlign: 'middle' }}>folder</span>Upload File
+                    </button>
+                </div>
+
+                {/* Tab Content */}
+                <div style={{ padding: '1.5rem', minHeight: '280px' }}>
+
+                    {/* ── Search tab ── */}
+                    {tab === 'search' && (
+                        <div>
+                            <div style={{ position: 'relative', marginBottom: '1rem' }}>
+                                <span className="material-symbols-outlined" style={{
+                                    position: 'absolute', left: '0.75rem', top: '50%',
+                                    transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '1.1rem',
+                                }}>search</span>
+                                <input
+                                    type="text"
+                                    value={query}
+                                    onChange={handleQueryChange}
+                                    placeholder="Search by company name…"
+                                    style={{
+                                        width: '100%', padding: '0.65rem 0.75rem 0.65rem 2.4rem',
+                                        background: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
+                                        borderRadius: '0.5rem', color: 'var(--text-primary)', fontSize: '0.9rem',
+                                        outline: 'none', boxSizing: 'border-box',
+                                    }}
+                                    autoFocus
+                                />
+                            </div>
+
+                            {searching && (
+                                <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>
+                                    <div style={{
+                                        width: '28px', height: '28px', border: '3px solid var(--border-color)',
+                                        borderTopColor: 'var(--primary)', borderRadius: '50%',
+                                        animation: 'spin 0.8s linear infinite', margin: '0 auto 0.5rem',
+                                    }} />
+                                    Searching logos…
+                                </div>
+                            )}
+
+                            {!searching && results.length === 0 && query.trim() && (
+                                <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>
+                                    No logos found for "{query}". Try a different name.
+                                </div>
+                            )}
+
+                            {!searching && results.length === 0 && !query.trim() && (
+                                <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>
+                                    Type a company name to search for logos.
+                                </div>
+                            )}
+
+                            {!searching && results.length > 0 && (
+                                <div style={{
+                                    display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem',
+                                }}>
+                                    {results.map((r, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => handleSelectResult(r.domain)}
+                                            title={r.name || r.domain}
+                                            style={{
+                                                background: 'white', border: '2px solid var(--border-color)',
+                                                borderRadius: '0.6rem', padding: '0.6rem',
+                                                cursor: 'pointer', display: 'flex', flexDirection: 'column',
+                                                alignItems: 'center', gap: '0.4rem',
+                                                transition: 'all 0.15s', aspectRatio: '1 / 1.2',
+                                                justifyContent: 'center',
+                                            }}
+                                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+                                        >
+                                            <img
+                                                src={`https://www.google.com/s2/favicons?domain=${r.domain}&sz=64`}
+                                                alt={r.name || r.domain}
+                                                style={{ width: '48px', height: '48px', objectFit: 'contain' }}
+                                                onError={e => { e.target.style.display = 'none'; }}
+                                            />
+                                            <span style={{
+                                                fontSize: '0.65rem', color: '#333',
+                                                textOverflow: 'ellipsis', overflow: 'hidden',
+                                                whiteSpace: 'nowrap', maxWidth: '80px', textAlign: 'center',
+                                            }}>{r.name || r.domain}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── URL tab ── */}
+                    {tab === 'url' && (
+                        <div>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: 0 }}>Paste a direct link to any image on the web.</p>
+                            <input
+                                type="url"
+                                value={urlValue}
+                                onChange={e => { setUrlValue(e.target.value); setUrlError(''); }}
+                                placeholder="https://example.com/logo.png"
+                                style={{
+                                    width: '100%', padding: '0.65rem 0.75rem',
+                                    background: 'var(--bg-secondary)', border: `1px solid ${urlError ? '#ef4444' : 'var(--border-color)'}`,
+                                    borderRadius: '0.5rem', color: 'var(--text-primary)', fontSize: '0.9rem',
+                                    outline: 'none', boxSizing: 'border-box', marginBottom: '0.5rem',
+                                }}
+                            />
+                            {urlError && <p style={{ color: '#f87171', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>{urlError}</p>}
+
+                            {/* Live preview */}
+                            {urlValue && !urlError && (
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    background: 'white', borderRadius: '0.6rem', padding: '1rem',
+                                    marginBottom: '1rem', border: '1px solid var(--border-color)',
+                                    minHeight: '100px',
+                                }}>
+                                    <img
+                                        src={urlValue}
+                                        alt="Logo preview"
+                                        style={{ maxWidth: '120px', maxHeight: '80px', objectFit: 'contain' }}
+                                        onError={e => { e.target.style.display = 'none'; }}
+                                    />
+                                </div>
+                            )}
+
+                            <button
+                                onClick={handleUrlSubmit}
+                                style={{
+                                    width: '100%', padding: '0.7rem', background: 'var(--primary)',
+                                    border: 'none', borderRadius: '0.5rem', color: 'white',
+                                    fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer',
+                                }}
+                            >
+                                Use This Image
+                            </button>
+                        </div>
+                    )}
+
+                    {/* ── Upload tab ── */}
+                    {tab === 'upload' && (
+                        <div>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: 0 }}>Choose an image file from your computer.</p>
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                style={{
+                                    border: '2px dashed var(--border-color)', borderRadius: '0.75rem',
+                                    padding: '3rem 1rem', textAlign: 'center', cursor: 'pointer',
+                                    transition: 'all 0.2s', color: 'var(--text-muted)',
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.background = 'rgba(var(--primary-rgb, 99,102,241), 0.05)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.background = 'transparent'; }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '3rem', display: 'block', marginBottom: '0.75rem' }}>upload_file</span>
+                                <div style={{ fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>Click to browse files</div>
+                                <div style={{ fontSize: '0.8rem' }}>PNG, JPG, SVG, WEBP accepted</div>
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={handleFileChange}
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <style>{`
+                @keyframes spin { to { transform: rotate(360deg); } }
+            `}</style>
+        </div>
+    );
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate }) => {
     const [previewFile, setPreviewFile] = React.useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
     const [deleting, setDeleting] = React.useState(false);
     const [isArchived, setIsArchived] = React.useState(app.is_archived === 'true');
     const [archiving, setArchiving] = React.useState(false);
     const [logoUrl, setLogoUrl] = React.useState(app.company_logo || null);
+    const [showLogoPicker, setShowLogoPicker] = React.useState(false);
+    const [isEditing, setIsEditing] = React.useState(false);
+    const [saving, setSaving] = React.useState(false);
+    const [formData, setFormData] = React.useState({ ...app });
+    const [regeneratingResume, setRegeneratingResume] = React.useState(false);
+    const [regeneratingCL, setRegeneratingCL] = React.useState(false);
+    
+    const [showResumeOverrideConfirm, setShowResumeOverrideConfirm] = React.useState(false);
+    const [showCLOverrideConfirm, setShowCLOverrideConfirm] = React.useState(false);
+    const [pendingResumeFile, setPendingResumeFile] = React.useState(null);
+    const [pendingCLFile, setPendingCLFile] = React.useState(null);
+    const [uploadingOverride, setUploadingOverride] = React.useState(false);
+
     const logoInputRef = React.useRef(null);
+    const resumeOverrideInputRef = React.useRef(null);
+    const clOverrideInputRef = React.useRef(null);
+
+    // Sync formData when app changes
+    React.useEffect(() => {
+        setFormData({ ...app });
+        setIsArchived(app.is_archived === 'true' || app.is_archived === true);
+        setLogoUrl(app.company_logo || null);
+    }, [app]);
 
     const handleArchive = async (archive) => {
         setArchiving(true);
@@ -223,6 +546,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate })
         reader.onload = async (ev) => {
             const dataUrl = ev.target.result;
             setLogoUrl(dataUrl);
+            if (onUpdate) onUpdate(app.id, { company_logo: dataUrl });
             // Persist to backend
             try {
                 await fetch(`${API_URL}/api/applications/${app.id}/logo`, {
@@ -235,6 +559,209 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate })
             }
         };
         reader.readAsDataURL(file);
+    };
+
+    const handleLogoSelect = async (logoValue) => {
+        // logoValue can be a data URL (from file) or a remote URL
+        setShowLogoPicker(false);
+        setLogoUrl(logoValue);
+        if (onUpdate) onUpdate(app.id, { company_logo: logoValue });
+        try {
+            await fetch(`${API_URL}/api/applications/${app.id}/logo`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ company_logo: logoValue }),
+            });
+        } catch (err) {
+            console.warn('Logo save failed', err);
+        }
+    };
+
+    const handleOverrideUpload = (type) => {
+        if (type === 'resume') {
+            resumeOverrideInputRef.current?.click();
+        } else {
+            clOverrideInputRef.current?.click();
+        }
+    };
+
+    const onFileSelected = (e, type) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        if (type === 'resume') {
+            setPendingResumeFile(file);
+            setShowResumeOverrideConfirm(true);
+        } else {
+            setPendingCLFile(file);
+            setShowCLOverrideConfirm(true);
+        }
+        // Reset input so same file can be selected again if needed
+        e.target.value = '';
+    };
+
+    const confirmOverride = async (type) => {
+        setUploadingOverride(true);
+        const file = type === 'resume' ? pendingResumeFile : pendingCLFile;
+        const endpoint = type === 'resume' ? 'override-resume' : 'override-cover-letter';
+        
+        try {
+            const upData = new FormData();
+            upData.append('file', file);
+            
+            const res = await fetch(`${API_URL}/api/applications/${app.id}/${endpoint}`, {
+                method: 'POST',
+                body: upData
+            });
+            
+            if (res.ok) {
+                const result = await res.json();
+                if (onUpdate) {
+                    const updateData = type === 'resume' 
+                        ? { override_resume_path: result.path, active_resume_type: 'override', profile_snapshot: result.profile_snapshot }
+                        : { override_cover_letter_path: result.path, active_cover_letter_type: 'override' };
+                    onUpdate(app.id, updateData);
+                }
+            } else {
+                alert(`Failed to upload override ${type}.`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert(`Error uploading override ${type}.`);
+        } finally {
+            setUploadingOverride(false);
+            if (type === 'resume') {
+                setShowResumeOverrideConfirm(false);
+                setPendingResumeFile(null);
+            } else {
+                setShowCLOverrideConfirm(false);
+                setPendingCLFile(null);
+            }
+        }
+    };
+
+    const toggleActiveVersion = async (type, active) => {
+        try {
+            const res = await fetch(`${API_URL}/api/applications/${app.id}/toggle-active`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, active })
+            });
+            
+            if (res.ok) {
+                if (onUpdate) {
+                    const field = type === 'resume' ? 'active_resume_type' : 'active_cover_letter_type';
+                    onUpdate(app.id, { [field]: active });
+                }
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const res = await fetch(`${API_URL}/api/applications/${app.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+            if (res.ok) {
+                setIsEditing(false);
+                if (onUpdate) onUpdate(app.id, formData);
+            } else {
+                alert('Failed to save changes.');
+            }
+        } catch {
+            alert('Error saving changes.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleRegenerateResume = async () => {
+        if (!window.confirm("This will regenerate the tailored resume using your current base resume and this job description. Continue?")) return;
+        setRegeneratingResume(true);
+        try {
+            const body = new FormData();
+            body.append('job_description', app.job_description);
+            // We use the profile's base resume by default
+            body.append('use_default_resume', 'true'); 
+            
+            const res = await fetch(`${API_URL}/api/tailor-resume`, {
+                method: 'POST',
+                body: body
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                const updateData = {
+                    tailored_resume_path: data.files.pdf.split('/').pop(),
+                    resume_changes_summary: data.change_summary
+                };
+                // Save the update
+                await fetch(`${API_URL}/api/applications/${app.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                if (onUpdate) onUpdate(app.id, updateData);
+                alert("Resume regenerated successfully!");
+            } else {
+                const err = await res.json();
+                alert(`Failed to regenerate: ${err.detail || 'Unknown error'}`);
+            }
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        } finally {
+            setRegeneratingResume(false);
+        }
+    };
+
+    const handleRegenerateCL = async () => {
+        if (!window.confirm("This will regenerate the cover letter using your current resume data and this job description. Continue?")) return;
+        setRegeneratingCL(true);
+        try {
+            // We need resume text. If we don't have it locally, we might need to fetch it or assume backend handles it.
+            // Currently generate-cover-letter requires resume_text.
+            // Let's see if we have resume_data in app.
+            const resumeData = typeof app.resume_data === 'string' ? JSON.parse(app.resume_data) : app.resume_data;
+            const resumeText = resumeData?.full_text?.join('\n') || "";
+
+            const res = await fetch(`${API_URL}/api/generate-cover-letter`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    resume_text: resumeText,
+                    job_description: app.job_description,
+                    base_filename: app.original_resume_path || "resume.docx"
+                })
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                const updateData = {
+                    cover_letter_path: data.files.pdf.split('/').pop(),
+                    cover_letter_changes_summary: data.generation_summary
+                };
+                // Save the update
+                await fetch(`${API_URL}/api/applications/${app.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                if (onUpdate) onUpdate(app.id, updateData);
+                alert("Cover letter regenerated successfully!");
+            } else {
+                const err = await res.json();
+                alert(`Failed to regenerate: ${err.detail || 'Unknown error'}`);
+            }
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        } finally {
+            setRegeneratingCL(false);
+        }
     };
 
     const handleDelete = async () => {
@@ -296,7 +823,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate })
 
 
     return (
-        <div style={{ padding: '3rem', maxWidth: '1000px', width: '100%', height: '100%', overflowY: 'auto' }}>
+        <div style={{ padding: '3rem', maxWidth: '1600px', width: '100%', margin: '0 auto', height: '100%', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <button
                     onClick={onBack}
@@ -305,9 +832,48 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate })
                         cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: 0
                     }}
                 >
-                    ← Back to Dashboard
+                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>arrow_back</span>
+                    Back to Dashboard
                 </button>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                        onClick={() => {
+                            if (isEditing) handleSave();
+                            else {
+                                setFormData({ ...app });
+                                setIsEditing(true);
+                            }
+                        }}
+                        disabled={saving}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '0.4rem',
+                            padding: '0.4rem 0.9rem', borderRadius: '0.5rem',
+                            background: isEditing ? 'var(--primary)' : 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color-card)',
+                            color: isEditing ? 'white' : 'var(--text-secondary)',
+                            cursor: saving ? 'not-allowed' : 'pointer',
+                            fontSize: '0.85rem', fontWeight: 500, transition: 'all 0.2s',
+                        }}
+                    >
+                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>{isEditing ? 'save' : 'edit'}</span>
+                        {isEditing ? (saving ? 'Saving...' : 'Save Changes') : 'Edit Info'}
+                    </button>
+                    {isEditing && (
+                        <button
+                            onClick={() => {
+                                setIsEditing(false);
+                                setFormData({ ...app });
+                            }}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: '0.4rem',
+                                padding: '0.4rem 0.9rem', borderRadius: '0.5rem',
+                                background: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
+                                color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500,
+                            }}
+                        >
+                            Cancel
+                        </button>
+                    )}
                     {/* Archive / Unarchive button */}
                     <button
                         onClick={() => handleArchive(!isArchived)}
@@ -315,9 +881,9 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate })
                         style={{
                             display: 'flex', alignItems: 'center', gap: '0.4rem',
                             padding: '0.4rem 0.9rem', borderRadius: '0.5rem',
-                            background: isArchived ? 'rgba(245,158,11,0.15)' : 'rgba(100,116,139,0.15)',
-                            border: isArchived ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(100,116,139,0.3)',
-                            color: isArchived ? '#fbbf24' : 'var(--text-secondary)',
+                            background: isArchived ? 'rgba(245,158,11,0.15)' : 'var(--bg-secondary)',
+                            border: isArchived ? '1px solid rgba(245,158,11,0.4)' : '1px solid var(--border-color-card)',
+                            color: isArchived ? 'var(--warning)' : 'var(--text-secondary)',
                             cursor: archiving ? 'not-allowed' : 'pointer',
                             fontSize: '0.85rem', fontWeight: 500, transition: 'all 0.2s',
                             opacity: archiving ? 0.7 : 1,
@@ -352,8 +918,8 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate })
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: '0.6rem',
                     padding: '0.6rem 1rem', marginBottom: '1.25rem',
-                    background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)',
-                    borderRadius: '0.6rem', color: '#fbbf24', fontSize: '0.875rem',
+                    background: 'var(--shadow-glow)', border: '1px solid var(--warning)',
+                    borderRadius: '0.6rem', color: 'var(--warning)', fontSize: '0.875rem',
                 }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>archive</span>
                     This application is archived. It won’t appear in your main dashboard view.
@@ -364,7 +930,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate })
             {showDeleteConfirm && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     zIndex: 9999, backdropFilter: 'blur(6px)'
                 }}>
                     <div style={{
@@ -404,13 +970,109 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate })
                 </div>
             )}
 
+            {/* Resume Override Confirmation Modal */}
+            {showResumeOverrideConfirm && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 9999, backdropFilter: 'blur(6px)'
+                }}>
+                    <div style={{
+                        background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem',
+                        border: '1px solid var(--primary)', maxWidth: '440px', width: '90%',
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                            <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.5rem' }}>info</span>
+                            <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Use Override Resume?</h2>
+                        </div>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+                            You are about to upload a final override version of your resume. 
+                            <strong> This version will be used by the Chrome extension when applying for this job.</strong>
+                            <br/><br/>
+                            We will also process this document to update your profile snapshot for this application.
+                        </p>
+                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => {
+                                    setShowResumeOverrideConfirm(false);
+                                    setPendingResumeFile(null);
+                                }}
+                                style={{
+                                    padding: '0.5rem 1.2rem', background: 'transparent',
+                                    border: '1px solid var(--border-color)', color: 'var(--text-secondary)',
+                                    borderRadius: '0.5rem', cursor: 'pointer'
+                                }}
+                            >Cancel</button>
+                            <button
+                                onClick={() => confirmOverride('resume')}
+                                disabled={uploadingOverride}
+                                style={{
+                                    padding: '0.5rem 1.2rem', background: 'var(--primary)',
+                                    border: 'none', color: 'white', borderRadius: '0.5rem',
+                                    cursor: uploadingOverride ? 'not-allowed' : 'pointer', fontWeight: 600,
+                                    opacity: uploadingOverride ? 0.7 : 1
+                                }}
+                            >{uploadingOverride ? 'Uploading...' : 'Confirm & Use'}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Cover Letter Override Confirmation Modal */}
+            {showCLOverrideConfirm && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 9999, backdropFilter: 'blur(6px)'
+                }}>
+                    <div style={{
+                        background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem',
+                        border: '1px solid var(--primary)', maxWidth: '440px', width: '90%',
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                            <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.5rem' }}>info</span>
+                            <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Use Override Cover Letter?</h2>
+                        </div>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+                            You are about to upload a final override version of your cover letter. 
+                            <strong> This version will be used by the Chrome extension when applying for this job.</strong>
+                        </p>
+                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => {
+                                    setShowCLOverrideConfirm(false);
+                                    setPendingCLFile(null);
+                                }}
+                                style={{
+                                    padding: '0.5rem 1.2rem', background: 'transparent',
+                                    border: '1px solid var(--border-color)', color: 'var(--text-secondary)',
+                                    borderRadius: '0.5rem', cursor: 'pointer'
+                                }}
+                            >Cancel</button>
+                            <button
+                                onClick={() => confirmOverride('cover_letter')}
+                                disabled={uploadingOverride}
+                                style={{
+                                    padding: '0.5rem 1.2rem', background: 'var(--primary)',
+                                    border: 'none', color: 'white', borderRadius: '0.5rem',
+                                    cursor: uploadingOverride ? 'not-allowed' : 'pointer', fontWeight: 600,
+                                    opacity: uploadingOverride ? 0.7 : 1
+                                }}
+                            >{uploadingOverride ? 'Uploading...' : 'Confirm & Use'}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <header style={{ marginBottom: '3rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                        {/* Clickable logo zone — click to upload a new one */}
+                        {/* Clickable logo zone — click to open logo picker */}
                         <div
-                            onClick={() => logoInputRef.current?.click()}
-                            title="Click to upload a logo"
+                            onClick={() => setShowLogoPicker(true)}
+                            title="Click to set a logo"
                             style={{
                                 width: '72px', height: '72px', borderRadius: '12px', flexShrink: 0,
                                 background: logoUrl ? 'white' : 'rgba(255,255,255,0.05)',
@@ -439,10 +1101,32 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate })
                                 <span className="material-symbols-outlined" style={{ color: 'white', fontSize: '1.25rem' }}>edit</span>
                             </div>
                         </div>
+                        {/* Hidden file input kept for legacy compatibility */}
                         <input type="file" ref={logoInputRef} accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
-                        <div>
-                            <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem', lineHeight: '1.2' }}>{app.job_title}</h1>
-                            <div style={{ fontSize: '1.5rem', color: 'var(--text-secondary)' }}>{app.company}</div>
+                        <input type="file" ref={resumeOverrideInputRef} accept=".docx,.pdf,.txt" style={{ display: 'none' }} onChange={(e) => onFileSelected(e, 'resume')} />
+                        <input type="file" ref={clOverrideInputRef} accept=".docx,.pdf,.txt" style={{ display: 'none' }} onChange={(e) => onFileSelected(e, 'cover_letter')} />
+                        <div style={{ flex: 1 }}>
+                            {isEditing ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    <input
+                                        type="text"
+                                        value={formData.job_title}
+                                        onChange={e => setFormData({ ...formData, job_title: e.target.value })}
+                                        style={{ fontSize: '2.5rem', fontWeight: 800, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.5rem', color: 'var(--text-primary)', width: '100%', padding: '0.25rem 0.75rem' }}
+                                    />
+                                    <input
+                                        type="text"
+                                        value={formData.company}
+                                        onChange={e => setFormData({ ...formData, company: e.target.value })}
+                                        style={{ fontSize: '1.5rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.5rem', color: 'var(--text-secondary)', width: '100%', padding: '0.25rem 0.75rem' }}
+                                    />
+                                </div>
+                            ) : (
+                                <>
+                                    <h1 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '0.25rem', lineHeight: '1.2', letterSpacing: '-0.02em' }}>{app.job_title}</h1>
+                                    <div style={{ fontSize: '1.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{app.company}</div>
+                                </>
+                            )}
                         </div>
                     </div>
                     
@@ -466,15 +1150,121 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate })
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem', background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: '0.5rem' }}>
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', 
+                    gap: '2rem', 
+                    marginBottom: '2.5rem', 
+                    background: 'var(--bg-secondary)', 
+                    padding: '2rem', 
+                    borderRadius: '1rem',
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
+                }}>
 
                     <div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Job Link</div>
-                        {app.job_url ? (
-                            <a href={app.job_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 500, wordBreak: 'break-all' }}>
-                                Visit Listing 🔗
-                            </a>
-                        ) : <span style={{ color: 'var(--text-muted)' }}>N/A</span>}
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={formData.job_url || ''}
+                                onChange={e => setFormData({ ...formData, job_url: e.target.value })}
+                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
+                            />
+                        ) : (
+                            app.job_url ? (
+                                <a href={app.job_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 500, wordBreak: 'break-all', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                    Visit Listing <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>open_in_new</span>
+                                </a>
+                            ) : <span style={{ color: 'var(--text-muted)' }}>N/A</span>
+                        )}
+                    </div>
+
+                    <div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Apply Link</div>
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={formData.apply_url || ''}
+                                onChange={e => setFormData({ ...formData, apply_url: e.target.value })}
+                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
+                            />
+                        ) : (
+                            app.apply_url ? (
+                                <a href={app.apply_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 500, wordBreak: 'break-all', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                    Direct Apply <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>rocket_launch</span>
+                                </a>
+                            ) : <span style={{ color: 'var(--text-muted)' }}>N/A</span>
+                        )}
+                    </div>
+
+                    <div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Salary Range</div>
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={formData.salary_range || ''}
+                                onChange={e => setFormData({ ...formData, salary_range: e.target.value })}
+                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
+                            />
+                        ) : (
+                            <div style={{ fontWeight: 500, color: app.salary_range ? '#fbbf24' : 'inherit' }}>{app.salary_range || 'Not Listed'}</div>
+                        )}
+                    </div>
+
+                    <div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Deadline</div>
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={formData.deadline || ''}
+                                onChange={e => setFormData({ ...formData, deadline: e.target.value })}
+                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
+                            />
+                        ) : (
+                            <div style={{ fontWeight: 500, color: app.deadline ? '#ef4444' : 'inherit' }}>{app.deadline || 'None'}</div>
+                        )}
+                    </div>
+
+                    <div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Location Type</div>
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={formData.location_type || ''}
+                                onChange={e => setFormData({ ...formData, location_type: e.target.value })}
+                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
+                            />
+                        ) : (
+                            <div style={{ fontWeight: 500 }}>{app.location_type || 'N/A'}</div>
+                        )}
+                    </div>
+
+                    <div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Location</div>
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={formData.location || ''}
+                                onChange={e => setFormData({ ...formData, location: e.target.value })}
+                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
+                            />
+                        ) : (
+                            <div style={{ fontWeight: 500 }}>{app.location || 'Remote'}</div>
+                        )}
+                    </div>
+
+                    <div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Job Type</div>
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={formData.job_type || ''}
+                                onChange={e => setFormData({ ...formData, job_type: e.target.value })}
+                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
+                            />
+                        ) : (
+                            <div style={{ fontWeight: 500 }}>{app.job_type || 'Full-time'}</div>
+                        )}
                     </div>
 
                     <div>
@@ -484,168 +1274,493 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate })
 
                     <div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Date Posted</div>
-                        <div style={{ fontWeight: 500 }}>{app.date_posted || 'Unknown'}</div>
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={formData.date_posted || ''}
+                                onChange={e => setFormData({ ...formData, date_posted: e.target.value })}
+                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
+                            />
+                        ) : (
+                            <div style={{ fontWeight: 500 }}>{app.date_posted || 'Unknown'}</div>
+                        )}
+                    </div>
+
+                    <div 
+                        onClick={async () => {
+                            // Cycle: null -> true -> false -> null
+                            let nextVal = null;
+                            const current = app.relocation;
+                            if (current === null || current === undefined || current === '' || current === 'None') {
+                                nextVal = true;
+                            } else if (current === 'true' || current === 'True' || current === true) {
+                                nextVal = false;
+                            } else {
+                                nextVal = null;
+                            }
+                            
+                            // Update state
+                            const relocationVal = nextVal === true ? 'true' : (nextVal === false ? 'false' : null);
+                            if (isEditing) {
+                                setFormData({ ...formData, relocation: relocationVal });
+                            } else {
+                                onUpdate(app.id, { relocation: relocationVal });
+                                try {
+                                    await fetch(`${API_URL}/api/applications/${app.id}`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ relocation: nextVal })
+                                    });
+                                } catch (err) {
+                                    console.warn('Failed to save relocation update', err);
+                                }
+                            }
+                        }}
+                        style={{ cursor: 'pointer', userSelect: 'none' }}
+                        title="Click to toggle relocation status (Covered -> Not Covered -> Not Provided)"
+                    >
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Relocation</div>
+                        <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            {(isEditing ? formData.relocation : app.relocation) === 'true' || (isEditing ? formData.relocation : app.relocation) === 'True' || (isEditing ? formData.relocation : app.relocation) === true ? (
+                                'Required'
+                            ) : (isEditing ? formData.relocation : app.relocation) === 'false' || (isEditing ? formData.relocation : app.relocation) === 'False' || (isEditing ? formData.relocation : app.relocation) === false ? (
+                                'Not Required'
+                            ) : (
+                                'Not Provided'
+                            )}
+                        </div>
                     </div>
 
                     <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Salary Range</div>
-                        <div style={{ fontWeight: 500, color: app.salary_range ? '#fbbf24' : 'inherit' }}>{app.salary_range || 'Not Listed'}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Interest Level</div>
+                        <div style={{ marginTop: '0.25rem' }}>
+                            <InterestStars 
+                                level={isEditing ? formData.interest_level : app.interest_level} 
+                                size="1.4rem"
+                                onChange={async (newLevel) => {
+                                    if (isEditing) {
+                                        setFormData({ ...formData, interest_level: newLevel });
+                                    } else {
+                                        try {
+                                            const res = await fetch(`${API_URL}/api/applications/${app.id}`, {
+                                                method: 'PUT',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ interest_level: newLevel })
+                                            });
+                                            if (res.ok && onUpdate) onUpdate(app.id, { interest_level: newLevel });
+                                        } catch (err) {
+                                            console.error(err);
+                                        }
+                                    }
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    <div style={{ gridColumn: 'span 2' }}>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Personal Remarks & Notes</div>
+                        {isEditing ? (
+                            <textarea
+                                value={formData.remarks || ''}
+                                onChange={e => setFormData({ ...formData, remarks: e.target.value })}
+                                rows={2}
+                                placeholder="Add your own notes here..."
+                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.5rem', color: 'var(--text-primary)', width: '100%', padding: '0.75rem', fontSize: '0.9rem', outline: 'none', resize: 'vertical' }}
+                            />
+                        ) : (
+                            <div style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontStyle: app.remarks ? 'italic' : 'normal', lineHeight: '1.6' }}>
+                                {app.remarks ? `"${app.remarks}"` : <span style={{ opacity: 0.5 }}>No notes added yet. Click edit to add remarks.</span>}
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                <div style={{ marginTop: '1.5rem' }}>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Job Description</div>
-                    <JobDescriptionContent text={app.job_description} />
-                </div>
+
             </header>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '3rem' }}>
+            <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'minmax(0, 2fr) minmax(300px, 1fr)', 
+                gap: '2.5rem', 
+                marginBottom: '3rem',
+                alignItems: 'start'
+            }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    {/* Remarks moved up to header */}
+                    
+                    <div className="card" style={{ padding: '2rem' }}>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="material-symbols-outlined">description</span>
+                            Description & Requirements
+                        </div>
+                        <JobDescriptionContent text={app.job_description} />
+                    </div>
 
-                {/* Documents Grid - Simplified */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                    {/* AI Insights - Moved below Description */}
+                    <div className="card" style={{ padding: '2rem' }}>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="material-symbols-outlined">auto_awesome</span>
+                            AI Insights & Tailoring Summary
+                        </div>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                            {/* Resume Changes */}
+                            <div>
+                                <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Resume Improvements</h4>
+                                {app.resume_changes_summary ? (
+                                    <ul style={{ paddingLeft: '1.2rem', margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                                        {((typeof app.resume_changes_summary === 'string'
+                                            ? JSON.parse(app.resume_changes_summary || '[]')
+                                            : app.resume_changes_summary) || []).map((change, i) => (
+                                                <li key={i}>{change}</li>
+                                            ))}
+                                    </ul>
+                                ) : (
+                                    <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No summary available.</p>
+                                )}
+                            </div>
+
+                            {/* Cover Letter Refinements */}
+                            <div>
+                                <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Cover Letter History</h4>
+                                {app.cover_letter_changes_summary && (typeof app.cover_letter_changes_summary === 'string' ? JSON.parse(app.cover_letter_changes_summary) : app.cover_letter_changes_summary).length > 0 ? (
+                                    <ul style={{ paddingLeft: '1.2rem', margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                                        {((typeof app.cover_letter_changes_summary === 'string'
+                                            ? JSON.parse(app.cover_letter_changes_summary || '[]')
+                                            : app.cover_letter_changes_summary) || []).map((change, i) => (
+                                                <li key={i}>{change}</li>
+                                            ))}
+                                    </ul>
+                                ) : (
+                                    <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No manual refinements made yet.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {/* Company Ratings Card */}
+                    <div className="card" style={{ padding: '1.25rem' }}>
+                        <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>analytics</span>
+                            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Company Insights</h3>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {/* Glassdoor */}
+                            <a href={app.glassdoor_url || `https://www.glassdoor.com/Search/results.htm?keyword=${encodeURIComponent(app.company)}`} 
+                               target="_blank" rel="noopener noreferrer"
+                               className="rating-row"
+                            >
+                                <img src="https://www.glassdoor.com/favicon.ico" alt="" style={{ width: '16px', height: '16px' }} />
+                                <span style={{ fontWeight: 500 }}>Glassdoor</span>
+                                <span style={{ marginLeft: 'auto', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                    {app.glassdoor_rating || 'Search'} <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>search</span>
+                                </span>
+                            </a>
+
+                            {/* Indeed */}
+                            <a href={app.indeed_url || `https://www.indeed.com/cmp/${encodeURIComponent(app.company)}`} 
+                               target="_blank" rel="noopener noreferrer"
+                               className="rating-row"
+                            >
+                                <img src="https://www.indeed.com/favicon.ico" alt="" style={{ width: '16px', height: '16px' }} />
+                                <span style={{ fontWeight: 500 }}>Indeed</span>
+                                <span style={{ marginLeft: 'auto', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                    {app.indeed_rating || 'Search'} <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>search</span>
+                                </span>
+                            </a>
+
+                            {/* LinkedIn */}
+                            <a href={app.linkedin_url || `https://www.linkedin.com/search/results/companies/?keywords=${encodeURIComponent(app.company)}`} 
+                               target="_blank" rel="noopener noreferrer"
+                               className="rating-row"
+                            >
+                                <img src="https://www.linkedin.com/favicon.ico" alt="" style={{ width: '16px', height: '16px' }} />
+                                <span style={{ fontWeight: 500 }}>LinkedIn</span>
+                                <span style={{ marginLeft: 'auto', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                    {app.linkedin_rating || 'Search'} <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>search</span>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+
 
                     {/* Resume Card */}
-                    <div className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>
-                            <h3 style={{ fontSize: '1.2rem', margin: 0 }}>📄 Resume</h3>
+                    <div className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>description</span>
+                            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Resumes</h3>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
-                            {/* Original Resume Button */}
-                            <button className="doc-row-btn" onClick={() => handlePreview('original', app.original_resume_path)}>
-                                <span style={{ fontSize: '1.2rem' }}>📎</span>
-                                <div style={{ textAlign: 'left', overflow: 'hidden' }}>
-                                    <div style={{ fontWeight: 500 }}>Original Resume</div>
-                                    <div style={{ fontSize: '0.75rem', opacity: 0.7, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{app.original_resume_path}</div>
-                                </div>
-                                <span style={{ marginLeft: 'auto', fontSize: '1.2rem' }}>👁️</span>
-                            </button>
-
-                            {/* Tailored Version Button */}
-                            <div style={{ marginTop: 'auto' }}>
-                                <button className="doc-row-btn"
-                                    onClick={() => handlePreview('tailored', app.tailored_resume_path)}
-                                    style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--primary)', position: 'relative' }}
-                                >
-                                    <span style={{ fontSize: '1.2rem' }}>✨</span>
-                                    <div style={{ textAlign: 'left' }}>
-                                        <div style={{ fontWeight: 500, color: 'var(--primary)' }}>Tailored Version</div>
-                                        <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>Optimized for this role</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+                            {/* Reference Resume */}
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600 }}>Reference</div>
+                                <button className="doc-row-btn btn-mini-doc" onClick={() => handlePreview('original', app.original_resume_path)}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>attach_file</span>
+                                    <div style={{ textAlign: 'left', overflow: 'hidden' }}>
+                                        <div style={{ fontWeight: 500, fontSize: '0.85rem' }}>Original Upload</div>
                                     </div>
-                                    <span style={{ marginLeft: 'auto', fontSize: '1.2rem' }}>👁️</span>
+                                    <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '1rem', opacity: 0.6 }}>visibility</span>
                                 </button>
+                            </div>
+
+                            {/* Generated Version */}
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
+                                    Generated
+                                    {app.active_resume_type === 'generated' && <span style={{ color: 'var(--success)', fontWeight: 700 }}>● ACTIVE (FINAL)</span>}
+                                </div>
+                                <div style={{ position: 'relative' }}>
+                                    <button 
+                                        className={`doc-row-btn ${app.active_resume_type === 'generated' ? 'doc-active' : ''}`}
+                                        onClick={() => handlePreview('tailored', app.tailored_resume_path)}
+                                        style={{ borderStyle: app.active_resume_type === 'generated' ? 'solid' : 'dashed' }}
+                                    >
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: app.active_resume_type === 'generated' ? 'var(--primary)' : 'inherit' }}>auto_awesome</span>
+                                        <div style={{ textAlign: 'left' }}>
+                                            <div style={{ fontWeight: 600 }}>Tailored Resume</div>
+                                            <div style={{ fontSize: '0.7rem', opacity: 0.7 }}>AI Optimized</div>
+                                        </div>
+                                        <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '1.2rem', opacity: 0.8 }}>visibility</span>
+                                    </button>
+                                    
+                                    <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem' }}>
+                                        {app.active_resume_type !== 'generated' && (
+                                            <button 
+                                                className="btn-secondary btn-mini" 
+                                                onClick={() => toggleActiveVersion('resume', 'generated')}
+                                                style={{ flex: 1, fontSize: '0.7rem' }}
+                                            >Use as Final</button>
+                                        )}
+                                        <button 
+                                            className="btn-secondary btn-mini" 
+                                            onClick={handleRegenerateResume}
+                                            disabled={regeneratingResume}
+                                            style={{ flex: 1, fontSize: '0.7rem' }}
+                                        >Regenerate</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Final / Override Version */}
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
+                                    Custom Final
+                                    {app.active_resume_type === 'override' && <span style={{ color: 'var(--success)', fontWeight: 700 }}>● ACTIVE (FINAL)</span>}
+                                </div>
+                                {app.override_resume_path ? (
+                                    <>
+                                        <button 
+                                            className={`doc-row-btn ${app.active_resume_type === 'override' ? 'doc-active' : ''}`}
+                                            onClick={() => handlePreview('override', app.override_resume_path)}
+                                        >
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: 'var(--primary)' }}>verified</span>
+                                            <div style={{ textAlign: 'left', overflow: 'hidden' }}>
+                                                <div style={{ fontWeight: 600 }}>Custom Version</div>
+                                                <div style={{ fontSize: '0.7rem', opacity: 0.7, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{app.override_resume_path.split('/').pop()}</div>
+                                            </div>
+                                            <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '1.2rem' }}>visibility</span>
+                                        </button>
+                                        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem' }}>
+                                            {app.active_resume_type !== 'override' && (
+                                                <button 
+                                                    className="btn-primary btn-mini" 
+                                                    onClick={() => toggleActiveVersion('resume', 'override')}
+                                                    style={{ flex: 1, fontSize: '0.7rem' }}
+                                                >Set Active</button>
+                                            )}
+                                            <button 
+                                                className="btn-secondary btn-mini" 
+                                                onClick={() => handleOverrideUpload('resume')}
+                                                style={{ flex: 1, fontSize: '0.7rem' }}
+                                            >Replace</button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <button 
+                                        className="doc-row-btn" 
+                                        style={{ borderStyle: 'dashed', background: 'transparent' }}
+                                        onClick={() => handleOverrideUpload('resume')}
+                                    >
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', opacity: 0.5 }}>upload_file</span>
+                                        <div style={{ textAlign: 'left' }}>
+                                            <div style={{ fontWeight: 500, opacity: 0.7 }}>Upload Final</div>
+                                            <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>Overwrite generated version</div>
+                                        </div>
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
 
                     {/* Cover Letter Card */}
-                    <div className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>
-                            <h3 style={{ fontSize: '1.2rem', margin: 0 }}>✉️ Cover Letter</h3>
+                    <div className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>mail</span>
+                            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Cover Letter</h3>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
-                            {app.cover_letter_path ? (
-                                <div style={{ marginTop: 'auto' }}>
-                                    <button className="doc-row-btn"
-                                        onClick={() => handlePreview('cover', app.cover_letter_path)}
-                                        style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--primary)' }}
-                                    >
-                                        <span style={{ fontSize: '1.2rem' }}>📝</span>
-                                        <div style={{ textAlign: 'left' }}>
-                                            <div style={{ fontWeight: 500, color: 'var(--primary)' }}>Generated Version</div>
-                                            <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>Ready to send</div>
-                                        </div>
-                                        <span style={{ marginLeft: 'auto', fontSize: '1.2rem' }}>👁️</span>
-                                    </button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+                            {/* Generated Version */}
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
+                                    Generated
+                                    {app.active_cover_letter_type === 'generated' && <span style={{ color: 'var(--success)', fontWeight: 700 }}>● ACTIVE (FINAL)</span>}
                                 </div>
-                            ) : (
-                                <div style={{
-                                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    border: '1px dashed var(--border-color)', borderRadius: '8px', color: 'var(--text-muted)'
-                                }}>
-                                    <div style={{ textAlign: 'center' }}>
-                                        <p style={{ margin: '0 0 0.5rem 0' }}>Not generated yet</p>
-                                        <button style={{
-                                            padding: '0.5rem 1rem', background: 'var(--primary)', color: 'white',
-                                            border: 'none', borderRadius: '4px', cursor: 'pointer'
-                                        }}>
-                                            Generate Now
+                                {app.cover_letter_path ? (
+                                    <div style={{ position: 'relative' }}>
+                                        <button 
+                                            className={`doc-row-btn ${app.active_cover_letter_type === 'generated' ? 'doc-active' : ''}`}
+                                            onClick={() => handlePreview('cover', app.cover_letter_path)}
+                                        >
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: app.active_cover_letter_type === 'generated' ? 'var(--primary)' : 'inherit' }}>edit_note</span>
+                                            <div style={{ textAlign: 'left' }}>
+                                                <div style={{ fontWeight: 600 }}>Generated Letter</div>
+                                                <div style={{ fontSize: '0.7rem', opacity: 0.7 }}>AI Written</div>
+                                            </div>
+                                            <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '1.2rem', opacity: 0.8 }}>visibility</span>
                                         </button>
+                                        
+                                        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem' }}>
+                                            {app.active_cover_letter_type !== 'generated' && (
+                                                <button 
+                                                    className="btn-secondary btn-mini" 
+                                                    onClick={() => toggleActiveVersion('cover_letter', 'generated')}
+                                                    style={{ flex: 1, fontSize: '0.7rem' }}
+                                                >Use as Final</button>
+                                            )}
+                                            <button 
+                                                className="btn-secondary btn-mini" 
+                                                onClick={handleRegenerateCL}
+                                                disabled={regeneratingCL}
+                                                style={{ flex: 1, fontSize: '0.7rem' }}
+                                            >Regenerate</button>
+                                        </div>
                                     </div>
+                                ) : (
+                                    <div style={{ padding: '1rem', border: '1px dashed var(--border-color)', borderRadius: '8px', textAlign: 'center' }}>
+                                         <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem' }}>Not generated</p>
+                                         <button className="btn-primary btn-mini" onClick={handleRegenerateCL}>Generate</button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Final / Override Version */}
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
+                                    Custom Final
+                                    {app.active_cover_letter_type === 'override' && <span style={{ color: 'var(--success)', fontWeight: 700 }}>● ACTIVE (FINAL)</span>}
                                 </div>
-                            )}
+                                {app.override_cover_letter_path ? (
+                                    <>
+                                        <button 
+                                            className={`doc-row-btn ${app.active_cover_letter_type === 'override' ? 'doc-active' : ''}`}
+                                            onClick={() => handlePreview('override_cl', app.override_cover_letter_path)}
+                                        >
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: 'var(--primary)' }}>verified</span>
+                                            <div style={{ textAlign: 'left', overflow: 'hidden' }}>
+                                                <div style={{ fontWeight: 600 }}>Custom Version</div>
+                                                <div style={{ fontSize: '0.7rem', opacity: 0.7, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{app.override_cover_letter_path.split('/').pop()}</div>
+                                            </div>
+                                            <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '1.2rem' }}>visibility</span>
+                                        </button>
+                                        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem' }}>
+                                            {app.active_cover_letter_type !== 'override' && (
+                                                <button 
+                                                    className="btn-primary btn-mini" 
+                                                    onClick={() => toggleActiveVersion('cover_letter', 'override')}
+                                                    style={{ flex: 1, fontSize: '0.7rem' }}
+                                                >Set Active</button>
+                                            )}
+                                            <button 
+                                                className="btn-secondary btn-mini" 
+                                                onClick={() => handleOverrideUpload('cover_letter')}
+                                                style={{ flex: 1, fontSize: '0.7rem' }}
+                                            >Replace</button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <button 
+                                        className="doc-row-btn" 
+                                        style={{ borderStyle: 'dashed', background: 'transparent' }}
+                                        onClick={() => handleOverrideUpload('cover_letter')}
+                                    >
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', opacity: 0.5 }}>upload_file</span>
+                                        <div style={{ textAlign: 'left' }}>
+                                            <div style={{ fontWeight: 500, opacity: 0.7 }}>Upload Final</div>
+                                            <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>Overwrite generated version</div>
+                                        </div>
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div> {/* End Grid Container */}
 
-                <style>{`
-                    .doc-row-btn {
-                        display: flex;
-                        align-items: center;
-                        gap: 1rem;
-                        width: 100%;
-                        padding: 1rem;
-                        background: var(--bg-secondary);
-                        border: 1px solid var(--border-color);
-                        border-radius: 8px;
-                        color: var(--text-primary);
-                        cursor: pointer;
-                        transition: all 0.2s;
-                    }
-                    .doc-row-btn:hover {
-                        transform: translateY(-2px);
-                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                        border-color: var(--text-muted);
-                    }
-                `}</style>
+            <style>{`
+                .doc-row-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    width: 100%;
+                    padding: 1rem;
+                    background: var(--bg-secondary);
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    color: var(--text-primary);
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .doc-row-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    border-color: var(--text-muted);
+                }
+                .rating-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    padding: 0.75rem;
+                    background: var(--bg-secondary);
+                    border: 1px solid var(--border-color);
+                    border-radius: 6px;
+                    color: var(--text-primary);
+                    text-decoration: none;
+                    transition: all 0.2s;
+                    font-size: 0.9rem;
+                }
+                .rating-row:hover {
+                    background: var(--bg-tertiary);
+                    border-color: var(--primary);
+                    transform: translateX(4px);
+                }
+                .btn-mini-doc {
+                    padding: 0.5rem 0.75rem !important;
+                    gap: 0.5rem !important;
+                }
+                .doc-active {
+                    background: var(--bg-card) !important;
+                    border: 2px solid var(--primary) !important;
+                    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2) !important;
+                }
+            `}</style>
 
-            </div>
-
-            {/* Changes & Insights */}
-            <div className="card" style={{ marginBottom: '2rem' }}>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>✨ AI Insights & Changes</h3>
-                <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1fr 1fr' }}>
-
-                    {/* Resume Changes */}
-                    <div>
-                        <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Resume Improvements</h4>
-                        {app.resume_changes_summary ? (
-                            <ul style={{ paddingLeft: '1.2rem', margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5' }}>
-                                {(typeof app.resume_changes_summary === 'string'
-                                    ? JSON.parse(app.resume_changes_summary)
-                                    : app.resume_changes_summary).map((change, i) => (
-                                        <li key={i}>{change}</li>
-                                    ))}
-                            </ul>
-                        ) : (
-                            <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.9rem' }}>No summary available.</p>
-                        )}
-                    </div>
-
-                    {/* Cover Letter Refinements */}
-                    <div>
-                        <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Cover Letter History</h4>
-                        {app.cover_letter_changes_summary && (typeof app.cover_letter_changes_summary === 'string' ? JSON.parse(app.cover_letter_changes_summary) : app.cover_letter_changes_summary).length > 0 ? (
-                            <ul style={{ paddingLeft: '1.2rem', margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5' }}>
-                                {(typeof app.cover_letter_changes_summary === 'string'
-                                    ? JSON.parse(app.cover_letter_changes_summary)
-                                    : app.cover_letter_changes_summary).map((change, i) => (
-                                        <li key={i}>{change}</li>
-                                    ))}
-                            </ul>
-                        ) : (
-                            <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.9rem' }}>No manual refinements made.</p>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Modal */}
+            {/* Preview Modal */}
             {previewFile && (
                 <PreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />
             )}
 
+            {/* Logo Picker Modal */}
+            {showLogoPicker && (
+                <LogoPickerModal
+                    companyName={app.company}
+                    onSelect={handleLogoSelect}
+                    onClose={() => setShowLogoPicker(false)}
+                />
+            )}
         </div>
     );
 };

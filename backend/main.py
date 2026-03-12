@@ -1,12 +1,13 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import os
 import shutil
 import tempfile
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from dotenv import load_dotenv
+import json
 
 from services.document_service import DocumentService
 from services.ai_service import AIService
@@ -41,18 +42,23 @@ class RefineRequest(BaseModel):
     instructions: str
     original_filename: str
     original_text_content: Optional[str] = None # To preserve original diff context
+    additional_context: Optional[str] = None
 
 class CoverLetterRequest(BaseModel):
     resume_text: str
     job_description: str
     base_filename: str
+    additional_context: Optional[str] = None
 
 class RefineCoverLetterRequest(BaseModel):
     content: str
     instructions: str
     base_filename: str
+    additional_context: Optional[str] = None
 
 class ApplicationSaveRequest(BaseModel):
+    id: Optional[int] = None
+    application_id: Optional[int] = None
     job_title: Optional[str] = "Unknown Role"
     company: Optional[str] = "Unknown Company"
     company_logo: Optional[str] = ""
@@ -62,7 +68,7 @@ class ApplicationSaveRequest(BaseModel):
     original_resume_path: Optional[str] = ""
     tailored_resume_path: Optional[str] = ""
     cover_letter_path: Optional[str] = ""
-    resume_data: Optional[dict] = {}
+    resume_data: Optional[Any] = {}
     cover_letter_text: Optional[str] = ""
     salary_range: Optional[str] = ""
     date_posted: Optional[str] = ""
@@ -70,11 +76,28 @@ class ApplicationSaveRequest(BaseModel):
     job_type: Optional[str] = ""
     location_type: Optional[str] = ""
     location: Optional[str] = ""
-    relocation: Optional[bool] = False
+    relocation: Optional[Any] = None
     interest_level: Optional[str] = ""
     remarks: Optional[str] = ""
-    resume_changes_summary: Optional[list] = []
-    cover_letter_changes_summary: Optional[list] = []
+    status: Optional[str] = None
+    is_archived: Optional[Any] = None
+    resume_changes_summary: Optional[Any] = []
+    cover_letter_changes_summary: Optional[Any] = []
+    kanban_order: Optional[int] = 0
+    
+    # Company Ratings & Links
+    glassdoor_rating: Optional[str] = None
+    glassdoor_url: Optional[str] = None
+    indeed_rating: Optional[str] = None
+    indeed_url: Optional[str] = None
+    linkedin_rating: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    profile_snapshot: Optional[Any] = None
+    override_resume_path: Optional[str] = None
+    override_cover_letter_path: Optional[str] = None
+    active_resume_type: Optional[str] = 'generated'
+    active_cover_letter_type: Optional[str] = 'generated'
+
 
 class StatusUpdateRequest(BaseModel):
     status: str
@@ -93,7 +116,6 @@ class EducationModel(BaseModel):
     start_date: Optional[str] = ""
     end_date: Optional[str] = ""
 
-from typing import List
 
 class ProfileModel(BaseModel):
     first_name: Optional[str] = ""
@@ -158,9 +180,10 @@ async def get_app_config():
     config = get_config()
     
     # Use the live prompts from ai_service, which are already merged with defaults
-    config["prompts"] = ai_service.prompts
-        
-    return config
+    config_dict: Dict[str, Any] = config
+    config_dict.update({"prompts": ai_service.prompts})
+    
+    return config_dict
 
 @app.post("/api/config")
 async def update_app_config(config: dict):
@@ -328,7 +351,9 @@ async def tailor_resume(
     resume: Optional[UploadFile] = File(None),
     job_description: Optional[str] = Form(None),
     job_url: Optional[str] = Form(None),
-    use_default_resume: bool = Form(False)
+    use_default_resume: bool = Form(False),
+    additional_context_paths: Optional[str] = Form(None), # JSON list of paths
+    additional_files: List[UploadFile] = File([])
 ):
     """
     Tailor a resume based on a job description.
@@ -336,33 +361,45 @@ async def tailor_resume(
     Supports using a default local resume file for testing.
     """
     try:
-        # Handle Resume Source
         config = get_config()
+        profile = database_service.get_profile()
         file_path = None
         original_filename = "resume.docx"
         
-        if use_default_resume and config.get("default_resume_path"):
-            # Use local default file
-            default_path = config["default_resume_path"]
-            if not os.path.exists(default_path):
-                raise HTTPException(status_code=404, detail=f"Default resume not found at {default_path}")
-            
-            # Copy to uploads folder to normalize processing
-            original_filename = os.path.basename(default_path)
-            file_path = f"uploads/{original_filename}"
-            shutil.copy2(default_path, file_path)
-            
-        elif resume:
+        if resume:
             # Use uploaded file
             original_filename = resume.filename
             file_path = f"uploads/{original_filename}"
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(resume.file, buffer)
+        elif profile.get("base_resume_path"):
+            # Use base resume from profile
+            base_resume_path = profile["base_resume_path"]
+            if not os.path.exists(base_resume_path):
+                # Check absolute vs relative
+                if not base_resume_path.startswith('/'):
+                    # might be relative to project root?
+                    pass
+                else:
+                    raise HTTPException(status_code=404, detail=f"Base resume not found at {base_resume_path}")
+            
+            original_filename = os.path.basename(base_resume_path)
+            file_path = f"uploads/{original_filename}"
+            shutil.copy2(base_resume_path, file_path)
+        elif use_default_resume and config.get("default_resume_path"):
+            # Fallback to config default (kept for legacy/test support)
+            default_path = config["default_resume_path"]
+            if not os.path.exists(default_path):
+                raise HTTPException(status_code=404, detail=f"Default resume not found at {default_path}")
+            
+            original_filename = os.path.basename(default_path)
+            file_path = f"uploads/{original_filename}"
+            shutil.copy2(default_path, file_path)
         else:
-            raise HTTPException(status_code=400, detail="No resume provided. Upload a file or use default.")
+            raise HTTPException(status_code=400, detail="No resume provided. Please upload a resume or set a Base Resume in your profile.")
 
         # Handle Job Description Source
-        final_job_description = job_description
+        final_job_description: str = job_description or ""
         if job_url:
             print(f"Scraping job from: {job_url}")
             try:
@@ -375,13 +412,67 @@ async def tailor_resume(
             except Exception as e:
                  print(f"Warning: Scraper failed: {e}")
                  # If scraping failed and no text provided, we must error out with specific message
-                 if not job_description:
+                 if not final_job_description:
                      raise HTTPException(status_code=400, detail=f"Could not auto-scrape content from URL. Please paste the job description manually.")
 
         if not final_job_description:
             raise HTTPException(status_code=400, detail="No job description provided (text or URL)")
             
         print(f"Processing resume: {original_filename}")
+        
+        # --- Handle Additional Context Documents ---
+        additional_context_chunks: List[str] = []
+        
+        # 1. Process paths from profile
+        if additional_context_paths:
+            try:
+                paths = json.loads(str(additional_context_paths))
+                for path in paths:
+                    if os.path.exists(path):
+                         # Extract text using document_service
+                         path_str = str(path)
+                         if path_str.endswith('.docx'):
+                             doc_data = document_service.parse_docx(path)
+                             text = "\n".join(doc_data.get("full_text", []))
+                             additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path)} ---\n{text}\n")
+                         elif path_str.endswith('.pdf'):
+                             text = document_service.extract_text_from_pdf(path)
+                             if text:
+                                 additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path)} ---\n{text}\n")
+                         elif path_str.endswith('.txt'):
+                             text = document_service.extract_text_from_txt(path)
+                             if text:
+                                 additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path)} ---\n{text}\n")
+            except Exception as e:
+                print(f"Error processing additional context paths: {e}")
+
+        # 2. Process newly uploaded files
+        for adj_file in additional_files:
+            try:
+                # Save temporarily to parse
+                suffix = os.path.splitext(adj_file.filename)[1] if adj_file.filename else ""
+                with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+                    shutil.copyfileobj(adj_file.file, tmp)
+                    tmp_path = tmp.name
+                
+                if adj_file.filename.endswith('.docx'):
+                    doc_data = document_service.parse_docx(tmp_path)
+                    text = "\n".join(doc_data.get("full_text", []))
+                    additional_context_chunks.append(f"\n--- Context Document: {adj_file.filename} ---\n{text}\n")
+                elif adj_file.filename.endswith('.pdf'):
+                    text = document_service.extract_text_from_pdf(tmp_path)
+                    if text:
+                        additional_context_chunks.append(f"\n--- Context Document: {adj_file.filename} ---\n{text}\n")
+                elif adj_file.filename.endswith('.txt'):
+                    text = document_service.extract_text_from_txt(tmp_path)
+                    if text:
+                        additional_context_chunks.append(f"\n--- Context Document: {adj_file.filename} ---\n{text}\n")
+                
+                os.remove(tmp_path)
+            except Exception as e:
+                print(f"Error processing additional uploaded file: {e}")
+        
+        all_additional_context = "".join(additional_context_chunks)
         
         # 1. Parse Resume
         resume_data = document_service.parse_docx(file_path)
@@ -393,7 +484,7 @@ async def tailor_resume(
                 document_service.create_pdf_from_docx(file_path, original_pdf_path)
         
         # 2. Tailor with AI
-        tailored_resume_data = await ai_service.tailor_resume(resume_data, final_job_description)
+        tailored_resume_data = await ai_service.tailor_resume(resume_data, final_job_description, additional_context=all_additional_context)
         
         # 3. Generate Output
         base_name = os.path.splitext(original_filename)[0]
@@ -434,13 +525,15 @@ async def tailor_resume(
             print(f"⚠️ Redline generation failed: {e}")
         
         # Create preview text (first 500 characters of content)
-        preview_text = ""
+        preview_chunks: List[str] = []
         for section in tailored_resume_data.get("sections", [])[:3]:  # First 3 sections
             if section.get("title") and section.get("type") != "table":
-                preview_text += f"{section['title']}\n"
+                preview_chunks.append(f"{section['title']}\n")
                 for item in section.get("content", [])[:2]:  # First 2 items per section
-                    preview_text += f"• {item[:100]}...\n" if len(str(item)) > 100 else f"• {item}\n"
-                preview_text += "\n"
+                    preview_chunks.append(f"• {item[:100]}...\n" if len(str(item)) > 100 else f"• {item}\n")
+                preview_chunks.append("\n")
+        
+        preview_text = "".join(preview_chunks)
         
         if not preview_text:
             preview_text = tailored_resume_data.get("summary", "Resume tailored successfully")
@@ -472,7 +565,8 @@ async def tailor_resume(
             "resume_data": tailored_resume_data,
             "original_filename": original_filename,
             "job_metadata": tailored_resume_data.get("job_metadata", {}),
-            "job_description": final_job_description  # Return the actual text used (scraped or pasted)
+            "job_description": final_job_description,  # Return the actual text used (scraped or pasted)
+            "extracted_context": all_additional_context
         }
         
         # Add font warnings if any fonts were substituted
@@ -496,7 +590,11 @@ async def refine_resume(request: RefineRequest):
         current_data = request.current_resume_data
         
         # 1. Refine Data with AI
-        refined_data = await ai_service.refine_resume(current_data, request.instructions)
+        refined_data = await ai_service.refine_resume(
+            current_data, 
+            request.instructions, 
+            additional_context=request.additional_context
+        )
         
         # 2. File Paths
         original_filename = request.original_filename
@@ -571,7 +669,12 @@ async def generate_cover_letter_endpoint(request: CoverLetterRequest):
         # Fetch profile
         user_profile = database_service.get_profile()
         
-        result = await ai_service.generate_cover_letter(request.resume_text, request.job_description, user_profile)
+        result = await ai_service.generate_cover_letter(
+            request.resume_text, 
+            request.job_description, 
+            user_profile,
+            additional_context=request.additional_context
+        )
         content = result.get("content", "")
         
         base_name = os.path.splitext(request.base_filename)[0]
@@ -603,7 +706,11 @@ async def generate_cover_letter_endpoint(request: CoverLetterRequest):
 @app.post("/api/refine-cover-letter")
 async def refine_cover_letter_endpoint(request: RefineCoverLetterRequest):
     try:
-        result = await ai_service.refine_cover_letter(request.content, request.instructions)
+        result = await ai_service.refine_cover_letter(
+            request.content, 
+            request.instructions, 
+            additional_context=request.additional_context
+        )
         content = result.get("content", "")
         
         base_name = os.path.splitext(request.base_filename)[0]
@@ -694,6 +801,80 @@ async def delete_application(app_id: int):
             raise HTTPException(status_code=404, detail="Application not found")
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/applications/{application_id}/override-resume")
+async def override_resume(application_id: int, file: UploadFile = File(...)):
+    try:
+        # Save file
+        content = await file.read()
+        filename = f"override_resume_{application_id}_{file.filename}"
+        file_path = f"outputs/{filename}"
+        with open(file_path, "wb") as f:
+            f.write(content)
+            
+        # Extract text and process profile
+        text = ""
+        if file.filename.endswith('.docx'):
+            doc_data = document_service.parse_docx(file_path)
+            text = "\n".join(doc_data.get("full_text", []))
+        elif file.filename.endswith('.pdf'):
+            text = document_service.extract_text_from_pdf(file_path)
+        elif file.filename.endswith('.txt'):
+            text = document_service.extract_text_from_txt(file_path)
+        
+        profile_snapshot = None
+        if text:
+            profile_snapshot = await ai_service.extract_profile_data(text)
+        
+        database_service.update_application(application_id, {
+            "override_resume_path": filename,
+            "active_resume_type": "override",
+            "profile_snapshot": profile_snapshot
+        })
+        
+        return {"message": "Override resume updated", "path": filename, "profile_snapshot": profile_snapshot}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/applications/{application_id}/override-cover-letter")
+async def override_cover_letter(application_id: int, file: UploadFile = File(...)):
+    try:
+        # Save file
+        content = await file.read()
+        filename = f"override_cl_{application_id}_{file.filename}"
+        file_path = f"outputs/{filename}"
+        with open(file_path, "wb") as f:
+            f.write(content)
+            
+        database_service.update_application(application_id, {
+            "override_cover_letter_path": filename,
+            "active_cover_letter_type": "override"
+        })
+        
+        return {"message": "Override cover letter updated", "path": filename}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/applications/{application_id}/toggle-active")
+async def toggle_active_endpoint(application_id: int, request: Request):
+    try:
+        data = await request.json()
+        doc_type = data.get("type") # 'resume' or 'cover_letter'
+        active_version = data.get("active") # 'generated' or 'override'
+        
+        update_data = {}
+        if doc_type == 'resume':
+            update_data["active_resume_type"] = active_version
+        elif doc_type == 'cover_letter':
+            update_data["active_cover_letter_type"] = active_version
+            
+        success = database_service.update_application(application_id, update_data)
+        if not success:
+            raise HTTPException(status_code=404, detail="Application not found")
+            
+        return {"message": "Active version updated"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -822,11 +1003,26 @@ async def analyze_job(request: JobDescriptionRequest):
 async def fetch_available_models(config: dict):
     """Fetch available models from the specified provider"""
     try:
-        models = await ai_service.list_available_models(
-            api_key=config.get("api_key"),
-            provider=config.get("provider"),
-            base_url=config.get("base_url")
-        )
+        # Extract parameters from config
+        api_key = config.get("api_key")
+        provider = config.get("provider")
+        base_url = config.get("base_url")
+
+        # Prepare kwargs for the service call
+        kwargs = {
+            "provider": provider,
+            "base_url": base_url
+        }
+
+        # Handle API key based on provider, providing default from environment if not explicitly given
+        if provider == "openai" and not api_key:
+            kwargs["api_key"] = os.getenv("OPENAI_API_KEY", "")
+        elif provider == "google" and not api_key:
+            kwargs["api_key"] = os.getenv("GOOGLE_API_KEY", "")
+        else:
+            kwargs["api_key"] = api_key # Use provided api_key if available or for other providers
+
+        models = await ai_service.list_available_models(**kwargs)
         return {"models": models}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

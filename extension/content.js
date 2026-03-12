@@ -391,44 +391,259 @@ const LINKEDIN_SCRAPER = {
 const INDEED_SCRAPER = {
   isJobPage: () =>
     window.location.pathname.includes('/viewjob') ||
-    !!document.querySelector('#jobsearch-ViewJobLayout'),
-  title: () => firstMatch(['.jobsearch-JobInfoHeader-title', 'h1']),
+    !!document.querySelector('#jobsearch-ViewJobLayout') ||
+    !!document.querySelector('.jobsearch-JobComponent'),
+  title: () => firstMatch([
+    'h1.jobsearch-JobInfoHeader-title',
+    '[data-testid="jobsearch-JobInfoHeader-title"]',
+    '.jobsearch-JobInfoHeader-title',
+    'h1'
+  ]),
   company: () => firstMatch([
     '[data-testid="inlineHeader-companyName"]',
+    '[data-testid="jobsearch-JobInfoHeader-companyName"]',
     '.jobsearch-InlineCompanyRating div',
+    '.jobsearch-CompanyReview--heading',
   ]),
   location: () => firstMatch([
     '[data-testid="inlineHeader-companyLocation"]',
+    '[data-testid="jobsearch-JobInfoHeader-companyLocation"]',
     '.jobsearch-JobInfoHeader-subtitle div:nth-child(2)',
   ]),
-  workplaceType: () => null,
+  workplaceType: () => {
+    const text = document.body.innerText;
+    if (/remote/i.test(text)) return 'Remote';
+    if (/hybrid/i.test(text)) return 'Hybrid';
+    if (/on-site|onsite/i.test(text)) return 'On-site';
+    return null;
+  },
   description: () => document.querySelector('#jobDescriptionText')?.innerText || null,
-  type: () => document.querySelector('#jobDetailsSection div:nth-child(2)')?.innerText || null,
-  salary: () => document.querySelector('#salaryInfoAndJobType')?.innerText || null,
-  datePosted: () => null,
+  type: () => firstMatch([
+    '[data-testid="jobsearch-JobInfoHeader-salaryAndJobType"]',
+    '#jobDetailsSection div:nth-child(2)',
+    '.jobsearch-JobMetadataHeader-item'
+  ]),
+  salary: () => firstMatch([
+    '#salaryInfoAndJobType',
+    '[data-testid="jobsearch-JobInfoHeader-salary"]',
+    '.jobsearch-JobMetadataHeader-item'
+  ]),
+  datePosted: () => {
+    const el = document.querySelector('.jobsearch-JobMetadataHeader-item');
+    return el?.innerText || null;
+  },
   companyLogo: () => {
-    const img = document.querySelector('[class*="companyAvatar"] img, [class*="company-logo"] img');
+    const img = document.querySelector('[class*="companyAvatar"] img, [class*="company-logo"] img, .jobsearch-JobInfoHeader-logo img');
     return img?.src || null;
   },
+  applyLink: () => {
+    // Indeed often uses an 'Apply Now' button that redirects or opens a modal.
+    // We try to find the direct link if available, otherwise return the viewjob URL.
+    const applyBtn = document.querySelector('#applyButtonLinkContainer a, .jobsearch-SearchApplyButton--native a, [data-testid="jobsearch-ViewJobButton-button"]');
+    if (applyBtn && applyBtn.href && !applyBtn.href.startsWith('javascript:')) return applyBtn.href;
+    
+    // Construct viewjob link if possible
+    const jk = new URLSearchParams(window.location.search).get('jk') || new URLSearchParams(window.location.search).get('vjk');
+    if (jk) return `https://www.indeed.com/viewjob?jk=${jk}`;
+    
+    return window.location.href;
+  },
+  url: () => {
+    // Return a clean permalink if possible
+    const jk = new URLSearchParams(window.location.search).get('jk') || new URLSearchParams(window.location.search).get('vjk');
+    if (jk) return `https://www.indeed.com/viewjob?jk=${jk}`;
+    return window.location.href;
+  }
+};
+
+// ─── Glassdoor scraper ───────────────────────────────────────────────────────
+
+const GLASSDOOR_SCRAPER = {
+  isJobPage: () => window.location.hostname.includes('glassdoor.com') && (window.location.pathname.includes('/Job/') || !!document.querySelector('[data-test="job-title"]')),
+  title: () => firstMatch(['[data-test="job-title"]', 'h1']),
+  company: () => firstMatch(['[data-test="employer-name"]', '.EmployerProfile_employerName__vp_7Z']),
+  location: () => firstMatch(['[data-test="location"]', '.JobDetails_location__m_iSl']),
+  description: () => document.querySelector('.jobDescriptionContent')?.innerText || document.querySelector('#JobDescriptionContainer')?.innerText || null,
+  salary: () => firstMatch(['[data-test="detailSalary"]', '.SalaryEstimate_salaryRange__6o7_s']),
+  companyLogo: () => document.querySelector('.JobDetails_logo__7_8_s img')?.src || null,
+  applyLink: () => {
+    const btn = document.querySelector('[data-test="apply-button"]');
+    return btn?.href || window.location.href;
+  },
+  url: () => {
+    const jobId = new URLSearchParams(window.location.search).get('jobListingId') || new URLSearchParams(window.location.search).get('jobId');
+    if (jobId && !window.location.href.includes('/job-listing/')) {
+        return `https://www.glassdoor.com/job-listing/job.htm?jl=${jobId}`;
+    }
+    return window.location.href;
+  }
+};
+
+// ─── ZipRecruiter scraper ────────────────────────────────────────────────────
+
+const ZIPRECRUITER_SCRAPER = {
+  isJobPage: () => window.location.hostname.includes('ziprecruiter.com') && (window.location.pathname.includes('/jobs/') || !!document.querySelector('.job_title')),
+  title: () => firstMatch(['.job_title', 'h1']),
+  company: () => firstMatch(['.hiring_company_link', '.company_name']),
+  location: () => firstMatch(['.location', '.job_location']),
+  description: () => document.querySelector('.job_description')?.innerText || document.querySelector('.jobDescriptionSection')?.innerText || null,
+  salary: () => firstMatch(['.salary_range', '.job_salary']),
+  applyLink: () => document.querySelector('a.apply_button')?.href || window.location.href,
+  url: () => window.location.href.split('?')[0],
+};
+
+// ─── Greenhouse scraper ──────────────────────────────────────────────────────
+
+const GREENHOUSE_SCRAPER = {
+  isJobPage: () => !!document.querySelector('#grnhse_app') || window.location.hostname.includes('greenhouse.io'),
+  title: () => firstMatch(['h1.app-title', '.job-title', 'h1']),
+  company: () => firstMatch(['.company-name', 'span.company-name', 'h1 + span']),
+  location: () => firstMatch(['.location', 'span.location']),
+  description: () => document.querySelector('#content')?.innerText || document.querySelector('#main')?.innerText || null,
+};
+
+// ─── Lever scraper ──────────────────────────────────────────────────────────
+
+const LEVER_SCRAPER = {
+  isJobPage: () => !!document.querySelector('.postings-container') || window.location.hostname.includes('lever.co'),
+  title: () => firstMatch(['.posting-header h2', 'h2']),
+  company: () => firstMatch(['.main-header-logo img', 'title']),
+  location: () => firstMatch(['.sort-by-time + .location', '.location']),
+  description: () => document.querySelector('.section-wrapper .section:nth-child(3)')?.innerText || document.querySelector('.job-description')?.innerText || null,
+};
+
+// ─── Wellfound scraper ───────────────────────────────────────────────────────
+
+const WELLFOUND_SCRAPER = {
+  isJobPage: () => window.location.hostname.includes('wellfound.com') || window.location.hostname.includes('angel.co'),
+  title: () => firstMatch(['h1[class*="job-title"]', 'h1']),
+  company: () => firstMatch(['h2[class*="company-name"]', 'h2']),
+  location: () => firstMatch(['[class*="location"]']),
+  description: () => document.querySelector('[class*="job-description"]')?.innerText || null,
+};
+
+// ─── Workday scraper ─────────────────────────────────────────────────────────
+
+const WORKDAY_SCRAPER = {
+  isJobPage: () => window.location.hostname.includes('myworkdayjobs.com'),
+  title: () => firstMatch(['[data-automation-id="jobPostingHeader"]', 'h1', 'h2']),
+  company: () => firstMatch(['[data-automation-id="legalEntity"]', 'title']),
+  location: () => firstMatch(['[data-automation-id="location"]', '[class*="location"]']),
+  description: () => document.querySelector('[data-automation-id="jobPostingDescription"]')?.innerText || null,
+};
+
+// ─── SimplyHired scraper ─────────────────────────────────────────────────────
+
+const SIMPLYHIRED_SCRAPER = {
+  isJobPage: () => window.location.hostname.includes('simplyhired.com'),
+  title: () => firstMatch(['h2 a.chakra-button', 'h1']),
+  company: () => firstMatch(['span[data-testid="company-name"]', '.company-name']),
+  location: () => firstMatch(['span[data-testid="location"]', '.location']),
+  description: () => document.querySelector('div.css-1u3q0w0')?.innerText || document.querySelector('.job-description')?.innerText || null,
+  url: () => {
+    const jk = new URLSearchParams(window.location.search).get('jk') || new URLSearchParams(window.location.search).get('vjk');
+    if (jk) return `https://www.simplyhired.com/job/${jk}`;
+    return window.location.href;
+  }
+};
+
+// ─── Monster scraper ─────────────────────────────────────────────────────────
+
+const MONSTER_SCRAPER = {
+  isJobPage: () => window.location.hostname.includes('monster.com'),
+  title: () => firstMatch(['h1[class*="JobTitle"]', 'h1']),
+  company: () => firstMatch(['[class*="company-link"]', '.company-name']),
+  location: () => firstMatch(['[class*="job-location"]', '.location']),
+  description: () => document.querySelector('[class*="description-style__Description"]')?.innerText || null,
+};
+
+// ─── CareerBuilder scraper ───────────────────────────────────────────────────
+
+const CAREERBUILDER_SCRAPER = {
+  isJobPage: () => window.location.hostname.includes('careerbuilder.com'),
+  title: () => firstMatch(['.jdp_title', 'h1']),
+  company: () => firstMatch(['.jdp_company_name', '.company-name']),
+  location: () => firstMatch(['.jdp_location', '.location']),
+  description: () => document.querySelector('.jdp_description')?.innerText || null,
 };
 
 // ─── Site registry & fallback ────────────────────────────────────────────────
 
+const KERNEL_SCRAPER = {
+  isJobPage: () => false,
+  title: () => null,
+  company: () => null,
+  location: () => null,
+  description: () => null,
+};
+
 const SCRAPERS = {
   'linkedin.com': LINKEDIN_SCRAPER,
   'indeed.com': INDEED_SCRAPER,
+  'glassdoor.com': GLASSDOOR_SCRAPER,
+  'ziprecruiter.com': ZIPRECRUITER_SCRAPER,
+  'greenhouse.io': GREENHOUSE_SCRAPER,
+  'lever.co': LEVER_SCRAPER,
+  'wellfound.com': WELLFOUND_SCRAPER,
+  'angel.co': WELLFOUND_SCRAPER,
+  'myworkdayjobs.com': WORKDAY_SCRAPER,
+  'simplyhired.com': SIMPLYHIRED_SCRAPER,
+  'monster.com': MONSTER_SCRAPER,
+  'careerbuilder.com': CAREERBUILDER_SCRAPER,
+  'localhost': KERNEL_SCRAPER,
 };
 
 const FALLBACK_SCRAPER = {
-  isJobPage: () => true,
-  title: () => document.querySelector('h1')?.innerText || document.title || null,
-  company: () => null,
-  location: () => null,
-  workplaceType: () => null,
+  isJobPage: () => {
+    const text = document.body.innerText.toLowerCase();
+    const isJob = text.includes('job description') || text.includes('apply for this job') || text.includes('qualifications') || text.includes('requirements');
+    const isCompany = text.includes('about the company') || text.includes('company overview') || (text.includes('careers') && text.includes('location'));
+    const isWellfound = window.location.hostname.includes('wellfound') && window.location.pathname.includes('/company/');
+    return isJob || isCompany || isWellfound;
+  },
+  title: () => {
+    // Try to find the first H1 that isn't a logo
+    const h1s = Array.from(document.querySelectorAll('h1'));
+    for (const h1 of h1s) {
+      if (h1.innerText.length > 3 && h1.innerText.length < 100) return h1.innerText.trim();
+    }
+    return document.title.split('|')[0].split('-')[0].trim();
+  },
+  company: () => {
+    // Try to extract company from title or meta tags
+    const ogCompany = document.querySelector('meta[property="og:site_name"]')?.content;
+    if (ogCompany) return ogCompany;
+    
+    const titleParts = document.title.split(/[\|\-–]/);
+    if (titleParts.length > 1) return titleParts[titleParts.length - 1].trim();
+    
+    return null;
+  },
+  location: () => {
+    const patterns = [/location/i, /city/i, /remote/i];
+    for (const p of patterns) {
+      const el = findLeafText(t => p.test(t), 1)[0];
+      if (el) {
+        const val = el.el.nextElementSibling?.innerText?.trim() || el.el.parentElement?.innerText?.replace(p, '').trim();
+        if (val && val.length < 50) return val;
+      }
+    }
+    return null;
+  },
+  workplaceType: () => {
+    const text = document.body.innerText.toLowerCase();
+    if (text.includes('remote')) return 'Remote';
+    if (text.includes('hybrid')) return 'Hybrid';
+    return null;
+  },
   description: () => {
+    // Look for common container IDs
+    const container = document.querySelector('#job-description, .job-description, #description, .description, main, article');
+    if (container) return container.innerText;
+
     let largest = '';
     document.querySelectorAll('div, p, article').forEach(el => {
-      if (el.innerText && el.innerText.length > largest.length && el.innerText.length < 15000) {
+      if (el.innerText && el.innerText.length > largest.length && el.innerText.length < 20000) {
         largest = el.innerText;
       }
     });
@@ -437,8 +652,13 @@ const FALLBACK_SCRAPER = {
   type: () => null,
   salary: () => null,
   datePosted: () => null,
-  companyLogo: () => null,
-  applyLink: () => null,
+  companyLogo: () => {
+    return document.querySelector('link[rel*="icon"]')?.href || document.querySelector('meta[property="og:image"]')?.content || null;
+  },
+  applyLink: () => {
+    const applyBtn = Array.from(document.querySelectorAll('a, button')).find(el => /apply/i.test(el.innerText || el.value));
+    return applyBtn?.href || applyBtn?.onclick ? window.location.href : null;
+  },
   deadline: () => null,
 };
 
@@ -518,6 +738,7 @@ function scrapeJobData() {
   const rawCompanyLogo = scraper.companyLogo?.() || null;
   const rawApplyLink = scraper.applyLink?.() || null;
   const rawDeadline = scraper.deadline?.() || null;
+  const rawUrl = scraper.url?.() || window.location.href;
 
   const locationType = inferLocationType(rawLocation, rawWorkplaceType) || null;
   const location = cleanLocation(rawLocation);
@@ -528,8 +749,8 @@ function scrapeJobData() {
     title: rawTitle?.trim() || null,
     company: rawCompany?.trim() || null,
     companyLogo: rawCompanyLogo || null,
-    link: window.location.href,
-    applyLink: rawApplyLink || window.location.href,
+    link: rawUrl,
+    applyLink: rawApplyLink || rawUrl,
     datePosted: datePosted || null,
     deadline: deadlineParsed || null,
     salaryRange: rawSalary?.trim() || null,
@@ -537,8 +758,8 @@ function scrapeJobData() {
     jobType: normaliseJobType(rawType),
     locationType: locationType || null,
     location: location || null,
-    relocation: 'false',
-    interestLevel: 'Medium',
+    relocation: null,
+    interestLevel: null,
     remarks: '',
   };
 }
@@ -662,8 +883,18 @@ function checkIfJobPage() {
 //     per second which would continuously reset any debounce timer.
 
 let lastJobUrl = window.location.href;
-let lastJobId = new URLSearchParams(window.location.search).get('currentJobId') || '';
+// We track both the URL and common job identification parameters for SPA transitions
+let lastJobIdValue = '';
 let scrapeTimer = null;
+
+function getJobIdFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  // Check common job ID parameters
+  return params.get('jk') || params.get('vjk') || params.get('currentJobId') || params.get('jobId') || params.get('jobListingId') || params.get('jl') || params.get('lvk') || '';
+}
+
+lastJobIdValue = null; // Initialize as null to ensure first check triggers
+lastJobUrl = null;
 
 function handleJobNavigation() {
   if (!isExtValid()) return;
@@ -697,8 +928,13 @@ patchHistoryAPI();
 
 window.addEventListener('locationchange', () => {
   const newUrl = window.location.href;
-  if (newUrl === lastJobUrl) return;
+  const newId = getJobIdFromUrl();
+  
+  if (newUrl === lastJobUrl && newId === lastJobIdValue) return;
+  
   lastJobUrl = newUrl;
+  lastJobIdValue = newId;
+  
   setTimeout(checkIfJobPage, 800);
   
   if (!isExtValid()) return;
@@ -711,15 +947,16 @@ window.addEventListener('locationchange', () => {
   } catch(e) {}
 });
 
-// 2. Lightweight currentJobId poll
+// 2. Lightweight ID poll (for sites that might change URL via hash or other means)
 setInterval(() => {
-  const params = new URLSearchParams(window.location.search);
-  const currentJobId = params.get('currentJobId') || '';
-  if (!currentJobId || currentJobId === lastJobId) return;
-  lastJobId = currentJobId;
-  const newUrl = window.location.href;
-  if (newUrl === lastJobUrl) return;
-  lastJobUrl = newUrl;
+  const currentId = getJobIdFromUrl();
+  const currentUrl = window.location.href;
+
+  if (currentId === lastJobIdValue && currentUrl === lastJobUrl) return;
+  
+  lastJobIdValue = currentId;
+  lastJobUrl = currentUrl;
+
   setTimeout(checkIfJobPage, 800);
   
   if (!isExtValid()) return;
@@ -732,5 +969,83 @@ setInterval(() => {
   } catch(e) {}
 }, 1000);
 
-window.addEventListener('load', checkIfJobPage);
+function initialScrape() {
+  if (!isExtValid()) return;
+  chrome.storage.local.get(['isPanelOpen'], (result) => {
+    if (result.isPanelOpen && getScraper().isJobPage()) {
+      handleJobNavigation();
+    }
+  });
+}
+
+window.addEventListener('load', () => {
+  checkIfJobPage();
+  initialScrape();
+});
 setInterval(checkIfJobPage, 2000);
+// Also periodically check for navigation in case events are missed
+setInterval(() => {
+  if (isExtValid()) {
+    chrome.storage.local.get(['isPanelOpen'], (result) => {
+      if (result.isPanelOpen) {
+        const currentId = getJobIdFromUrl();
+        const currentUrl = window.location.href;
+        if (currentId !== lastJobIdValue || currentUrl !== lastJobUrl) {
+          lastJobIdValue = currentId;
+          lastJobUrl = currentUrl;
+          if (getScraper().isJobPage()) handleJobNavigation();
+        }
+      }
+    });
+  }
+}, 3000);
+
+// ── Context Menu Insertion ────────────────────────────────────────────────
+let lastRightClickedElement = null;
+
+document.addEventListener('contextmenu', (e) => {
+  lastRightClickedElement = e.target;
+}, true);
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'insert_text') {
+    const target = lastRightClickedElement || document.activeElement;
+    if (!target) return;
+
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+      // Focus the element
+      target.focus();
+
+      if (target.isContentEditable) {
+        document.execCommand('insertText', false, message.text);
+      } else {
+        // Find cursor position
+        const start = target.selectionStart;
+        const end = target.selectionEnd;
+        const value = target.value;
+        
+        // Insert text
+        target.value = value.substring(0, start) + message.text + value.substring(end);
+        
+        // Restore cursor
+        target.selectionStart = target.selectionEnd = start + message.text.length;
+      }
+
+      // Dispatch events so the site's JS (React/Vue/etc) picks up the change
+      target.dispatchEvent(new Event('input', { bubbles: true }));
+      target.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+});
+
+// ─── App Interaction ─────────────────────────────────────────────────────────
+
+window.addEventListener('JOB_KERNEL_APP_UPDATED', (e) => {
+  if (!isExtValid()) return;
+  try {
+    chrome.runtime.sendMessage({ 
+      action: 'app_updated', 
+      application_id: e.detail?.application_id 
+    });
+  } catch (err) {}
+});

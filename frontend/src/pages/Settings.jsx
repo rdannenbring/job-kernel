@@ -3,7 +3,7 @@ import CustomDropdown from '../components/CustomDropdown';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-const Settings = () => {
+const Settings = ({ theme: externalTheme, onThemeChange }) => {
     const [aiConfig, setAiConfig] = useState({
         provider: 'openai',
         model: 'gpt-4o-mini',
@@ -11,7 +11,8 @@ const Settings = () => {
         api_key: ''
     });
     const [uiConfig, setUiConfig] = useState({
-        font_size: 14.5
+        font_size: 14.5,
+        theme: 'system'
     });
     const [availableModels, setAvailableModels] = useState([]);
     const [prompts, setPrompts] = useState({});
@@ -31,7 +32,7 @@ const Settings = () => {
         }
 
         try {
-            setMessage('⏳ Fetching models...');
+            setMessage('Fetching models...');
             const res = await fetch(`${API_URL}/api/fetch-models`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -44,11 +45,11 @@ const Settings = () => {
                 setModelSearch('');
                 setShowModelModal(true);
             } else {
-                setMessage('⚠️ No models found or API error.');
+                setMessage('No models found or API error.');
             }
         } catch (e) {
             console.error("Error fetching models", e);
-            setMessage('❌ Failed to fetch models.');
+            setMessage('Failed to fetch models.');
         }
     };
 
@@ -56,6 +57,13 @@ const Settings = () => {
     useEffect(() => {
         fetchConfig();
     }, []);
+
+    // Sync with external theme changes (e.g. from Sidebar)
+    useEffect(() => {
+        if (externalTheme) {
+            setUiConfig(prev => ({ ...prev, theme: externalTheme }));
+        }
+    }, [externalTheme]);
 
     const fetchConfig = async () => {
         try {
@@ -68,6 +76,12 @@ const Settings = () => {
                 setUiConfig(prev => ({ ...prev, ...data.ui_config }));
                 if (data.ui_config.font_size) {
                     document.documentElement.style.fontSize = `${data.ui_config.font_size}px`;
+                }
+                if (data.ui_config.theme) {
+                    const activeTheme = data.ui_config.theme === 'system' 
+                        ? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+                        : data.ui_config.theme;
+                    document.documentElement.setAttribute('data-theme', activeTheme);
                 }
             }
             if (data.prompts) {
@@ -92,10 +106,10 @@ const Settings = () => {
                 })
             });
             if (!res.ok) throw new Error('Failed to save');
-            setMessage('✅ Settings saved successfully!');
+            setMessage('Settings saved successfully!');
             setTimeout(() => setMessage(''), 3000);
         } catch (e) {
-            setMessage('❌ Error saving settings: ' + e.message);
+            setMessage('Error saving settings: ' + e.message);
         } finally {
             setLoading(false);
         }
@@ -113,7 +127,10 @@ const Settings = () => {
     return (
         <div style={{ padding: '3rem', maxWidth: '1000px' }}>
             <header style={{ marginBottom: '2rem' }}>
-                <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⚙️ Settings</h1>
+                <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '2.2rem', color: 'var(--primary)' }}>settings</span>
+                    Settings
+                </h1>
                 <p style={{ color: 'var(--text-secondary)' }}>Configure your application preferences and AI prompts.</p>
             </header>
 
@@ -140,7 +157,8 @@ const Settings = () => {
                 <>
                     <div className="card" style={{ marginBottom: '1.5rem' }}>
                         <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            🤖 AI Model Configuration
+                            <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>smart_toy</span>
+                            AI Model Configuration
                         </h3>
 
                         <div className="form-group">
@@ -166,11 +184,12 @@ const Settings = () => {
                                 <label className="form-label">Model Name</label>
                                 <button
                                     className="btn btn-secondary"
-                                    style={{ padding: '2px 8px', fontSize: '0.8rem' }}
+                                    style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                                     onClick={fetchModels}
                                     disabled={!aiConfig.provider}
                                 >
-                                    🔄 Load Models
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>refresh</span>
+                                    Load Models
                                 </button>
                             </div>
 
@@ -226,7 +245,8 @@ const Settings = () => {
 
                     <div className="card" style={{ marginBottom: '1.5rem' }}>
                         <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            🎨 Appearance
+                            <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>palette</span>
+                            Appearance
                         </h3>
                         
                         <div className="form-group">
@@ -254,13 +274,43 @@ const Settings = () => {
                             </div>
                         </div>
 
-                        <div className="form-group" style={{ opacity: 0.7 }}>
+                        <div className="form-group">
                             <label className="form-label">
-                                Theme <span style={{ fontSize: '0.7rem', background: '#f59e0b', color: 'black', padding: '2px 6px', borderRadius: '4px', marginLeft: '0.5rem' }}>COMING SOON</span>
+                                Theme
                             </label>
                             <div style={{ display: 'flex', gap: '1rem' }}>
-                                <button className="btn btn-primary" disabled>Dark</button>
-                                <button className="btn btn-secondary" disabled>Light</button>
+                                <button 
+                                    className={`btn ${uiConfig.theme === 'dark' ? 'btn-primary' : 'btn-secondary'}`}
+                                    onClick={() => {
+                                        setUiConfig({ ...uiConfig, theme: 'dark' });
+                                        if (onThemeChange) onThemeChange('dark');
+                                        document.documentElement.setAttribute('data-theme', 'dark');
+                                        document.documentElement.classList.add('dark');
+                                    }}>
+                                    Dark
+                                </button>
+                                <button 
+                                    className={`btn ${uiConfig.theme === 'light' ? 'btn-primary' : 'btn-secondary'}`}
+                                    onClick={() => {
+                                        setUiConfig({ ...uiConfig, theme: 'light' });
+                                        if (onThemeChange) onThemeChange('light');
+                                        document.documentElement.setAttribute('data-theme', 'light');
+                                        document.documentElement.classList.remove('dark');
+                                    }}>
+                                    Light
+                                </button>
+                                <button 
+                                    className={`btn ${(!uiConfig.theme || uiConfig.theme === 'system') ? 'btn-primary' : 'btn-secondary'}`}
+                                    onClick={() => {
+                                        setUiConfig({ ...uiConfig, theme: 'system' });
+                                        if (onThemeChange) onThemeChange('system');
+                                        const isLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+                                        const activeTheme = isLight ? 'light' : 'dark';
+                                        document.documentElement.setAttribute('data-theme', activeTheme);
+                                        document.documentElement.classList.toggle('dark', !isLight);
+                                    }}>
+                                    System
+                                </button>
                             </div>
                         </div>
 
@@ -276,7 +326,8 @@ const Settings = () => {
             {activeTab === 'prompts' && (
                 <div className="card">
                     <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        📝 AI Prompt Engineering
+                        <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>edit_note</span>
+                        AI Prompt Engineering
                     </h3>
                     <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '2rem', background: '#0f172a', padding: '1rem', borderRadius: '8px', borderLeft: '4px solid #3b82f6' }}>
                         <strong>Note:</strong> You can use variables like <code>&#123;job_description&#125;</code> or <code>&#123;resume_data&#125;</code> in your prompts.
@@ -313,32 +364,57 @@ const Settings = () => {
                 </div>
             )}
 
-            {message && <p style={{
-                position: 'fixed', bottom: '2rem', right: '2rem',
-                backgroundColor: message.includes('❌') ? '#ef4444' : '#10b981',
-                color: 'white', padding: '1rem 2rem', borderRadius: '8px',
-                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                zIndex: 3000,
-                animation: 'slideIn 0.3s ease-out'
-            }}>{message}</p>}
+            {message && (
+                <div style={{
+                    position: 'fixed', bottom: '2rem', right: '2rem',
+                    backgroundColor: (message.includes('Error') || message.includes('Failed')) ? '#ef4444' : (message.includes('Fetching') ? 'var(--primary)' : '#10b981'),
+                    color: 'white', padding: '1rem 2rem', borderRadius: '8px',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                    zIndex: 3000,
+                    animation: 'slideIn 0.3s ease-out',
+                    display: 'flex', alignItems: 'center', gap: '0.75rem'
+                }}>
+                    <span className="material-symbols-outlined">
+                        {message.includes('saved') ? 'check_circle' : (message.includes('Fetching') ? 'sync' : (message.includes('Error') || message.includes('Failed') ? 'error' : 'info'))}
+                    </span>
+                    {message}
+                </div>
+            )}
 
 
             {activeTab === 'about' && (
                 <div>
                     <div className="card" style={{ marginBottom: '1.5rem' }}>
-                        <h2 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>ℹ️ About Resume Automator</h2>
+                        <h2 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>info</span>
+                            About Resume Automator
+                        </h2>
                         <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Privacy-first, AI-powered job application assistant.</p>
                         <h3 style={{ fontSize: '1rem', marginBottom: '0.75rem', color: 'var(--text-primary)' }}>How it works</h3>
-                        <ul style={{ paddingLeft: '1.25rem', color: 'var(--text-secondary)', lineHeight: '1.7', margin: 0 }}>
-                            <li style={{ marginBottom: '0.4rem' }}><strong>Tailor:</strong> AI analyzes your resume against a job description to highlight the best fit.</li>
-                            <li style={{ marginBottom: '0.4rem' }}><strong>Refine:</strong> Review the suggested changes and make tweaks before exporting.</li>
-                            <li style={{ marginBottom: '0.4rem' }}><strong>Cover Letter:</strong> A matching cover letter is generated automatically.</li>
-                            <li style={{ marginBottom: '0.4rem' }}><strong>Save:</strong> Everything is stored locally in your private database — nothing leaves your machine.</li>
+                        <ul style={{ padding: 0, listStyle: 'none', color: 'var(--text-secondary)', lineHeight: '1.7', margin: 0 }}>
+                            <li style={{ marginBottom: '0.85rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary)', marginTop: '0.1rem' }}>auto_awesome</span>
+                                <span><strong>Tailor:</strong> AI analyzes your resume against a job description to highlight the best fit.</span>
+                            </li>
+                            <li style={{ marginBottom: '0.85rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary)', marginTop: '0.1rem' }}>edit_note</span>
+                                <span><strong>Refine:</strong> Review the suggested changes and make tweaks before exporting.</span>
+                            </li>
+                            <li style={{ marginBottom: '0.85rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary)', marginTop: '0.1rem' }}>history_edu</span>
+                                <span><strong>Cover Letter:</strong> A matching cover letter is generated automatically.</span>
+                            </li>
+                            <li style={{ marginBottom: '0.85rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary)', marginTop: '0.1rem' }}>shield</span>
+                                <span><strong>Save:</strong> Everything is stored locally in your private database — nothing leaves your machine.</span>
+                            </li>
                         </ul>
                     </div>
                     <div className="card">
                         <h3 style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>Open Source</h3>
-                        <p style={{ color: 'var(--text-secondary)', margin: 0 }}>Built with ❤️ using React, FastAPI, and Docker.</p>
+                        <p style={{ color: 'var(--text-secondary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            Built with <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#f87171' }}>favorite</span> using React, FastAPI, and Docker.
+                        </p>
                     </div>
                 </div>
             )}
@@ -374,9 +450,9 @@ const Settings = () => {
                             <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#f8fafc' }}>Select Model</h2>
                             <button
                                 onClick={() => setShowModelModal(false)}
-                                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1.5rem' }}
+                                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                             >
-                                &times;
+                                <span className="material-symbols-outlined">close</span>
                             </button>
                         </div>
 

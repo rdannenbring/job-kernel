@@ -34,6 +34,7 @@ function App() {
   });
   const [selectedApp, setSelectedApp] = useState(null);
   const [apps, setApps] = useState([]);
+  const [uiConfigTheme, setUiConfigTheme] = useState('system');
 
   // Profile dirty-state ref — Profile.jsx sets window.__profileIsDirty = true/false
   const isDirtyRef = useRef(false);
@@ -101,8 +102,13 @@ function App() {
     fetch(`${API_URL}/api/config`)
       .then(res => res.json())
       .then(data => {
-        if (data.ui_config && data.ui_config.font_size) {
-          document.documentElement.style.fontSize = `${data.ui_config.font_size}px`;
+        if (data.ui_config) {
+          if (data.ui_config.font_size) {
+            document.documentElement.style.fontSize = `${data.ui_config.font_size}px`;
+          }
+          if (data.ui_config.theme) {
+            setUiConfigTheme(data.ui_config.theme);
+          }
         }
       })
       .catch(e => console.error("Failed to load global config:", e));
@@ -110,6 +116,7 @@ function App() {
     // Check if a job was passed from the extension
     const params = new URLSearchParams(window.location.search);
     const processJobData = params.get('processJob');
+    const viewAppId = params.get('viewApp');
 
     if (processJobData) {
       try {
@@ -124,12 +131,57 @@ function App() {
       } catch (e) {
         console.error("Failed to parse processJob from URL", e);
       }
+    } else if (viewAppId) {
+      // Direct navigation to details
+      const id = parseInt(viewAppId);
+      
+      // We need to fetch the app specifically if it's not already in state
+      fetch(`${API_URL}/api/applications/${id}`)
+        .then(res => {
+          if (!res.ok) throw new Error("App not found");
+          return res.json();
+        })
+        .then(app => {
+          setSelectedApp(app);
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname + "#detail");
+          setCurrentScreenState('detail');
+        })
+        .catch(e => {
+          console.error("Failed to load app for viewAppId", e);
+          // If we can't load the app, go back to dashboard
+          window.history.replaceState({ screen: 'dashboard' }, '', '#dashboard');
+          setCurrentScreenState('dashboard');
+        });
     } else {
       // Ensure the initial hash is reflected in history so Back works from the first screen
       const initialScreen = hashToScreen(window.location.hash);
-      window.history.replaceState({ screen: initialScreen }, '', SCREEN_TO_HASH[initialScreen] || '#dashboard');
+      if (initialScreen === 'detail' && !selectedApp) {
+        setScreen('dashboard', { replace: true });
+      } else {
+        window.history.replaceState({ screen: initialScreen }, '', SCREEN_TO_HASH[initialScreen] || '#dashboard');
+      }
     }
   }, [])
+
+  // Apply and listen to theme changes
+  useEffect(() => {
+    const applyTheme = () => {
+      let activeTheme = uiConfigTheme;
+      if (!activeTheme || activeTheme === 'system') {
+        activeTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      }
+      document.documentElement.setAttribute('data-theme', activeTheme);
+      document.documentElement.classList.toggle('dark', activeTheme === 'dark');
+    };
+    
+    applyTheme();
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
+    const handleChange = () => applyTheme();
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [uiConfigTheme]);
 
   // --- Handlers ---
   const handleStartNew = () => {
@@ -157,10 +209,7 @@ function App() {
 
   const handleStatusUpdate = async (appId, newStatus) => {
     // Optimistic update
-    setApps(apps.map(app => app.id === appId ? { ...app, status: newStatus } : app));
-    if (selectedApp && selectedApp.id === appId) {
-      setSelectedApp({ ...selectedApp, status: newStatus });
-    }
+    handleAppUpdate(appId, { status: newStatus });
 
     try {
       await fetch(`${API_URL}/api/applications/${appId}/status`, {
@@ -176,30 +225,82 @@ function App() {
     }
   }
 
+  const handleAppUpdate = (appId, updates) => {
+    setApps(prev => prev.map(a => a.id === appId ? { ...a, ...updates } : a));
+    if (selectedApp && selectedApp.id === appId) {
+      setSelectedApp(prev => prev ? { ...prev, ...updates } : null);
+    }
+  }
+
+  const handleThemeToggle = async () => {
+    // Current active theme
+    const activeTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = activeTheme === 'dark' ? 'light' : 'dark';
+    
+    // Update local state
+    setUiConfigTheme(newTheme);
+    
+    // Persist to backend
+    try {
+      // First get current config
+      const res = await fetch(`${API_URL}/api/config`);
+      const config = await res.json();
+      
+      // Update only ui_config.theme
+      config.ui_config = {
+        ...config.ui_config,
+        theme: newTheme
+      };
+      
+      await fetch(`${API_URL}/api/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+    } catch (e) {
+      console.warn("Failed to persist theme change", e);
+    }
+  };
+
   // --- Routing ---
   const renderScreen = () => {
     switch (currentScreen) {
       case 'dashboard':
-        return <Dashboard apps={apps} onStartNew={handleStartNew} onViewApp={handleViewApp} onStatusUpdate={handleStatusUpdate} />
+        return <Dashboard apps={apps} onStartNew={handleStartNew} onViewApp={handleViewApp} onStatusUpdate={handleStatusUpdate} onUpdate={handleAppUpdate} />
       case 'new_app':
         return <NewApplication onComplete={handleAppComplete} />
       case 'detail':
-        return <ApplicationDetail app={selectedApp} onBack={() => setScreen('dashboard')} onDelete={handleDeleteApp} onArchive={handleArchiveApp} onStatusUpdate={handleStatusUpdate} />
+        if (!selectedApp) {
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid var(--bg-tertiary)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }} />
+                <p>Loading application details...</p>
+              </div>
+            </div>
+          );
+        }
+        return <ApplicationDetail app={selectedApp} onBack={() => setScreen('dashboard')} onDelete={handleDeleteApp} onArchive={handleArchiveApp} onStatusUpdate={handleStatusUpdate} onUpdate={handleAppUpdate} />
       case 'analytics':
         return <Analytics />
       case 'settings':
-        return <Settings />
+        return <Settings theme={uiConfigTheme} onThemeChange={setUiConfigTheme} />
       case 'profile':
         return <Profile />
       default:
-        return <Dashboard apps={apps} onStartNew={handleStartNew} onViewApp={handleViewApp} onStatusUpdate={handleStatusUpdate} />
+        return <Dashboard apps={apps} onStartNew={handleStartNew} onViewApp={handleViewApp} onStatusUpdate={handleStatusUpdate} onUpdate={handleAppUpdate} />
     }
   }
 
   return (
     <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       {/* Sidebar Navigation */}
-      <Sidebar currentScreen={currentScreen} setScreen={setScreen} />
+      <Sidebar 
+        currentScreen={currentScreen} 
+        setScreen={setScreen} 
+        theme={uiConfigTheme} 
+        onThemeToggle={handleThemeToggle} 
+      />
 
       {/* Main Content Area */}
       <main style={{ flex: 1, height: '100%', overflowY: 'auto', position: 'relative' }}>

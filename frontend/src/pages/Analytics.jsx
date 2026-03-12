@@ -2,8 +2,8 @@ import React from 'react';
 
 const StatCard = ({ icon, label, value, sub, color }) => (
     <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: `${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', flexShrink: 0 }}>
-            {icon}
+        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: `${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '1.5rem', color: color }}>{icon}</span>
         </div>
         <div>
             <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>{value}</div>
@@ -13,11 +13,14 @@ const StatCard = ({ icon, label, value, sub, color }) => (
     </div>
 );
 
-const BarRow = ({ label, value, max, color }) => {
-    const pct = Math.round((value / max) * 100);
+const BarRow = ({ icon, label, value, max, color }) => {
+    const pct = max > 0 ? Math.round((value / max) * 100) : 0;
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ width: '110px', fontSize: '0.82rem', color: 'var(--text-secondary)', flexShrink: 0, textAlign: 'right' }}>{label}</span>
+            <div style={{ width: '120px', fontSize: '0.82rem', color: 'var(--text-secondary)', flexShrink: 0, textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: color, opacity: 0.8 }}>{icon}</span>
+                {label}
+            </div>
             <div style={{ flex: 1, height: '10px', background: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
                 <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '99px', transition: 'width 0.6s ease' }} />
             </div>
@@ -30,13 +33,16 @@ const Analytics = () => {
     return (
         <div style={{ padding: '3rem', maxWidth: '1100px', margin: '0 auto' }}>
             <header style={{ marginBottom: '2.5rem' }}>
-                <h1 style={{ fontSize: '2rem', marginBottom: '0.4rem' }}>📊 Analytics</h1>
+                <h1 style={{ fontSize: '2rem', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '2.2rem', color: 'var(--primary)' }}>leaderboard</span>
+                    Analytics
+                </h1>
                 <p style={{ color: 'var(--text-secondary)' }}>Track your job search performance over time.</p>
             </header>
 
             {/* Coming Soon Banner */}
             <div style={{ marginBottom: '2.5rem', padding: '1rem 1.5rem', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '1.25rem' }}>🚧</span>
+                <span className="material-symbols-outlined" style={{ color: '#f59e0b' }}>construction</span>
                 <div>
                     <strong style={{ color: '#f59e0b' }}>Full analytics coming soon.</strong>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginLeft: '0.5rem' }}>Below is a preview of the metrics we'll be tracking once more data is available.</span>
@@ -45,10 +51,10 @@ const Analytics = () => {
 
             {/* Stat Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', marginBottom: '2rem' }}>
-                <StatCard icon="📤" label="Applications Sent" value="—" sub="This month" color="#3b82f6" />
-                <StatCard icon="💬" label="Responses Received" value="—" sub="All time" color="#10b981" />
-                <StatCard icon="📞" label="Interviews Booked" value="—" sub="All time" color="#8b5cf6" />
-                <StatCard icon="🎯" label="Response Rate" value="—%" sub="vs industry avg 8%" color="#f59e0b" />
+                <StatCard icon="send" label="Applications Sent" value="—" sub="This month" color="#3b82f6" />
+                <StatCard icon="forum" label="Responses Received" value="—" sub="All time" color="#10b981" />
+                <StatCard icon="call" label="Interviews Booked" value="—" sub="All time" color="#8b5cf6" />
+                <StatCard icon="track_changes" label="Response Rate" value="—%" sub="vs industry avg 8%" color="#f59e0b" />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
@@ -57,12 +63,12 @@ const Analytics = () => {
                 <div className="card">
                     <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Applications by Status</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        <BarRow label="Applied"      value={0} max={20} color="#3b82f6" />
-                        <BarRow label="Reviewing"    value={0} max={20} color="#f59e0b" />
-                        <BarRow label="Interview"    value={0} max={20} color="#8b5cf6" />
-                        <BarRow label="Offer"        value={0} max={20} color="#10b981" />
-                        <BarRow label="Rejected"     value={0} max={20} color="#ef4444" />
-                        <BarRow label="Withdrawn"    value={0} max={20} color="#6b7280" />
+                        <BarRow icon="send" label="Applied"      value={0} max={20} color="#3b82f6" />
+                        <BarRow icon="search" label="Reviewing"    value={0} max={20} color="#f59e0b" />
+                        <BarRow icon="groups" label="Interview"    value={0} max={20} color="#8b5cf6" />
+                        <BarRow icon="stars" label="Offer"        value={0} max={20} color="#10b981" />
+                        <BarRow icon="cancel" label="Rejected"     value={0} max={20} color="#ef4444" />
+                        <BarRow icon="undo" label="Withdrawn"    value={0} max={20} color="#6b7280" />
                     </div>
                 </div>
 
@@ -85,7 +91,9 @@ const Analytics = () => {
             <div className="card">
                 <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Recent Applications</h3>
                 <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                    <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📭</div>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', opacity: 0.3 }}>inbox</span>
+                    </div>
                     No applications yet. Add your first application to start tracking your job search journey.
                 </div>
             </div>
