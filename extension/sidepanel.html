@@ -3,27 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Job Automator</title>
+  <title>JobKernel</title>
   <link rel="stylesheet" href="sidepanel.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 </head>
 <body>
   <div class="container">
     <header class="header">
-      <div class="logo">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#10b981" />
-              <stop offset="100%" stop-color="#059669" />
-            </linearGradient>
-          </defs>
-          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2h11A2.5 2.5 0 0 1 20 4.5v15a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 19.5z" />
-          <path d="M8 7h8" />
-          <path d="M8 11h8" />
-          <path d="M8 15h6" />
-        </svg>
-        <h1>Job Automator</h1>
+      <div class="header-top">
+        <div class="logo">
+          <img src="logos/jobkernel-logo-dark.png" alt="JobKernel" class="brand-logo" />
+          <h1 class="brand-name">
+            <span class="brand-bold">Job</span><span class="brand-light">Kernel</span>
+          </h1>
+        </div>
+        <button type="button" id="btn-refresh" class="refresh-btn" title="Refresh extension">
+          <span class="material-symbols-outlined">refresh</span>
+        </button>
+      </div>
+      <div class="mode-switcher-row">
+        <div class="mode-switcher">
+          <button type="button" class="mode-btn active" id="mode-details" data-mode="details">Search</button>
+          <button type="button" class="mode-btn" id="mode-apply" data-mode="apply">Apply</button>
+        </div>
+        <!-- Moved Change Application button to header row -->
+        <button type="button" id="btn-change-application" class="header-action-btn" title="Change Job Application" style="display:none">
+          <span class="material-symbols-outlined">swap_horiz</span>
+        </button>
       </div>
     </header>
 
@@ -43,27 +50,45 @@
         </div>
         <p class="loading-title" id="loading-title">Detecting New Job</p>
         <p class="loading-subtitle" id="loading-subtitle">Reading the job listing&hellip;</p>
+        <div class="progress-container">
+          <div class="progress-bar" id="loading-progress"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Already saved banner -->
-    <div class="saved-banner" id="saved-banner" style="display:none">
-      <div class="saved-banner-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      </div>
-      <div class="saved-banner-content">
-        <div class="saved-banner-title">Already saved to JobKernel</div>
-        <div class="saved-banner-meta">
-          <span class="saved-banner-status-label">Status:</span>
-          <span class="saved-banner-status" id="saved-banner-status"></span>
-          <span class="saved-banner-sep">·</span>
-          <a class="saved-banner-link" id="saved-banner-link" href="#" target="_blank">View in app →</a>
+    <!-- Already-in-Kernel confirmation overlay -->
+    <div class="kernel-confirmation" id="saved-banner" aria-hidden="true">
+      <div class="kernel-confirmation-inner">
+        <!-- Checkmark icon -->
+        <div class="kernel-check-ring">
+          <svg class="kernel-check-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52" fill="none">
+            <circle class="kernel-check-circle" cx="26" cy="26" r="24" stroke="white" stroke-width="2.5" fill="none"/>
+            <polyline class="kernel-check-tick" points="14,26 22,34 38,18" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
+
+        <h2 class="kernel-confirmation-title">This job is already in your Kernel.</h2>
+        <p class="kernel-confirmation-sub" id="saved-banner-status">Last updated —</p>
+
+        <div class="kernel-confirmation-actions">
+          <button type="button" class="kernel-view-link" id="btn-banner-apply" style="border: none; cursor: pointer;">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">rocket_launch</span>
+            Apply Mode
+          </button>
+          <a class="kernel-view-link" id="saved-banner-link" href="#" target="_blank">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">open_in_new</span>
+            View in App
+          </a>
+          <button type="button" class="kernel-edit-btn" id="kernel-edit-btn">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">edit_note</span>
+            Edit details
+          </button>
         </div>
       </div>
     </div>
 
 
-    <main class="form-container">
+    <main class="form-container" id="details-container">
       <form id="job-form">
 
         <!-- Read-only notice (shown when status prevents editing) -->
@@ -73,7 +98,12 @@
 
         <!-- Job Title row -->
         <div class="form-group field-diff-wrapper" data-field="title" style="margin-bottom:0.75rem">
-          <label for="title">Job Title</label>
+          <div class="label-row">
+            <label for="title">Job Title</label>
+            <button type="button" class="label-action-btn" data-copy="title" title="Copy Title">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
           <input type="text" id="title" name="title" required />
         </div>
 
@@ -104,7 +134,12 @@
 
           <div class="company-fields" style="width: 100%;">
             <div class="form-group field-diff-wrapper" data-field="company" style="margin-bottom:0">
-              <label for="company">Company</label>
+              <div class="label-row">
+                <label for="company">Company</label>
+                <button type="button" class="label-action-btn" data-copy="company" title="Copy Company">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+              </div>
               <input type="text" id="company" name="company" required />
             </div>
           </div>
@@ -112,11 +147,21 @@
 
         <!-- URL & Date -->
         <div class="form-group field-diff-wrapper" data-field="link">
-          <label for="link">Job Link</label>
+          <div class="label-row">
+            <label for="link">Job Link</label>
+            <button type="button" class="label-action-btn" data-copy="link" title="Copy Job Link">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
           <input type="url" id="link" name="link" required />
         </div>
         <div class="form-group field-diff-wrapper" data-field="applyLink">
-          <label for="applyLink">Apply Link</label>
+          <div class="label-row">
+            <label for="applyLink">Apply Link</label>
+            <button type="button" class="label-action-btn" data-copy="applyLink" title="Copy Apply Link">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
           <input type="url" id="applyLink" name="applyLink" placeholder="External ATS application URL" />
         </div>
         <div class="form-row">
@@ -130,7 +175,12 @@
           </div>
         </div>
         <div class="form-group field-diff-wrapper" data-field="salaryRange">
-          <label for="salaryRange">Salary Range</label>
+          <div class="label-row">
+            <label for="salaryRange">Salary Range</label>
+            <button type="button" class="label-action-btn" data-copy="salaryRange" title="Copy Salary">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
           <input type="text" id="salaryRange" name="salaryRange" placeholder="e.g. $100k – $120k" />
         </div>
 
@@ -158,7 +208,12 @@
         </div>
 
         <div class="form-group field-diff-wrapper" data-field="location">
-          <label for="location">Location</label>
+          <div class="label-row">
+            <label for="location">Location</label>
+            <button type="button" class="label-action-btn" data-copy="location" title="Copy Location">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
           <input type="text" id="location" name="location" placeholder="City, State, Country" />
         </div>
 
@@ -173,10 +228,10 @@
           </div>
           <div class="form-group half" style="flex: 2;">
             <label>Interest Level</label>
-            <div class="toggle-group" id="interest-toggles">
-              <button type="button" class="toggle-btn" data-value="Low">★</button>
-              <button type="button" class="toggle-btn" data-value="Medium">★★</button>
-              <button type="button" class="toggle-btn" data-value="High">★★★</button>
+            <div class="interest-stars" id="interest-stars">
+              <span class="material-symbols-outlined star" data-value="1">star</span>
+              <span class="material-symbols-outlined star" data-value="2">star</span>
+              <span class="material-symbols-outlined star" data-value="3">star</span>
             </div>
             <input type="hidden" id="interestLevel" name="interestLevel" value="" />
           </div>
@@ -202,6 +257,143 @@
       </form>
     </main>
 
+    <!-- Job Selection Overlay (Apply Mode) -->
+    <div id="apply-job-picker" class="apply-job-picker-overlay" style="display:none">
+      <div class="picker-content">
+        <div class="picker-header">
+          <h4>Select tailored application</h4>
+          <button type="button" id="btn-close-picker" class="picker-close-btn" style="display:none">&times;</button>
+        </div>
+        <div class="search-input-wrapper">
+          <span class="material-symbols-outlined">search</span>
+          <input type="text" id="apply-job-search" placeholder="Search saved jobs..." />
+        </div>
+        <div id="apply-search-results" class="picker-results">
+          <!-- Results populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Apply Mode Container -->
+    <main class="apply-container" id="apply-container" style="display:none">
+      <!-- Compact Job Summary -->
+      <div id="apply-job-summary" class="apply-summary-card" style="display:none">
+        <div class="summary-status-row">
+          <span id="summary-status-badge" class="status-badge">Unknown</span>
+        </div>
+        <div class="summary-top">
+          <img id="summary-logo" src="" alt="" class="summary-logo" />
+          <div class="summary-info">
+            <h4 id="summary-title">Position</h4>
+            <p id="summary-company">Company</p>
+          </div>
+        </div>
+        <div class="summary-meta-row" id="summary-meta">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+      <!-- Grouped Sections -->
+      <div class="apply-sections" id="apply-sections">
+        
+        <!-- Documents Section -->
+        <details class="section-group" id="section-documents" open>
+          <summary class="section-header">
+            <span class="material-symbols-outlined">description</span>
+            <span>Documents</span>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="section-content">
+            <div id="apply-assets-v2">
+              <!-- Inline assets or handled by JS -->
+            </div>
+          </div>
+        </details>
+
+        <!-- Contact Info -->
+        <details class="section-group" id="section-contact">
+          <summary class="section-header">
+            <span class="material-symbols-outlined">person</span>
+            <span>Contact Info</span>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="section-content" id="grid-contact">
+            <!-- Populated by JS -->
+          </div>
+        </details>
+
+        <!-- Skills -->
+        <details class="section-group" id="section-skills">
+          <summary class="section-header">
+            <span class="material-symbols-outlined">psychology</span>
+            <span>Skills</span>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="section-content">
+            <div class="skills-actions">
+              <button type="button" id="btn-copy-all-skills" class="btn-text">
+                <span class="material-symbols-outlined">content_copy</span> Copy All
+              </button>
+            </div>
+            <div class="copy-grid" id="grid-skills">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </details>
+
+        <!-- Experience -->
+        <details class="section-group" id="section-experience">
+          <summary class="section-header">
+            <span class="material-symbols-outlined">work</span>
+            <span>Experience</span>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="section-content" id="grid-experience">
+            <!-- Each job in its own sub-card -->
+          </div>
+        </details>
+
+        <!-- Education -->
+        <details class="section-group" id="section-education">
+          <summary class="section-header">
+            <span class="material-symbols-outlined">school</span>
+            <span>Education</span>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="section-content" id="grid-education">
+          </div>
+        </details>
+
+        <!-- Certificates -->
+        <details class="section-group" id="section-certificates">
+          <summary class="section-header">
+            <span class="material-symbols-outlined">verified</span>
+            <span>Certificates</span>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="section-content" id="grid-certificates">
+          </div>
+        </details>
+
+        <!-- Other -->
+        <details class="section-group" id="section-other">
+          <summary class="section-header">
+            <span class="material-symbols-outlined">more_horiz</span>
+            <span>Other</span>
+            <span class="material-symbols-outlined chevron">expand_more</span>
+          </summary>
+          <div class="section-content" id="grid-other">
+          </div>
+        </details>
+
+      </div>
+
+      <div id="apply-no-job" class="apply-empty-state">
+        <div class="empty-icon">📂</div>
+        <p>No tailored application found for this job.</p>
+        <button type="button" id="btn-switch-to-details" class="btn btn-secondary" style="margin-top:1rem">Go to Details</button>
+      </div>
+    </main>
+
 
     <footer class="footer-actions">
       <div class="footer-btn-row">
@@ -216,6 +408,79 @@
       </div>
       <div id="status-message" class="status-message"></div>
     </footer>
+
+    <!-- Logo Picker Modal -->
+    <div id="logo-modal" class="modal" aria-hidden="true">
+      <div class="modal-overlay" id="logo-modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h3>Set Company Logo</h3>
+            <p>Search for a logo or upload your own</p>
+          </div>
+          <button type="button" class="modal-close" id="logo-modal-close">&times;</button>
+        </div>
+
+        <div class="modal-tabs">
+          <button type="button" class="tab-btn active" data-tab="search">
+            <span>🔍</span> Search
+          </button>
+          <button type="button" class="tab-btn" data-tab="url">
+            <span>🔗</span> URL
+          </button>
+          <button type="button" class="tab-btn" data-tab="upload">
+            <span>📁</span> Upload
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Search Tab -->
+          <div id="tab-search" class="tab-content active">
+            <div class="search-input-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" id="logo-search-input" placeholder="Search company name..." />
+            </div>
+            
+            <div id="logo-results" class="logo-results-grid">
+              <!-- Results populated by JS -->
+            </div>
+
+            <div id="logo-searching" class="logo-status-view" style="display:none">
+              <div class="mini-spinner"></div>
+              <span>Searching logos...</span>
+            </div>
+
+            <div id="logo-no-results" class="logo-status-view" style="display:none">
+              <span>No logos found. Try a different name.</span>
+            </div>
+          </div>
+
+          <!-- URL Tab -->
+          <div id="tab-url" class="tab-content">
+            <p class="tab-hint">Paste a link to any image online</p>
+            <input type="url" id="logo-url-input" placeholder="https://example.com/logo.png" />
+            <div id="logo-url-preview-container" class="url-preview-container" style="display:none">
+              <img id="logo-url-preview" src="" alt="URL Preview" />
+            </div>
+            <button type="button" id="btn-use-url" class="btn btn-primary" style="margin-top:1rem">Use This Image</button>
+          </div>
+
+          <!-- Upload Tab -->
+          <div id="tab-upload" class="tab-content">
+            <p class="tab-hint">Upload an image file from your device</p>
+            <div class="upload-dropzone" id="logo-dropzone">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <strong>Click to browse</strong>
+              <span>PNG, JPG, WEBP accepted</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <script src="sidepanel.js"></script>
 </body>

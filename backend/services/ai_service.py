@@ -26,7 +26,19 @@ Return a JSON object with this EXACT structure:
         "job_title": "Extract exact job title or 'Unknown Role'",
         "company": "Extract company name or 'Unknown Company'",
         "salary_range": "Extract salary if present (e.g. '$100k-$120k'), else 'Not Listed'",
-        "date_posted": "Extract date if present, else 'Unknown'"
+        "date_posted": "Extract date if present, else 'Unknown'",
+        "deadline": "Extract application deadline if present (YYYY-MM-DD), else ''",
+        "job_type": "Extract 'Full-time', 'Part-time', 'Contract', 'Freelance', or 'Internship'",
+        "location_type": "Extract 'On-site', 'Remote', or 'Hybrid'",
+        "location": "Extract city/state or 'Remote'",
+        "relocation": true/false or null (true if explicitly supported, false if explicitly not, else null),
+        "interest_level": "Extract 'High', 'Medium', or 'Low' based on role impact/prestige guess or default 'Medium'",
+        "glassdoor_rating": "The company's rating on Glassdoor (e.g. '4.2/5') if known, or null",
+        "glassdoor_url": "The link to the company's Glassdoor page if known, or null",
+        "indeed_rating": "The company's rating on Indeed (e.g. '4.0/5') if known, or null",
+        "indeed_url": "The link to the company's Indeed page if known, or null",
+        "linkedin_rating": "The company's rating or follower count sentiment (e.g. '4.5/5') if known, or null",
+        "linkedin_url": "The link to the company's LinkedIn page if known, or null"
     }}
 }}""",
     "tailor_resume": """You are an expert resume writer. Tailor the following resume to match the job description.
@@ -39,6 +51,8 @@ JOB DESCRIPTION:
 
 JOB ANALYSIS:
 {job_analysis}
+
+{additional_context_instr}
 
 CRITICAL INSTRUCTIONS - MUST FOLLOW EXACTLY:
 1. **MAINTAIN EXACT STRUCTURE**: Return the SAME number of sections as the input
@@ -64,24 +78,24 @@ STRUCTURE REQUIREMENT:
 Return the tailored resume in the EXACT SAME JSON structure as the input, with only the text content modified.
 
 Additionally, include a "change_summary" field with a concise list of 3-5 bullet points explaining exactly what was updated (e.g., "Added keyword X to Skills", "Rewrote Professional Summary to focus on Y").""",
-    "refine_resume": """You are an expert resume editor. You are refining a resume based on specific user feedback.
-        
-CURRENT RESUME CONTENT (JSON):
+    "refine_resume": """You are a meticulous resume editor. Refine the following resume based on these instructions.
+
+CURRENT RESUME DATA:
 {resume_data}
 
-USER INSTRUCTIONS:
-"{instructions}"
+{additional_context_instr}
 
-CRITICAL INSTRUCTIONS:
-1. Apply the user's changes to the text content.
-2. MAINTAIN THE EXACT SAME JSON STRUCTURE. Do not change keys.
-3. Do not add or remove sections unless the user explicitly asks to.
-4. If the user asks to "shorten" or "expand", you may change the text length but try to keep item counts similar if possible, unless instructed otherwise.
-5. "full_text" array MUST be updated to reflect changes in "sections".
-6. PRESERVE CONTACT INFO (Name, Email, etc) at the top of "full_text" / first section.
+REFINEMENT INSTRUCTIONS:
+{instructions}
 
-Return the updated resume in the exact same JSON format.
-Include a "change_summary" field with 3-5 bullet points summarizing your specific updates.""",
+CRITICAL RULES:
+1. **PRESERVE STRUCTURE**: Maintain the exact same JSON structure, section titles, and item counts.
+2. **FOLLOW INSTRUCTIONS**: Apply the requested changes while keeping the tailoring for the target job in mind.
+3. **USE ADDITIONAL CONTEXT**: If additional context is provided above, use it to support the requested refinements.
+4. **NO MARKDOWN**: Output raw text only.
+5. **URL CLEANING**: Continue cleaning web addresses by removing "http://", "https://", and "www.".
+
+Return the updated resume in the same JSON structure.""",
     "extract_profile": """Extract structured data from the resume text below.
         
 RESUME TEXT:
@@ -143,6 +157,8 @@ RESUME CONTENT:
 JOB DESCRIPTION:
 {job_description}
 
+{additional_context_instr}
+
 INSTRUCTIONS:
 1. **DATE**: Use '{current_date}' as the date in the letter.
 2. **TONE**: Professional, enthusiastic, and confident.
@@ -157,7 +173,7 @@ INSTRUCTIONS:
      b) If not found, use your internal knowledge to find the company's Headquarters address.
      c) **CRITICAL**: If you absolutely cannot find the address, **OMIT THE ADDRESS BLOCK ENTIRELY**.
      d) **ALWAYS** include the Company Name if known.
-5. **CONTENT**: Highlight specific achievements from the resume that align with the required skills. Keep it to 3-4 paragraphs.
+5. **CONTENT**: Highlight specific achievements from the resume that align with the required skills. Use details from the additional context documents if provided to add more depth and personalization to the letter. Keep it to 3-4 paragraphs.
 
 Return the result as a JSON object with:
    - "content": The full text of the letter.
@@ -171,6 +187,8 @@ Return the result as a JSON object with:
         
 CURRENT CONTENT:
 {current_content}
+
+{additional_context_instr}
 
 INSTRUCTIONS:
 "{instructions}"
@@ -230,15 +248,29 @@ class AIService:
         
         # Try finding the first { or [ and last } or ]
         try:
-            return json.loads(content)
+            # strict=False allows control characters (like literal newlines) in strings
+            return json.loads(content, strict=False)
         except json.JSONDecodeError as e:
-            # Fallback for weird formatting
-            match = re.search(r'(\{.*\}|\[.*\])', content, re.DOTALL)
+            # Attempt to fix common AI-isms before searching for brackets
+            # 1. Replace True/False/None with true/false/null
+            content_fixed = re.sub(r'\bTrue\b', 'true', content)
+            content_fixed = re.sub(r'\bFalse\b', 'false', content_fixed)
+            content_fixed = re.sub(r'\bNone\b', 'null', content_fixed)
+            
+            # Fallback for weird formatting (e.g. text before/after JSON)
+            match = re.search(r'(\{.*\}|\[.*\])', content_fixed, re.DOTALL)
             if match:
+                json_part = match.group(1)
                 try:
-                    return json.loads(match.group(1))
+                    return json.loads(json_part, strict=False)
                 except:
-                    pass
+                    # Final attempt: try to fix common issues like trailing commas
+                    cleaned_json = re.sub(r',\s*([}\]])', r'\1', json_part)
+                    try:
+                        return json.loads(cleaned_json, strict=False)
+                    except:
+                        pass
+            # Re-raise original exception if nothing worked
             raise e
 
     def load_config(self):
@@ -405,9 +437,10 @@ class AIService:
             print(f"Error analyzing job description: {e}")
             raise e
     
-    async def tailor_resume(self, resume_data: Dict[str, Any], job_description: str) -> Dict[str, Any]:
+    async def tailor_resume(self, resume_data: Dict[str, Any], job_description: str, additional_context: str = "") -> Dict[str, Any]:
         """
         Tailor a resume based on job description while maintaining formatting.
+        Includes additional context if provided.
         """
         if not self._has_active_client():
             # Return original resume if no AI available
@@ -421,12 +454,19 @@ class AIService:
         contact_header = full_text_original[:4] if len(full_text_original) > 4 else []
             
         prompt_template = self.get_prompt("tailor_resume")
+        
+        # Build context string
+        additional_context_instr = ""
+        if additional_context:
+            additional_context_instr = f"\n\nADDITIONAL CONTEXT DOCUMENTS:\n{additional_context}\n\nINSTRUCTION: Use the above context documents to find more detailed project info, specific metrics, or achievements that might not be in the base resume but are relevant to the job. Use this to enhance the tailored bullet points."
+
         # Ensure we pass the entire resume_data
         prompt = prompt_template.format(
             resume_data=json.dumps(resume_data, indent=2),
             job_description=job_description,
             job_analysis=json.dumps(job_analysis, indent=2),
-            item_count=len(full_text_original)
+            item_count=len(full_text_original),
+            additional_context_instr=additional_context_instr
         )
         
         try:
@@ -479,27 +519,23 @@ class AIService:
             print(f"Error tailoring resume: {e}")
             raise e
 
-    async def refine_resume(self, resume_data: Dict[str, Any], refinement_instructions: str) -> Dict[str, Any]:
+    async def refine_resume(self, resume_data: Dict[str, Any], refinement_instructions: str, additional_context: str = "") -> Dict[str, Any]:
         """
         Refine an existing resume revision based on user instructions.
         """
         if not self._has_active_client():
             return resume_data
             
-        # Protect Contact Info (similar logic to tailor_resume)
-        # We assume resume_data IS the structured JSON we use internally
-        full_text = resume_data.get("full_text", [])
-        
-        # Heuristic: First 4 lines are contact info if we are using the standard parser output
-        # But if this is a Revision, it might be different. 
-        # Safest is to explicitly tell AI to preserve the first X items if they look like contact info
-        # OR just send it all and tell it NOT to touch contact info. 
-        # Let's send it all but give strict verify instructions.
-        
         prompt_template = self.get_prompt("refine_resume")
+        
+        additional_context_instr = ""
+        if additional_context:
+            additional_context_instr = f"\nADDITIONAL CONTEXT DOCUMENTS:\n{additional_context}\n"
+
         prompt = prompt_template.format(
             resume_data=json.dumps(resume_data, indent=2),
-            instructions=refinement_instructions
+            instructions=refinement_instructions,
+            additional_context_instr=additional_context_instr
         )
         
         try:
@@ -572,10 +608,11 @@ class AIService:
             print(f"Error extracting profile data: {e}")
             return {}
 
-    async def generate_cover_letter(self, resume_text: str, job_description: str, user_profile: Dict[str, Any] = None) -> Dict[str, str]:
+    async def generate_cover_letter(self, resume_text: str, job_description: str, user_profile: Dict[str, Any] = None, additional_context: str = "") -> Dict[str, Any]:
         """
         Generate a cover letter based on the resume and job description.
         If user_profile is provided, ensure the header uses that info.
+        Includes additional context if provided.
         """
         if not self._has_active_client():
             return {"content": "AI Client not initialized."}
@@ -607,11 +644,18 @@ class AIService:
             profile_context = "\n".join(profile_lines)
 
         prompt_template = self.get_prompt("generate_cover_letter")
+        
+        # Build context string
+        additional_context_instr = ""
+        if additional_context:
+            additional_context_instr = f"\n\nADDITIONAL CONTEXT DOCUMENTS:\n{additional_context}\n\nINSTRUCTION: Incorporate relevant details, projects, or specific achievements found in these additional context documents to make the cover letter more personalized and demonstrate a stronger fit for the role."
+
         prompt = prompt_template.format(
             current_date=current_date,
             profile_context=profile_context,
             resume_text=resume_text[:4000],
-            job_description=job_description[:4000]
+            job_description=job_description[:4000],
+            additional_context_instr=additional_context_instr
         )
         
         try:
@@ -630,12 +674,21 @@ class AIService:
             print(f"Error generating cover letter: {e}")
             return {"content": f"Error generating cover letter: {str(e)}"}
 
-    async def refine_cover_letter(self, current_content: str, instructions: str) -> Dict[str, str]:
+    async def refine_cover_letter(self, current_content: str, instructions: str, additional_context: str = "") -> Dict[str, Any]:
         """Refine cover letter text based on instructions."""
+        if not self._has_active_client():
+            return {"content": current_content}
+            
         prompt_template = self.get_prompt("refine_cover_letter")
+
+        additional_context_instr = ""
+        if additional_context:
+            additional_context_instr = f"\nADDITIONAL CONTEXT DOCUMENTS:\n{additional_context}\n"
+
         prompt = prompt_template.format(
             current_content=current_content,
-            instructions=instructions
+            instructions=instructions,
+            additional_context_instr=additional_context_instr
         )
         try:
             content = await self.execute_ai_request(
@@ -682,7 +735,7 @@ class AIService:
             if api_key: 
                 kwargs["api_key"] = api_key
             elif provider == "openai":
-                kwargs["api_key"] = os.getenv("OPENAI_API_KEY")
+                kwargs["api_key"] = os.getenv("OPENAI_API_KEY", "")
                 
             if not kwargs.get("api_key"): kwargs["api_key"] = "dummy"
             
@@ -690,7 +743,7 @@ class AIService:
             elif provider == "openrouter": kwargs["base_url"] = "https://openrouter.ai/api/v1"
             elif provider == "deepseek": kwargs["base_url"] = "https://api.deepseek.com"
             elif provider == "mistral": kwargs["base_url"] = "https://api.mistral.ai/v1"
-            elif provider == "openai" and not api_key: kwargs["api_key"] = os.getenv("OPENAI_API_KEY")
+            elif provider == "openai" and not api_key: kwargs["api_key"] = os.getenv("OPENAI_API_KEY", "")
 
 
             temp_client = OpenAI(**kwargs)

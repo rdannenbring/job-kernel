@@ -94,7 +94,7 @@ const ProcessVisualization = ({ mode = 'resume' }) => {
                     {stage === 0 && (
                         <div className="stage-ingestion">
                             <div className="ingestion-portal"></div>
-                            <div className="doc-flying">📄</div>
+                            <div className="doc-flying"><span className="material-symbols-outlined" style={{ fontSize: '3rem', color: 'var(--primary)' }}>description</span></div>
                         </div>
                     )}
 
@@ -103,10 +103,13 @@ const ProcessVisualization = ({ mode = 'resume' }) => {
                         <div className="stage-analysis">
                             <div className="analysis-node">
                                 <div className="analysis-icon-circle">
-                                    📄
+                                    <span className="material-symbols-outlined" style={{ fontSize: '2rem' }}>description</span>
                                     <div className="scan-line"></div>
                                 </div>
-                                <div className="analysis-label">RESUME</div>
+                                <div className="analysis-label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '0.9rem' }}>description</span>
+                                    RESUME
+                                </div>
                             </div>
 
                             <div className="binary-stream">
@@ -115,10 +118,13 @@ const ProcessVisualization = ({ mode = 'resume' }) => {
 
                             <div className="analysis-node">
                                 <div className="analysis-icon-circle">
-                                    💼
+                                    <span className="material-symbols-outlined" style={{ fontSize: '2rem' }}>work</span>
                                     <div className="scan-line" style={{ animationDelay: '0.5s', animationDirection: 'reverse' }}></div>
                                 </div>
-                                <div className="analysis-label">JOB</div>
+                                <div className="analysis-label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '0.9rem' }}>work</span>
+                                    JOB
+                                </div>
                             </div>
                         </div>
                     )}
@@ -126,7 +132,9 @@ const ProcessVisualization = ({ mode = 'resume' }) => {
                     {/* Stage 3: AI Neural Net */}
                     {stage === 3 && (
                         <div className="stage-ai">
-                            <div className="brain-core">🧠</div>
+                            <div className="brain-core">
+                                <span className="material-symbols-outlined" style={{ fontSize: '4.5rem', color: 'var(--primary)' }}>psychology</span>
+                            </div>
                             {/* Orbiting synapses */}
                             {[0, 60, 120, 180, 240, 300].map(deg => (
                                 <div

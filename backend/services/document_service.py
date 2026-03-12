@@ -1250,3 +1250,26 @@ class DocumentService:
             p.paragraph_format.space_after = Pt(6)
         
         doc.save(output_path)
+
+    def extract_text_from_pdf(self, pdf_path: str) -> str:
+        """Extract text from PDF using pdftotext."""
+        try:
+            result = subprocess.run(
+                ['pdftotext', '-layout', pdf_path, '-'],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            return result.stdout
+        except Exception as e:
+            print(f"Error extracting PDF text: {e}")
+            return ""
+
+    def extract_text_from_txt(self, txt_path: str) -> str:
+        """Extract text from a plain text file."""
+        try:
+            with open(txt_path, 'r', encoding='utf-8', errors='ignore') as f:
+                return f.read()
+        except Exception as e:
+            print(f"Error reading txt file: {e}")
+            return ""

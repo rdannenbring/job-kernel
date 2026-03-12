@@ -87,7 +87,7 @@
 .search-input {
     width: 100%;
     background: var(--bg-card);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-color-input);
     border-radius: var(--radius-lg);
     padding: 0.75rem 1rem 0.75rem 2.75rem;
     color: var(--text-primary);
@@ -112,7 +112,7 @@
     padding: 0.75rem 1rem;
     border-radius: var(--radius-lg);
     background: var(--bg-card);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-color-card);
     color: var(--text-primary);
     font-size: 0.875rem;
     font-weight: 600;
@@ -165,8 +165,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color-card);
     font-size: 1.5rem;
     color: var(--text-secondary);
 }
@@ -243,7 +243,7 @@
 
 .action-btn:hover {
     color: var(--primary);
-    background: rgba(255,255,255,0.05);
+    background: var(--bg-secondary);
 }
 
 .status-badge {
@@ -307,8 +307,8 @@
     font-weight: 700;
     text-transform: uppercase;
     color: var(--text-muted);
-    background: rgba(255,255,255,0.05);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color-card);
     letter-spacing: 0.05em;
 }
 
@@ -393,7 +393,7 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color-card);
     min-height: 400px; /* Important for drag and drop to empty columns */
 }
 
@@ -434,7 +434,7 @@
     background: var(--bg-card);
     border-radius: var(--radius-lg);
     padding: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-color-card);
     cursor: grab;
     transition: all var(--transition-fast);
 }

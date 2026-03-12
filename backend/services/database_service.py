@@ -35,10 +35,29 @@ class Application(Base):
     interest_level = Column(String)
     remarks = Column(Text)
     is_archived = Column(String, default='false')  # 'true'/'false'
+    kanban_order = Column(Integer, default=0)
+    
+    # Override fields for final versions
+    override_resume_path = Column(String)
+    override_cover_letter_path = Column(String)
+    active_resume_type = Column(String, default='generated') # 'generated' or 'override'
+    active_cover_letter_type = Column(String, default='generated') # 'generated' or 'override'
     
     # New fields for AI insights
     resume_changes_summary = Column(Text) # JSON list/string
     cover_letter_changes_summary = Column(Text) # JSON list/string
+
+    # Company Ratings & Links
+    glassdoor_rating = Column(String)
+    glassdoor_url = Column(String)
+    indeed_rating = Column(String)
+    indeed_url = Column(String)
+    linkedin_rating = Column(String)
+    linkedin_url = Column(String)
+    
+    # Snapshot of User Profile at time of generation
+    profile_snapshot = Column(Text) # JSON string
+
 
 class UserProfile(Base):
     __tablename__ = 'user_profile'
@@ -131,11 +150,23 @@ class DatabaseService:
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS interest_level TEXT",
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS remarks TEXT",
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS is_archived TEXT DEFAULT 'false'",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS kanban_order INTEGER DEFAULT 0",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS glassdoor_rating TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS glassdoor_url TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS indeed_rating TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS indeed_url TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS linkedin_rating TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS linkedin_url TEXT",
             "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS base_resume_path TEXT",
             "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS long_form_resume_path TEXT",
             "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS additional_docs TEXT",
             "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS social_links TEXT",
             "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS preferences TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS profile_snapshot TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS override_resume_path TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS override_cover_letter_path TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS active_resume_type TEXT DEFAULT 'generated'",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS active_cover_letter_type TEXT DEFAULT 'generated'",
         ]
         with self.engine.connect() as conn:
             for sql in migrations:
@@ -167,6 +198,59 @@ class DatabaseService:
     def save_application(self, data: Dict[str, Any]) -> int:
         session = self.Session()
         try:
+            app_id = data.get('application_id')
+            if app_id:
+                app = session.query(Application).filter(Application.id == app_id).first()
+                if app:
+                    app.status = data.get('status', 'Generated')
+                    app.job_title = data.get('job_title', app.job_title)
+                    app.company = data.get('company', app.company)
+                    if data.get('company_logo'): app.company_logo = data.get('company_logo')
+                    if data.get('job_url'): app.job_url = data.get('job_url')
+                    if data.get('job_description'): app.job_description = data.get('job_description')
+                    if data.get('original_resume_path'): app.original_resume_path = data.get('original_resume_path')
+                    if data.get('tailored_resume_path'): app.tailored_resume_path = data.get('tailored_resume_path')
+                    if data.get('cover_letter_path'): app.cover_letter_path = data.get('cover_letter_path')
+                    if data.get('resume_data'): app.resume_data = json.dumps(data.get('resume_data'))
+                    if data.get('cover_letter_text'): app.cover_letter_text = data.get('cover_letter_text')
+                    if data.get('salary_range'): app.salary_range = data.get('salary_range')
+                    if data.get('date_posted'): app.date_posted = data.get('date_posted')
+                    if data.get('deadline'): app.deadline = data.get('deadline')
+                    if data.get('apply_url'): app.apply_url = data.get('apply_url')
+                    if data.get('job_type'): app.job_type = data.get('job_type')
+                    if data.get('location_type'): app.location_type = data.get('location_type')
+                    if data.get('location'): app.location = data.get('location')
+                    if data.get('relocation') is not None: 
+                        app.relocation = 'true' if data.get('relocation') is True else 'false'
+                    else:
+                        app.relocation = None
+                    if data.get('interest_level'): app.interest_level = data.get('interest_level')
+                    if data.get('remarks'): app.remarks = data.get('remarks')
+                    if data.get('resume_changes_summary'): app.resume_changes_summary = json.dumps(data.get('resume_changes_summary'))
+                    if data.get('cover_letter_changes_summary'): app.cover_letter_changes_summary = json.dumps(data.get('cover_letter_changes_summary'))
+                    if 'kanban_order' in data: app.kanban_order = data['kanban_order']
+                    if 'is_archived' in data: 
+                        app.is_archived = 'true' if (data['is_archived'] is True or data['is_archived'] == 'true') else 'false'
+                    if data.get('profile_snapshot'):
+                        val = data['profile_snapshot']
+                        app.profile_snapshot = json.dumps(val) if isinstance(val, (dict, list)) else val
+                    if 'override_resume_path' in data: app.override_resume_path = data['override_resume_path']
+                    if 'override_cover_letter_path' in data: app.override_cover_letter_path = data['override_cover_letter_path']
+                    if 'active_resume_type' in data: app.active_resume_type = data['active_resume_type'] or 'generated'
+                    if 'active_cover_letter_type' in data: app.active_cover_letter_type = data['active_cover_letter_type'] or 'generated'
+
+                    
+                    # Update company ratings
+                    if data.get('glassdoor_rating') is not None: app.glassdoor_rating = data.get('glassdoor_rating')
+                    if data.get('glassdoor_url') is not None: app.glassdoor_url = data.get('glassdoor_url')
+                    if data.get('indeed_rating') is not None: app.indeed_rating = data.get('indeed_rating')
+                    if data.get('indeed_url') is not None: app.indeed_url = data.get('indeed_url')
+                    if data.get('linkedin_rating') is not None: app.linkedin_rating = data.get('linkedin_rating')
+                    if data.get('linkedin_url') is not None: app.linkedin_url = data.get('linkedin_url')
+                    
+                    session.commit()
+                    return app.id
+
             new_app = Application(
                 job_title=data.get('job_title', 'Unknown Role'),
                 company=data.get('company', 'Unknown Company'),
@@ -186,11 +270,25 @@ class DatabaseService:
                 job_type=data.get('job_type', ''),
                 location_type=data.get('location_type', ''),
                 location=data.get('location', ''),
-                relocation=str(data.get('relocation', False)),
+                relocation='true' if data.get('relocation') is True else ('false' if data.get('relocation') is False else None),
                 interest_level=data.get('interest_level', ''),
                 remarks=data.get('remarks', ''),
                 resume_changes_summary=json.dumps(data.get('resume_changes_summary', [])),
-                cover_letter_changes_summary=json.dumps(data.get('cover_letter_changes_summary', []))
+                cover_letter_changes_summary=json.dumps(data.get('cover_letter_changes_summary', [])),
+                status=data.get('status', 'Saved'),
+                is_archived='true' if (data.get('is_archived') is True or data.get('is_archived') == 'true') else 'false',
+                kanban_order=data.get('kanban_order', 0),
+                glassdoor_rating=data.get('glassdoor_rating'),
+                glassdoor_url=data.get('glassdoor_url'),
+                indeed_rating=data.get('indeed_rating'),
+                indeed_url=data.get('indeed_url'),
+                linkedin_rating=data.get('linkedin_rating'),
+                linkedin_url=data.get('linkedin_url'),
+                profile_snapshot=json.dumps(data.get('profile_snapshot')) if data.get('profile_snapshot') else None,
+                override_resume_path=data.get('override_resume_path'),
+                override_cover_letter_path=data.get('override_cover_letter_path'),
+                active_resume_type=data.get('active_resume_type', 'generated'),
+                active_cover_letter_type=data.get('active_cover_letter_type', 'generated')
             )
             session.add(new_app)
             session.commit()
@@ -250,12 +348,19 @@ class DatabaseService:
                     "job_type": app.job_type,
                     "location_type": app.location_type,
                     "location": app.location,
-                    "relocation": app.relocation,
+                    "relocation": True if app.relocation == 'true' else (False if app.relocation == 'false' else None),
                     "interest_level": app.interest_level,
                     "remarks": app.remarks,
                     "resume_changes_summary": app.resume_changes_summary,
                     "cover_letter_changes_summary": app.cover_letter_changes_summary,
-                    "is_archived": app.is_archived or 'false',
+                    "is_archived": app.is_archived == 'true',
+                    "glassdoor_rating": app.glassdoor_rating,
+                    "glassdoor_url": app.glassdoor_url,
+                    "indeed_rating": app.indeed_rating,
+                    "indeed_url": app.indeed_url,
+                    "linkedin_rating": app.linkedin_rating,
+                    "linkedin_url": app.linkedin_url,
+                    "profile_snapshot": json.loads(app.profile_snapshot) if app.profile_snapshot else None
                 })
             return result
         finally:
@@ -294,6 +399,12 @@ class DatabaseService:
             "resume_changes_summary": app.resume_changes_summary,
             "cover_letter_changes_summary": app.cover_letter_changes_summary,
             "is_archived": app.is_archived or 'false',
+            "kanban_order": app.kanban_order or 0,
+            "profile_snapshot": json.loads(app.profile_snapshot) if app.profile_snapshot else None,
+            "override_resume_path": app.override_resume_path,
+            "override_cover_letter_path": app.override_cover_letter_path,
+            "active_resume_type": app.active_resume_type or 'generated',
+            "active_cover_letter_type": app.active_cover_letter_type or 'generated'
         }
 
     def get_application_by_url(self, url: str) -> Dict[str, Any]:
@@ -353,10 +464,49 @@ class DatabaseService:
             if 'job_type' in data: app.job_type = data['job_type']
             if 'location_type' in data: app.location_type = data['location_type']
             if 'location' in data: app.location = data['location']
-            if 'relocation' in data: app.relocation = str(data['relocation'])
+            if 'relocation' in data: 
+                if data['relocation'] is True or data['relocation'] == 'true':
+                    app.relocation = 'true'
+                elif data['relocation'] is False or data['relocation'] == 'false':
+                    app.relocation = 'false'
+                else:
+                    app.relocation = None
             if 'interest_level' in data: app.interest_level = data['interest_level']
             if 'remarks' in data: app.remarks = data['remarks']
             if 'status' in data: app.status = data['status']
+            if 'kanban_order' in data: app.kanban_order = data['kanban_order']
+            if 'is_archived' in data: 
+                app.is_archived = 'true' if (data['is_archived'] is True or data['is_archived'] == 'true') else 'false'
+            if 'original_resume_path' in data: app.original_resume_path = data['original_resume_path']
+            if 'tailored_resume_path' in data: app.tailored_resume_path = data['tailored_resume_path']
+            if 'cover_letter_path' in data: app.cover_letter_path = data['cover_letter_path']
+            if 'cover_letter_text' in data: app.cover_letter_text = data['cover_letter_text']
+            if 'resume_data' in data: 
+                val = data['resume_data']
+                app.resume_data = json.dumps(val) if isinstance(val, (dict, list)) else val
+            if 'resume_changes_summary' in data:
+                val = data['resume_changes_summary']
+                app.resume_changes_summary = json.dumps(val) if isinstance(val, (dict, list)) else val
+            if 'cover_letter_changes_summary' in data:
+                val = data['cover_letter_changes_summary']
+                app.cover_letter_changes_summary = json.dumps(val) if isinstance(val, (dict, list)) else val
+            
+            if 'profile_snapshot' in data:
+                val = data['profile_snapshot']
+                app.profile_snapshot = json.dumps(val) if isinstance(val, (dict, list)) else val
+            if 'override_resume_path' in data: app.override_resume_path = data['override_resume_path']
+            if 'override_cover_letter_path' in data: app.override_cover_letter_path = data['override_cover_letter_path']
+            if 'active_resume_type' in data: app.active_resume_type = data['active_resume_type'] or 'generated'
+            if 'active_cover_letter_type' in data: app.active_cover_letter_type = data['active_cover_letter_type'] or 'generated'
+
+            
+            if 'glassdoor_rating' in data: app.glassdoor_rating = data['glassdoor_rating']
+            if 'glassdoor_url' in data: app.glassdoor_url = data['glassdoor_url']
+            if 'indeed_rating' in data: app.indeed_rating = data['indeed_rating']
+            if 'indeed_url' in data: app.indeed_url = data['indeed_url']
+            if 'linkedin_rating' in data: app.linkedin_rating = data['linkedin_rating']
+            if 'linkedin_url' in data: app.linkedin_url = data['linkedin_url']
+
             session.commit()
             return True
         except Exception as e:
