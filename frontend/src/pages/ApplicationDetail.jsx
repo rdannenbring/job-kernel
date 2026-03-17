@@ -1399,7 +1399,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                     jobMatchNode = <a href="#profile" title="Job Type preference missing. Click to set." style={{ color: 'var(--text-muted)' }}><span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>info</span></a>;
                                 } else {
                                     const jobTypeField = app.job_type || '';
-                                    if (jobTypeField && jobTypeField.trim() !== '' && jobTypeField !== 'N/A') {
+                                    if (jobTypeField && jobTypeField.trim() !== '' && jobTypeField.toUpperCase() !== 'N/A') {
                                         const isMatch = userArray.some(setting => jobTypeField.toLowerCase().includes(setting.toLowerCase()));
                                         if (isMatch) {
                                             jobMatchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#10b981' }} title={`Matches your preference (${userArray.join(', ')})`}>check_circle</span>;
@@ -1433,10 +1433,10 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                 const userSetting = profilePrefs.work_setting || [];
                                 const userArray = Array.isArray(userSetting) ? userSetting : (userSetting ? [userSetting] : []);
                                 if (userArray.length === 0) {
-                                    wsMatchNode = <a href="#profile" title="Work Setting preference missing. Click to set." style={{ color: 'var(--text-muted)' }}><span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>info</span></a>;
+                                    wsMatchNode = <a href="#profile" title="Location Type preference missing. Click to set." style={{ color: 'var(--text-muted)' }}><span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>info</span></a>;
                                 } else {
-                                    const jobType = app.location_type || app.location || '';
-                                    if (jobType && jobType.trim() !== '' && jobType !== 'N/A') {
+                                    const jobType = app.location_type || '';
+                                    if (jobType && jobType.trim() !== '' && jobType.toUpperCase() !== 'N/A') {
                                         const isMatch = userArray.some(setting => 
                                             setting === 'Any' || 
                                             (setting.toLowerCase() === 'remote' && jobType.toLowerCase() === 'hybrid') || 

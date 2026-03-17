@@ -940,7 +940,7 @@ const Profile = () => {
                                 ]}
                             />
                         </InputGroup>
-                        <InputGroup label="Work Setting">
+                        <InputGroup label="Location Type">
                             <CustomMultiSelect
                                 value={Array.isArray(formData.preferences?.work_setting) ? formData.preferences.work_setting : (formData.preferences?.work_setting ? [formData.preferences.work_setting] : [])}
                                 onChange={(val) => {
@@ -953,7 +953,7 @@ const Profile = () => {
                                     { value: 'On-site', label: 'On-site' },
                                     { value: 'Any', label: 'Any' }
                                 ]}
-                                placeholder="Select Settings"
+                                placeholder="Select Location Types"
                             />
                         </InputGroup>
                     </div>
