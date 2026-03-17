@@ -101,15 +101,15 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         if (profilePrefs) {
             const userJt = profilePrefs.job_types || [];
             const jtArr = Array.isArray(userJt) ? userJt : (userJt ? [userJt] : []);
-            if (jtArr.length > 0 && app.job_type && app.job_type !== 'N/A' && app.job_type.trim() !== '') {
+            if (jtArr.length > 0 && app.job_type && app.job_type.trim() !== '' && app.job_type.toUpperCase() !== 'N/A') {
                 const matched = jtArr.some(s => app.job_type.toLowerCase().includes(s.toLowerCase()));
                 matchJobType = matched ? 'green' : 'red';
             }
             
             const userWs = profilePrefs.work_setting || [];
             const wsArr = Array.isArray(userWs) ? userWs : (userWs ? [userWs] : []);
-            const jobLoc = app.location_type || app.location || '';
-            if (wsArr.length > 0 && jobLoc && jobLoc !== 'N/A' && jobLoc.trim() !== '') {
+            const jobLoc = app.location_type || '';
+            if (wsArr.length > 0 && jobLoc && jobLoc.trim() !== '' && jobLoc.toUpperCase() !== 'N/A') {
                 const matched = wsArr.some(s => s === 'Any' || (s.toLowerCase() === 'remote' && jobLoc.toLowerCase() === 'hybrid') || jobLoc.toLowerCase().includes(s.toLowerCase()));
                 matchLocType = matched ? 'green' : 'red';
             }
