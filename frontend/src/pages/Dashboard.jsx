@@ -23,6 +23,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
     const [filterInterestLevels, setFilterInterestLevels] = useState(saved.filterInterestLevels || []);
     const [filterRelocation, setFilterRelocation] = useState(saved.filterRelocation || []);
     const [showArchived, setShowArchived] = useState(saved.showArchived || false);
+    const [profilePrefs, setProfilePrefs] = useState(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef(null);
     const [isSortOpen, setIsSortOpen] = useState(false);
@@ -40,6 +41,19 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
             filterLocationTypes, filterInterestLevels, filterRelocation, showArchived 
         }));
     }, [viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, filterLocationTypes, filterInterestLevels, filterRelocation, showArchived]);
+
+    useEffect(() => {
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.preferences) {
+                    try {
+                        setProfilePrefs(JSON.parse(data.preferences));
+                    } catch (e) { console.error('Error parsing profile prefs in dashboard'); }
+                }
+            })
+            .catch(err => console.error('Failed to load profile for dashboard filtering', err));
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -81,7 +95,27 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         return status;
     };
 
-    const processedApps = [...apps].filter(app => {
+    const processedApps = [...apps].map(app => {
+        let matchJobType = null;
+        let matchLocType = null;
+        if (profilePrefs) {
+            const userJt = profilePrefs.job_types || [];
+            const jtArr = Array.isArray(userJt) ? userJt : (userJt ? [userJt] : []);
+            if (jtArr.length > 0 && app.job_type && app.job_type !== 'N/A' && app.job_type.trim() !== '') {
+                const matched = jtArr.some(s => app.job_type.toLowerCase().includes(s.toLowerCase()));
+                matchJobType = matched ? 'green' : 'red';
+            }
+            
+            const userWs = profilePrefs.work_setting || [];
+            const wsArr = Array.isArray(userWs) ? userWs : (userWs ? [userWs] : []);
+            const jobLoc = app.location_type || app.location || '';
+            if (wsArr.length > 0 && jobLoc && jobLoc !== 'N/A' && jobLoc.trim() !== '') {
+                const matched = wsArr.some(s => s === 'Any' || (s.toLowerCase() === 'remote' && jobLoc.toLowerCase() === 'hybrid') || jobLoc.toLowerCase().includes(s.toLowerCase()));
+                matchLocType = matched ? 'green' : 'red';
+            }
+        }
+        return { ...app, matchJobType, matchLocType };
+    }).filter(app => {
         const archived = app.is_archived === 'true';
         if (!showArchived && archived) return false;
         if (showArchived && !archived) return false;
@@ -663,10 +697,16 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                                 <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
                                                     <span className="material-symbols-outlined text-[12px]">location_on</span>
                                                     <span className="truncate">{app.location || 'Remote'}{app.location_type ? ` (${app.location_type})` : ''}</span>
+                                                    {app.matchLocType === 'green' && <span className="material-symbols-outlined text-[12px] text-emerald-500">check_circle</span>}
+                                                    {app.matchLocType === 'red' && <span className="material-symbols-outlined text-[12px] text-rose-500">cancel</span>}
                                                 </div>
                                                 <div className="flex items-center justify-between text-[10px]">
                                                     <span className="font-bold text-primary">{app.salary_range && app.salary_range !== "Not Listed" ? app.salary_range : '-'}</span>
-                                                    <span className="text-slate-400 dark:text-slate-500">{app.job_type || 'Full-time'}</span>
+                                                    <div className="flex items-center gap-1">
+                                                        {app.matchJobType === 'green' && <span className="material-symbols-outlined text-[12px] text-emerald-500">check_circle</span>}
+                                                        {app.matchJobType === 'red' && <span className="material-symbols-outlined text-[12px] text-rose-500">cancel</span>}
+                                                        <span className="text-slate-400 dark:text-slate-500">{app.job_type || 'Full-time'}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             </>
@@ -718,11 +758,15 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="material-symbols-outlined text-[14px]">location_on</span>
                                                     <span>{app.location || 'Remote'}{app.location_type ? ` (${app.location_type})` : ''}</span>
+                                                    {app.matchLocType === 'green' && <span className="material-symbols-outlined text-[14px] text-emerald-500">check_circle</span>}
+                                                    {app.matchLocType === 'red' && <span className="material-symbols-outlined text-[14px] text-rose-500">cancel</span>}
                                                 </div>
                                                 {app.job_type && (
                                                     <div className="flex items-center gap-1.5">
                                                         <span className="material-symbols-outlined text-[14px]">work</span>
                                                         <span>{app.job_type}</span>
+                                                        {app.matchJobType === 'green' && <span className="material-symbols-outlined text-[14px] text-emerald-500">check_circle</span>}
+                                                        {app.matchJobType === 'red' && <span className="material-symbols-outlined text-[14px] text-rose-500">cancel</span>}
                                                     </div>
                                                 )}
                                                 <div className="flex items-center gap-1.5">
@@ -773,7 +817,11 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                         </td>
                         <td className="px-6 py-4"><span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors">{app.job_title || 'Unknown'}</span></td>
                         <td className="px-6 py-4">
-                            <div className="text-sm font-medium text-slate-600 dark:text-slate-300">{app.location || 'Remote'}</div>
+                            <div className="flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300">
+                                {app.location || 'Remote'}
+                                {app.matchLocType === 'green' && <span className="material-symbols-outlined text-[14px] text-emerald-500">check_circle</span>}
+                                {app.matchLocType === 'red' && <span className="material-symbols-outlined text-[14px] text-rose-500">cancel</span>}
+                            </div>
                             {app.location_type && <div className="text-[10px] text-slate-500 uppercase tracking-tight">{app.location_type}</div>}
                         </td>
                         <td className="px-6 py-4"><span className="text-sm font-bold text-primary">{app.salary_range && app.salary_range !== "Not Listed" ? app.salary_range : '-'}</span></td>

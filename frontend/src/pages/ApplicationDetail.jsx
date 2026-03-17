@@ -1,6 +1,8 @@
 import React from 'react';
 import CustomDropdown from '../components/CustomDropdown';
 import InterestStars from '../components/InterestStars';
+import PipelineProgressBar, { STAGE_TO_STATUS } from '../components/PipelineProgressBar';
+import ApplicationLifecycle from './ApplicationLifecycle';
 
 // Use same env logic or passed prop
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -487,7 +489,7 @@ const LogoPickerModal = ({ companyName, onSelect, onClose }) => {
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate }) => {
+const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate, onViewLifecycle }) => {
     const [previewFile, setPreviewFile] = React.useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
     const [deleting, setDeleting] = React.useState(false);
@@ -500,14 +502,34 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     const [formData, setFormData] = React.useState({ ...app });
     const [regeneratingResume, setRegeneratingResume] = React.useState(false);
     const [regeneratingCL, setRegeneratingCL] = React.useState(false);
+    const [activeTab, setActiveTab] = React.useState('details'); // 'details' | 'lifecycle'
     
     const [showResumeOverrideConfirm, setShowResumeOverrideConfirm] = React.useState(false);
     const [showCLOverrideConfirm, setShowCLOverrideConfirm] = React.useState(false);
     const [pendingResumeFile, setPendingResumeFile] = React.useState(null);
     const [pendingCLFile, setPendingCLFile] = React.useState(null);
     const [uploadingOverride, setUploadingOverride] = React.useState(false);
+    const [connections, setConnections] = React.useState([]);
+    const [commuteInfo, setCommuteInfo] = React.useState({ text: 'Calculating...' });
+    const [profilePrefs, setProfilePrefs] = React.useState(null);
 
     const logoInputRef = React.useRef(null);
+    
+    const extractSalaryNumbers = (str) => {
+        if (!str) return [];
+        const normalized = str.replace(/,/g, '');
+        const regex = /(\d+(?:\.\d+)?)(k)?/gi;
+        let match;
+        const nums = [];
+        while ((match = regex.exec(normalized)) !== null) {
+            let val = parseFloat(match[1]);
+            if (match[2] && match[2].toLowerCase() === 'k') val *= 1000;
+            else if (val < 1000 && val > 0 && str.toLowerCase().includes('k')) val *= 1000;
+            else if (val < 1000 && val > 0 && !str.toLowerCase().includes('k')) val *= 2080;
+            nums.push(val);
+        }
+        return nums;
+    };
     const resumeOverrideInputRef = React.useRef(null);
     const clOverrideInputRef = React.useRef(null);
 
@@ -516,6 +538,70 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
         setFormData({ ...app });
         setIsArchived(app.is_archived === 'true' || app.is_archived === true);
         setLogoUrl(app.company_logo || null);
+
+        // Fetch connections
+        if (app.company) {
+            fetch(`${API_URL}/api/linkedin/matches/name/${encodeURIComponent(app.company)}`)
+                .then(res => res.json())
+                .then(data => setConnections(data.matches || []))
+                .catch(err => console.warn("Failed to fetch connections", err));
+        }
+
+        // Use precalculated commute
+        if (app.id) {
+            const getPrefs = async () => {
+                try {
+                    const profileRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile`);
+                    const profileData = await profileRes.json();
+                    setProfilePrefs(profileData?.preferences || {});
+                    
+                    const maxCommutePref = profileData?.preferences?.max_commute || '';
+                    let maxCommuteMins = null;
+                    if (maxCommutePref === '15 mins') maxCommuteMins = 15;
+                    else if (maxCommutePref === '30 mins') maxCommuteMins = 30;
+                    else if (maxCommutePref === '45 mins') maxCommuteMins = 45;
+                    else if (maxCommutePref === '1 hour') maxCommuteMins = 60;
+                    else if (maxCommutePref === '1.5 hours') maxCommuteMins = 90;
+                    else if (maxCommutePref === '2 hours') maxCommuteMins = 120;
+                    else if (maxCommutePref === 'Remote Only') maxCommuteMins = 0;
+
+                    if (!app.location) {
+                        setCommuteInfo({ text: 'No Location Provided' });
+                        return;
+                    }
+
+                    if (app.location.toLowerCase().includes('remote') || app.location_type?.toLowerCase() === 'remote') {
+                        setCommuteInfo({ text: 'Remote (No Commute)' });
+                        return;
+                    }
+
+                    if (app.commute_time_mins !== undefined && app.commute_time_mins !== null) {
+                        const mins = app.commute_time_mins;
+                        const dist = app.commute_distance_miles;
+                        const isOverLimit = maxCommuteMins !== null && mins > maxCommuteMins;
+                        
+                        const originParts = [];
+                        if (profileData.address_line1) originParts.push(profileData.address_line1);
+                        if (profileData.city) originParts.push(profileData.city);
+                        if (profileData.state) originParts.push(profileData.state);
+                        const originStr = originParts.join(', ');
+                        const directionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originStr)}&destination=${encodeURIComponent(app.location)}&travelmode=driving`;
+                        
+                        setCommuteInfo({
+                            text: `${mins} min driving (${dist || 0} mi)`,
+                            isOverLimit,
+                            maxMins: maxCommuteMins,
+                            url: directionsUrl
+                        });
+                    } else {
+                        setCommuteInfo({ text: 'Calculation pending...' });
+                    }
+                } catch(e) {
+                    setCommuteInfo({ text: 'Unavailable' });
+                }
+            };
+            getPrefs();
+        }
     }, [app]);
 
     const handleArchive = async (archive) => {
@@ -836,6 +922,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     Back to Dashboard
                 </button>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    {/* Button removed in favor of tabs */}
                     <button
                         onClick={() => {
                             if (isEditing) handleSave();
@@ -1131,7 +1218,27 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-                        <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</label>
+                        {connections && connections.length > 0 && (
+                            <button 
+                                onClick={() => {
+                                    document.getElementById('networking-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                    padding: '0.4rem 0.8rem', borderRadius: '2rem',
+                                    background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.4)',
+                                    color: '#10b981', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
+                                    transition: 'all 0.2s', whiteSpace: 'nowrap'
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.6)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)'; }}
+                                title="Scroll to networking contacts"
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>group</span>
+                                {connections.length} Network {connections.length === 1 ? 'Connection' : 'Connections'}
+                            </button>
+                        )}
+                        <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', alignSelf: 'flex-end', marginTop: connections && connections.length > 0 ? '0.5rem' : '0' }}>Status</label>
                         <CustomDropdown 
                             value={app.status || 'Applied'} 
                             onChange={(val) => onStatusUpdate(app.id, val)}
@@ -1149,6 +1256,28 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                         />
                     </div>
                 </div>
+
+
+                <PipelineProgressBar 
+                    currentStage={app.pipeline_stage} 
+                    isArchived={isArchived}
+                    onStageClick={async (newStage) => {
+                        if (newStage === app.pipeline_stage) return;
+                        try {
+                            const newStatus = STAGE_TO_STATUS[newStage] || app.status;
+                            const res = await fetch(`${API_URL}/api/applications/${app.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ ...app, pipeline_stage: newStage, status: newStatus })
+                            });
+                            if (res.ok && onUpdate) {
+                                onUpdate(app.id, { pipeline_stage: newStage, status: newStatus });
+                            }
+                        } catch (e) {
+                            console.error("Failed to update pipeline stage", e);
+                        }
+                    }} 
+                />
 
                 <div style={{ 
                     display: 'grid', 
@@ -1206,50 +1335,49 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                 onChange={e => setFormData({ ...formData, salary_range: e.target.value })}
                                 style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
                             />
-                        ) : (
-                            <div style={{ fontWeight: 500, color: app.salary_range ? '#fbbf24' : 'inherit' }}>{app.salary_range || 'Not Listed'}</div>
-                        )}
+                        ) : (() => {
+                            let matchNode = null;
+                            if (app.salary_range && profilePrefs) {
+                                if (!profilePrefs.min_salary && !profilePrefs.max_salary) {
+                                    matchNode = <a href="#profile" title="Salary preference missing. Click to set." style={{ color: 'var(--text-muted)' }}><span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>info</span></a>;
+                                } else {
+                                    const jobSalaries = extractSalaryNumbers(app.salary_range);
+                                    if (jobSalaries.length > 0) {
+                                        const jobMin = Math.min(...jobSalaries);
+                                        const jobMax = Math.max(...jobSalaries);
+                                        const userMin = profilePrefs.min_salary ? Number(profilePrefs.min_salary) : null;
+                                        const userMax = profilePrefs.max_salary ? Number(profilePrefs.max_salary) : null;
+                                        const matchesMin = userMin ? jobMax >= userMin : true;
+                                        const matchesMax = userMax ? jobMin <= userMax : true;
+                                        
+                                        if (matchesMin && matchesMax) {
+                                            matchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#10b981' }} title="Matches your salary preferences">check_circle</span>;
+                                        } else {
+                                            matchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#ef4444' }} title="Does not meet your salary preferences">cancel</span>;
+                                        }
+                                    }
+                                }
+                            }
+                            return (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <div style={{ fontWeight: 500, color: app.salary_range ? '#fbbf24' : 'inherit' }}>{app.salary_range || 'Not Listed'}</div>
+                                    {matchNode}
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     <div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Deadline</div>
                         {isEditing ? (
                             <input
-                                type="text"
+                                type="date"
                                 value={formData.deadline || ''}
                                 onChange={e => setFormData({ ...formData, deadline: e.target.value })}
                                 style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
                             />
                         ) : (
                             <div style={{ fontWeight: 500, color: app.deadline ? '#ef4444' : 'inherit' }}>{app.deadline || 'None'}</div>
-                        )}
-                    </div>
-
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Location Type</div>
-                        {isEditing ? (
-                            <input
-                                type="text"
-                                value={formData.location_type || ''}
-                                onChange={e => setFormData({ ...formData, location_type: e.target.value })}
-                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
-                            />
-                        ) : (
-                            <div style={{ fontWeight: 500 }}>{app.location_type || 'N/A'}</div>
-                        )}
-                    </div>
-
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Location</div>
-                        {isEditing ? (
-                            <input
-                                type="text"
-                                value={formData.location || ''}
-                                onChange={e => setFormData({ ...formData, location: e.target.value })}
-                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
-                            />
-                        ) : (
-                            <div style={{ fontWeight: 500 }}>{app.location || 'Remote'}</div>
                         )}
                     </div>
 
@@ -1262,9 +1390,119 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                 onChange={e => setFormData({ ...formData, job_type: e.target.value })}
                                 style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
                             />
+                        ) : (() => {
+                            let jobMatchNode = null;
+                            if (profilePrefs) {
+                                const userJobTypes = profilePrefs.job_types || [];
+                                const userArray = Array.isArray(userJobTypes) ? userJobTypes : (userJobTypes ? [userJobTypes] : []);
+                                if (userArray.length === 0) {
+                                    jobMatchNode = <a href="#profile" title="Job Type preference missing. Click to set." style={{ color: 'var(--text-muted)' }}><span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>info</span></a>;
+                                } else {
+                                    const jobTypeField = app.job_type || '';
+                                    if (jobTypeField && jobTypeField.trim() !== '' && jobTypeField !== 'N/A') {
+                                        const isMatch = userArray.some(setting => jobTypeField.toLowerCase().includes(setting.toLowerCase()));
+                                        if (isMatch) {
+                                            jobMatchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#10b981' }} title={`Matches your preference (${userArray.join(', ')})`}>check_circle</span>;
+                                        } else {
+                                            jobMatchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#ef4444' }} title={`Does not match preference (${userArray.join(', ')})`}>cancel</span>;
+                                        }
+                                    }
+                                }
+                            }
+                            return (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <div style={{ fontWeight: 500 }}>{app.job_type || 'Full-time'}</div>
+                                    {jobMatchNode}
+                                </div>
+                            );
+                        })()}
+                    </div>
+
+                    <div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Location Type</div>
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={formData.location_type || ''}
+                                onChange={e => setFormData({ ...formData, location_type: e.target.value })}
+                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
+                            />
+                        ) : (() => {
+                            let wsMatchNode = null;
+                            if (profilePrefs) {
+                                const userSetting = profilePrefs.work_setting || [];
+                                const userArray = Array.isArray(userSetting) ? userSetting : (userSetting ? [userSetting] : []);
+                                if (userArray.length === 0) {
+                                    wsMatchNode = <a href="#profile" title="Work Setting preference missing. Click to set." style={{ color: 'var(--text-muted)' }}><span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>info</span></a>;
+                                } else {
+                                    const jobType = app.location_type || app.location || '';
+                                    if (jobType && jobType.trim() !== '' && jobType !== 'N/A') {
+                                        const isMatch = userArray.some(setting => 
+                                            setting === 'Any' || 
+                                            (setting.toLowerCase() === 'remote' && jobType.toLowerCase() === 'hybrid') || 
+                                            jobType.toLowerCase().includes(setting.toLowerCase())
+                                        );
+                                        if (isMatch) {
+                                            wsMatchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#10b981' }} title={`Matches your preference (${userArray.join(', ')})`}>check_circle</span>;
+                                        } else {
+                                            wsMatchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#ef4444' }} title={`Does not match preference (${userArray.join(', ')})`}>cancel</span>;
+                                        }
+                                    }
+                                }
+                            }
+                            return (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <div style={{ fontWeight: 500 }}>{app.location_type || 'N/A'}</div>
+                                    {wsMatchNode}
+                                </div>
+                            );
+                        })()}
+                    </div>
+
+                    <div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Location</div>
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                value={formData.location || ''}
+                                onChange={e => setFormData({ ...formData, location: e.target.value })}
+                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
+                            />
                         ) : (
-                            <div style={{ fontWeight: 500 }}>{app.job_type || 'Full-time'}</div>
+                            app.location && app.location !== 'Remote' ? (
+                                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(app.location)}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                    {app.location} <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>map</span>
+                                </a>
+                            ) : (
+                                <div style={{ fontWeight: 500 }}>{app.location || 'Remote'}</div>
+                            )
                         )}
+                    </div>
+                    
+                    <div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Estimated Commute</div>
+                        <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            {commuteInfo.url ? (
+                                <a href={commuteInfo.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                    {commuteInfo.text} <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>directions_car</span>
+                                </a>
+                            ) : (
+                                <span style={{ color: 'var(--primary)' }}>{commuteInfo.text}</span>
+                            )}
+                            {commuteInfo.isOverLimit && (
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: '#ef4444' }} title={`Exceeds preferred max commute: ${commuteInfo.maxMins} mins`}>
+                                    warning
+                                </span>
+                            )}
+                            {commuteInfo.url && !commuteInfo.isOverLimit && profilePrefs?.max_commute && (
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#10b981' }} title="Within preferred max commute limit">
+                                    check_circle
+                                </span>
+                            )}
+                            {profilePrefs && !profilePrefs.max_commute && (
+                                <a href="#profile" title="Commute preference missing. Click to set." style={{ color: 'var(--text-muted)' }}><span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>info</span></a>
+                            )}
+                        </div>
                     </div>
 
                     <div>
@@ -1276,7 +1514,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Date Posted</div>
                         {isEditing ? (
                             <input
-                                type="text"
+                                type="date"
                                 value={formData.date_posted || ''}
                                 onChange={e => setFormData({ ...formData, date_posted: e.target.value })}
                                 style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
@@ -1286,49 +1524,31 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                         )}
                     </div>
 
-                    <div 
-                        onClick={async () => {
-                            // Cycle: null -> true -> false -> null
-                            let nextVal = null;
-                            const current = app.relocation;
-                            if (current === null || current === undefined || current === '' || current === 'None') {
-                                nextVal = true;
-                            } else if (current === 'true' || current === 'True' || current === true) {
-                                nextVal = false;
-                            } else {
-                                nextVal = null;
-                            }
-                            
-                            // Update state
-                            const relocationVal = nextVal === true ? 'true' : (nextVal === false ? 'false' : null);
-                            if (isEditing) {
-                                setFormData({ ...formData, relocation: relocationVal });
-                            } else {
-                                onUpdate(app.id, { relocation: relocationVal });
-                                try {
-                                    await fetch(`${API_URL}/api/applications/${app.id}`, {
-                                        method: 'PUT',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ relocation: nextVal })
-                                    });
-                                } catch (err) {
-                                    console.warn('Failed to save relocation update', err);
-                                }
-                            }
-                        }}
-                        style={{ cursor: 'pointer', userSelect: 'none' }}
-                        title="Click to toggle relocation status (Covered -> Not Covered -> Not Provided)"
-                    >
+                    <div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Relocation</div>
-                        <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            {(isEditing ? formData.relocation : app.relocation) === 'true' || (isEditing ? formData.relocation : app.relocation) === 'True' || (isEditing ? formData.relocation : app.relocation) === true ? (
-                                'Required'
-                            ) : (isEditing ? formData.relocation : app.relocation) === 'false' || (isEditing ? formData.relocation : app.relocation) === 'False' || (isEditing ? formData.relocation : app.relocation) === false ? (
-                                'Not Required'
-                            ) : (
-                                'Not Provided'
-                            )}
-                        </div>
+                        {isEditing ? (
+                            <CustomDropdown
+                                value={formData.relocation === 'true' || formData.relocation === true || formData.relocation === 'True' ? 'true' : (formData.relocation === 'false' || formData.relocation === false || formData.relocation === 'False' ? 'false' : '')}
+                                onChange={(val) => setFormData({ ...formData, relocation: val === '' ? null : val })}
+                                options={[
+                                    { value: '', label: 'Not Provided' },
+                                    { value: 'true', label: 'Required' },
+                                    { value: 'false', label: 'Not Required' }
+                                ]}
+                                className="bg-tertiary"
+                                style={{ width: '100%' }}
+                            />
+                        ) : (
+                            <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                {app.relocation === 'true' || app.relocation === 'True' || app.relocation === true ? (
+                                    'Required'
+                                ) : app.relocation === 'false' || app.relocation === 'False' || app.relocation === false ? (
+                                    'Not Required'
+                                ) : (
+                                    'Not Provided'
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -1378,7 +1598,70 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
 
             </header>
 
+            {/* Tab Navigation */}
             <div style={{ 
+                display: 'flex', 
+                gap: '2.5rem', 
+                marginBottom: '2rem',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)', // Clear greyish line across the page
+                padding: '0 0.5rem'
+            }}>
+                <button 
+                    onClick={() => setActiveTab('lifecycle')}
+                    style={{
+                        padding: '0.75rem 0',
+                        background: 'none',
+                        color: activeTab === 'lifecycle' ? 'var(--primary)' : 'var(--text-muted)',
+                        border: 'none',
+                        borderBottom: `2px solid ${activeTab === 'lifecycle' ? 'var(--primary)' : 'transparent'}`,
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        transition: 'all 0.2s',
+                        marginBottom: '-1px'
+                    }}
+                >
+                    Current Phase
+                </button>
+                <button 
+                    onClick={() => setActiveTab('details')}
+                    style={{
+                        padding: '0.75rem 0',
+                        background: 'none',
+                        color: activeTab === 'details' ? 'var(--primary)' : 'var(--text-muted)',
+                        border: 'none',
+                        borderBottom: `2px solid ${activeTab === 'details' ? 'var(--primary)' : 'transparent'}`,
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        transition: 'all 0.2s',
+                        marginBottom: '-1px'
+                    }}
+                >
+                    Details & Documents
+                </button>
+                <button 
+                    style={{
+                        padding: '0.75rem 0',
+                        background: 'none',
+                        color: 'var(--text-muted)',
+                        border: 'none',
+                        borderBottom: '2px solid transparent',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        transition: 'all 0.2s',
+                        marginBottom: '-1px',
+                        opacity: 0.6
+                    }}
+                >
+                    Interviewer Profiles
+                </button>
+            </div>
+
+            {activeTab === 'details' ? (
+                <>
+                <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'minmax(0, 2fr) minmax(300px, 1fr)', 
                 gap: '2.5rem', 
@@ -1440,6 +1723,35 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {/* Networking Card */}
+                    {connections && connections.length > 0 && (
+                        <div id="networking-section" className="card" style={{ padding: '1.25rem', border: '1px solid rgba(16, 185, 129, 0.4)', background: 'linear-gradient(to bottom right, rgba(16, 185, 129, 0.05), var(--bg-card))' }}>
+                            <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#10b981' }}>group</span>
+                                <h3 style={{ fontSize: '1.1rem', margin: 0, color: '#10b981' }}>Networking ({connections.length})</h3>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                {connections.map((conn, i) => (
+                                    <a key={i} href={conn.profile_url} target="_blank" rel="noopener noreferrer" 
+                                       className="rating-row"
+                                       style={{ textDecoration: 'none', background: 'var(--bg-tertiary)', borderRadius: '0.5rem', border: '1px solid var(--border-color)', padding: '0.75rem' }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', minWidth: 0 }}>
+                                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #4f46e5)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.8rem', flexShrink: 0 }}>
+                                                {conn.name?.split(' ').map(n => n[0]).join('') || '?'}
+                                            </div>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{conn.name}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{conn.headline}</div>
+                                            </div>
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>open_in_new</span>
+                                        </div>
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Company Ratings Card */}
                     <div className="card" style={{ padding: '1.25rem' }}>
                         <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1699,6 +2011,17 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     </div>
                 </div>
             </div> {/* End Grid Container */}
+                </>
+            ) : (
+                <div style={{ marginTop: '1rem' }}>
+                    <ApplicationLifecycle 
+                        app={app} 
+                        onUpdate={onUpdate} 
+                        hideHeader={true} 
+                        onBack={() => setActiveTab('details')} 
+                    />
+                </div>
+            )}
 
             <style>{`
                 .doc-row-btn {

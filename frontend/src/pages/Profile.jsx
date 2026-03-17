@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CustomDropdown from '../components/CustomDropdown';
+import CustomMultiSelect from '../components/CustomMultiSelect';
 import ProcessVisualization from '../ProcessVisualization';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -93,6 +94,27 @@ const CollapsibleCard = ({ title, defaultExpanded = false, onAdd, addTitle, chil
 
 const Profile = () => {
     const [loading, setLoading] = useState(true);
+
+    const [isRecalculating, setIsRecalculating] = useState(false);
+
+    const handleRecalculateCommutes = async () => {
+        setIsRecalculating(true);
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile/recalculate-commutes`, {
+                method: 'POST'
+            });
+            if (res.ok) {
+                alert("Commute recalculation started in the background!");
+            } else {
+                alert("Failed to start commute recalculation.");
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Error starting recalculation.");
+        }
+        setIsRecalculating(false);
+    };
+
     const [saving, setSaving] = useState(false);
     const [scanning, setScanning] = useState(false);
     const [formData, setFormData] = useState({
@@ -895,7 +917,7 @@ const Profile = () => {
             </CollapsibleSection>
 
             {/* Preferences Section */}
-            <CollapsibleSection title="Preferences" icon={<span className="material-symbols-outlined">settings</span>} defaultExpanded={true}>
+            <CollapsibleSection title="Preferences" icon={<span className="material-symbols-outlined">settings</span>} defaultExpanded={true} style={{ position: 'relative', zIndex: 10 }}>
                 <section className="card">
                     <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: 'var(--primary-light)', fontWeight: 600 }}>Job Preferences</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
@@ -919,34 +941,69 @@ const Profile = () => {
                             />
                         </InputGroup>
                         <InputGroup label="Work Setting">
-                            <CustomDropdown
-                                value={formData.preferences?.work_setting || ''}
+                            <CustomMultiSelect
+                                value={Array.isArray(formData.preferences?.work_setting) ? formData.preferences.work_setting : (formData.preferences?.work_setting ? [formData.preferences.work_setting] : [])}
                                 onChange={(val) => {
                                     setFormData(prev => ({...prev, preferences: {...prev.preferences, work_setting: val}}));
                                     setIsDirty(true);
                                 }}
                                 options={[
-                                    { value: '', label: 'Select Setting' },
                                     { value: 'Remote', label: 'Remote' },
                                     { value: 'Hybrid', label: 'Hybrid' },
                                     { value: 'On-site', label: 'On-site' },
                                     { value: 'Any', label: 'Any' }
                                 ]}
+                                placeholder="Select Settings"
                             />
                         </InputGroup>
                     </div>
-                    <InputGroup label="Expected/Desired Salary">
-                        <Input 
-                            className="input-premium" 
-                            name="expected_salary" 
-                            value={formData.preferences?.expected_salary || ''} 
-                            onChange={(e) => {
-                                setFormData(prev => ({...prev, preferences: {...prev.preferences, expected_salary: e.target.value}}));
-                                setIsDirty(true);
-                            }} 
-                            placeholder="e.g. $120k - $150k" 
-                        />
-                    </InputGroup>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginTop: '1.25rem' }}>
+                        <InputGroup label="Job Type">
+                            <CustomMultiSelect
+                                value={Array.isArray(formData.preferences?.job_types) ? formData.preferences.job_types : (formData.preferences?.job_types ? [formData.preferences.job_types] : [])}
+                                onChange={(val) => {
+                                    setFormData(prev => ({...prev, preferences: {...prev.preferences, job_types: val}}));
+                                    setIsDirty(true);
+                                }}
+                                options={[
+                                    { value: 'Full-time', label: 'Full-time' },
+                                    { value: 'Part-time', label: 'Part-time' },
+                                    { value: 'Contract', label: 'Contract' },
+                                    { value: 'Internship', label: 'Internship' },
+                                    { value: 'Any', label: 'Any' }
+                                ]}
+                                placeholder="Select Job Types"
+                            />
+                        </InputGroup>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginTop: '1.25rem' }}>
+                        <InputGroup label="Minimum Salary">
+                            <Input 
+                                className="input-premium" 
+                                type="number"
+                                name="min_salary" 
+                                value={formData.preferences?.min_salary || ''} 
+                                onChange={(e) => {
+                                    setFormData(prev => ({...prev, preferences: {...prev.preferences, min_salary: e.target.value}}));
+                                    setIsDirty(true);
+                                }} 
+                                placeholder="e.g. 120000" 
+                            />
+                        </InputGroup>
+                        <InputGroup label="Maximum Salary">
+                            <Input 
+                                className="input-premium" 
+                                type="number"
+                                name="max_salary" 
+                                value={formData.preferences?.max_salary || ''} 
+                                onChange={(e) => {
+                                    setFormData(prev => ({...prev, preferences: {...prev.preferences, max_salary: e.target.value}}));
+                                    setIsDirty(true);
+                                }} 
+                                placeholder="e.g. 150000" 
+                            />
+                        </InputGroup>
+                    </div>
                 </section>
             </CollapsibleSection>
 
@@ -1101,9 +1158,24 @@ const Profile = () => {
                             </InputGroup>
                             <InputGroup label="Zip Code">
                                 <Input className="input-premium" name="zip_code" value={formData.zip_code} onChange={handleChange} />
+
                             </InputGroup>
                         </div>
+                        <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-start' }}>
+                            <button 
+                                onClick={handleRecalculateCommutes} 
+                                disabled={isRecalculating || loading}
+                                className="btn-secondary" 
+                                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                                    {isRecalculating ? 'sync' : 'directions_car'}
+                                </span>
+                                {isRecalculating ? 'Recalculating...' : 'Recalculate All Commutes'}
+                            </button>
+                        </div>
                     </section>
+
                 </div>
 
                 {/* Right Column: Contact + Social */}
@@ -1119,9 +1191,24 @@ const Profile = () => {
                             </InputGroup>
                             <InputGroup label="Secondary Phone">
                                 <Input className="input-premium" name="phone_secondary" value={formData.phone_secondary} onChange={handleChange} placeholder="Optional" />
+
                             </InputGroup>
                         </div>
+                        <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-start' }}>
+                            <button 
+                                onClick={handleRecalculateCommutes} 
+                                disabled={isRecalculating || loading}
+                                className="btn-secondary" 
+                                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                                    {isRecalculating ? 'sync' : 'directions_car'}
+                                </span>
+                                {isRecalculating ? 'Recalculating...' : 'Recalculate All Commutes'}
+                            </button>
+                        </div>
                     </section>
+
 
                     <section className="card">
                         <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: 'var(--primary-light)', fontWeight: 600 }}>Social & Links</h3>
