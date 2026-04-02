@@ -7,6 +7,8 @@ import ApplicationDetail from './pages/ApplicationDetail'
 import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
 import Profile from './pages/Profile'
+import ApplicationLifecycle from './pages/ApplicationLifecycle'
+import MobileCapture from './pages/MobileCapture'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -18,6 +20,8 @@ const SCREEN_TO_HASH = {
   analytics: '#analytics',
   settings: '#settings',
   profile: '#profile',
+  lifecycle: '#lifecycle',
+  capture: '#capture',
 };
 const HASH_TO_SCREEN = Object.fromEntries(
   Object.entries(SCREEN_TO_HASH).map(([k, v]) => [v, k])
@@ -154,6 +158,16 @@ function App() {
           setCurrentScreenState('dashboard');
         });
     } else {
+      // Check for share target params (PWA mobile capture)
+      const shareUrl = params.get('url');
+      const shareText = params.get('text');
+      if (shareUrl || shareText) {
+        // Share target received — route to capture screen
+        // Keep query params so MobileCapture can read them
+        setScreen('capture', { replace: true });
+        return;
+      }
+
       // Ensure the initial hash is reflected in history so Back works from the first screen
       const initialScreen = hashToScreen(window.location.hash);
       if (initialScreen === 'detail' && !selectedApp) {
@@ -208,20 +222,35 @@ function App() {
   }
 
   const handleStatusUpdate = async (appId, newStatus) => {
+    // Sync pipeline_stage with status labels
+    const statusToStage = {
+      'Saved': 'saved',
+      'Generated': 'generated',
+      'Applied': 'applied',
+      'Interviewing': 'interviewing',
+      'Rejected': 'rejected',
+      'Offered': 'decision',
+      'Accepted': 'accepted',
+      'Declined': 'declined'
+    };
+    
+    const newStage = statusToStage[newStatus] || 'saved';
+    const updates = { status: newStatus, pipeline_stage: newStage };
+
     // Optimistic update
-    handleAppUpdate(appId, { status: newStatus });
+    handleAppUpdate(appId, updates);
 
     try {
-      await fetch(`${API_URL}/api/applications/${appId}/status`, {
+      await fetch(`${API_URL}/api/applications/${appId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify(updates)
       });
     } catch (e) {
       console.error("Failed to update status", e);
-      loadApplications(); // revert
+      loadApplications(); // revert on failure
     }
   }
 
@@ -280,7 +309,15 @@ function App() {
             </div>
           );
         }
-        return <ApplicationDetail app={selectedApp} onBack={() => setScreen('dashboard')} onDelete={handleDeleteApp} onArchive={handleArchiveApp} onStatusUpdate={handleStatusUpdate} onUpdate={handleAppUpdate} />
+        return <ApplicationDetail app={selectedApp} onBack={() => setScreen('dashboard')} onDelete={handleDeleteApp} onArchive={handleArchiveApp} onStatusUpdate={handleStatusUpdate} onUpdate={handleAppUpdate} onViewLifecycle={() => setScreen('lifecycle')} />
+      case 'lifecycle':
+        if (!selectedApp) {
+          setScreen('dashboard', { replace: true });
+          return null;
+        }
+        return <ApplicationLifecycle app={selectedApp} onBack={() => setScreen('detail')} onUpdate={handleAppUpdate} />
+      case 'capture':
+        return <MobileCapture onSaved={loadApplications} onGoToDashboard={() => setScreen('dashboard')} />
       case 'analytics':
         return <Analytics />
       case 'settings':
@@ -292,15 +329,20 @@ function App() {
     }
   }
 
+  // Hide sidebar on capture screen (mobile-first)
+  const showSidebar = currentScreen !== 'capture';
+
   return (
     <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       {/* Sidebar Navigation */}
-      <Sidebar 
-        currentScreen={currentScreen} 
-        setScreen={setScreen} 
-        theme={uiConfigTheme} 
-        onThemeToggle={handleThemeToggle} 
-      />
+      {showSidebar && (
+        <Sidebar 
+          currentScreen={currentScreen} 
+          setScreen={setScreen} 
+          theme={uiConfigTheme} 
+          onThemeToggle={handleThemeToggle} 
+        />
+      )}
 
       {/* Main Content Area */}
       <main style={{ flex: 1, height: '100%', overflowY: 'auto', position: 'relative' }}>

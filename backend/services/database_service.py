@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, text
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, text, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -57,6 +57,48 @@ class Application(Base):
     
     # Snapshot of User Profile at time of generation
     profile_snapshot = Column(Text) # JSON string
+    pipeline_stage = Column(String, default='saved') # saved, generated, applied, interviewing, decision, accepted
+    commute_time_mins = Column(Integer, nullable=True)
+    commute_distance_miles = Column(Float, nullable=True)
+    commute_details = Column(Text) # JSON dict like {"driving": {"mins": 25, "distance": 12}, "walking": {...}}
+
+    match_score = Column(Integer, nullable=True)
+    match_details = Column(Text) # JSON string containing scoring and coaching plan
+    
+    # Relationships
+    sub_steps = relationship("ApplicationSubStep", back_populates="application", cascade="all, delete-orphan")
+    contacts = relationship("ApplicationContact", back_populates="application", cascade="all, delete-orphan")
+    events = relationship("ApplicationEvent", back_populates="application", cascade="all, delete-orphan")
+
+
+class ApplicationSubStep(Base):
+    __tablename__ = 'application_sub_steps'
+    id = Column(Integer, primary_key=True)
+    application_id = Column(Integer, ForeignKey('applications.id'))
+    title = Column(String)
+    description = Column(Text)
+    status = Column(String) # 'todo', 'in_progress', 'completed'
+    date = Column(String)
+    application = relationship("Application", back_populates="sub_steps")
+
+class ApplicationContact(Base):
+    __tablename__ = 'application_contacts'
+    id = Column(Integer, primary_key=True)
+    application_id = Column(Integer, ForeignKey('applications.id'))
+    name = Column(String)
+    role = Column(String)
+    email = Column(String)
+    phone = Column(String)
+    application = relationship("Application", back_populates="contacts")
+
+class ApplicationEvent(Base):
+    __tablename__ = 'application_events'
+    id = Column(Integer, primary_key=True)
+    application_id = Column(Integer, ForeignKey('applications.id'))
+    event_type = Column(String)
+    description = Column(Text)
+    timestamp = Column(String)
+    application = relationship("Application", back_populates="events")
 
 
 class UserProfile(Base):
@@ -117,6 +159,17 @@ class UserEducation(Base):
 
     user = relationship("UserProfile", back_populates="educations")
 
+class LinkedInConnection(Base):
+    __tablename__ = 'linkedin_connections'
+    
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    headline = Column(Text)
+    profile_url = Column(String)
+    company_id = Column(String) # Numeric LinkedIn company ID
+    company_name = Column(String)
+    last_synced = Column(DateTime, default=datetime.utcnow)
+
 # Import remaining sqlalchemy types
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
@@ -167,6 +220,54 @@ class DatabaseService:
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS override_cover_letter_path TEXT",
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS active_resume_type TEXT DEFAULT 'generated'",
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS active_cover_letter_type TEXT DEFAULT 'generated'",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS pipeline_stage TEXT DEFAULT 'saved'",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS commute_time_mins INTEGER",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS commute_distance_miles REAL",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS commute_details TEXT",
+            # Ensure tables are created if not already (Base.metadata.create_all handles this mostly, but explicit for clarity in migrations)
+            """
+            CREATE TABLE IF NOT EXISTS application_sub_steps (
+                id INTEGER PRIMARY KEY,
+                application_id INTEGER,
+                title TEXT,
+                description TEXT,
+                status TEXT,
+                date TEXT,
+                FOREIGN KEY(application_id) REFERENCES applications(id)
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS application_contacts (
+                id INTEGER PRIMARY KEY,
+                application_id INTEGER,
+                name TEXT,
+                role TEXT,
+                email TEXT,
+                phone TEXT,
+                FOREIGN KEY(application_id) REFERENCES applications(id)
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS application_events (
+                id INTEGER PRIMARY KEY,
+                application_id INTEGER,
+                event_type TEXT,
+                description TEXT,
+                timestamp TEXT,
+                FOREIGN KEY(application_id) REFERENCES applications(id)
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS linkedin_connections (
+                id INTEGER PRIMARY KEY,
+                name TEXT,
+                headline TEXT,
+                profile_url TEXT,
+                company_id TEXT,
+                company_name TEXT,
+                last_synced TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """
         ]
         with self.engine.connect() as conn:
             for sql in migrations:
@@ -176,6 +277,19 @@ class DatabaseService:
                 except Exception as e:
                     print(f"Migration skipped or failed (may already exist): {e}")
         
+    def _get_stage_from_status(self, status: str) -> str:
+        """Helper to map legacy status strings to pipeline stages."""
+        if not status: return 'saved'
+        s = status.lower()
+        if s == 'saved': return 'saved'
+        if s in ['generated', 'ready', 'ready to apply']: return 'generated'
+        if s in ['applied', 'submitted']: return 'applied'
+        if s in ['interviewing', 'interview']: return 'interviewing'
+        if s in ['decision', 'offer']: return 'decision'
+        if s == 'accepted': return 'accepted'
+        if s in ['rejected', 'declined', 'archived']: return s
+        return 'saved'
+
     def _wait_for_db(self, retries=30, delay=2):
         """Wait for database to be ready."""
         print(f"Waiting for database at {self.db_url}...")
@@ -238,7 +352,13 @@ class DatabaseService:
                     if 'override_cover_letter_path' in data: app.override_cover_letter_path = data['override_cover_letter_path']
                     if 'active_resume_type' in data: app.active_resume_type = data['active_resume_type'] or 'generated'
                     if 'active_cover_letter_type' in data: app.active_cover_letter_type = data['active_cover_letter_type'] or 'generated'
-
+                    if 'pipeline_stage' in data: 
+                        app.pipeline_stage = data['pipeline_stage']
+                    elif 'status' in data:
+                        app.pipeline_stage = self._get_stage_from_status(data['status'])
+                    if 'match_score' in data: app.match_score = data['match_score']
+                    if 'match_details' in data: 
+                        app.match_details = json.dumps(data['match_details']) if isinstance(data['match_details'], (dict, list)) else data['match_details']
                     
                     # Update company ratings
                     if data.get('glassdoor_rating') is not None: app.glassdoor_rating = data.get('glassdoor_rating')
@@ -278,6 +398,8 @@ class DatabaseService:
                 status=data.get('status', 'Saved'),
                 is_archived='true' if (data.get('is_archived') is True or data.get('is_archived') == 'true') else 'false',
                 kanban_order=data.get('kanban_order', 0),
+                match_score=data.get('match_score'),
+                match_details=json.dumps(data.get('match_details')) if isinstance(data.get('match_details'), (dict, list)) else data.get('match_details'),
                 glassdoor_rating=data.get('glassdoor_rating'),
                 glassdoor_url=data.get('glassdoor_url'),
                 indeed_rating=data.get('indeed_rating'),
@@ -288,7 +410,8 @@ class DatabaseService:
                 override_resume_path=data.get('override_resume_path'),
                 override_cover_letter_path=data.get('override_cover_letter_path'),
                 active_resume_type=data.get('active_resume_type', 'generated'),
-                active_cover_letter_type=data.get('active_cover_letter_type', 'generated')
+                active_cover_letter_type=data.get('active_cover_letter_type', 'generated'),
+                pipeline_stage=data.get('pipeline_stage') or self._get_stage_from_status(data.get('status', 'Saved'))
             )
             session.add(new_app)
             session.commit()
@@ -302,6 +425,8 @@ class DatabaseService:
             app = session.query(Application).filter(Application.id == app_id).first()
             if app:
                 app.status = new_status
+                # Sync pipeline stage
+                app.pipeline_stage = self._get_stage_from_status(new_status)
                 session.commit()
                 return True
             return False
@@ -324,45 +449,7 @@ class DatabaseService:
         session = self.Session()
         try:
             apps = session.query(Application).order_by(Application.date_saved.desc()).all()
-            
-            # Convert to dict list
-            result = []
-            for app in apps:
-                result.append({
-                    "id": app.id,
-                    "job_title": app.job_title,
-                    "company": app.company,
-                    "company_logo": app.company_logo,
-                    "job_url": app.job_url,
-                    "job_description": app.job_description,
-                    "status": app.status,
-                    "date_saved": app.date_saved,
-                    "original_resume_path": app.original_resume_path,
-                    "tailored_resume_path": app.tailored_resume_path,
-                    "cover_letter_path": app.cover_letter_path,
-                    "cover_letter_text": app.cover_letter_text,
-                    "salary_range": app.salary_range,
-                    "date_posted": app.date_posted,
-                    "deadline": app.deadline,
-                    "apply_url": app.apply_url,
-                    "job_type": app.job_type,
-                    "location_type": app.location_type,
-                    "location": app.location,
-                    "relocation": True if app.relocation == 'true' else (False if app.relocation == 'false' else None),
-                    "interest_level": app.interest_level,
-                    "remarks": app.remarks,
-                    "resume_changes_summary": app.resume_changes_summary,
-                    "cover_letter_changes_summary": app.cover_letter_changes_summary,
-                    "is_archived": app.is_archived == 'true',
-                    "glassdoor_rating": app.glassdoor_rating,
-                    "glassdoor_url": app.glassdoor_url,
-                    "indeed_rating": app.indeed_rating,
-                    "indeed_url": app.indeed_url,
-                    "linkedin_rating": app.linkedin_rating,
-                    "linkedin_url": app.linkedin_url,
-                    "profile_snapshot": json.loads(app.profile_snapshot) if app.profile_snapshot else None
-                })
-            return result
+            return [self._app_to_dict(app) for app in apps]
         finally:
             session.close()
 
@@ -389,7 +476,7 @@ class DatabaseService:
             "job_type": app.job_type,
             "location_type": app.location_type,
             "location": app.location,
-            "relocation": app.relocation,
+            "relocation": True if app.relocation == 'true' else (False if app.relocation == 'false' else None),
             "interest_level": app.interest_level,
             "remarks": app.remarks,
             "original_resume_path": app.original_resume_path,
@@ -398,13 +485,22 @@ class DatabaseService:
             "cover_letter_text": app.cover_letter_text,
             "resume_changes_summary": app.resume_changes_summary,
             "cover_letter_changes_summary": app.cover_letter_changes_summary,
-            "is_archived": app.is_archived or 'false',
+            "match_score": app.match_score,
+            "match_details": app.match_details,
+            "is_archived": app.is_archived == 'true',
             "kanban_order": app.kanban_order or 0,
             "profile_snapshot": json.loads(app.profile_snapshot) if app.profile_snapshot else None,
             "override_resume_path": app.override_resume_path,
             "override_cover_letter_path": app.override_cover_letter_path,
             "active_resume_type": app.active_resume_type or 'generated',
-            "active_cover_letter_type": app.active_cover_letter_type or 'generated'
+            "active_cover_letter_type": app.active_cover_letter_type or 'generated',
+            "pipeline_stage": app.pipeline_stage or 'saved',
+            "commute_time_mins": app.commute_time_mins,
+            "commute_distance_miles": app.commute_distance_miles,
+            "commute_details": json.loads(app.commute_details) if app.commute_details else {},
+            "sub_steps": [{"id": s.id, "title": s.title, "description": s.description, "status": s.status, "date": s.date} for s in app.sub_steps],
+            "contacts": [{"id": c.id, "name": c.name, "role": c.role, "email": c.email, "phone": c.phone} for c in app.contacts],
+            "events": [{"id": e.id, "event_type": e.event_type, "description": e.description, "timestamp": e.timestamp} for e in app.events]
         }
 
     def get_application_by_url(self, url: str) -> Dict[str, Any]:
@@ -498,7 +594,17 @@ class DatabaseService:
             if 'override_cover_letter_path' in data: app.override_cover_letter_path = data['override_cover_letter_path']
             if 'active_resume_type' in data: app.active_resume_type = data['active_resume_type'] or 'generated'
             if 'active_cover_letter_type' in data: app.active_cover_letter_type = data['active_cover_letter_type'] or 'generated'
+            
+            if 'pipeline_stage' in data: 
+                app.pipeline_stage = data['pipeline_stage']
+            elif 'status' in data:
+                app.pipeline_stage = self._get_stage_from_status(data['status'])
 
+            if 'commute_time_mins' in data: app.commute_time_mins = data['commute_time_mins']
+            if 'commute_distance_miles' in data: app.commute_distance_miles = data['commute_distance_miles']
+            if 'commute_details' in data:
+                val = data['commute_details']
+                app.commute_details = json.dumps(val) if isinstance(val, (dict, list)) else val
             
             if 'glassdoor_rating' in data: app.glassdoor_rating = data['glassdoor_rating']
             if 'glassdoor_url' in data: app.glassdoor_url = data['glassdoor_url']
@@ -671,3 +777,109 @@ class DatabaseService:
             return profile.id
         finally:
             session.close()
+
+    def save_linkedin_connections(self, connections: List[Dict[str, Any]]) -> int:
+        """Save a batch of LinkedIn connections."""
+        session = self.Session()
+        try:
+            count = 0
+            for conn_data in connections:
+                # Basic deduplication based on profile_url
+                existing = session.query(LinkedInConnection).filter(
+                    LinkedInConnection.profile_url == conn_data.get('profile_url')
+                ).first()
+                
+                if not existing:
+                    new_conn = LinkedInConnection(
+                        name=conn_data.get('name'),
+                        headline=conn_data.get('headline'),
+                        profile_url=conn_data.get('profile_url'),
+                        company_id=str(conn_data.get('company_id', '')),
+                        company_name=conn_data.get('company_name', ''),
+                        last_synced=datetime.utcnow()
+                    )
+                    session.add(new_conn)
+                    count += 1
+                else:
+                    # Update existing record
+                    existing.name = conn_data.get('name', existing.name)
+                    existing.headline = conn_data.get('headline', existing.headline)
+                    existing.company_id = str(conn_data.get('company_id', existing.company_id))
+                    existing.company_name = conn_data.get('company_name', existing.company_name)
+                    existing.last_synced = datetime.utcnow()
+            
+            session.commit()
+            return count
+        finally:
+            session.close()
+
+    def get_linkedin_connections_by_company(self, company_id: str) -> List[Dict[str, Any]]:
+        """Get connections matching a specific company ID."""
+        session = self.Session()
+        try:
+            conns = session.query(LinkedInConnection).filter(
+                LinkedInConnection.company_id == str(company_id)
+            ).all()
+            return [
+                {
+                    "name": c.name,
+                    "headline": c.headline,
+                    "profile_url": c.profile_url,
+                    "company_name": c.company_name
+                } for c in conns
+            ]
+        finally:
+            session.close()
+
+    def get_linkedin_connections_by_company_name(self, company_name: str) -> List[Dict[str, Any]]:
+        """Get connections matching a specific company name (fuzzy)."""
+        session = self.Session()
+        try:
+            # Simple case-insensitive partial match
+            search = f"%{company_name}%"
+            conns = session.query(LinkedInConnection).filter(
+                LinkedInConnection.company_name.ilike(search)
+            ).all()
+            return [
+                {
+                    "name": c.name,
+                    "headline": c.headline,
+                    "profile_url": c.profile_url,
+                    "company_id": c.company_id,
+                    "company_name": c.company_name
+                } for c in conns
+            ]
+        finally:
+            session.close()
+
+    def get_all_linkedin_connections(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """Retrieve all synced LinkedIn connections."""
+        session = self.Session()
+        try:
+            conns = session.query(LinkedInConnection).order_by(LinkedInConnection.last_synced.desc()).limit(limit).all()
+            return [
+                {
+                    "name": c.name,
+                    "headline": c.headline,
+                    "profile_url": c.profile_url,
+                    "company_id": c.company_id,
+                    "company_name": c.company_name,
+                    "last_synced": c.last_synced.isoformat() if c.last_synced else None
+                } for c in conns
+            ]
+        finally:
+            session.close()
+
+    def clear_linkedin_connections(self) -> bool:
+        """Purge all LinkedIn connection records."""
+        session = self.Session()
+        try:
+            session.query(LinkedInConnection).delete()
+            session.commit()
+            return True
+        finally:
+            session.close()
+
+
+if __name__ == "__main__":
+    pass

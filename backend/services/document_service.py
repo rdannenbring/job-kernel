@@ -268,13 +268,17 @@ class DocumentService:
                     if (run.find('.//w:drawing', namespaces) is not None or 
                         run.find('.//w:pict', namespaces) is not None or 
                         run.find('.//w:object', namespaces) is not None or
+                        run.find('.//v:shape', namespaces) is not None or
+                        run.find('.//v:rect', namespaces) is not None or
+                        run.find('.//wps:wsp', namespaces) is not None or
                         run.find('.//mc:AlternateContent', namespaces) is not None):
                         has_drawing = True
                     
                     # Fallback: Check tag names for anything suspicious not caught by namespace
                     if not has_drawing:
                         for child in run.iter():
-                            if 'drawing' in child.tag.lower() or 'pict' in child.tag.lower():
+                            tag_lower = child.tag.lower() if isinstance(child.tag, str) else ""
+                            if any(x in tag_lower for x in ['drawing', 'pict', 'shape', 'rect', 'wsp', 'vml', 'background']):
                                 has_drawing = True
                                 break
                                 
@@ -290,8 +294,15 @@ class DocumentService:
                     # or create a new run (complex), but typically we are replacing text so there should be text
                     continue
                 
+                # SMART REPLACEMENT LOGIC
+                text_bearing_runs_filtered = []
+                for idx, (run, t_elems) in enumerate(text_bearing_runs):
+                    text = "".join((t.text or "") for t in t_elems)
+                    if text.strip():  # Only consider runs with actual non-whitespace content
+                        text_bearing_runs_filtered.append((idx, run, t_elems, len(text)))
+                
                 # Check for colon pattern (bold before colon, normal after)
-                has_colon_pattern = ':' in sanitized_text and len(text_bearing_runs) > 1
+                has_colon_pattern = ':' in sanitized_text and len(text_bearing_runs_filtered) >= 2
                 
                 if has_colon_pattern:
                     # Split at colon
@@ -300,41 +311,46 @@ class DocumentService:
                         label_part = parts[0] + ':'
                         content_part = parts[1]
                         
-                        # Update first text run with label
-                        run, t_elems = text_bearing_runs[0]
+                        idx1 = text_bearing_runs_filtered[0][0]
+                        idx2 = text_bearing_runs_filtered[1][0]
+                        
+                        # Update label run
+                        run, t_elems = text_bearing_runs[idx1]
                         if t_elems:
                             t_elems[0].text = label_part
-                            # Clear extra text tags in this run if any
-                            for t in t_elems[1:]:
-                                t.text = ""
-                        
-                        # Update second text run with content
-                        run, t_elems = text_bearing_runs[1]
+                            for t in t_elems[1:]: t.text = ""
+                            
+                        # Update content run
+                        run, t_elems = text_bearing_runs[idx2]
                         if t_elems:
                             t_elems[0].text = content_part
-                            for t in t_elems[1:]:
-                                t.text = ""
-                        
-                        # Clear remaining text runs
-                        for run, t_elems in text_bearing_runs[2:]:
-                            for t in t_elems:
-                                t.text = ""
+                            for t in t_elems[1:]: t.text = ""
+                            
+                        # Clear others
+                        for i, (r, ts) in enumerate(text_bearing_runs):
+                            if i not in (idx1, idx2):
+                                for t in ts: t.text = ""
                     else:
-                        # Fallback to simple
                         has_colon_pattern = False
-                
+                        
                 if not has_colon_pattern:
-                    # Simple case: put all text in first text-bearing run
-                    run, t_elems = text_bearing_runs[0]
+                    # Simple case: put all new text in the original run that held the longest text
+                    if text_bearing_runs_filtered:
+                        # Find the index of the run with the longest text to inherit its formatting
+                        longest = max(text_bearing_runs_filtered, key=lambda x: x[3])
+                        target_idx = longest[0]
+                    else:
+                        target_idx = 0
+                        
+                    run, t_elems = text_bearing_runs[target_idx]
                     if t_elems:
                         t_elems[0].text = sanitized_text
-                        for t in t_elems[1:]:
-                            t.text = ""
-                    
+                        for t in t_elems[1:]: t.text = ""
+                        
                     # Clear all other text-bearing runs
-                    for run, t_elems in text_bearing_runs[1:]:
-                        for t in t_elems:
-                            t.text = ""
+                    for i, (r, ts) in enumerate(text_bearing_runs):
+                        if i != target_idx:
+                            for t in ts: t.text = ""
                 
                 # Mark this file as modified
                 modified_files.add(para_file)
@@ -343,10 +359,12 @@ class DocumentService:
             
             # SMART MARGIN ADJUSTMENT: Try to keep the same page count as original
             # by adjusting margins intelligently
-            self._adjust_margins_for_page_count(
-                root, namespaces, document_xml_path, 
-                original_file_path, temp_dir, modified_files
-            )
+            # NOTE: Removed because this breaks absolute positioning of UI elements like 
+            # shaded backgrounds and sidebars in resumes.
+            # self._adjust_margins_for_page_count(
+            #     root, namespaces, document_xml_path, 
+            #     original_file_path, temp_dir, modified_files
+            # )
 
             # Write all modified XML files back
             for file_path in modified_files:
@@ -1250,6 +1268,27 @@ class DocumentService:
             p.paragraph_format.space_after = Pt(6)
         
         doc.save(output_path)
+
+    def extract_text(self, file_path: str) -> str:
+        """Extract text from a file based on its extension."""
+        if not file_path:
+            return ""
+        
+        path_lower = file_path.lower()
+        if path_lower.endswith('.pdf'):
+            return self.extract_text_from_pdf(file_path)
+        elif path_lower.endswith('.txt'):
+            return self.extract_text_from_txt(file_path)
+        elif path_lower.endswith('.docx'):
+            try:
+                doc_data = self.parse_docx(file_path)
+                return "\n".join(doc_data.get("full_text", []))
+            except Exception as e:
+                print(f"Error extracting text from docx: {e}")
+                return ""
+        else:
+            return ""
+
 
     def extract_text_from_pdf(self, pdf_path: str) -> str:
         """Extract text from PDF using pdftotext."""

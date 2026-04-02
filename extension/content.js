@@ -35,6 +35,10 @@ function findLeafText(predicate, limit = 20, root = document.body) {
 const getLIRoot = () => document.querySelector('.jobs-search__job-details--container') 
   || document.querySelector('.job-view-layout') 
   || document.querySelector('.jobs-details')
+  || document.querySelector('.scaffold-layout__main')
+  || document.querySelector('.top-card-layout')
+  || document.querySelector('#workspace')
+  || document.querySelector('.main-workspace')
   || document;
 
 // ─── LinkedIn scraper ────────────────────────────────────────────────────────
@@ -57,9 +61,14 @@ const LINKEDIN_SCRAPER = {
   title: () => firstMatch([
     '.job-details-jobs-unified-top-card__job-title h1',
     '.jobs-unified-top-card__job-title h1',
+    '.top-card-layout__title',
     'h1.top-card-layout__title',
     'h1[class*="job-title"]',
     'h1',
+    '#workspace h1',
+    '#workspace h2',
+    '.top-card-layout__title',
+    'h2.top-card-layout__title',
   ], getLIRoot()),
 
   company: () => firstMatch([
@@ -67,10 +76,50 @@ const LINKEDIN_SCRAPER = {
     '.job-details-jobs-unified-top-card__company-name',
     '.jobs-unified-top-card__company-name a',
     '.jobs-unified-top-card__company-name',
+    '#workspace a[href*="/company/"]',
+    '#workspace .company-name',
+    '#workspace [class*="company"] a',
+    '#workspace h2 a',
     '.topcard__org-name-link',
+    '.top-card-layout__first-subline a',
     '[class*="company-name"] a',
     '[class*="company-name"]',
   ], getLIRoot()),
+
+  companyId: () => {
+    // Try multiple strategies to get slug or numeric ID
+    const root = getLIRoot();
+    
+    // Strategy 1: link in the top card
+    const link = root.querySelector('.job-details-jobs-unified-top-card__company-name a') || 
+                 root.querySelector('.jobs-unified-top-card__company-name a') ||
+                 root.querySelector('.topcard__org-name-link') ||
+                 root.querySelector('[class*="company-name"] a');
+
+    if (link) {
+      // Try slug first: /company/pwc/
+      const slugMatch = link.href.match(/\/company\/([^/?#]+)/);
+      if (slugMatch && !/^\d+$/.test(slugMatch[1])) return slugMatch[1];
+      
+      // Try numeric ID: /company/12345/ or f_C=12345
+      const numericMatch = link.href.match(/\/company\/(\d+)/) || link.href.match(/f_C=(\d+)/);
+      if (numericMatch) return numericMatch[1];
+    }
+
+    // Strategy 2: Search internal <code> tags for numeric ID
+    const codes = document.querySelectorAll('code');
+    for (const code of codes) {
+      try {
+        const content = code.textContent;
+        if (content.includes('urn:li:fsd_company:')) {
+          const idMatch = content.match(/urn:li:fsd_company:(\d+)/);
+          if (idMatch) return idMatch[1];
+        }
+      } catch (e) {}
+    }
+
+    return null;
+  },
 
   /**
    * Extract the city/state location from the unified top card.
@@ -109,7 +158,24 @@ const LINKEDIN_SCRAPER = {
       }
     }
     
-    // Strategy 3: any generic text node mapping to city/state in the top card
+    // Strategy 3: Top-card layout flavors
+    const flavors = document.querySelectorAll('#workspace [class*="flavor"], .top-card-layout__first-subline .topcard__flavor, .topcard__flavor--bullet');
+    for (const flavor of flavors) {
+        const text = flavor.innerText?.trim();
+        // Check for common tokens that aren't locations
+        if (text && text.includes(',') && !/\d/.test(text) && !/applicant|employee|ago|hybrid|remote|on-site/i.test(text)) {
+            return text;
+        }
+    }
+    
+    // Strategy 4: Workspace subline scan
+    const workspaceHeader = document.querySelector('#workspace header');
+    if (workspaceHeader) {
+        const textNodes = findLeafText(t => t.includes(',') && t.length < 50, 10, workspaceHeader);
+        if (textNodes.length) return textNodes[0].text;
+    }
+    
+    // Strategy 5: any generic text node mapping to city/state in the top card
     const topCard = root.querySelector('[class*="unified-top-card"], [class*="job-details"]');
     if (topCard) {
         const textNodes = findLeafText(t => t.includes(',') && !/\d/.test(t) && t.length < 50, 15, topCard);
@@ -158,6 +224,13 @@ const LINKEDIN_SCRAPER = {
         if (t && /^(remote|hybrid|on-site)$/i.test(t)) return t;
       }
     }
+    
+    // Strategy 4: scan specifically for .topcard__flavor elements
+    const flavors = document.querySelectorAll('.topcard__flavor');
+    for (const f of flavors) {
+        const t = f.innerText?.trim();
+        if (t && /remote|hybrid|on-site/i.test(t)) return t;
+    }
 
     return null;
   },
@@ -168,7 +241,9 @@ const LINKEDIN_SCRAPER = {
     '.jobs-description-content__text',
     '#job-details',
     '.description__text',
+    '.show-more-less-html__markup',
     '[class*="job-description"]',
+    '.jobs-box__html-content',
   ], getLIRoot()),
 
   /**
@@ -238,10 +313,22 @@ const LINKEDIN_SCRAPER = {
 
     // Strategy 5: Nuclear option. Search the entire job details block's raw text.
     const everything = root.innerText || '';
-    if (/full[\s-]?time/i.test(everything)) return 'Full-time';
-    if (/part[\s-]?time/i.test(everything)) return 'Part-time';
-    if (/contract/i.test(everything)) return 'Contract';
-    if (/internship/i.test(everything)) return 'Internship';
+    if (everything.includes('Full-time')) return 'Full-time';
+    if (everything.includes('Part-time')) return 'Part-time';
+    if (everything.includes('Contract')) return 'Contract';
+    if (everything.includes('Internship')) return 'Internship';
+
+    // Strategy 6: Scan all .topcard__flavor elements for job type tokens
+    const flavors2 = document.querySelectorAll('.topcard__flavor');
+    for (const f of flavors2) {
+        const t = f.innerText?.trim();
+        if (t && /full[\s-]?time|part[\s-]?time|contract|internship/i.test(t)) {
+            if (/full/i.test(t)) return 'Full-time';
+            if (/part/i.test(t)) return 'Part-time';
+            if (/contract/i.test(t)) return 'Contract';
+            if (/intern/i.test(t)) return 'Internship';
+        }
+    }
 
     return null;
   },
@@ -356,16 +443,18 @@ const LINKEDIN_SCRAPER = {
     return null;
   },
 
-  /**
-   * Capture the company logo URL from the job card.
-   */
   companyLogo: () => {
     const root = getLIRoot();
     const selectors = [
       '.job-details-jobs-unified-top-card__company-logo-image',
       '.jobs-unified-top-card__company-logo-image',
       '.artdeco-entity-image--company',
+      '#workspace img[src*="company-logo"]',
+      '#workspace img[alt*="logo"]',
       '.topcard__logo-image',
+      '.topcard__logo-container img',
+      '.top-card-layout__entity-image',
+      '.top-card-layout__entity-image--logo',
       '[class*="company-logo"] img',
       '[class*="entity-image"]',
     ];
@@ -383,8 +472,11 @@ const LINKEDIN_SCRAPER = {
       if (cardImg && cardImg.src && cardImg.src.includes('http')) return cardImg.src;
     }
     return null;
-  },
+  }
 };
+
+
+
 
 // ─── Indeed scraper ──────────────────────────────────────────────────────────
 
@@ -596,18 +688,43 @@ const SCRAPERS = {
 const FALLBACK_SCRAPER = {
   isJobPage: () => {
     const text = document.body.innerText.toLowerCase();
-    const isJob = text.includes('job description') || text.includes('apply for this job') || text.includes('qualifications') || text.includes('requirements');
+    const commonJobKeywords = [
+      'job description', 'apply for this job', 'qualifications', 'requirements', 
+      'about the role', 'responsibilities', 'who you are', 'what you\'ll do',
+      'desired skills', 'minimum qualifications', 'preferred qualifications',
+      'pay range', 'compensation', 'benefits', 'equal opportunity employer'
+    ];
+    
+    // Check if any significant number of keywords are present
+    const matchCount = commonJobKeywords.filter(k => text.includes(k)).length;
+    const isJob = matchCount >= 2 || text.includes('apply for this job') || text.includes('submit application');
+    
     const isCompany = text.includes('about the company') || text.includes('company overview') || (text.includes('careers') && text.includes('location'));
-    const isWellfound = window.location.hostname.includes('wellfound') && window.location.pathname.includes('/company/');
-    return isJob || isCompany || isWellfound;
+    const isWellfound = window.location.hostname.includes('wellfound') && (window.location.pathname.includes('/company/') || window.location.pathname.includes('/jobs/'));
+    
+    // Also check URL for common job-related paths
+    const path = window.location.pathname.toLowerCase();
+    const isJobUrl = path.includes('/jobs/') || path.includes('/careers/') || path.includes('/openings/') || path.includes('/job/');
+
+    return isJob || isCompany || isWellfound || isJobUrl;
   },
   title: () => {
-    // Try to find the first H1 that isn't a logo
+    // Strategy 1: Look for elements with clear job-title classes or IDs
+    const specific = firstMatch([
+      '[class*="job-title"]', '[class*="JobTitle"]', '[id*="job-title"]',
+      '.posting-header h2', '.app-title', '.jdp_title', 'h1.title'
+    ]);
+    if (specific) return specific;
+
+    // Strategy 2: First H1 that isn't a logo
     const h1s = Array.from(document.querySelectorAll('h1'));
     for (const h1 of h1s) {
-      if (h1.innerText.length > 3 && h1.innerText.length < 100) return h1.innerText.trim();
+      const text = h1.innerText.trim();
+      if (text.length > 3 && text.length < 100 && !/login|sign in|welcome/i.test(text)) return text;
     }
-    return document.title.split('|')[0].split('-')[0].trim();
+    
+    // Strategy 3: Clean up page title
+    return document.title.split(/[\|\-–]/)[0].trim();
   },
   company: () => {
     // Try to extract company from title or meta tags
@@ -906,6 +1023,11 @@ function handleJobNavigation() {
   scrapeTimer = setTimeout(() => {
     const jobData = scrapeJobData();
     console.log('[JobAutomator] Auto-scraped new job:', jobData);
+    
+    // Check for network matches if on LinkedIn
+    if (window.location.hostname.includes('linkedin.com')) {
+      processLinkedInConnections();
+    }
     if (!isExtValid()) return;
     try {
       chrome.runtime.sendMessage({ action: 'store_job_data', data: jobData }, () => {
@@ -939,11 +1061,7 @@ window.addEventListener('locationchange', () => {
   
   if (!isExtValid()) return;
   try {
-    chrome.storage.local.get(['isPanelOpen'], (result) => {
-      if (chrome.runtime.lastError) return;
-      if (!result.isPanelOpen) return;
-      if (getScraper().isJobPage()) handleJobNavigation();
-    });
+    if (getScraper().isJobPage()) handleJobNavigation();
   } catch(e) {}
 });
 
@@ -961,21 +1079,33 @@ setInterval(() => {
   
   if (!isExtValid()) return;
   try {
-    chrome.storage.local.get(['isPanelOpen'], (result) => {
-      if (chrome.runtime.lastError) return;
-      if (!result.isPanelOpen) return;
-      if (getScraper().isJobPage()) handleJobNavigation();
-    });
+    if (getScraper().isJobPage()) handleJobNavigation();
   } catch(e) {}
 }, 1000);
 
+// 3. Tab Visibility Tracker
+// When the user swaps back to this tab, silently push the job data to the sidepanel
+// so that the panel isn't showing a stale job from a different tab.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    if (!isExtValid()) return;
+    try {
+      if (getScraper().isJobPage()) {
+        const jobData = scrapeJobData();
+        chrome.runtime.sendMessage({ action: 'store_job_data', data: jobData }, () => {
+          if (chrome.runtime.lastError) return;
+          chrome.runtime.sendMessage({ action: 'refresh_panel_data' }).catch(()=>{});
+        });
+      }
+    } catch(e) {}
+  }
+});
+
 function initialScrape() {
   if (!isExtValid()) return;
-  chrome.storage.local.get(['isPanelOpen'], (result) => {
-    if (result.isPanelOpen && getScraper().isJobPage()) {
-      handleJobNavigation();
-    }
-  });
+  if (getScraper().isJobPage()) {
+    handleJobNavigation();
+  }
 }
 
 window.addEventListener('load', () => {
@@ -999,6 +1129,202 @@ setInterval(() => {
     });
   }
 }, 3000);
+
+
+// ─── Magic Fill ─────────────────────────────────────────────────────────────
+
+// Inject Google Fonts for icons
+if (!document.getElementById('kernel-google-fonts')) {
+  const link = document.createElement('link');
+  link.id = 'kernel-google-fonts';
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200';
+  document.head.appendChild(link);
+}
+
+const FIELD_MAP = {
+  first_name: ['first', 'fname', 'given-name'],
+  last_name: ['last', 'lname', 'family-name', 'surname'],
+  full_name: ['full_name', 'fullname', 'name'],
+  email: ['email', 'mail'],
+  phone: ['phone', 'tel', 'mobile', 'cell'],
+  address: ['address', 'street'],
+  city: ['city', 'town'],
+  state: ['state', 'province', 'region'],
+  zip_code: ['zip', 'postal', 'postcode'],
+  linkedin: ['linkedin'],
+  github: ['github'],
+  website: ['portfolio', 'website', 'blog', 'site']
+};
+
+let activeHighlights = [];
+
+function findFields() {
+  const inputs = Array.from(document.querySelectorAll('input:not([type="hidden"]), textarea, select'));
+  const matches = [];
+
+  inputs.forEach(input => {
+    // 1. Check direct attributes
+    const attrs = [
+      input.id, input.name, input.placeholder, 
+      input.getAttribute('aria-label'), input.title, 
+      input.autocomplete
+    ].filter(Boolean).map(a => a.toLowerCase());
+
+    // 2. Check associated label
+    let labelText = '';
+    if (input.id) {
+      const label = document.querySelector(`label[for="${input.id}"]`);
+      if (label) labelText = label.innerText.toLowerCase();
+    }
+    if (!labelText) {
+      const parentLabel = input.closest('label');
+      if (parentLabel) labelText = parentLabel.innerText.toLowerCase();
+    }
+
+    for (const [key, keywords] of Object.entries(FIELD_MAP)) {
+      // Avoid matching "name" inside "password" or "password_confirmation"
+      const isMatch = keywords.some(k => {
+        const matchesAttr = attrs.some(a => {
+          // If keyword is 'name', it must be nearly the whole word or start/end properly
+          if (k === 'name' && (a.includes('password') || a.includes('secret') || a.includes('token') || a.includes('username') || a.includes('login'))) return false;
+          return a.includes(k);
+        });
+        const matchesLabel = labelText.includes(k.replace('-', ' '));
+        return matchesAttr || matchesLabel;
+      });
+
+      if (isMatch) {
+        matches.push({ el: input, key });
+        break; 
+      }
+    }
+  });
+
+  return matches;
+}
+
+function clearMagicHighlights() {
+  activeHighlights.forEach(h => h.remove());
+  activeHighlights = [];
+  document.querySelectorAll('.kernel-magic-highlight').forEach(el => {
+    el.classList.remove('kernel-magic-highlight');
+  });
+}
+
+function injectMagicUI(allMatches, profile) {
+  clearMagicHighlights();
+  
+  // Bug fix: Filter matches by available profile data so the count is accurate
+  const matches = allMatches.filter(m => {
+    const val = profile[m.key];
+    return val && val.trim() !== '';
+  });
+
+  if (matches.length === 0) return;
+
+  // Create human labels for the summary
+  const fieldLabels = {
+    first_name: 'First Name',
+    last_name: 'Last Name',
+    full_name: 'Full Name',
+    email: 'Email',
+    phone: 'Phone',
+    address: 'Address',
+    city: 'City',
+    state: 'State',
+    zip_code: 'Zip Code',
+    linkedin: 'LinkedIn',
+    github: 'GitHub',
+    website: 'Portfolio/Website'
+  };
+
+  const detectedFieldsList = [...new Set(matches.map(m => fieldLabels[m.key] || m.key))].join(', ');
+
+  // Create floating "Fill All" bar
+  const bar = document.createElement('div');
+  bar.className = 'kernel-magic-bar';
+  bar.innerHTML = `
+    <div class="kernel-magic-bar-content">
+      <span class="material-symbols-outlined">magic_button</span>
+      <div class="kernel-magic-info" title="Detected: ${detectedFieldsList}">
+        <span>Found <strong>${matches.length}</strong> fields to auto-fill</span>
+        <span class="material-symbols-outlined kernel-info-icon">info</span>
+      </div>
+      <div class="kernel-magic-bar-actions">
+        <button type="button" id="kernel-magic-fill-all" class="kernel-btn-primary">Fill All</button>
+        <button type="button" id="kernel-magic-cancel" class="kernel-btn-secondary">Cancel</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(bar);
+  activeHighlights.push(bar);
+
+  bar.querySelector('#kernel-magic-fill-all').onclick = () => {
+    matches.forEach(m => fillField(m.el, profile[m.key]));
+    clearMagicHighlights();
+  };
+  bar.querySelector('#kernel-magic-cancel').onclick = clearMagicHighlights;
+
+  // Individual field highlights
+  matches.forEach(m => {
+    const val = profile[m.key];
+    // redundant check but safe
+    if (!val) return;
+
+    m.el.classList.add('kernel-magic-highlight');
+    
+    // Preview badge
+    const badge = document.createElement('div');
+    badge.className = 'kernel-magic-badge';
+    badge.innerHTML = `
+      <span class="kernel-badge-text">Fill: ${val.length > 20 ? val.substring(0, 17) + '...' : val}</span>
+      <button type="button" class="kernel-badge-btn" title="Fill this field">
+        <span class="material-symbols-outlined" style="font-size: 14px;">check</span>
+      </button>
+    `;
+    
+    document.body.appendChild(badge);
+    activeHighlights.push(badge);
+
+    const updatePosition = () => {
+      const rect = m.el.getBoundingClientRect();
+      badge.style.top = `${window.scrollY + rect.top - 28}px`;
+      badge.style.left = `${window.scrollX + rect.left}px`;
+    };
+    
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition);
+
+    badge.querySelector('.kernel-badge-btn').onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      fillField(m.el, val);
+      badge.remove();
+      m.el.classList.remove('kernel-magic-highlight');
+    };
+  });
+}
+
+function fillField(el, value) {
+  if (!el || !value) return;
+  el.focus();
+  if (el.tagName === 'SELECT') {
+    // Try to match option
+    const options = Array.from(el.options);
+    const match = options.find(o => 
+      o.value.toLowerCase() === value.toLowerCase() || 
+      o.text.toLowerCase().includes(value.toLowerCase())
+    );
+    if (match) el.value = match.value;
+  } else {
+    el.value = value;
+  }
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+  el.blur();
+}
 
 // ── Context Menu Insertion ────────────────────────────────────────────────
 let lastRightClickedElement = null;
@@ -1035,10 +1361,205 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       target.dispatchEvent(new Event('input', { bubbles: true }));
       target.dispatchEvent(new Event('change', { bubbles: true }));
     }
+  } else if (message.action === 'start_magic_fill') {
+    const matches = findFields();
+    injectMagicUI(matches, message.profile);
+    sendResponse({ found: matches.length });
   }
 });
 
-// ─── App Interaction ─────────────────────────────────────────────────────────
+// ── LinkedIn Network Matches ──────────────────────────────────────────────
+
+let connectionCache = new Map(); // companyId or name -> matches
+let lastActiveJobId = null;
+
+async function getMatches(companyId, companyName) {
+  const key = companyId || companyName;
+  if (!key) return [];
+  if (connectionCache.has(key)) return connectionCache.get(key);
+
+  return new Promise((resolve) => {
+    // Strategy: Try ID first if available. If no matches, try Name.
+    const tryQuery = (id, name) => {
+      const action = id ? 'CHECK_CONNECTIONS' : 'CHECK_CONNECTIONS_BY_NAME';
+      const params = id ? { companyId: id } : { companyName: name };
+      
+      chrome.runtime.sendMessage({ action, ...params }, (response) => {
+        const matches = response?.matches || [];
+        if (matches.length > 0 || !name || (id && !name)) {
+          connectionCache.set(key, matches);
+          resolve(matches);
+        } else if (id && name) {
+          // Fallback to name search
+          tryQuery(null, name);
+        } else {
+          connectionCache.set(key, []);
+          resolve([]);
+        }
+      });
+    };
+
+    tryQuery(companyId, companyName);
+  });
+}
+
+async function processLinkedInConnections() {
+  if (!LINKEDIN_SCRAPER.isJobPage()) return;
+  
+  // 1. Current Job Banner
+  const jobId = new URLSearchParams(window.location.search).get('currentJobId');
+  if (jobId && (jobId !== lastActiveJobId || !document.getElementById('kernel-connection-banner'))) {
+    const companyName = LINKEDIN_SCRAPER.company();
+    const companyId = LINKEDIN_SCRAPER.companyId();
+    
+    if (companyName || companyId) {
+      lastActiveJobId = jobId;
+      const matches = await getMatches(companyId, companyName);
+      renderConnectionBanner(matches, companyName);
+    }
+  }
+  
+  // 2. Job List Highlights
+  highlightConnectionsInList();
+}
+
+function renderConnectionBanner(matches, companyName) {
+  // Remove existing banner
+  const existing = document.getElementById('kernel-connection-banner');
+  if (existing) existing.remove();
+  
+  if (!matches || matches.length === 0) return;
+  
+  const root = getLIRoot();
+  const topCard = root.querySelector('.jobs-unified-top-card') || root.querySelector('.job-details-jobs-unified-top-card');
+  if (!topCard) return;
+  
+  const banner = document.createElement('div');
+  banner.id = 'kernel-connection-banner';
+  banner.className = 'kernel-connection-banner';
+  
+  const match = matches[0];
+  const othersCount = matches.length - 1;
+  const othersText = othersCount > 0 ? ` and ${othersCount} other${othersCount > 1 ? 's' : ''}` : '';
+  
+  banner.innerHTML = `
+    <div class="kernel-banner-inner">
+      <div class="kernel-banner-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      </div>
+      <div class="kernel-banner-text">
+        <span class="kernel-banner-strong">Network Connection Found:</span>
+        <a href="${match.profile_url}" target="_blank" class="kernel-banner-link">${match.name}</a>${othersText} at ${companyName || 'this company'}
+      </div>
+      <button class="kernel-banner-close" onclick="this.parentElement.parentElement.remove()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+      </button>
+    </div>
+  `;
+  
+  // Prepend to top card
+  topCard.insertBefore(banner, topCard.firstChild);
+}
+
+async function highlightConnectionsInList() {
+  const listItems = document.querySelectorAll('.jobs-search-results-list__item, .scaffold-layout__list-item, .job-card-container');
+  
+  for (const item of listItems) {
+    if (item.dataset.kernelProcessed) continue;
+    
+    const companyLink = item.querySelector('a[href*="/company/"]');
+    const companyNameEl = item.querySelector('.job-card-container__company-name, .artdeco-entity-lockup__subtitle, .job-card-container__primary-description');
+    
+    if (!companyLink && !companyNameEl) continue;
+    
+    // Mark as processed to avoid double-querying immediately
+    item.dataset.kernelProcessed = 'true';
+    
+    const companyIdMatch = companyLink ? companyLink.href.match(/\/company\/([^/?#]+)/) : null;
+    const companyId = companyIdMatch ? companyIdMatch[1] : null;
+    
+    const companyName = companyNameEl?.innerText?.trim();
+    
+    if (companyId || companyName) {
+      const matches = await getMatches(companyId, companyName);
+      if (matches && matches.length > 0) {
+        addConnectionIndicator(item, matches);
+      }
+    } else {
+      delete item.dataset.kernelProcessed;
+    }
+  }
+}
+
+function addConnectionIndicator(item, matches) {
+  // Check if indicator already exists
+  if (item.querySelector('.kernel-list-indicator')) return;
+  
+  const count = matches.length;
+  // Get names, cap at 3 for tooltip
+  const names = matches.slice(0, 3).map(m => m.name);
+  let namesStr = names.join(', ');
+  if (count > 3) {
+    namesStr += ` and ${count - 3} others`;
+  }
+  
+  const tooltipText = `${count} network connection${count > 1 ? 's' : ''}:\n${namesStr}`;
+  
+  const indicator = document.createElement('div');
+  indicator.className = 'kernel-list-indicator';
+  indicator.setAttribute('data-tooltip', tooltipText);
+  indicator.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+      <circle cx="9" cy="7" r="4"></circle>
+    </svg>
+  `;
+
+  // Find a good spot to place it - usually near the company logo or title
+  const target = item.querySelector('.job-card-list__entity-lockup, .job-card-container__content-container, .job-card-list__title');
+  if (target) {
+    target.style.position = 'relative';
+    target.appendChild(indicator);
+    item.classList.add('kernel-match-highlight');
+  } else {
+    // fallback if internal structure is different
+    item.style.position = 'relative';
+    item.appendChild(indicator);
+  }
+}
+
+// ── Mutation Observer to handle SPA navigation ──────────────────────────
+
+let connectionTimeout = null;
+let lastConnectionProcess = 0;
+const THROTTLE_MS = 250;
+
+const connectionObserver = new MutationObserver(() => {
+  const now = Date.now();
+  if (now - lastConnectionProcess > THROTTLE_MS) {
+    lastConnectionProcess = now;
+    processLinkedInConnections();
+  } else {
+    clearTimeout(connectionTimeout);
+    connectionTimeout = setTimeout(() => {
+      lastConnectionProcess = Date.now();
+      processLinkedInConnections();
+    }, THROTTLE_MS);
+  }
+});
+
+if (LINKEDIN_SCRAPER.isJobPage()) {
+  connectionObserver.observe(document.body, { childList: true, subtree: true });
+  // Initial run
+  setTimeout(processLinkedInConnections, 500);
+}
+
+// ── App Interaction ─────────────────────────────────────────────────────────
 
 window.addEventListener('JOB_KERNEL_APP_UPDATED', (e) => {
   if (!isExtValid()) return;

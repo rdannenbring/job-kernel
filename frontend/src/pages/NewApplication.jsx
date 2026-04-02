@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import ProcessVisualization from '../ProcessVisualization'
 import DiffViewer from '../DiffViewer'
+import ResumeScoringView from '../components/JobMatch/ResumeScoringView'
+import ResumePreview from '../components/JobMatch/ResumePreview'
+import ResumeEditor from '../components/JobMatch/ResumeEditor'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -86,9 +89,12 @@ function NewApplication({ onComplete }) {
     const [result, setResult] = useState(null) // Resume Result
     const [coverLetterResult, setCoverLetterResult] = useState(null) // Cover Letter Result
     const [coverLetterChanges, setCoverLetterChanges] = useState([]) // Track refinement history
+    const [matchScoreResult, setMatchScoreResult] = useState(null) // Match Score Result
 
     // UI State
     const [refineInstructions, setRefineInstructions] = useState('')
+    const [resumeInstructions, setResumeInstructions] = useState('')
+    const [clInstructions, setClInstructions] = useState('')
     const [viewMode, setViewMode] = useState('pdf') // 'pdf', 'redline'
     const [missingInfo, setMissingInfo] = useState({ show: false, fields: [], inputs: {} })
 
@@ -243,6 +249,8 @@ function NewApplication({ onComplete }) {
                 formData.append('additional_files', file)
             })
 
+            formData.append('instructions', resumeInstructions)
+
             const response = await fetch(`${API_URL}/api/tailor-resume`, {
                 method: 'POST',
                 body: formData,
@@ -256,9 +264,34 @@ function NewApplication({ onComplete }) {
             const data = await response.json()
             setResult(data)
             setExtractedContext(data.extracted_context || "")
-            setAppStage('resume_review')
             setRefineInstructions('')
             setViewMode('redline')
+
+            // Generate Job Match Score based on the tailored resume
+            setProcessingMode('resume')
+            try {
+                const tailoredText = data.resume_data?.full_text ? data.resume_data.full_text.join('\n') : "";
+                const matchFormData = new FormData()
+                matchFormData.append('tailored_resume_text', tailoredText)
+                if (resumeFile) matchFormData.append('resume', resumeFile)
+                else if (userProfile?.base_resume_path) matchFormData.append('use_base_resume', 'true')
+                
+                if (inputMode === 'text') matchFormData.append('job_description', jobDescription)
+                else matchFormData.append('job_url', jobUrl?.trim() || '')
+                
+                const matchResponse = await fetch(`${API_URL}/api/score-job-match`, {
+                    method: 'POST',
+                    body: matchFormData,
+                })
+                if (matchResponse.ok) {
+                    const matchData = await matchResponse.json()
+                    setMatchScoreResult(matchData)
+                }
+            } catch (scoreErr) {
+                console.warn('Scoring failed, continuing anyway:', scoreErr)
+            }
+            
+            setAppStage('match_scoring')
         } catch (err) {
             setError(err.message || 'An error occurred while processing your resume')
         } finally {
@@ -311,7 +344,8 @@ function NewApplication({ onComplete }) {
                     resume_text: resumeText,
                     job_description: jobText,
                     base_filename: result.original_filename,
-                    additional_context: extractedContext
+                    additional_context: extractedContext,
+                    instructions: clInstructions
                 })
             })
 
@@ -384,6 +418,8 @@ function NewApplication({ onComplete }) {
                 job_url: extensionMetadata?.link || result.job_url || (inputMode === 'url' ? jobUrl : ""),
                 apply_url: extensionMetadata?.applyLink || metadata.apply_url || "",
                 job_description: extensionMetadata?.description || result.job_description || (inputMode === 'text' ? jobDescription : "No description captured"),
+                match_score: matchScoreResult?.overall_score || null,
+                match_details: matchScoreResult || null,
                 original_resume_path: resumeFile ? resumeFile.name : (userProfile?.base_resume_path ? userProfile.base_resume_path.split('/').pop() : "Default Resume"),
                 tailored_resume_path: result.files.docx.split('/').pop(),
                 cover_letter_path: coverLetterResult?.files?.docx ? coverLetterResult.files.docx.split('/').pop() : "",
@@ -401,6 +437,7 @@ function NewApplication({ onComplete }) {
                 resume_changes_summary: result.change_summary || [],
                 cover_letter_changes_summary: coverLetterInsights,
                 status: 'Generated',
+                pipeline_stage: 'generated',
                 glassdoor_rating: metadata.glassdoor_rating || null,
                 glassdoor_url: metadata.glassdoor_url || null,
                 indeed_rating: metadata.indeed_rating || null,
@@ -454,11 +491,14 @@ function NewApplication({ onComplete }) {
         setJobUrl('')
         setResult(null)
         setCoverLetterResult(null)
+        setMatchScoreResult(null)
         setError(null)
         setAppStage('upload')
         setViewMode('pdf')
         setExtractedContext("")
         setRefineInstructions('')
+        setResumeInstructions('')
+        setClInstructions('')
         setMissingInfo({ show: false, fields: [], inputs: {} })
         setContextDocs(userProfile ? initializeContextDocs(userProfile) : [])
 
@@ -506,15 +546,57 @@ function NewApplication({ onComplete }) {
             justifyContent: 'space-between'
         }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, background: 'linear-gradient(135deg, var(--primary-light), var(--secondary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
                     {title}
                 </h1>
             </div>
-            <button onClick={handleStartOver} className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
+            <button onClick={handleStartOver} className="btn-util">
+                <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>restart_alt</span>
                 Restart
             </button>
         </header>
     )
+
+    // 2.5 Match Scoring View
+    if (appStage === 'match_scoring') {
+        const diffData = result?.diff_data || { original: '', tailored: '' };
+        return (
+            <ResumeScoringView 
+                diffData={diffData} 
+                scoreData={matchScoreResult || {}} 
+                onPreview={() => setAppStage('resume_preview')}
+                onEdit={() => setAppStage('resume_edit')}
+                onFinalize={handleAcceptResume}
+            />
+        )
+    }
+
+    // 2.6 High Fidelity Resume Preview
+    if (appStage === 'resume_preview') {
+        return (
+            <ResumePreview 
+                pdfUrl={result?.files?.pdf ? `${API_URL}${result.files.pdf}` : null}
+                onBack={() => setAppStage('match_scoring')}
+                onFinalize={handleAcceptResume}
+            />
+        )
+    }
+
+    // 2.7 Resume Visual Editor
+    if (appStage === 'resume_edit') {
+        return (
+            <ResumeEditor 
+                pdfUrl={result?.files?.pdf ? `${API_URL}${result.files.pdf}` : null}
+                resumeData={result?.resume_data}
+                diffData={result?.diff_data}
+                refineInstructions={refineInstructions}
+                setRefineInstructions={setRefineInstructions}
+                onRegenerate={handleRefineResume}
+                isRegenerating={isProcessing}
+                onBack={() => setAppStage('match_scoring')}
+            />
+        )
+    }
 
     // 3. Cover Letter Review
     if (appStage === 'cover_letter_review' && coverLetterResult) {
@@ -639,17 +721,16 @@ function NewApplication({ onComplete }) {
                             </button>
                         </div>
 
-                        {/* Actions */}
                         <div style={{ display: 'grid', gap: '0.75rem' }}>
-                            <button className="btn btn-secondary" onClick={() => handleDownload('docx', true)} style={{ gap: '0.4rem' }}>
+                            <button className="btn-util" onClick={() => handleDownload('docx', true)} style={{ gap: '0.4rem' }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>download</span>
                                 Download Word
                             </button>
-                            <button className="btn btn-secondary" onClick={() => handleDownload('pdf', true)} style={{ gap: '0.4rem' }}>
+                            <button className="btn-util" onClick={() => handleDownload('pdf', true)} style={{ gap: '0.4rem' }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>picture_as_pdf</span>
                                 Download PDF
                             </button>
-                            <button className="btn btn-secondary" onClick={() => handleDownload('txt', true)} style={{ gap: '0.4rem' }}>
+                            <button className="btn-util" onClick={() => handleDownload('txt', true)} style={{ gap: '0.4rem' }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>description</span>
                                 Download Text
                             </button>
@@ -668,165 +749,7 @@ function NewApplication({ onComplete }) {
         )
     }
 
-    // 4. Resume Review
-    if (appStage === 'resume_review' && result) {
-        return (
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-primary)' }}>
-                <ReviewHeader title={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '1.4rem' }}>auto_awesome</span>
-                        Resume Automator
-                    </div>
-                } />
-
-                <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                    {/* LEFT: Preview Area */}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1rem', background: '#e5e7eb', position: 'relative' }}>
-                        {error && (
-                            <div style={{
-                                marginBottom: '1rem',
-                                background: '#fee2e2', border: '1px solid #ef4444', color: '#b91c1c',
-                                padding: '1rem', borderRadius: '0.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                            }}>
-                                <span className="material-symbols-outlined" style={{ verticalAlign: 'middle', marginRight: '0.4rem', fontSize: '1.2rem' }}>warning</span><strong>Error: </strong> {error}
-                            </div>
-                        )}
-                        {/* View Switcher */}
-                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-                            <div style={{ background: '#d1d5db', padding: '4px', borderRadius: '8px', display: 'flex', gap: '4px', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)' }}>
-                                <button
-                                    onClick={() => setViewMode('pdf')}
-                                    style={{
-                                        border: 'none', borderRadius: '6px', padding: '6px 16px', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer',
-                                        background: viewMode === 'pdf' ? 'white' : 'transparent',
-                                        color: viewMode === 'pdf' ? '#111827' : '#4b5563',
-                                        boxShadow: viewMode === 'pdf' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                                        transition: 'all 0.2s ease'
-                                    }}
-                                >
-                                    Clean
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('text')}
-                                    style={{
-                                        border: 'none', borderRadius: '6px', padding: '6px 16px', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer',
-                                        background: viewMode === 'text' ? 'white' : 'transparent',
-                                        color: viewMode === 'text' ? '#2563eb' : '#4b5563',
-                                        boxShadow: viewMode === 'text' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                                        transition: 'all 0.2s ease'
-                                    }}
-                                >
-                                    Text Diff
-                                </button>
-                                {result.files.redline_pdf && (
-                                    <button
-                                        onClick={() => setViewMode('redline')}
-                                        style={{
-                                            border: 'none', borderRadius: '6px', padding: '6px 16px', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer',
-                                            background: viewMode === 'redline' ? 'white' : 'transparent',
-                                            color: viewMode === 'redline' ? '#dc2626' : '#4b5563',
-                                            boxShadow: viewMode === 'redline' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                                            transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '6px'
-                                        }}
-                                    >
-                                        <span>PDF Diff</span>
-                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#dc2626' }}></span>
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Preview Area */}
-                        <div style={{ flex: 1, background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', position: 'relative' }}>
-                            {viewMode === 'pdf' && result.files.pdf && (
-                                <iframe
-                                    src={`${API_URL}${result.files.pdf}?t=${Date.now()}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
-                                    style={{ width: '100%', height: '100%', border: 'none' }}
-                                    title="Clean Resume Preview"
-                                />
-                            )}
-                            {viewMode === 'text' && result.diff_data && (
-                                <div style={{ height: '100%', overflowY: 'auto', background: '#f8fafc' }}>
-                                    <DiffViewer
-                                        original={result.diff_data.original}
-                                        tailored={result.diff_data.tailored}
-                                    />
-                                </div>
-                            )}
-                            {viewMode === 'redline' && result.files.redline_pdf && (
-                                <iframe
-                                    src={`${API_URL}${result.files.redline_pdf}?t=${Date.now()}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
-                                    style={{ width: '100%', height: '100%', border: 'none' }}
-                                    title="Redline Resume Preview"
-                                />
-                            )}
-                        </div>
-                    </div>
-
-                    {/* RIGHT: Sidebar */}
-                    <div style={{ width: '380px', display: 'flex', flexDirection: 'column', borderLeft: '1px solid var(--border-color-card)', background: 'var(--bg-card)', overflowY: 'auto' }}>
-                        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-
-                            {/* Change Summary */}
-                            {result.change_summary && result.change_summary.length > 0 && (
-                                <div style={{ background: 'var(--shadow-glow)', padding: '1.25rem', borderRadius: '0.5rem', border: '1px solid var(--primary-light)' }}>
-                                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                        <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>auto_awesome</span>
-                                        What Changed
-                                    </h3>
-                                    <ul style={{ paddingLeft: '1.25rem', listStyle: 'disc', margin: 0 }}>
-                                        {result.change_summary.map((item, i) => (
-                                            <li key={i} style={{ color: 'var(--text-primary)', marginBottom: '0.4rem', fontSize: '0.9rem', lineHeight: '1.4', opacity: 0.9 }}>{item}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-
-                            {/* Download Buttons */}
-                            <div style={{ display: 'grid', gap: '0.75rem' }}>
-                                <button className="btn btn-secondary" onClick={() => handleDownload('docx')} style={{ gap: '0.4rem' }}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>download</span>
-                                    Download Word
-                                </button>
-                                <button className="btn btn-secondary" onClick={() => handleDownload('pdf')} style={{ gap: '0.4rem' }}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>picture_as_pdf</span>
-                                    Download PDF
-                                </button>
-                            </div>
-
-                            {/* Refinement Tool */}
-                            <div style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: '0.5rem', border: '1px solid var(--border-color-card)' }}>
-                                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>edit_note</span>
-                                    Tweak & Refine
-                                </h3>
-                                <textarea
-                                    className="form-textarea"
-                                    placeholder="Describe tweaks..."
-                                    value={refineInstructions}
-                                    onChange={(e) => setRefineInstructions(e.target.value)}
-                                    style={{ minHeight: '80px', fontSize: '0.9rem', marginBottom: '0.75rem', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
-                                />
-                                <button className="btn btn-primary" onClick={handleRefineResume} disabled={!refineInstructions.trim()} style={{ width: '100%', padding: '0.5rem', fontSize: '0.9rem', gap: '0.4rem' }}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>auto_awesome</span>
-                                    Update Resume
-                                </button>
-                            </div>
-
-                            {/* Actions */}
-                            <div style={{ marginTop: 'auto', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                                <button className="btn btn-primary" onClick={handleAcceptResume} style={{ width: '100%', fontSize: '1.1rem', padding: '1rem', background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', gap: '0.6rem' }}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.4rem' }}>check_circle</span>
-                                    Accept & Continue
-                                </button>
-                                <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Proceed to Cover Letter Generation</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )
-    }
+    // Legacy resume review replaced via appStage === 'match_scoring', 'resume_preview', 'resume_edit'
 
     // 5. Upload View (Standard)
     return (
@@ -1059,9 +982,37 @@ function NewApplication({ onComplete }) {
                                 )}
                             </div>
                         </div>
+
+                        {/* AI Generation Instructions */}
+                        <div className="bg-white dark:bg-slate-800/50 rounded-3xl p-8 border border-slate-200/60 dark:border-slate-700/50 shadow-xl shadow-slate-200/20 dark:shadow-none mb-8">
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6">AI Generation Preferences</h3>
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">Resume Tailoring Instructions</label>
+                                    <textarea 
+                                        className="form-textarea" 
+                                        style={{ minHeight: '80px', fontSize: '0.9rem' }}
+                                        placeholder="e.g. 'Focus on my leadership experience', 'Emphasize my cloud architecture skills'..." 
+                                        value={resumeInstructions} 
+                                        onChange={(e) => setResumeInstructions(e.target.value)} 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">Cover Letter Writing Instructions</label>
+                                    <textarea 
+                                        className="form-textarea" 
+                                        style={{ minHeight: '80px', fontSize: '0.9rem' }}
+                                        placeholder="e.g. 'Keep it under 250 words', 'Highlight my passion for sustainable energy'..." 
+                                        value={clInstructions} 
+                                        onChange={(e) => setClInstructions(e.target.value)} 
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="form-group">
                             <label className="form-label">Job Description</label>
-                            <div className="btn-group mb-2">
+                            <div className="grid grid-cols-2 gap-4 mb-2">
                                 <button type="button" className={`btn ${inputMode === 'text' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setInputMode('text')} style={{ gap: '0.4rem' }}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>edit_note</span>
                                     Paste Text

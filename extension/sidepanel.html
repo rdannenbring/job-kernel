@@ -18,9 +18,34 @@
             <span class="brand-bold">Job</span><span class="brand-light">Kernel</span>
           </h1>
         </div>
-        <button type="button" id="btn-refresh" class="refresh-btn" title="Refresh extension">
-          <span class="material-symbols-outlined">refresh</span>
-        </button>
+        <div class="header-right">
+          <button type="button" id="btn-settings" class="header-icon-btn" title="Settings">
+            <span class="material-symbols-outlined">settings</span>
+          </button>
+          <button type="button" id="btn-refresh" class="header-icon-btn" title="Refresh extension">
+            <span class="material-symbols-outlined">refresh</span>
+          </button>
+        </div>
+      </div>
+      <!-- Encouragement Banner -->
+      <div id="sync-banner" class="alert-banner" style="display:none">
+        <div class="alert-main">
+          <div class="alert-content">
+            <span class="material-symbols-outlined">info</span>
+            <p>Mirror your LinkedIn network to find connections at jobs you view.</p>
+          </div>
+          <button type="button" id="btn-go-sync" class="alert-btn">Sync Now</button>
+        </div>
+        
+        <div id="banner-progress-container" class="banner-progress-wrapper" style="display:none; width: 100%; margin-top: 0.5rem;">
+          <div class="banner-status-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+            <span id="banner-sync-status" style="font-size: 0.7rem; color: rgba(255,255,255,0.9); font-weight: 500;">Starting sync...</span>
+            <span id="banner-sync-percent" style="font-size: 0.7rem; color: rgba(255,255,255,0.9); font-weight: 700;">0%</span>
+          </div>
+          <div class="banner-progress-bar" style="width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden;">
+            <div id="banner-progress-fill" style="width: 0%; height: 100%; background: white; transition: width 0.3s ease;"></div>
+          </div>
+        </div>
       </div>
       <div class="mode-switcher-row">
         <div class="mode-switcher">
@@ -88,12 +113,83 @@
     </div>
 
 
+    <!-- Settings Container -->
+    <main class="form-container" id="settings-container" style="display:none">
+      <div class="section-title-row" style="margin-top: 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+        <h2 class="section-title">Settings</h2>
+        <button type="button" id="btn-settings-back" class="icon-text-btn">
+          <span class="material-symbols-outlined">arrow_back</span>
+          Back
+        </button>
+      </div>
+
+      <div id="linkedin-sync-section" class="linkedin-sync-card">
+        <div class="sync-header">
+          <span class="material-symbols-outlined sync-icon">group</span>
+          <div class="sync-info">
+            <span class="sync-title">LinkedIn Network Mirror</span>
+            <span id="sync-status" class="sync-status">Mirror your 1st-degree connections</span>
+            <span id="sync-last-time" class="sync-timestamp" style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">Not synced yet</span>
+          </div>
+          <div class="sync-actions" style="display: flex; gap: 0.5rem;">
+            <button type="button" id="btn-view-network" class="btn-sync" title="View Network" style="display:none">
+              <span class="material-symbols-outlined">visibility</span>
+            </button>
+            <button type="button" id="btn-sync-linkedin" class="btn-sync" title="Sync Connections">
+              <span class="material-symbols-outlined">sync</span>
+            </button>
+          </div>
+        </div>
+        <div id="sync-progress-container" class="sync-progress-bar" style="display:none">
+          <div id="sync-progress" class="sync-progress-fill"></div>
+        </div>
+      </div>
+      
+      <div class="settings-info-card" style="background: var(--bg-secondary); border-radius: 12px; padding: 1rem; margin-top: 1.5rem; border: 1px solid var(--border-color);">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin: 0; margin-bottom: 1rem;">
+          Sync your connections to automatically see matching contacts when viewing job postings on LinkedIn and other sites.
+        </p>
+        <button type="button" id="btn-clear-network" class="icon-text-btn" style="color: var(--error); border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05);">
+          <span class="material-symbols-outlined">delete_sweep</span>
+          Clear Network Data
+        </button>
+      </div>
+    </main>
+
     <main class="form-container" id="details-container">
+
+      <!-- LinkedIn Connections Section -->
+      <div id="side-connection-banner" class="side-connection-card" style="display:none">
+        <div class="side-conn-header" id="side-conn-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="material-symbols-outlined">group</span>
+            <span class="side-conn-title">Network Connections <span id="side-conn-count-badge" class="side-conn-count-badge" style="display: none;"></span></span>
+          </div>
+          <span class="material-symbols-outlined" id="side-conn-toggle-icon" style="transition: transform 0.2s; color: var(--text-muted);">expand_more</span>
+        </div>
+        <div id="side-conn-list" class="side-conn-list" style="display: none;">
+          <!-- Connections will be injected here -->
+        </div>
+      </div>
+
       <form id="job-form">
 
         <!-- Read-only notice (shown when status prevents editing) -->
         <div class="readonly-notice" id="readonly-notice">
           This application is in a status that does not allow editing.
+        </div>
+
+
+        <div class="listing-source-inline" id="listing-source-container" style="display:none; margin-bottom: 0.5rem;">
+          <span class="source-label">From:</span>
+          <div id="listing-source-link" class="source-link-inline" role="button" tabindex="0">
+            <img id="listing-source-logo" src="" alt="" class="source-logo-mini" />
+            <span id="listing-source-name" class="source-name-inline"></span>
+            <span class="material-symbols-outlined source-icon-mini">open_in_new</span>
+          </div>
+          <button type="button" id="btn-manual-parse" class="inline-action-btn" title="Paste job manually" style="margin-left: auto">
+            <span class="material-symbols-outlined">edit_square</span>
+          </button>
         </div>
 
         <!-- Job Title row -->
@@ -188,22 +284,47 @@
         <div class="form-row">
           <div class="form-group half field-diff-wrapper" data-field="jobType">
             <label for="jobType">Job Type</label>
-            <select id="jobType" name="jobType">
-              <option value="">— Unknown —</option>
-              <option value="Full-time">Full-time</option>
-              <option value="Part-time">Part-time</option>
-              <option value="Contract">Contract</option>
-              <option value="Internship">Internship</option>
-            </select>
+            <div class="custom-dropdown" id="jobType-custom">
+              <div class="dropdown-trigger">
+                <span class="trigger-text">- Unknown -</span>
+                <span class="material-symbols-outlined">expand_more</span>
+              </div>
+              <div class="dropdown-menu">
+                <div class="dropdown-option" data-value="">- Unknown -</div>
+                <div class="dropdown-option" data-value="Full-time">Full-time</div>
+                <div class="dropdown-option" data-value="Part-time">Part-time</div>
+                <div class="dropdown-option" data-value="Contract">Contract</div>
+                <div class="dropdown-option" data-value="Internship">Internship</div>
+              </div>
+              <select id="jobType" name="jobType" class="native-select-hidden">
+                <option value="">- Unknown -</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Contract">Contract</option>
+                <option value="Internship">Internship</option>
+              </select>
+            </div>
           </div>
           <div class="form-group half field-diff-wrapper" data-field="locationType">
             <label for="locationType">Location Type</label>
-            <select id="locationType" name="locationType">
-              <option value="">— Unknown —</option>
-              <option value="On-site">On-site</option>
-              <option value="Remote">Remote</option>
-              <option value="Hybrid">Hybrid</option>
-            </select>
+            <div class="custom-dropdown" id="locationType-custom">
+              <div class="dropdown-trigger">
+                <span class="trigger-text">- Unknown -</span>
+                <span class="material-symbols-outlined">expand_more</span>
+              </div>
+              <div class="dropdown-menu">
+                <div class="dropdown-option" data-value="">- Unknown -</div>
+                <div class="dropdown-option" data-value="On-site">On-site</div>
+                <div class="dropdown-option" data-value="Remote">Remote</div>
+                <div class="dropdown-option" data-value="Hybrid">Hybrid</div>
+              </div>
+              <select id="locationType" name="locationType" class="native-select-hidden">
+                <option value="">- Unknown -</option>
+                <option value="On-site">On-site</option>
+                <option value="Remote">Remote</option>
+                <option value="Hybrid">Hybrid</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -262,7 +383,9 @@
       <div class="picker-content">
         <div class="picker-header">
           <h4>Select tailored application</h4>
-          <button type="button" id="btn-close-picker" class="picker-close-btn" style="display:none">&times;</button>
+          <button type="button" id="btn-close-picker" class="picker-close-btn">
+            <span class="material-symbols-outlined">close</span>
+          </button>
         </div>
         <div class="search-input-wrapper">
           <span class="material-symbols-outlined">search</span>
@@ -279,6 +402,10 @@
       <!-- Compact Job Summary -->
       <div id="apply-job-summary" class="apply-summary-card" style="display:none">
         <div class="summary-status-row">
+          <button type="button" id="btn-magic-fill" class="magic-fill-btn" title="Re-scan page for fields">
+            <span class="material-symbols-outlined">refresh</span>
+            <span>Re-scan</span>
+          </button>
           <span id="summary-status-badge" class="status-badge">Unknown</span>
         </div>
         <div class="summary-top">
@@ -481,7 +608,55 @@
         </div>
       </div>
     </div>
+    <!-- Network Mirror Modal -->
+    <div id="network-modal" class="modal" aria-hidden="true">
+      <div class="modal-overlay" id="network-modal-overlay"></div>
+      <div class="modal-content network-content">
+        <div class="modal-header">
+          <div>
+            <h3>Network Mirror</h3>
+            <p id="network-modal-count">0 connections stored locally</p>
+          </div>
+          <button type="button" class="modal-close" id="network-modal-close">&times;</button>
+        </div>
+        <div class="modal-body network-list-body">
+          <div class="search-input-wrapper" style="margin: 0.75rem 1rem; width: auto;">
+            <span class="material-symbols-outlined">search</span>
+            <input type="text" id="network-search" placeholder="Search synced naming/headlines..." />
+          </div>
+          <div id="network-list" class="network-list">
+            <!-- Populated by JS -->
+          </div>
+          <div id="network-empty" class="network-empty-state" style="display:none">
+            <span class="material-symbols-outlined emoji">person_off</span>
+            <p>Your network hasn't been mirrored yet.</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  <script src="sidepanel.js"></script>
+    <!-- Manual Parse Modal -->
+    <div id="manual-parse-modal" class="modal" aria-hidden="true">
+      <div class="modal-overlay" id="manual-parse-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h3>Paste Job Listing</h3>
+            <p>Paste the full job description to auto-fill fields</p>
+          </div>
+          <button type="button" class="modal-close" id="manual-parse-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <textarea id="manual-parse-textarea" class="manual-textarea" rows="12" placeholder="Paste the job title, company, and description here..."></textarea>
+          <div class="modal-footer" style="margin-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <button type="button" id="btn-do-manual-parse" class="btn btn-primary">
+              <span class="material-symbols-outlined">auto_fix</span>
+              Parse Fields
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="sidepanel.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -8,6 +8,7 @@ import tempfile
 from typing import Optional, List, Dict, Any
 from dotenv import load_dotenv
 import json
+import requests
 
 from services.document_service import DocumentService
 from services.ai_service import AIService
@@ -37,6 +38,151 @@ ai_service = AIService()
 scraper_service = ScraperService()
 database_service = DatabaseService()
 
+
+
+def calculate_commute_for_app(app_id: int):
+    # Retrieve app to get location
+    app = database_service.get_application_by_id(app_id)
+    if not app: return
+    
+    dest_str = app.get('location')
+    if not dest_str or 'remote' in dest_str.lower() or str(app.get('location_type', '')).lower() == 'remote':
+        database_service.update_application(app_id, {
+            'commute_time_mins': 0, 
+            'commute_distance_miles': 0.0,
+            'commute_details': {'Driving': {'mins': 0, 'distance': 0.0}}
+        })
+        return
+        
+    profile = database_service.get_profile()
+    if not profile: return
+    
+    origin_parts = []
+    if profile.get('address_line1'): origin_parts.append(profile['address_line1'])
+    if profile.get('city'): origin_parts.append(profile['city'])
+    if profile.get('state'): origin_parts.append(profile['state'])
+    origin_str = ", ".join(origin_parts)
+    if not origin_str: return
+    
+    # Get preferred commute types from profile
+    prefs = profile.get('preferences', {})
+    commute_types = prefs.get('commute_types', ['Driving'])
+    if not isinstance(commute_types, list):
+        commute_types = [commute_types]
+    
+    details = {}
+    
+    try:
+        r1 = requests.get(f"https://nominatim.openstreetmap.org/search?format=json&q={origin_str}&limit=1", headers={'Accept-Language': 'en', 'User-Agent': 'JobAppTracker'})
+        r1.raise_for_status()
+        loc1 = r1.json()
+        
+        r2 = requests.get(f"https://nominatim.openstreetmap.org/search?format=json&q={dest_str}&limit=1", headers={'Accept-Language': 'en', 'User-Agent': 'JobAppTracker'})
+        r2.raise_for_status()
+        loc2 = r2.json()
+        
+        if loc1 and loc2:
+            lon1, lat1 = loc1[0]['lon'], loc1[0]['lat']
+            lon2, lat2 = loc2[0]['lon'], loc2[0]['lat']
+            
+            # Get driving info first as a reliable base for distance
+            driving_mins = 0
+            driving_dist_meters = 0
+            
+            try:
+                base_res = requests.get(f"https://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=false")
+                if base_res.ok:
+                    base_data = base_res.json()
+                    if base_data.get('code') == 'Ok' and base_data.get('routes'):
+                        driving_mins = int(round(base_data['routes'][0]['duration'] / 60))
+                        driving_dist_meters = base_data['routes'][0]['distance']
+            except:
+                pass
+
+            for ctype in commute_types:
+                mode = 'driving'
+                if ctype == 'Walking': mode = 'walking'
+                elif ctype == 'Bicycle': mode = 'bicycle'
+                elif ctype == 'Public Transportation': mode = 'transit'
+                elif ctype == 'Flight': mode = 'flight'
+                
+                if mode == 'driving':
+                    if driving_dist_meters > 0:
+                        details[ctype] = {
+                            'mins': driving_mins,
+                            'distance': round(driving_dist_meters * 0.000621371, 1)
+                        }
+                elif mode == 'walking':
+                    if driving_dist_meters > 0:
+                        # 5 km/h = 83.3 meters per minute
+                        walk_mins = int(round(driving_dist_meters / 83.3))
+                        details[ctype] = {
+                            'mins': walk_mins,
+                            'distance': round(driving_dist_meters * 0.000621371, 1)
+                        }
+                elif mode == 'bicycle':
+                    if driving_dist_meters > 0:
+                        # 16 km/h = 266.6 meters per minute
+                        bike_mins = int(round(driving_dist_meters / 266.6))
+                        details[ctype] = {
+                            'mins': bike_mins,
+                            'distance': round(driving_dist_meters * 0.000621371, 1)
+                        }
+                elif mode == 'transit':
+                    if driving_mins > 0:
+                        # Roughly 1.5x driving plus 10 min wait
+                        transit_mins = int(driving_mins * 1.5) + 10
+                        details[ctype] = {
+                            'mins': transit_mins,
+                            'distance': round(driving_dist_meters * 0.000621371, 1)
+                        }
+                elif mode == 'flight':
+                    # Haversine distance for flight
+                    from math import radians, cos, sin, asin, sqrt
+                    def haversine(lon1, lat1, lon2, lat2):
+                        lon1, lat1, lon2, lat2 = map(radians, [float(lon1), float(lat1), float(lon2), float(lat2)])
+                        dlon = lon2 - lon1
+                        dlat = lat2 - lat1
+                        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+                        c = 2 * asin(sqrt(a))
+                        r = 3956 # Radius of earth in miles
+                        return c * r
+                    
+                    dist_miles = haversine(lon1, lat1, lon2, lat2)
+                    # Flight time: 500 mph + 2 hours for airport overhead
+                    if dist_miles > 50:
+                        f_mins = int((dist_miles / 500.0) * 60) + 120
+                        details[ctype] = {
+                            'mins': f_mins,
+                            'distance': int(dist_miles)
+                        }
+            
+            # Update main fields with Driving info or first available
+            main_mins = 0
+            main_dist = 0.0
+            if 'Driving' in details:
+                main_mins = details['Driving']['mins']
+                main_dist = details['Driving']['distance']
+            elif details:
+                first_key = list(details.keys())[0]
+                main_mins = details[first_key]['mins']
+                main_dist = details[first_key]['distance']
+            
+            database_service.update_application(app_id, {
+                'commute_time_mins': main_mins,
+                'commute_distance_miles': main_dist,
+                'commute_details': details
+            })
+    except Exception as e:
+        print(f"Error calculating commute for app {app_id}: {e}")
+
+@app.post("/api/profile/recalculate-commutes")
+async def recalculate_commutes(background_tasks: BackgroundTasks):
+    apps = database_service.get_applications()
+    for ap in apps:
+        background_tasks.add_task(calculate_commute_for_app, ap['id'])
+    return {"message": "Recalculation started in background."}
+
 class RefineRequest(BaseModel):
     current_resume_data: dict
     instructions: str
@@ -49,12 +195,14 @@ class CoverLetterRequest(BaseModel):
     job_description: str
     base_filename: str
     additional_context: Optional[str] = None
+    instructions: Optional[str] = ""
 
 class RefineCoverLetterRequest(BaseModel):
     content: str
     instructions: str
     base_filename: str
     additional_context: Optional[str] = None
+
 
 class ApplicationSaveRequest(BaseModel):
     id: Optional[int] = None
@@ -97,6 +245,13 @@ class ApplicationSaveRequest(BaseModel):
     override_cover_letter_path: Optional[str] = None
     active_resume_type: Optional[str] = 'generated'
     active_cover_letter_type: Optional[str] = 'generated'
+    pipeline_stage: Optional[str] = 'saved'
+    commute_time_mins: Optional[int] = None
+    commute_distance_miles: Optional[float] = None
+    match_score: Optional[int] = None
+    match_details: Optional[Any] = None
+    commute_details: Optional[Any] = {}
+
 
 
 class StatusUpdateRequest(BaseModel):
@@ -142,6 +297,8 @@ class ProfileModel(BaseModel):
     base_resume_path: Optional[str] = None
     long_form_resume_path: Optional[str] = None
     additional_docs: List[dict] = []
+    preferences: Optional[dict] = {}
+    social_links: List[dict] = []
 
 
 
@@ -150,9 +307,23 @@ os.makedirs("uploads", exist_ok=True)
 os.makedirs("outputs", exist_ok=True)
 
 
+class CaptureJobRequest(BaseModel):
+    url: Optional[str] = None
+    text: Optional[str] = None
+
 class JobDescriptionRequest(BaseModel):
     job_description: Optional[str] = None
     job_url: Optional[str] = None
+
+class LinkedInConnectionModel(BaseModel):
+    name: str
+    headline: Optional[str] = None
+    profile_url: str
+    company_id: Optional[str] = None
+    company_name: Optional[str] = None
+
+class LinkedInSyncRequest(BaseModel):
+    connections: List[LinkedInConnectionModel]
 
 
 @app.get("/")
@@ -165,6 +336,7 @@ async def root():
 
 
 import json
+import requests
 
 # Load config if exists
 CONFIG_PATH = "config.json"
@@ -346,6 +518,67 @@ async def serve_profile_file(path: str):
     filename = os.path.basename(abs_path)
     return FileResponse(abs_path, filename=filename)
 
+@app.post("/api/score-job-match")
+async def score_job_match(
+    resume: Optional[UploadFile] = File(None),
+    job_description: Optional[str] = Form(None),
+    job_url: Optional[str] = Form(None),
+    use_default_resume: bool = Form(False),
+    additional_context_paths: Optional[str] = Form(None),
+    tailored_resume_text: Optional[str] = Form(None)
+):
+    """
+    Score the match between a resume and a job description.
+    """
+    try:
+        config = get_config()
+        profile = database_service.get_profile()
+        file_path = None
+        
+        if tailored_resume_text:
+            resume_text = tailored_resume_text
+        else:
+            if resume:
+                file_path = f"uploads/{resume.filename}"
+                with open(file_path, "wb") as buffer:
+                    shutil.copyfileobj(resume.file, buffer)
+            elif profile.get("base_resume_path") and os.path.exists(profile["base_resume_path"]):
+                file_path = profile["base_resume_path"]
+            elif use_default_resume and config.get("default_resume_path") and os.path.exists(config["default_resume_path"]):
+                file_path = config["default_resume_path"]
+            else:
+                raise HTTPException(status_code=400, detail="No resume provided or found in profile.")
+
+            resume_text = document_service.extract_text(file_path)
+        final_job_description: str = job_description or ""
+        if job_url:
+            scraped_text = await scraper_service.scrape_job_description(job_url)
+            if scraped_text:
+                final_job_description = scraped_text + "\n\n" + final_job_description
+
+        if not final_job_description.strip():
+            raise HTTPException(status_code=400, detail="Job description or valid URL is required.")
+
+        additional_context_text = ""
+        if additional_context_paths:
+            paths = json.loads(additional_context_paths)
+            for path in paths:
+                if os.path.exists(path):
+                    additional_context_text += f"\n--- Context from {os.path.basename(path)} ---\n"
+                    additional_context_text += document_service.extract_text(path) + "\n"
+
+        result = await ai_service.score_job_match(
+            resume_text=resume_text,
+            job_description=final_job_description,
+            additional_context=additional_context_text
+        )
+
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/tailor-resume")
 async def tailor_resume(
     resume: Optional[UploadFile] = File(None),
@@ -353,7 +586,8 @@ async def tailor_resume(
     job_url: Optional[str] = Form(None),
     use_default_resume: bool = Form(False),
     additional_context_paths: Optional[str] = Form(None), # JSON list of paths
-    additional_files: List[UploadFile] = File([])
+    additional_files: List[UploadFile] = File([]),
+    instructions: Optional[str] = Form("")
 ):
     """
     Tailor a resume based on a job description.
@@ -426,51 +660,69 @@ async def tailor_resume(
         # 1. Process paths from profile
         if additional_context_paths:
             try:
-                paths = json.loads(str(additional_context_paths))
+                # Some clients might send double-encoded JSON or weird strings
+                if isinstance(additional_context_paths, str) and (additional_context_paths.startswith('[') or additional_context_paths.startswith('{')):
+                    paths = json.loads(additional_context_paths)
+                else:
+                    paths = [additional_context_paths] if additional_context_paths else []
+
                 for path in paths:
-                    if os.path.exists(path):
+                    if path and os.path.exists(str(path)):
                          # Extract text using document_service
                          path_str = str(path)
                          if path_str.endswith('.docx'):
-                             doc_data = document_service.parse_docx(path)
+                             doc_data = document_service.parse_docx(path_str)
                              text = "\n".join(doc_data.get("full_text", []))
-                             additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path)} ---\n{text}\n")
+                             additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path_str)} ---\n{text}\n")
                          elif path_str.endswith('.pdf'):
-                             text = document_service.extract_text_from_pdf(path)
+                             text = document_service.extract_text_from_pdf(path_str)
                              if text:
-                                 additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path)} ---\n{text}\n")
+                                 additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path_str)} ---\n{text}\n")
                          elif path_str.endswith('.txt'):
-                             text = document_service.extract_text_from_txt(path)
+                             text = document_service.extract_text_from_txt(path_str)
                              if text:
-                                 additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path)} ---\n{text}\n")
+                                 additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path_str)} ---\n{text}\n")
             except Exception as e:
-                print(f"Error processing additional context paths: {e}")
+                print(f"Warning: Failed to parse additional_context_paths: {e}")
+                # Fallback: if it's just a single string path that's not JSON
+                if isinstance(additional_context_paths, str) and os.path.exists(additional_context_paths):
+                    path_str = str(additional_context_paths)
+                    if path_str.endswith('.docx'):
+                        doc_data = document_service.parse_docx(path_str)
+                        text = "\n".join(doc_data.get("full_text", []))
+                        additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path_str)} ---\n{text}\n")
+                    elif path_str.endswith('.pdf'):
+                        text = document_service.extract_text_from_pdf(path_str)
+                        if text:
+                            additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path_str)} ---\n{text}\n")
 
-        # 2. Process newly uploaded files
-        for adj_file in additional_files:
-            try:
-                # Save temporarily to parse
-                suffix = os.path.splitext(adj_file.filename)[1] if adj_file.filename else ""
-                with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-                    shutil.copyfileobj(adj_file.file, tmp)
-                    tmp_path = tmp.name
-                
-                if adj_file.filename.endswith('.docx'):
-                    doc_data = document_service.parse_docx(tmp_path)
-                    text = "\n".join(doc_data.get("full_text", []))
-                    additional_context_chunks.append(f"\n--- Context Document: {adj_file.filename} ---\n{text}\n")
-                elif adj_file.filename.endswith('.pdf'):
-                    text = document_service.extract_text_from_pdf(tmp_path)
-                    if text:
+        # 2. Add text from newly uploaded files
+        if additional_files:
+            for adj_file in additional_files:
+                try:
+                    # Save temporarily to parse
+                    suffix = os.path.splitext(adj_file.filename)[1] if adj_file.filename else ""
+                    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+                        shutil.copyfileobj(adj_file.file, tmp)
+                        tmp_path = tmp.name
+                    
+                    if adj_file.filename.endswith('.docx'):
+                        doc_data = document_service.parse_docx(tmp_path)
+                        text = "\n".join(doc_data.get("full_text", []))
                         additional_context_chunks.append(f"\n--- Context Document: {adj_file.filename} ---\n{text}\n")
-                elif adj_file.filename.endswith('.txt'):
-                    text = document_service.extract_text_from_txt(tmp_path)
-                    if text:
-                        additional_context_chunks.append(f"\n--- Context Document: {adj_file.filename} ---\n{text}\n")
-                
-                os.remove(tmp_path)
-            except Exception as e:
-                print(f"Error processing additional uploaded file: {e}")
+                    elif adj_file.filename.endswith('.pdf'):
+                        text = document_service.extract_text_from_pdf(tmp_path)
+                        if text:
+                            additional_context_chunks.append(f"\n--- Context Document: {adj_file.filename} ---\n{text}\n")
+                    elif adj_file.filename.endswith('.txt'):
+                        text = document_service.extract_text_from_txt(tmp_path)
+                        if text:
+                            additional_context_chunks.append(f"\n--- Context Document: {adj_file.filename} ---\n{text}\n")
+                    
+                    if os.path.exists(tmp_path):
+                        os.remove(tmp_path)
+                except Exception as e:
+                    print(f"Error processing additional uploaded file: {e}")
         
         all_additional_context = "".join(additional_context_chunks)
         
@@ -484,7 +736,12 @@ async def tailor_resume(
                 document_service.create_pdf_from_docx(file_path, original_pdf_path)
         
         # 2. Tailor with AI
-        tailored_resume_data = await ai_service.tailor_resume(resume_data, final_job_description, additional_context=all_additional_context)
+        tailored_resume_data = await ai_service.tailor_resume(
+            resume_data, 
+            final_job_description, 
+            additional_context=all_additional_context,
+            instructions=instructions
+        )
         
         # 3. Generate Output
         base_name = os.path.splitext(original_filename)[0]
@@ -673,7 +930,8 @@ async def generate_cover_letter_endpoint(request: CoverLetterRequest):
             request.resume_text, 
             request.job_description, 
             user_profile,
-            additional_context=request.additional_context
+            additional_context=request.additional_context,
+            instructions=request.instructions
         )
         content = result.get("content", "")
         
@@ -737,9 +995,10 @@ async def refine_cover_letter_endpoint(request: RefineCoverLetterRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/save-application")
-async def save_application(request: ApplicationSaveRequest):
+async def save_application(request: ApplicationSaveRequest, background_tasks: BackgroundTasks):
     try:
         app_id = database_service.save_application(request.dict())
+        background_tasks.add_task(calculate_commute_for_app, app_id)
         return {"message": "Application saved", "id": app_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -758,11 +1017,13 @@ async def get_application(app_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.put("/api/applications/{app_id}")
-async def update_application(app_id: int, request: ApplicationSaveRequest):
+async def update_application(app_id: int, request: ApplicationSaveRequest, background_tasks: BackgroundTasks):
     """Update an existing application's fields."""
     try:
         success = database_service.update_application(app_id, request.dict(exclude_unset=True))
         if success:
+            if 'location' in request.dict(exclude_unset=True) or 'location_type' in request.dict(exclude_unset=True):
+                background_tasks.add_task(calculate_commute_for_app, app_id)
             return {"message": "Application updated", "id": app_id}
         raise HTTPException(status_code=404, detail="Application not found")
     except HTTPException:
@@ -857,6 +1118,10 @@ async def override_cover_letter(application_id: int, file: UploadFile = File(...
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+        return {"message": "Active version updated"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/applications/{application_id}/toggle-active")
 async def toggle_active_endpoint(application_id: int, request: Request):
     try:
@@ -875,6 +1140,43 @@ async def toggle_active_endpoint(application_id: int, request: Request):
             raise HTTPException(status_code=404, detail="Application not found")
             
         return {"message": "Active version updated"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/applications/{application_id}/override/{doc_type}")
+async def delete_application_override(application_id: int, doc_type: str):
+    """
+    Remove an override (custom) file for a resume or cover letter.
+    Sets the active type back to 'generated'.
+    """
+    try:
+        if doc_type not in ["resume", "cover_letter"]:
+            raise HTTPException(status_code=400, detail="doc_type must be 'resume' or 'cover_letter'")
+        
+        field = "override_resume_path" if doc_type == "resume" else "override_cover_letter_path"
+        active_field = "active_resume_type" if doc_type == "resume" else "active_cover_letter_type"
+        
+        # Get application to find file path
+        app_data = database_service.get_application_by_id(application_id)
+        if not app_data:
+            raise HTTPException(status_code=404, detail="Application not found")
+        
+        filename = app_data.get(field)
+        if filename:
+            file_path = f"outputs/{filename}"
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    print(f"Warning: Failed to delete physical file {file_path}: {e}")
+        
+        # Update database
+        database_service.update_application(application_id, {
+            field: None,
+            active_field: "generated"
+        })
+        
+        return {"message": f"Override {doc_type} removed"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -971,6 +1273,18 @@ async def debug_urls():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/profile/recalculate-commutes")
+async def recalculate_commutes(background_tasks: BackgroundTasks):
+    """Trigger background recalculation of commutes for all applications."""
+    try:
+        apps = database_service.get_applications()
+        for app in apps:
+            if app.get('id'):
+                background_tasks.add_task(calculate_commute_for_app, app['id'])
+        return {"message": "Recalculation started for all applications"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/analyze-job")
 async def analyze_job(request: JobDescriptionRequest):
     """
@@ -1024,6 +1338,125 @@ async def fetch_available_models(config: dict):
 
         models = await ai_service.list_available_models(**kwargs)
         return {"models": models}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/linkedin/sync")
+async def sync_linkedin_connections(request: LinkedInSyncRequest):
+    try:
+        count = database_service.save_linkedin_connections([c.dict() for c in request.connections])
+        return {"message": f"Successfully synced {count} new connections.", "count": count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/linkedin/matches/{company_id}")
+async def get_linkedin_matches(company_id: str):
+    try:
+        matches = database_service.get_linkedin_connections_by_company(company_id)
+        return {"matches": matches}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/linkedin/matches/name/{company_name}")
+async def get_linkedin_matches_by_name(company_name: str):
+    try:
+        matches = database_service.get_linkedin_connections_by_company_name(company_name)
+        return {"matches": matches}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/linkedin/matches/batch")
+async def get_linkedin_batch_matches(company_names: List[str]):
+    try:
+        results = {}
+        for name in company_names:
+            matches = database_service.get_linkedin_connections_by_company_name(name)
+            if matches:
+                results[name] = matches
+        return {"results": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/linkedin/debug")
+async def debug_linkedin_connections(limit: int = 100):
+    try:
+        connections = database_service.get_all_linkedin_connections(limit)
+        return {"total_count": len(connections), "connections": connections}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/linkedin/purge")
+async def purge_linkedin_connections():
+    try:
+        success = database_service.clear_linkedin_connections()
+        return {"success": success}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/capture-job")
+async def capture_job(request: CaptureJobRequest):
+    """
+    Mobile job capture: accept a URL or raw pasted text,
+    scrape/parse the content, and use AI to extract structured job fields.
+    Returns extracted data for user review before saving.
+    """
+    try:
+        url = (request.url or "").strip()
+        text = (request.text or "").strip()
+
+        if not url and not text:
+            raise HTTPException(status_code=400, detail="Either 'url' or 'text' is required")
+
+        scraped_text = ""
+
+        if url:
+            # Check for duplicate first
+            existing = database_service.find_application_by_url(url) if hasattr(database_service, 'find_application_by_url') else None
+            
+            try:
+                scraped_text = await scraper_service.scrape_job_description(url)
+            except Exception as scrape_err:
+                # If scraping fails and we have no text, report the error
+                if not text:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"Could not scrape the URL. Try pasting the job description text instead. ({str(scrape_err)[:100]})"
+                    )
+                # Fall through to use the provided text
+                scraped_text = text
+        else:
+            scraped_text = text
+
+        if not scraped_text or len(scraped_text.strip()) < 20:
+            raise HTTPException(
+                status_code=422,
+                detail="Not enough content was extracted. Try pasting the full job description text instead."
+            )
+
+        # Use AI to extract structured fields
+        analysis = await ai_service.analyze_job_description(scraped_text)
+        metadata = analysis.get("metadata", {})
+
+        return {
+            "success": True,
+            "job_url": url,
+            "raw_description": scraped_text,
+            "extracted": {
+                "job_title": metadata.get("job_title", ""),
+                "company": metadata.get("company", ""),
+                "location": metadata.get("location", ""),
+                "location_type": metadata.get("location_type", ""),
+                "job_type": metadata.get("job_type", ""),
+                "salary_range": metadata.get("salary_range", ""),
+                "date_posted": metadata.get("date_posted", ""),
+                "deadline": metadata.get("deadline", ""),
+            },
+            "duplicate": existing if url and existing else None
+        }
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

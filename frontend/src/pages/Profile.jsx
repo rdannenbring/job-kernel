@@ -922,24 +922,41 @@ const Profile = () => {
                     <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: 'var(--primary-light)', fontWeight: 600 }}>Job Preferences</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
                         <InputGroup label="Maximum Commute">
-                            <CustomDropdown
-                                value={formData.preferences?.max_commute || ''}
-                                onChange={(val) => {
-                                    setFormData(prev => ({...prev, preferences: {...prev.preferences, max_commute: val}}));
-                                    setIsDirty(true);
-                                }}
-                                options={[
-                                    { value: '', label: 'Select Commute' },
-                                    { value: 'Remote Only', label: 'Remote Only' },
-                                    { value: '15 mins', label: '15 mins' },
-                                    { value: '30 mins', label: '30 mins' },
-                                    { value: '45 mins', label: '45 mins' },
-                                    { value: '1 hour', label: '1 hour' },
-                                    { value: '1.5 hours', label: '1.5 hours' },
-                                    { value: '2 hours', label: '2 hours' }
-                                ]}
-                            />
-                        </InputGroup>
+                             <CustomDropdown
+                                 value={formData.preferences?.max_commute || ''}
+                                 onChange={(val) => {
+                                     setFormData(prev => ({...prev, preferences: {...prev.preferences, max_commute: val}}));
+                                     setIsDirty(true);
+                                 }}
+                                 options={[
+                                     { value: '', label: 'Select Commute' },
+                                     { value: 'Remote Only', label: 'Remote Only' },
+                                     { value: '15 mins', label: '15 mins' },
+                                     { value: '30 mins', label: '30 mins' },
+                                     { value: '45 mins', label: '45 mins' },
+                                     { value: '1 hour', label: '1 hour' },
+                                     { value: '1.5 hours', label: '1.5 hours' },
+                                     { value: '2 hours', label: '2 hours' }
+                                 ]}
+                             />
+                         </InputGroup>
+                         <InputGroup label="Preferred Commute Types">
+                             <CustomMultiSelect
+                                 value={formData.preferences?.commute_types || ['Driving']}
+                                 onChange={(val) => {
+                                     setFormData(prev => ({...prev, preferences: {...prev.preferences, commute_types: val}}));
+                                     setIsDirty(true);
+                                 }}
+                                 options={[
+                                     { value: 'Driving', label: 'Driving' },
+                                     { value: 'Public Transportation', label: 'Public Transportation' },
+                                     { value: 'Bicycle', label: 'Bicycle' },
+                                     { value: 'Walking', label: 'Walking' },
+                                     { value: 'Flight', label: 'Flight' }
+                                 ]}
+                                 placeholder="Select Commute Types"
+                             />
+                         </InputGroup>
                         <InputGroup label="Location Type">
                             <CustomMultiSelect
                                 value={Array.isArray(formData.preferences?.work_setting) ? formData.preferences.work_setting : (formData.preferences?.work_setting ? [formData.preferences.work_setting] : [])}
@@ -1004,6 +1021,30 @@ const Profile = () => {
                             />
                         </InputGroup>
                     </div>
+                    
+                    <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center' }}>
+                         <button 
+                             onClick={handleRecalculateCommutes} 
+                             disabled={isRecalculating}
+                             className="btn-secondary"
+                             style={{
+                                 display: 'flex',
+                                 alignItems: 'center',
+                                 gap: '0.6rem',
+                                 padding: '0.6rem 1.2rem',
+                                 opacity: isRecalculating ? 0.7 : 1,
+                                 cursor: isRecalculating ? 'not-allowed' : 'pointer'
+                             }}
+                         >
+                             <span className="material-symbols-outlined" style={{ 
+                                 fontSize: '1.2rem',
+                                 animation: isRecalculating ? 'spin 2s linear infinite' : 'none'
+                             }}>
+                                 {isRecalculating ? 'sync' : 'calculate'}
+                             </span>
+                             {isRecalculating ? 'Recalculating...' : 'Refresh All Commute Calculations'}
+                         </button>
+                     </div>
                 </section>
             </CollapsibleSection>
 
@@ -1057,7 +1098,7 @@ const Profile = () => {
                                 <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>description</span>
                                 Save as Base Resume &amp; Import Profile
                             </button>
-                            <button className="btn btn-primary" style={{ justifyContent: 'center', background: 'rgba(139,92,246,0.8)', gap: '0.5rem' }} onClick={async () => {
+                            <button className="btn btn-primary" style={{ justifyContent: 'center', gap: '0.5rem' }} onClick={async () => {
                                 setShowResumeTypeDialog(false);
                                 const file = pendingImportFile.current;
                                 pendingImportFile.current = null;
@@ -1142,7 +1183,10 @@ const Profile = () => {
                     </section>
 
                     <section className="card">
-                        <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: 'var(--primary-light)', fontWeight: 600 }}>Address</h3>
+                        <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--primary-light)', fontWeight: 600 }}>Address</h3>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem', fontStyle: 'italic' }}>
+                            Your full address is only used to calculate commute distances and won't be included on your resume unless explicitly specified.
+                        </p>
                         <InputGroup label="Address Line 1">
                             <Input className="input-premium" name="address_line1" value={formData.address_line1} onChange={handleChange} />
                         </InputGroup>
