@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Resume Preview - Midnight Talent</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-tertiary-fixed-variant": "#9f1239",
+            "secondary-container": "#1e293b",
+            "on-background": "#f1f5f9",
+            "outline": "#334155",
+            "on-surface": "#f1f5f9",
+            "surface-tint": "#256af4",
+            "surface-container": "#1e293b80",
+            "on-primary-container": "#60a5fa",
+            "on-secondary-container": "#cbd5e1",
+            "on-secondary-fixed": "#0f172a",
+            "inverse-on-surface": "#0f172a",
+            "surface-container-low": "#1e293b66",
+            "tertiary-fixed": "#ffe4e6",
+            "surface-container-highest": "#2d3748",
+            "on-secondary-fixed-variant": "#334155",
+            "on-surface-variant": "#94a3b8",
+            "inverse-primary": "#60a5fa",
+            "on-primary-fixed-variant": "#1d4ed8",
+            "surface-container-lowest": "#080c14",
+            "on-primary-fixed": "#1e3a8a",
+            "on-tertiary": "#ffffff",
+            "error-container": "#450a0a",
+            "tertiary": "#f43f5e",
+            "tertiary-fixed-dim": "#fecdd3",
+            "surface-bright": "#1e293b",
+            "secondary-fixed-dim": "#cbd5e1",
+            "primary-container": "#256af433",
+            "surface-container-high": "#1e293b99",
+            "surface": "#101622",
+            "on-error-container": "#fca5a5",
+            "primary-fixed": "#dbeafe",
+            "tertiary-container": "#f43f5e22",
+            "on-secondary": "#f8fafc",
+            "error": "#ef4444",
+            "primary": "#256af4",
+            "secondary-fixed": "#e2e8f0",
+            "outline-variant": "#1e293b",
+            "inverse-surface": "#f8fafc",
+            "on-tertiary-fixed": "#4c0519",
+            "background": "#101622",
+            "surface-variant": "#1e293b",
+            "surface-dim": "#0b0f18",
+            "secondary": "#334155",
+            "on-primary": "#ffffff",
+            "primary-fixed-dim": "#bfdbfe",
+            "on-error": "#ffffff",
+            "on-tertiary-container": "#fb7185"
+          },
+          fontFamily: {
+            "headline": ["Manrope"],
+            "body": ["Manrope"],
+            "label": ["Manrope"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+<style>
+    .glass-panel {
+      backdrop-filter: blur(12px);
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .neon-glow {
+      text-shadow: 0 0 8px rgba(37, 106, 244, 0.4);
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #080c14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 10px;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen overflow-hidden">
+<!-- TOP NAV BAR -->
+<header class="fixed top-0 w-full z-50 bg-slate-950/40 backdrop-blur-xl border-b border-white/10 flex justify-between items-center px-8 py-4 w-full shadow-blue-500/5 transition-all duration-300 ease-in-out font-manrope text-slate-300">
+<div class="flex items-center gap-4">
+<span class="text-xl font-bold tracking-tight text-white">Midnight Talent</span>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-slate-400 hover:text-slate-100 transition-colors" href="#">Dashboard</a>
+<a class="text-slate-400 hover:text-slate-100 transition-colors" href="#">Job Tracker</a>
+<a class="text-white border-b-2 border-blue-500 pb-1" href="#">Resume Lab</a>
+<a class="text-slate-400 hover:text-slate-100 transition-colors" href="#">Insights</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-white/5 rounded-full transition-colors">
+<span class="material-symbols-outlined text-slate-300">notifications</span>
+</button>
+<button class="p-2 hover:bg-white/5 rounded-full transition-colors">
+<span class="material-symbols-outlined text-slate-300">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-slate-800 overflow-hidden border border-white/10">
+<img alt="User profile" data-alt="Close up portrait of a professional male designer in a creative office environment with soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMB-RvJbdQ2hdiYJnCPJaBWHRMbzlLWBIQAsn66vVMW4GYhZz35RXTd4l6qPX76wk7fXeCrUp2mQwY6V_oIm9ZCZnZOSfmYNZWq1xepxNNP7wYMZER0E9U2CpNpBK8X6nv5YvxkWct8tvJgXbsbXTU8dNQGFk3wcD5FKaJinUbGpLgiANARNnDMHNURdIqu05bcd_nfOvbMc6ctm6oWvXM1nCW6ULcUmpW_SvvAkE86dXGHzLmceN-YQJPT4R3k1RqnD1rGh2AE6k"/>
+</div>
+</div>
+</header>
+<!-- SIDE NAV BAR -->
+<aside class="fixed left-0 h-full w-64 z-40 bg-slate-950 flex flex-col h-screen pt-20 pb-8 px-4 font-manrope uppercase tracking-widest text-[10px] no-line-rule bg-slate-900/50">
+<div class="flex items-center gap-3 px-4 py-6 mb-4">
+<div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div>
+<h2 class="text-blue-500 font-bold tracking-normal text-sm normal-case">Midnight Glass</h2>
+<p class="text-slate-500 tracking-widest">Premium SaaS</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<button class="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-300 transition-all duration-200 scale-95 active:scale-90">
+<span class="material-symbols-outlined text-lg">description</span>
+<span>All Documents</span>
+</button>
+<button class="w-full flex items-center gap-3 px-4 py-3 text-blue-400 font-bold border-r-2 border-blue-500 bg-blue-500/5 transition-all duration-200 scale-95 active:scale-90">
+<span class="material-symbols-outlined text-lg">schedule</span>
+<span>Recently Viewed</span>
+</button>
+<button class="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-300 transition-all duration-200 scale-95 active:scale-90">
+<span class="material-symbols-outlined text-lg">share</span>
+<span>Shared</span>
+</button>
+<button class="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-300 transition-all duration-200 scale-95 active:scale-90">
+<span class="material-symbols-outlined text-lg">archive</span>
+<span>Archive</span>
+</button>
+<button class="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-300 transition-all duration-200 scale-95 active:scale-90">
+<span class="material-symbols-outlined text-lg">delete</span>
+<span>Trash</span>
+</button>
+</nav>
+<div class="mt-auto px-4">
+<button class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-xl normal-case tracking-normal transition-all shadow-lg shadow-blue-500/20 mb-6">
+        Upload New Resume
+      </button>
+<button class="w-full flex items-center gap-3 py-3 text-slate-500 hover:text-slate-300">
+<span class="material-symbols-outlined text-lg">help</span>
+<span>Help Center</span>
+</button>
+</div>
+</aside>
+<!-- MAIN CONTENT CANVAS -->
+<main class="ml-64 pt-24 px-8 pb-12 h-screen overflow-y-auto relative">
+<!-- Atmospheric Ambient Background -->
+<div class="fixed top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+<div class="fixed bottom-0 left-64 w-[300px] h-[300px] bg-tertiary/10 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+<div class="max-w-6xl mx-auto">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h1 class="text-4xl font-extrabold text-white tracking-tight mb-2">Resume Preview</h1>
+<p class="text-slate-400">Review your AI-optimized document for <span class="text-blue-400 font-semibold">Senior Product Designer</span></p>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-3 rounded-xl border border-white/10 text-slate-300 font-semibold hover:bg-white/5 transition-all">
+            Save Draft
+          </button>
+<button class="px-8 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2">
+            Finalize &amp; Submit
+            <span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+<!-- DOCUMENT VIEWER UI -->
+<div class="glass-panel rounded-2xl overflow-hidden flex flex-col h-[calc(100vh-280px)] shadow-2xl">
+<!-- Viewer Toolbar -->
+<div class="flex items-center justify-between px-6 py-3 border-b border-white/5 bg-slate-900/60 backdrop-blur-md">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-1 bg-slate-950/50 rounded-lg p-1">
+<button class="p-1.5 hover:bg-white/10 rounded-md text-slate-400 transition-colors">
+<span class="material-symbols-outlined text-lg">zoom_out</span>
+</button>
+<span class="px-3 text-xs font-bold text-slate-300 tracking-widest">100%</span>
+<button class="p-1.5 hover:bg-white/10 rounded-md text-slate-400 transition-colors">
+<span class="material-symbols-outlined text-lg">zoom_in</span>
+</button>
+</div>
+<div class="h-4 w-px bg-white/10"></div>
+<span class="text-xs font-bold text-slate-500 tracking-widest">PAGE 1 OF 2</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-lg transition-all uppercase tracking-widest">
+<span class="material-symbols-outlined text-lg">edit</span>
+              Edit Manually
+            </button>
+<button class="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-lg transition-all uppercase tracking-widest">
+<span class="material-symbols-outlined text-lg">print</span>
+              Print
+            </button>
+<button class="flex items-center gap-2 px-4 py-1.5 text-xs font-bold bg-white/10 text-white hover:bg-white/20 rounded-lg transition-all uppercase tracking-widest">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">download</span>
+              Download PDF
+            </button>
+</div>
+</div>
+<!-- Scrollable Document Area -->
+<div class="flex-1 overflow-y-auto bg-slate-950/80 p-12 flex justify-center">
+<!-- Resume Page 1 -->
+<div class="w-[800px] min-h-[1132px] bg-white text-slate-900 shadow-2xl rounded-sm p-16 flex flex-col font-serif mb-12 relative overflow-hidden">
+<!-- Decorative Accent -->
+<div class="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[100px]"></div>
+<header class="mb-12">
+<h1 class="text-5xl font-extrabold tracking-tight mb-2 text-slate-900 font-headline">Alex Sterling</h1>
+<p class="text-xl font-medium text-blue-600 mb-6 font-headline tracking-wide">Senior Product Designer</p>
+<div class="flex flex-wrap gap-4 text-sm text-slate-500 font-body">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base text-slate-400">mail</span>
+                  alex.sterling@design.com
+                </span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base text-slate-400">location_on</span>
+                  San Francisco, CA
+                </span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base text-slate-400">link</span>
+                  sterling.design
+                </span>
+</div>
+</header>
+<section class="mb-12">
+<h3 class="text-xs font-black uppercase tracking-[0.2em] text-blue-600 mb-4 border-b-2 border-slate-100 pb-2">Professional Summary</h3>
+<p class="text-lg leading-relaxed text-slate-700">
+                Strategic Product Designer with over 8 years of experience building complex digital ecosystems for Fintech and AI-driven platforms. Expert in bridging the gap between high-level business goals and user-centric execution. Proven track record of leading design teams to deliver high-conversion interfaces and scalable design systems.
+              </p>
+</section>
+<div class="grid grid-cols-3 gap-12">
+<div class="col-span-2 space-y-10">
+<section>
+<h3 class="text-xs font-black uppercase tracking-[0.2em] text-blue-600 mb-6 border-b-2 border-slate-100 pb-2">Experience</h3>
+<div class="mb-8">
+<div class="flex justify-between items-start mb-1">
+<h4 class="font-bold text-xl text-slate-900">Lead Product Designer</h4>
+<span class="text-sm font-bold text-slate-400">2020 — Present</span>
+</div>
+<p class="text-md font-semibold text-slate-600 mb-3">Nebula Systems • Remote</p>
+<ul class="list-disc pl-5 space-y-2 text-slate-700 leading-relaxed">
+<li>Spearheaded the complete overhaul of the SaaS analytics dashboard, resulting in a 40% increase in user retention.</li>
+<li>Architected a multi-brand design system used by 5 engineering teams, reducing UI development time by 30%.</li>
+<li>Mentored 4 junior designers and established a robust peer-review culture.</li>
+</ul>
+</div>
+<div class="mb-8">
+<div class="flex justify-between items-start mb-1">
+<h4 class="font-bold text-xl text-slate-900">Senior UI/UX Designer</h4>
+<span class="text-sm font-bold text-slate-400">2017 — 2020</span>
+</div>
+<p class="text-md font-semibold text-slate-600 mb-3">Velox Fintech • New York, NY</p>
+<ul class="list-disc pl-5 space-y-2 text-slate-700 leading-relaxed">
+<li>Designed the end-to-end mobile experience for the primary investment app (4.8 stars on App Store).</li>
+<li>Collaborated with product owners to define the strategic roadmap for the 'Auto-Invest' feature suite.</li>
+</ul>
+</div>
+</section>
+</div>
+<div class="col-span-1 space-y-10">
+<section>
+<h3 class="text-xs font-black uppercase tracking-[0.2em] text-blue-600 mb-4 border-b-2 border-slate-100 pb-2">Expertise</h3>
+<div class="flex flex-wrap gap-2">
+<span class="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded">Product Strategy</span>
+<span class="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded">Design Systems</span>
+<span class="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded">User Research</span>
+<span class="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded">Prototyping</span>
+<span class="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded">AI Integration</span>
+<span class="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded">Visual Design</span>
+</div>
+</section>
+<section>
+<h3 class="text-xs font-black uppercase tracking-[0.2em] text-blue-600 mb-4 border-b-2 border-slate-100 pb-2">Tools</h3>
+<ul class="space-y-1.5 text-slate-700 text-sm">
+<li class="flex justify-between"><span>Figma</span> <span class="font-bold">Expert</span></li>
+<li class="flex justify-between"><span>Webflow</span> <span class="font-bold">Advanced</span></li>
+<li class="flex justify-between"><span>Framer</span> <span class="font-bold">Advanced</span></li>
+<li class="flex justify-between"><span>Adobe CC</span> <span class="font-bold">Expert</span></li>
+</ul>
+</section>
+<section>
+<h3 class="text-xs font-black uppercase tracking-[0.2em] text-blue-600 mb-4 border-b-2 border-slate-100 pb-2">Education</h3>
+<div class="text-sm">
+<p class="font-bold text-slate-900">BFA in Communication Design</p>
+<p class="text-slate-600">Parsons School of Design</p>
+</div>
+</section>
+</div>
+</div>
+<!-- Page Number -->
+<div class="mt-auto pt-16 text-center">
+<span class="text-[10px] font-black tracking-widest text-slate-300 uppercase">Page 01 / 02</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Info -->
+<div class="mt-6 flex items-center justify-between text-slate-500 text-xs uppercase tracking-widest font-bold">
+<div class="flex items-center gap-4">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">lock</span>
+            Encrypted Document
+          </span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">cloud_done</span>
+            Auto-saved 2m ago
+          </span>
+</div>
+<div class="flex items-center gap-2">
+<span>Match Score:</span>
+<span class="text-primary font-black">94%</span>
+<div class="w-24 h-1 bg-slate-800 rounded-full overflow-hidden">
+<div class="w-[94%] h-full bg-primary"></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Midnight Glass | Resume Comparison &amp; Analysis</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary": "#f8fafc",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "primary-fixed": "#dbeafe",
+                        "surface-variant": "#1e293b",
+                        "outline": "#334155",
+                        "tertiary-fixed": "#ffe4e6",
+                        "error-container": "#450a0a",
+                        "surface": "#101622",
+                        "primary": "#256af4",
+                        "on-secondary-fixed": "#0f172a",
+                        "on-background": "#f1f5f9",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "surface-container-high": "#1e293b99",
+                        "outline-variant": "#1e293b",
+                        "on-secondary-fixed-variant": "#334155",
+                        "inverse-primary": "#60a5fa",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#f8fafc",
+                        "tertiary-container": "#f43f5e22",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "surface-container-low": "#1e293b66",
+                        "surface-container-lowest": "#080c14",
+                        "primary-container": "#256af433",
+                        "surface-bright": "#1e293b",
+                        "on-error-container": "#fca5a5",
+                        "on-primary": "#ffffff",
+                        "on-primary-container": "#60a5fa",
+                        "surface-container-highest": "#2d3748",
+                        "on-tertiary": "#ffffff",
+                        "surface-dim": "#0b0f18",
+                        "tertiary": "#f43f5e",
+                        "secondary-fixed": "#e2e8f0",
+                        "on-surface": "#f1f5f9",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "surface-container": "#1e293b80",
+                        "secondary": "#334155",
+                        "on-surface-variant": "#94a3b8",
+                        "on-secondary-container": "#cbd5e1",
+                        "on-primary-fixed": "#1e3a8a",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "on-tertiary-fixed": "#4c0519",
+                        "inverse-on-surface": "#0f172a",
+                        "surface-tint": "#256af4",
+                        "secondary-container": "#1e293b",
+                        "background": "#101622",
+                        "on-tertiary-container": "#fb7185",
+                        "error": "#ef4444"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-glow {
+            text-shadow: 0 0 8px rgba(37, 106, 244, 0.5);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(37, 106, 244, 0.2);
+            border-radius: 10px;
+        }
+        
+        /* Modal Animation */
+        #resume-preview-modal:not(.hidden) {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary/30">
+<!-- Resume Preview Modal -->
+<div class="hidden fixed inset-0 z-[100] items-center justify-center px-4 py-6 md:p-8" id="resume-preview-modal">
+<div class="absolute inset-0 bg-[#080c14]/90 backdrop-blur-md" onclick="document.getElementById('resume-preview-modal').classList.add('hidden')"></div>
+<div class="glass-panel w-full max-w-4xl max-h-full flex flex-col rounded-3xl overflow-hidden relative z-10 shadow-2xl border-white/20 animate-in fade-in zoom-in duration-300">
+<div class="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">visibility</span>
+<h2 class="text-xl font-headline font-bold">High-Fidelity Preview</h2>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-xs font-bold uppercase tracking-widest">
+<span class="material-symbols-outlined text-lg">download</span>
+                    PDF
+                </button>
+<button class="p-2 hover:bg-white/10 rounded-full transition-colors" onclick="document.getElementById('resume-preview-modal').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-8 md:p-12 bg-white text-slate-900 custom-scrollbar">
+<!-- Simulated High Fidelity Resume -->
+<div class="max-w-[700px] mx-auto shadow-sm border border-slate-100 p-8 md:p-12 min-h-[1000px] bg-white">
+<header class="mb-8 border-b-2 border-slate-900 pb-6">
+<h1 class="text-3xl font-bold tracking-tight mb-1">Jane Doe</h1>
+<p class="text-slate-600 font-medium">Lead Product Designer • B2B SaaS Specialist</p>
+<div class="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 font-medium">
+<span>jane.doe@example.com</span>
+<span>+1 (555) 123-4567</span>
+<span>linkedin.com/in/janedoe</span>
+<span>portfolio.design</span>
+</div>
+</header>
+<section class="mb-8">
+<h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 mb-3">Professional Summary</h2>
+<p class="text-sm leading-relaxed text-slate-700">Strategic Lead Product Designer specializing in B2B SaaS ecosystems and complex data visualization. Leverages 8+ years of expertise in scaling design systems to drive measurable business growth. Proven track record in orchestrating cross-functional teams to deliver high-impact user experiences.</p>
+</section>
+<section class="mb-8">
+<h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 mb-4">Experience</h2>
+<div class="mb-6">
+<div class="flex justify-between items-baseline mb-1">
+<h3 class="font-bold text-slate-900 text-sm uppercase">Lead Product Designer, PixelVault</h3>
+<span class="text-[10px] text-slate-500 font-bold">JAN 2021 — PRESENT</span>
+</div>
+<ul class="list-disc ml-4 space-y-2 text-sm text-slate-700">
+<li>Spearheaded end-to-end redesign of enterprise dashboard, resulting in 20% surge in daily active users (DAU) and improved data legibility.</li>
+<li>Mentored and architected growth paths for 3 cross-functional design specialists, improving team output efficiency by 35%.</li>
+<li>Integrated Jobs-to-be-Done (JTBD) framework into weekly research sprints to align design initiatives with key user pain points.</li>
+</ul>
+</div>
+</section>
+<section class="mb-8">
+<h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 mb-4">Expertise &amp; Tooling</h2>
+<div class="grid grid-cols-2 gap-4 text-sm text-slate-700">
+<div>
+<p class="font-bold text-slate-900 mb-2 text-[10px] uppercase">Core Skills</p>
+<ul class="space-y-1">
+<li>Design Systems Architecture</li>
+<li>Data Visualization Strategy</li>
+<li>A/B Testing &amp; Analysis</li>
+<li>User Research &amp; Synthesis</li>
+</ul>
+</div>
+<div>
+<p class="font-bold text-slate-900 mb-2 text-[10px] uppercase">Tech Stack</p>
+<ul class="space-y-1">
+<li>Figma (Auto-Layout 4.0)</li>
+<li>Storybook / Design Tokens</li>
+<li>React / Tailwind CSS</li>
+<li>Hotjar / Mixpanel</li>
+</ul>
+</div>
+</div>
+</section>
+</div>
+</div>
+<div class="p-4 border-t border-white/10 bg-white/5 flex justify-end gap-3">
+<button class="px-6 py-2 rounded-xl text-slate-400 hover:text-white transition-colors text-sm font-semibold" onclick="document.getElementById('resume-preview-modal').classList.add('hidden')">
+                Close Preview
+            </button>
+<button class="bg-primary px-6 py-2 rounded-xl text-white hover:scale-[1.02] transition-all text-sm font-semibold">
+                Proceed to Finalize
+            </button>
+</div>
+</div>
+</div>
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full flex justify-between items-center px-8 py-4 bg-[#101622]/80 backdrop-blur-xl z-50 shadow-white/5">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-[#256af4] drop-shadow-[0_0_8px_rgba(37,106,244,0.5)]">Midnight Glass</span>
+<nav class="hidden md:flex gap-6">
+<a class="font-manrope text-slate-400 hover:text-slate-200 transition-colors" href="#">Dashboard</a>
+<a class="font-manrope text-slate-100 border-b-2 border-[#256af4] pb-1" href="#">Job Tracker</a>
+<a class="font-manrope text-slate-400 hover:text-slate-200 transition-colors" href="#">Resumes</a>
+<a class="font-manrope text-slate-400 hover:text-slate-200 transition-colors" href="#">Network</a>
+<a class="font-manrope text-slate-400 hover:text-slate-200 transition-colors" href="#">Playbook</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-400 hover:text-[#256af4] transition-all">notifications</button>
+<button class="material-symbols-outlined text-slate-400 hover:text-[#256af4] transition-all">settings</button>
+<div class="h-8 w-8 rounded-full bg-surface-container overflow-hidden border border-white/10">
+<img class="h-full w-full object-cover" data-alt="User Profile Avatar close up portrait of professional male in modern business attire soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvt-I-KLa2O1eo8iT4lw-4WSVMNW6w6llO8nVPhNlqEBsC8yTI1U8vcg6YUcEPlKgzl661vFd4sb4m7QvTtxxCc6jElrEX9xufV48uQBAqo5wqRAi3vtoWCRNcs-zQGm_dTyZhRlJSOlxjx5dqk8czjWm7ley6MCoNLqTisaz9uYFReTlXlp_8gtCmubX_4GJior6aVCeHNEzDiO24dJU_arO_RPLq4J_vJpIZ_QEEmIlAqcjT8rqB5ps86MCd7sb-q6JrHHcK1kw"/>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 bg-gradient-to-b from-white/10 to-transparent h-[1px] w-full"></div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full flex flex-col py-6 bg-[#101622] border-r border-white/5 w-64 z-40 hidden md:flex pt-24">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3 mb-4">
+<div class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-primary">description</span>
+</div>
+<div>
+<h3 class="text-slate-100 font-bold text-sm">Senior UX Designer</h3>
+<p class="text-[10px] font-manrope uppercase tracking-widest text-slate-500">Compatibility: 88%</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-slate-800/40 rounded-lg transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">analytics</span>
+<span class="font-manrope uppercase tracking-widest text-[10px]">Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-[#256af4]/10 text-[#256af4] border-r-4 border-[#256af4] rounded-l-lg transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">query_stats</span>
+<span class="font-manrope uppercase tracking-widest text-[10px]">Score Breakdown</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-slate-800/40 rounded-lg transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">auto_awesome</span>
+<span class="font-manrope uppercase tracking-widest text-[10px]">Job Playbook</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-slate-800/40 rounded-lg transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">history_edu</span>
+<span class="font-manrope uppercase tracking-widest text-[10px]">Edit History</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-slate-800/40 rounded-lg transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">hub</span>
+<span class="font-manrope uppercase tracking-widest text-[10px]">Networking</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-slate-800/40 rounded-lg transition-all duration-200 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">record_voice_over</span>
+<span class="font-manrope uppercase tracking-widest text-[10px]">Interview Prep</span>
+</a>
+</nav>
+<div class="px-6 mt-auto space-y-4">
+<button class="w-full py-2 bg-primary text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:shadow-[0_0_15px_rgba(37,106,244,0.3)] transition-all">
+                Export Analysis
+            </button>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-slate-800/40 rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary">help</span>
+<span class="font-manrope uppercase tracking-widest text-[10px]">Support</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-slate-800/40 rounded-lg transition-colors group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-error">logout</span>
+<span class="font-manrope uppercase tracking-widest text-[10px]">Sign Out</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="md:ml-64 pt-24 pb-12 px-8 min-h-screen">
+<!-- Background Atmosphere Blurs -->
+<div class="fixed top-1/4 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-[128px] pointer-events-none"></div>
+<div class="fixed bottom-0 -left-24 w-64 h-64 bg-tertiary/5 rounded-full blur-[96px] pointer-events-none"></div>
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+<div>
+<span class="text-[10px] font-manrope uppercase tracking-[0.3em] text-primary mb-2 block font-bold">Analysis Workspace</span>
+<h1 class="text-4xl font-headline font-extrabold text-on-surface tracking-tight mb-2">Resume Compatibility</h1>
+<p class="text-slate-400 max-w-xl">Deep-diffing analysis between your baseline profile and the AI-optimized variant tailored for the Lead Product Designer role at TechFlow.</p>
+</div>
+<div class="flex gap-4">
+<button class="glass-panel px-6 py-3 rounded-xl flex items-center gap-2 text-slate-200 hover:bg-white/10 transition-all text-sm font-semibold border-primary/20" onclick="document.getElementById('resume-preview-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined text-lg text-primary">visibility</span>
+    Preview Final
+</button>
+<button class="glass-panel px-6 py-3 rounded-xl flex items-center gap-2 text-slate-200 hover:bg-white/10 transition-all text-sm font-semibold"><span class="material-symbols-outlined text-lg text-primary">edit_note</span>
+                    Edit Tailored</button>
+<button class="bg-primary px-6 py-3 rounded-xl flex items-center gap-2 text-white hover:scale-[1.02] active:scale-95 transition-all text-sm font-semibold shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-lg">auto_fix_high</span>
+                    Finalize Draft
+                </button>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-8">
+<!-- Left Column: Visual Diffing -->
+<div class="col-span-12 lg:col-span-8 space-y-8">
+<div class="glass-panel rounded-2xl overflow-hidden flex flex-col h-[700px]">
+<div class="flex border-b border-white/5 bg-white/5">
+<div class="flex-1 p-4 border-r border-white/5">
+<span class="text-[10px] uppercase tracking-widest font-bold text-slate-500">Base Resume</span>
+</div>
+<div class="flex-1 p-4 flex justify-between items-center">
+<span class="text-[10px] uppercase tracking-widest font-bold text-primary">AI-Tailored Resume</span>
+<span class="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded border border-primary/20 font-bold">42 CHANGES</span>
+</div>
+</div>
+<div class="flex-1 flex overflow-hidden">
+<!-- Base Side -->
+<div class="flex-1 p-6 overflow-y-auto custom-scrollbar border-r border-white/5 bg-slate-900/20">
+<div class="space-y-6 text-sm text-slate-400 leading-relaxed font-manrope">
+<div class="pb-6 border-b border-white/5">
+<h4 class="text-slate-300 font-bold mb-2 uppercase tracking-wide text-xs">Summary</h4>
+<p>Experienced Product Designer with a focus on user-centric web applications and mobile platforms. Proven track record in collaborating with engineering teams and delivering high-quality UI/UX solutions.</p>
+</div>
+<div class="pb-6 border-b border-white/5">
+<h4 class="text-slate-300 font-bold mb-2 uppercase tracking-wide text-xs">Experience</h4>
+<div class="space-y-4">
+<div>
+<p class="text-slate-200 font-semibold text-xs">Senior Designer, PixelVault</p>
+<ul class="list-disc ml-4 mt-2 space-y-1 opacity-70">
+<li>Led the redesign of the core dashboard increasing engagement by 20%.</li>
+<li>Managed a team of 3 junior designers.</li>
+<li>Facilitated weekly user research sessions.</li>
+</ul>
+</div>
+</div>
+</div>
+<div>
+<h4 class="text-slate-300 font-bold mb-2 uppercase tracking-wide text-xs">Skills</h4>
+<p class="opacity-70">Figma, Sketch, Adobe XD, React, HTML/CSS, User Research, Prototyping, Wireframing.</p>
+</div>
+</div>
+</div>
+<!-- Tailored Side -->
+<div class="flex-1 p-6 overflow-y-auto custom-scrollbar bg-slate-900/40">
+<div class="space-y-6 text-sm text-slate-200 leading-relaxed font-manrope">
+<div class="pb-6 border-b border-white/5">
+<h4 class="text-slate-100 font-bold mb-2 uppercase tracking-wide text-xs">Summary</h4>
+<p><span class="bg-primary/20 text-on-primary-container px-1 rounded">Strategic Lead Product Designer</span> specializing in <span class="bg-primary/20 text-on-primary-container px-1 rounded">B2B SaaS ecosystems</span> and complex data visualization. Leverages <span class="bg-primary/20 text-on-primary-container px-1 rounded">8+ years of expertise</span> in scaling design systems to drive measurable business growth.</p>
+</div>
+<div class="pb-6 border-b border-white/5">
+<h4 class="text-slate-100 font-bold mb-2 uppercase tracking-wide text-xs">Experience</h4>
+<div class="space-y-4">
+<div>
+<p class="text-primary font-bold text-xs uppercase tracking-wider">Lead Product Designer, PixelVault</p>
+<ul class="list-disc ml-4 mt-2 space-y-1">
+<li>Spearheaded <span class="text-primary font-medium">end-to-end redesign</span> of enterprise dashboard, resulting in <span class="text-primary font-medium">20% surge in daily active users (DAU)</span>.</li>
+<li>Mentored and <span class="bg-primary/20 text-on-primary-container px-1 rounded">architected growth paths</span> for 3 cross-functional design specialists.</li>
+<li>Integrated <span class="bg-primary/20 text-on-primary-container px-1 rounded">Jobs-to-be-Done (JTBD)</span> framework into weekly research sprints.</li>
+</ul>
+</div>
+</div>
+</div>
+<div>
+<h4 class="text-slate-100 font-bold mb-2 uppercase tracking-wide text-xs">Hard Skills &amp; Frameworks</h4>
+<div class="flex flex-wrap gap-2 mt-2">
+<span class="bg-primary/10 border border-primary/30 text-primary px-2 py-0.5 rounded text-[10px] font-bold">FIGMA AUTO-LAYOUT 4.0</span>
+<span class="bg-primary/10 border border-primary/30 text-primary px-2 py-0.5 rounded text-[10px] font-bold">STORYBOOK</span>
+<span class="bg-primary/10 border border-primary/30 text-primary px-2 py-0.5 rounded text-[10px] font-bold">DESIGN TOKENS</span>
+<span class="bg-primary/10 border border-primary/30 text-primary px-2 py-0.5 rounded text-[10px] font-bold">A/B TESTING</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Job Playbook -->
+<div class="space-y-6">
+<h2 class="text-2xl font-headline font-bold text-on-surface flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">menu_book</span>
+                        Job Playbook
+                    </h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Resume Levers -->
+<div class="glass-panel p-6 rounded-2xl">
+<h3 class="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-4 flex justify-between items-center">
+                                Resume Levers
+                                <span class="bg-error/10 text-error text-[10px] px-2 py-0.5 rounded border border-error/20">3 CRITICAL</span>
+</h3>
+<div class="space-y-4">
+<div class="flex gap-4 p-3 bg-white/5 rounded-xl border border-white/5">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">error</span>
+<div>
+<p class="text-xs font-bold text-slate-200 mb-1">Quantify Impact at PixelVault</p>
+<p class="text-[11px] text-slate-400">Add the exact retention metric from Q4 to the second bullet point.</p>
+</div>
+</div>
+<div class="flex gap-4 p-3 bg-white/5 rounded-xl border border-white/5">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">warning</span>
+<div>
+<p class="text-xs font-bold text-slate-200 mb-1">ATS Skill Density</p>
+<p class="text-[11px] text-slate-400">Add "Design Systems Architecture" to your Skills section.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Networking Strategy -->
+<div class="glass-panel p-6 rounded-2xl">
+<h3 class="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-4">Networking Strategy</h3>
+<div class="space-y-3">
+<div class="p-3 bg-primary/5 rounded-xl border border-primary/10">
+<p class="text-[11px] font-bold text-primary mb-2 uppercase tracking-tighter">Target Outreach</p>
+<div class="flex items-center gap-3">
+<div class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border border-white/10">JD</div>
+<div>
+<p class="text-xs text-slate-200">Jane Doe</p>
+<p class="text-[10px] text-slate-500">VP Design @ TechFlow</p>
+</div>
+</div>
+</div>
+<button class="w-full py-2 px-4 glass-panel border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-primary/10 transition-colors">
+                                    Generate Connection Template
+                                </button>
+</div>
+</div>
+<!-- Prep Plan -->
+<div class="glass-panel p-6 rounded-2xl">
+<h3 class="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-4">Prep Plan</h3>
+<div class="space-y-2">
+<div class="flex items-center justify-between text-xs text-slate-300 p-2 hover:bg-white/5 rounded transition-colors">
+<span>Portfolio Deep Dive: "SaaS Redesign"</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</div>
+<div class="flex items-center justify-between text-xs text-slate-300 p-2 hover:bg-white/5 rounded transition-colors">
+<span>Whiteboard: "Enterprise Data Filters"</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</div>
+<div class="flex items-center justify-between text-xs text-slate-300 p-2 hover:bg-white/5 rounded transition-colors">
+<span>Culture: "Scaling design culture"</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Credential Suggestions -->
+<div class="glass-panel p-6 rounded-2xl">
+<h3 class="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-4">Credential Suggestions</h3>
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between bg-white/5 p-2 rounded border border-white/5">
+<div>
+<p class="text-[11px] font-bold text-slate-200">IDEO: Design Leadership</p>
+<p class="text-[10px] text-primary">Quick Win • 4h</p>
+</div>
+<span class="material-symbols-outlined text-slate-500">add_circle</span>
+</div>
+<div class="flex items-center justify-between bg-white/5 p-2 rounded border border-white/5">
+<div>
+<p class="text-[11px] font-bold text-slate-200">Advanced HCI Micro-Masters</p>
+<p class="text-[10px] text-slate-500">Longer-term • 6 mo</p>
+</div>
+<span class="material-symbols-outlined text-slate-500">add_circle</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Score Breakdown -->
+<div class="col-span-12 lg:col-span-4 space-y-8">
+<!-- Score Widget -->
+<div class="glass-panel p-8 rounded-3xl relative overflow-hidden group">
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/20 rounded-full blur-3xl transition-transform group-hover:scale-150 duration-700"></div>
+<div class="text-center relative z-10">
+<span class="text-[10px] font-manrope uppercase tracking-[0.3em] text-slate-500 font-bold mb-4 block">Overall Compatibility</span>
+<div class="relative inline-flex items-center justify-center mb-6">
+<svg class="w-40 h-40 transform -rotate-90">
+<circle class="text-slate-800" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-dasharray="440" stroke-dashoffset="52.8" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute flex flex-col items-center">
+<span class="text-5xl font-extrabold text-on-surface neon-glow">88</span>
+<span class="text-[10px] font-bold text-slate-500 tracking-widest uppercase">PERCENT</span>
+</div>
+</div>
+<div class="bg-primary/10 border border-primary/20 rounded-2xl p-4">
+<p class="text-xs text-slate-300 leading-relaxed italic">"Your core role experience is a perfect match, but credentialing needs a minor boost for ATS safety."</p>
+</div>
+</div>
+</div>
+<!-- 10 Dimension Breakdown -->
+<div class="glass-panel p-6 rounded-2xl">
+<h3 class="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">query_stats</span>
+                        Dimension Analysis
+                    </h3>
+<div class="space-y-5">
+<!-- 1. Core Role Match -->
+<div>
+<div class="flex justify-between items-center mb-1 text-[11px]">
+<span class="text-slate-100 font-bold">Core Role Match (30%)</span>
+<span class="text-primary">95%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[95%]"></div>
+</div>
+</div>
+<!-- 2. Experience Level -->
+<div>
+<div class="flex justify-between items-center mb-1 text-[11px]">
+<span class="text-slate-100 font-bold">Experience Scope (15%)</span>
+<span class="text-primary">88%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[88%] shadow-[0_0_8px_rgba(37,106,244,0.4)]"></div>
+</div>
+</div>
+<!-- 3. Education -->
+<div>
+<div class="flex justify-between items-center mb-1 text-[11px]">
+<span class="text-slate-100 font-bold">Education &amp; Certs (10%)</span>
+<span class="text-tertiary">65%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-[65%]"></div>
+</div>
+</div>
+<!-- 4. Soft Skills -->
+<div>
+<div class="flex justify-between items-center mb-1 text-[11px]">
+<span class="text-slate-100 font-bold">Soft Skills (15%)</span>
+<span class="text-primary">90%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[90%] shadow-[0_0_8px_rgba(37,106,244,0.4)]"></div>
+</div>
+</div>
+<!-- 5. Culture -->
+<div>
+<div class="flex justify-between items-center mb-1 text-[11px]">
+<span class="text-slate-100 font-bold">Culture &amp; Values (10%)</span>
+<span class="text-primary">82%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[82%] shadow-[0_0_8px_rgba(37,106,244,0.4)]"></div>
+</div>
+</div>
+<!-- 6. Logistics -->
+<div>
+<div class="flex justify-between items-center mb-1 text-[11px]">
+<span class="text-slate-100 font-bold">Location &amp; Comp (5%)</span>
+<span class="text-primary">100%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[100%] shadow-[0_0_8px_rgba(37,106,244,0.4)]"></div>
+</div>
+</div>
+<!-- 7. Career Trajectory -->
+<div>
+<div class="flex justify-between items-center mb-1 text-[11px]">
+<span class="text-slate-100 font-bold">Career Trajectory (5%)</span>
+<span class="text-primary">75%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%]"></div>
+</div>
+</div>
+<!-- 8. ATS Alignment -->
+<div>
+<div class="flex justify-between items-center mb-1 text-[11px]">
+<span class="text-slate-100 font-bold">ATS &amp; Keywords (5%)</span>
+<span class="text-tertiary">40%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-[40%]"></div>
+</div>
+</div>
+<!-- 9. Portfolio -->
+<div>
+<div class="flex justify-between items-center mb-1 text-[11px]">
+<span class="text-slate-100 font-bold">Portfolio &amp; Proof (5%)</span>
+<span class="text-primary">95%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[95%] shadow-[0_0_8px_rgba(37,106,244,0.4)]"></div>
+</div>
+</div>
+<!-- 10. Industry Context -->
+<div>
+<div class="flex justify-between items-center mb-1 text-[11px]">
+<span class="text-slate-100 font-bold">Contextual Logic (5%)</span>
+<span class="text-primary">80%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[80%]"></div>
+</div>
+</div>
+</div>
+<button class="w-full mt-8 py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 hover:text-on-surface hover:bg-white/10 transition-all">
+                        View Detailed Audit Logs
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual FAB -->
+<div class="fixed bottom-8 right-8 z-[60]">
+<button class="h-14 w-14 bg-primary text-white rounded-full flex items-center justify-center shadow-2xl shadow-primary/40 hover:scale-110 active:scale-90 transition-all group" onclick="document.getElementById('resume-preview-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined text-3xl">visibility</span>
+<span class="absolute right-full mr-4 bg-[#1e293b] text-white text-[10px] font-bold uppercase tracking-widest py-2 px-4 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap border border-white/10">Quick Preview</span>
+</button>
+</div>
+<div class="fixed bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
+</body></html>

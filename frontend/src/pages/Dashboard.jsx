@@ -651,7 +651,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                         </h3>
                         <button className="text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300"><span className="material-symbols-outlined">more_horiz</span></button>
                     </div>
-                    <div className="flex flex-col gap-3 overflow-y-auto" style={{ minHeight: '400px' }}>
+                    <div className="flex flex-col gap-3 overflow-y-auto px-2" style={{ minHeight: '400px' }}>
                         {appsByColumn[col].map((app, index) => {
                             const isDragging = app.id === draggedAppId;
                             return (

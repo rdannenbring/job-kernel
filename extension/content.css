@@ -86,3 +86,245 @@
   75% { transform: translateY(-6px); }
   85% { transform: translateY(0); }
 }
+
+/* ─── Magic Fill ───────────────────────────────────────────────────────────── */
+
+.kernel-magic-highlight {
+  outline: 2px solid #256af4 !important;
+  outline-offset: 2px !important;
+  background-color: rgba(37, 106, 244, 0.05) !important;
+  transition: all 0.3s ease;
+}
+
+.kernel-magic-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #0a0f18;
+  color: white;
+  z-index: 2147483647;
+  padding: 10px 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  font-family: 'Inter', sans-serif;
+  animation: kernelSlideDown 0.4s ease;
+  display: flex;
+  justify-content: center;
+}
+
+.kernel-magic-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: help;
+  position: relative;
+}
+
+.kernel-info-icon {
+  font-size: 16px !important;
+  color: #94a3b8;
+}
+
+.kernel-magic-info:hover .kernel-info-icon {
+  color: #256af4;
+}
+
+.kernel-magic-bar-content {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.kernel-magic-bar-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+}
+
+.kernel-btn-primary {
+  background: #256af4;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kernel-btn-primary:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.kernel-btn-secondary:hover {
+  background: rgba(148, 163, 184, 0.1);
+}
+
+/* ── LinkedIn Connection Banner ─────────────────────────────────────────── */
+.kernel-connection-banner {
+  background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
+  border-bottom: 2px solid #256af4;
+  padding: 10px 16px;
+  animation: slideDownIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  position: relative;
+  z-index: 100;
+}
+
+@keyframes slideDownIn {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.kernel-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+}
+
+.kernel-banner-icon {
+  width: 32px;
+  height: 32px;
+  background: rgba(37, 106, 244, 0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #60a5fa;
+  flex-shrink: 0;
+}
+
+.kernel-banner-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.kernel-banner-text {
+  color: #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.kernel-banner-strong {
+  color: #60a5fa;
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.kernel-banner-link {
+  color: white;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(255,255,255,0.3);
+  transition: all 0.2s;
+}
+
+.kernel-banner-link:hover {
+  color: #60a5fa;
+  text-decoration-color: #60a5fa;
+}
+
+.kernel-banner-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.kernel-banner-close:hover {
+  color: white;
+}
+
+.kernel-banner-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Job List Indicators ────────────────────────────────────────────────── */
+.kernel-list-indicator {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 28px;
+  height: 28px;
+  background: #059669; /* Productivity Pro green */
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px white, 0 4px 10px rgba(5, 150, 105, 0.4);
+  z-index: 10;
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), kernelPulse 2s infinite;
+  cursor: help;
+}
+
+@keyframes kernelPulse {
+  0% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.7); }
+  70% { box-shadow: 0 0 0 8px rgba(5, 150, 105, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
+}
+
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.kernel-list-indicator svg {
+  width: 16px;
+  height: 16px;
+}
+
+.kernel-list-indicator::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: pre-wrap;
+  min-width: 180px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.2s, transform 0.2s;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+  z-index: 20;
+}
+
+.kernel-list-indicator:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.kernel-match-highlight {
+  border-left: 4px solid #059669 !important;
+  background-color: rgba(5, 150, 105, 0.04) !important;
+  border-radius: 6px;
+  outline: 1px solid rgba(5, 150, 105, 0.3) !important;
+  outline-offset: -1px;
+  transition: all 0.3s ease;
+}
+
+.kernel-match-highlight:hover {
+  background-color: rgba(5, 150, 105, 0.08) !important;
+  outline: 2px solid rgba(5, 150, 105, 0.7) !important;
+}

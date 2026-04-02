@@ -1,0 +1,27 @@
+.job-match-glass {
+    background: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.job-match-neon {
+    text-shadow: 0 0 8px rgba(37, 106, 244, 0.5);
+}
+.job-match-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.job-match-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.job-match-scroll::-webkit-scrollbar-thumb {
+    background: rgba(37, 106, 244, 0.2);
+    border-radius: 10px;
+}
+.job-match-bg {
+    background-color: #101622;
+}
+.job-match-primary {
+    color: #256af4;
+}
+.job-match-primary-bg {
+    background-color: #256af4;
+}

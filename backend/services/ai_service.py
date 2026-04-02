@@ -12,6 +12,8 @@ logger = logging.getLogger("uvicorn")
 
 DEFAULT_PROMPTS = {
     "analyze_job": """Analyze the following job description and extract key information.
+
+CURRENT DATE: {current_date}
         
 Job Description:
 {job_description}
@@ -25,20 +27,20 @@ Return a JSON object with this EXACT structure:
     "metadata": {{
         "job_title": "Extract exact job title or 'Unknown Role'",
         "company": "Extract company name or 'Unknown Company'",
-        "salary_range": "Extract salary if present (e.g. '$100k-$120k'), else 'Not Listed'",
-        "date_posted": "Extract date if present, else 'Unknown'",
+        "salary_range": "Extract salary range if present (e.g. '$160k-$190k' or '$50/hr'), else 'Not Listed'",
+        "date_posted": "Extract date. If a relative date is found (e.g., '4 days ago', 'Posted yesterday'), calculate the ACTUAL date based on CURRENT DATE and return it as YYYY-MM-DD. Else 'Unknown'.",
         "deadline": "Extract application deadline if present (YYYY-MM-DD), else ''",
         "job_type": "Extract 'Full-time', 'Part-time', 'Contract', 'Freelance', or 'Internship'",
         "location_type": "Extract 'On-site', 'Remote', or 'Hybrid'",
         "location": "Extract city/state or 'Remote'",
-        "relocation": true/false or null (true if explicitly supported, false if explicitly not, else null),
-        "interest_level": "Extract 'High', 'Medium', or 'Low' based on role impact/prestige guess or default 'Medium'",
-        "glassdoor_rating": "The company's rating on Glassdoor (e.g. '4.2/5') if known, or null",
-        "glassdoor_url": "The link to the company's Glassdoor page if known, or null",
-        "indeed_rating": "The company's rating on Indeed (e.g. '4.0/5') if known, or null",
-        "indeed_url": "The link to the company's Indeed page if known, or null",
-        "linkedin_rating": "The company's rating or follower count sentiment (e.g. '4.5/5') if known, or null",
-        "linkedin_url": "The link to the company's LinkedIn page if known, or null"
+        "relocation": true/false or null,
+        "interest_level": "Extract 'High', 'Medium', or 'Low'",
+        "glassdoor_rating": "Rating or null",
+        "glassdoor_url": "URL or null",
+        "indeed_rating": "Rating or null",
+        "indeed_url": "URL or null",
+        "linkedin_rating": "Rating or null",
+        "linkedin_url": "URL or null"
     }}
 }}""",
     "tailor_resume": """You are an expert resume writer. Tailor the following resume to match the job description.
@@ -59,7 +61,8 @@ CRITICAL INSTRUCTIONS - MUST FOLLOW EXACTLY:
 2. **MAINTAIN EXACT ITEM COUNT**: Each section must have the SAME number of content items as the original
 3. **PRESERVE SECTION TITLES**: Keep section titles identical (e.g., "EXPERIENCE", "EDUCATION", "SKILLS")
 4. **MODIFY CONTENT ONLY**: Only change the text content of professional experience/skills items, not the structure
-5. You MUST update the main professional title at the top of the resume to better match the target job title.
+5. **NEVER DROP HEADERS**: You MUST perfectly copy over the applicant's Name, Contact Info, and ALL section headers (like "EXECUTIVE SUMMARY", "EXPERIENCE"). Do not drop these from the `full_text` array under any circumstances.
+6. You MUST update the main professional title at the top of the resume to better match the target job title.
 6. Keep all dates, company names, and PAST job titles (in the experience section) exactly unchanged.
 7. Emphasize relevant experience by rewording bullet points to highlight matching skills
 7. Add relevant keywords from the job description naturally into existing bullet points
@@ -67,7 +70,7 @@ CRITICAL INSTRUCTIONS - MUST FOLLOW EXACTLY:
 9. Do NOT remove bullet points or sections
 10. DO NOT fabricate experience or skills
 11. **URL FORMATTING**: If any web addresses are included (e.g., in Projects or Summary), CLEAN them by removing "http://", "https://", and "www." prefixes (e.g., use "github.com/user" instead of "https://www.github.com/user").
-12. **NO MARKDOWN FORMATTING**: Do NOT use markdown syntax like **bold**, *italics*, or headers in your returned fields. Output raw text ONLY.
+12. **PRESERVE MARKDOWN FORMATTING**: You MUST keep all markdown syntax that was present in the original (e.g., **bold**, *italics*, bullet points, and # headers). Do not strip markdown formatting. If a section title had a markdown header (e.g., "### EXPERIENCE"), keep it exactly as "### EXPERIENCE". Keep all existing bullet points ("- ") exactly as they are formatted.
 
 STRUCTURE REQUIREMENT:
 - If the original has 3 sections with [2, 5, 3] items respectively, return 3 sections with [2, 5, 3] items
@@ -193,7 +196,46 @@ CURRENT CONTENT:
 INSTRUCTIONS:
 "{instructions}"
 
-Return the updated text in a JSON object with a "content" field."""
+Return the updated text in a JSON object with a "content" field.""",
+    "score_job_match": """You are an expert technical recruiter and career coach. Assess the compatibility between the candidate's profile/resume and the job description.
+
+CURRENT DATE: {current_date}
+
+CANDIDATE PROFILE / RESUME:
+{resume_text}
+
+JOB DESCRIPTION:
+{job_description}
+
+{additional_context_instr}
+
+INSTRUCTIONS:
+Evaluate the match based on the following 5 criteria. For each, provide a score out of 20, and a brief explanation.
+1. Core Role Match (Skills, responsibilities)
+2. Experience & Scope (Seniority, impact)
+3. Education/Certifications
+4. Soft Skills & Culture Fit
+5. ATS/Keyword Alignment
+
+Then, calculate the "overall_score" out of 100 (sum of the 5 criteria).
+Finally, create a "coaching_plan" with 3-5 specific, actionable levers the candidate can pull to improve their resume for this specific role (e.g., "Highlight your Python data analysis experience more prominently", "Add the keyword 'Agile' to your project management bullet").
+
+Return a JSON object with this EXACT structure:
+{{
+    "overall_score": 85,
+    "criteria_scores": {{
+        "core_role": {{"score": 18, "reason": "Explanation"}},
+        "experience": {{"score": 15, "reason": "Explanation"}},
+        "education": {{"score": 20, "reason": "Explanation"}},
+        "culture": {{"score": 17, "reason": "Explanation"}},
+        "ats_keywords": {{"score": 15, "reason": "Explanation"}}
+    }},
+    "coaching_plan": [
+        "Actionable advice 1",
+        "Actionable advice 2",
+        "Actionable advice 3"
+    ]
+}}"""
 }
 
 class AIService:
@@ -251,12 +293,16 @@ class AIService:
             # strict=False allows control characters (like literal newlines) in strings
             return json.loads(content, strict=False)
         except json.JSONDecodeError as e:
-            # Attempt to fix common AI-isms before searching for brackets
+            # Attempt to fix common AI-isms
             # 1. Replace True/False/None with true/false/null
             content_fixed = re.sub(r'\bTrue\b', 'true', content)
             content_fixed = re.sub(r'\bFalse\b', 'false', content_fixed)
             content_fixed = re.sub(r'\bNone\b', 'null', content_fixed)
             
+            # 2. Fix missing commas between fields (e.g. "field": "val" \n "next": "val")
+            # This regex looks for double quotes followed by a colon, preceded by a closing quote/bracket on a previous line
+            content_fixed = re.sub(r'("|\d|true|false|null|\]|\})\s*\n\s*"', r'\1,\n"', content_fixed)
+
             # Fallback for weird formatting (e.g. text before/after JSON)
             match = re.search(r'(\{.*\}|\[.*\])', content_fixed, re.DOTALL)
             if match:
@@ -419,8 +465,9 @@ class AIService:
                 "metadata": {}
             }
         
+        current_date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         prompt_template = self.get_prompt("analyze_job")
-        prompt = prompt_template.format(job_description=job_description)
+        prompt = prompt_template.format(job_description=job_description, current_date=current_date_str)
         
         
         try:
@@ -437,10 +484,10 @@ class AIService:
             print(f"Error analyzing job description: {e}")
             raise e
     
-    async def tailor_resume(self, resume_data: Dict[str, Any], job_description: str, additional_context: str = "") -> Dict[str, Any]:
+    async def tailor_resume(self, resume_data: Dict[str, Any], job_description: str, additional_context: str = "", instructions: str = "") -> Dict[str, Any]:
         """
         Tailor a resume based on job description while maintaining formatting.
-        Includes additional context if provided.
+        Includes additional context and custom instructions if provided.
         """
         if not self._has_active_client():
             # Return original resume if no AI available
@@ -466,7 +513,8 @@ class AIService:
             job_description=job_description,
             job_analysis=json.dumps(job_analysis, indent=2),
             item_count=len(full_text_original),
-            additional_context_instr=additional_context_instr
+            additional_context_instr=additional_context_instr,
+            instructions=f"\n\nCUSTOM USER INSTRUCTIONS:\n{instructions}\n" if instructions else ""
         )
         
         try:
@@ -608,11 +656,51 @@ class AIService:
             print(f"Error extracting profile data: {e}")
             return {}
 
-    async def generate_cover_letter(self, resume_text: str, job_description: str, user_profile: Dict[str, Any] = None, additional_context: str = "") -> Dict[str, Any]:
+    async def score_job_match(self, resume_text: str, job_description: str, additional_context: str = "") -> Dict[str, Any]:
+        """Assess the match between resume and job description, returning a score and coaching plan."""
+        if not self._has_active_client():
+            return {
+                "overall_score": 0,
+                "criteria_scores": {},
+                "coaching_plan": ["AI Client not initialized."]
+            }
+
+        current_date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        prompt_template = self.get_prompt("score_job_match")
+        
+        additional_context_instr = ""
+        if additional_context:
+            additional_context_instr = f"\n\nADDITIONAL CONTEXT DOCUMENTS:\n{additional_context}\n\nINSTRUCTION: Use these extra context documents to find more detailed information that might make the candidate a better fit."
+
+        prompt = prompt_template.format(
+            current_date=current_date_str,
+            resume_text=resume_text[:10000],
+            job_description=job_description[:10000],
+            additional_context_instr=additional_context_instr
+        )
+        
+        try:
+            content = await self.execute_ai_request(
+                system_prompt="You are an expert technical recruiter and career coach.",
+                user_prompt=prompt,
+                response_format="json_object",
+                temperature=0.3
+            )
+            analysis = self._parse_json_response(content)
+            return analysis
+        except Exception as e:
+            print(f"Error scoring job match: {e}")
+            return {
+                "overall_score": 0,
+                "criteria_scores": {},
+                "coaching_plan": [f"Error occurred during scoring: {str(e)}"]
+            }
+
+    async def generate_cover_letter(self, resume_text: str, job_description: str, user_profile: Dict[str, Any] = None, additional_context: str = "", instructions: str = "") -> Dict[str, Any]:
         """
         Generate a cover letter based on the resume and job description.
         If user_profile is provided, ensure the header uses that info.
-        Includes additional context if provided.
+        Includes additional context and custom instructions if provided.
         """
         if not self._has_active_client():
             return {"content": "AI Client not initialized."}
@@ -655,7 +743,8 @@ class AIService:
             profile_context=profile_context,
             resume_text=resume_text[:4000],
             job_description=job_description[:4000],
-            additional_context_instr=additional_context_instr
+            additional_context_instr=additional_context_instr,
+            instructions=f"\n\nCUSTOM USER INSTRUCTIONS:\n{instructions}\n" if instructions else ""
         )
         
         try:

@@ -9,21 +9,11 @@
     "storage",
     "scripting",
     "contextMenus",
-    "tabs"
+    "tabs",
+    "cookies"
   ],
   "host_permissions": [
-    "*://*.indeed.com/*",
-    "*://*.linkedin.com/*",
-    "*://*.glassdoor.com/*",
-    "*://*.ziprecruiter.com/*",
-    "*://*.simplyhired.com/*",
-    "*://*.wellfound.com/*",
-    "*://*.monster.com/*",
-    "*://*.careerbuilder.com/*",
-    "*://*.greenhouse.io/*",
-    "*://*.lever.co/*",
-    "*://*.myworkdayjobs.com/*",
-    "*://localhost/*"
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js"
@@ -31,18 +21,7 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.indeed.com/*",
-        "*://*.linkedin.com/*",
-        "*://*.glassdoor.com/*",
-        "*://*.ziprecruiter.com/*",
-        "*://*.simplyhired.com/*",
-        "*://*.wellfound.com/*",
-        "*://*.monster.com/*",
-        "*://*.careerbuilder.com/*",
-        "*://*.greenhouse.io/*",
-        "*://*.lever.co/*",
-        "*://*.myworkdayjobs.com/*",
-        "*://localhost/*"
+        "<all_urls>"
       ],
       "js": ["content.js"],
       "css": ["content.css"]
