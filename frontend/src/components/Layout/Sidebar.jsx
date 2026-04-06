@@ -5,6 +5,18 @@ import logoImgLight from '../../assets/jobkernel-logo-light.png';
 const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle }) => {
     const [collapsed, setCollapsed] = useState(false);
     
+    // Auto-collapse based on window width
+    React.useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 1025) {
+                setCollapsed(true);
+            }
+        };
+        handleResize(); // Initial check
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     // Derived active theme for icon state
     const [activeTheme, setActiveTheme] = useState(() => document.documentElement.getAttribute('data-theme') || 'dark');
 

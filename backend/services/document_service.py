@@ -69,7 +69,7 @@ class DocumentService:
             return 1
     
     @staticmethod
-    def sanitize_text(text: str) -> str:
+    def sanitize_text(text: str, strip_markdown: bool = True) -> str:
         """
         Sanitize text to be XML/DOCX compatible by removing control characters.
         Keeps only valid Unicode characters and common whitespace.
@@ -84,8 +84,9 @@ class DocumentService:
         # Also remove any null bytes that might have slipped through
         cleaned = cleaned.replace('\x00', '')
         
-        # Remove literal markdown bold/italic asterisks that the AI might generate
-        cleaned = cleaned.replace('**', '').replace('*', '')
+        if strip_markdown:
+            # Remove literal markdown bold/italic asterisks
+            cleaned = cleaned.replace('**', '').replace('*', '')
         
         return cleaned
     
@@ -244,143 +245,449 @@ class DocumentService:
                 print(f"   Proceeding with XML preservation anyway (safest option for shapes).")
                 # DO NOT FALL BACK - The fallback method destroys shapes
                 # self.create_docx_preserve_formatting(original_file_path, resume_data, output_path)
-             
-            # Track which files have been modified
+                      # Track which files have been modified
             modified_files = set()
             
-            # Update each paragraph's text
-            for (para, para_file, old_text), new_text in zip(all_paragraphs, full_text_items):
-                sanitized_text = self.sanitize_text(str(new_text))
+            # Update each paragraph's text with preservation
+            from collections import deque
+            paragraphs_deque = deque(all_paragraphs)
+            text_items_deque = deque(full_text_items)
+            
+            while paragraphs_deque and text_items_deque:
+                (para, para_file, old_text) = paragraphs_deque.popleft()
+                new_text = text_items_deque.popleft()
+                
+                # Use raw text (including **) for splitting markers
+                raw_new_text = str(new_text)
                 
                 # Find all text runs in this paragraph
                 text_runs = para.findall('.//w:r', namespaces)
-                
-                if not text_runs:
-                    continue
-                
-                # Identify runs that actually contain text elements
+                if not text_runs: continue
+
+                # Identify text-bearing runs, skipping those with drawings/picts/etc.
                 text_bearing_runs = []
                 for run in text_runs:
-                    # Check if run contains drawing/object/alternateContent - if so, skip it to preserve the shape
-                    has_drawing = False
-                    
-                    # check direct namespace matches
-                    if (run.find('.//w:drawing', namespaces) is not None or 
-                        run.find('.//w:pict', namespaces) is not None or 
-                        run.find('.//w:object', namespaces) is not None or
-                        run.find('.//v:shape', namespaces) is not None or
-                        run.find('.//v:rect', namespaces) is not None or
-                        run.find('.//wps:wsp', namespaces) is not None or
-                        run.find('.//mc:AlternateContent', namespaces) is not None):
-                        has_drawing = True
-                    
-                    # Fallback: Check tag names for anything suspicious not caught by namespace
-                    if not has_drawing:
-                        for child in run.iter():
-                            tag_lower = child.tag.lower() if isinstance(child.tag, str) else ""
-                            if any(x in tag_lower for x in ['drawing', 'pict', 'shape', 'rect', 'wsp', 'vml', 'background']):
-                                has_drawing = True
-                                break
-                                
-                    if has_drawing:
-                        continue
-
+                    # Comprehensive check for non-text artifacts to preserve
+                    has_artifact = (run.find('.//w:drawing', namespaces) is not None or 
+                                  run.find('.//w:pict', namespaces) is not None or 
+                                  run.find('.//w:object', namespaces) is not None or
+                                  run.find('.//v:rect', namespaces) is not None or
+                                  run.find('.//v:shape', namespaces) is not None or
+                                  run.find('.//wps:wsp', namespaces) is not None or
+                                  run.find('.//mc:AlternateContent', namespaces) is not None)
+                                  
                     t_elems = run.findall('.//w:t', namespaces)
-                    if t_elems:
+                    if not has_artifact and t_elems:
                         text_bearing_runs.append((run, t_elems))
-                
-                if not text_bearing_runs:
-                    # If no existing text runs (maybe just a shape?), try to find ANY run to add text to
-                    # or create a new run (complex), but typically we are replacing text so there should be text
-                    continue
-                
-                # SMART REPLACEMENT LOGIC
-                text_bearing_runs_filtered = []
-                for idx, (run, t_elems) in enumerate(text_bearing_runs):
-                    text = "".join((t.text or "") for t in t_elems)
-                    if text.strip():  # Only consider runs with actual non-whitespace content
-                        text_bearing_runs_filtered.append((idx, run, t_elems, len(text)))
-                
-                # Check for colon pattern (bold before colon, normal after)
-                has_colon_pattern = ':' in sanitized_text and len(text_bearing_runs_filtered) >= 2
-                
-                if has_colon_pattern:
-                    # Split at colon
-                    parts = sanitized_text.split(':', 1)
-                    if len(parts) == 2:
-                        label_part = parts[0] + ':'
-                        content_part = parts[1]
-                        
-                        idx1 = text_bearing_runs_filtered[0][0]
-                        idx2 = text_bearing_runs_filtered[1][0]
-                        
-                        # Update label run
-                        run, t_elems = text_bearing_runs[idx1]
-                        if t_elems:
-                            t_elems[0].text = label_part
-                            for t in t_elems[1:]: t.text = ""
-                            
-                        # Update content run
-                        run, t_elems = text_bearing_runs[idx2]
-                        if t_elems:
-                            t_elems[0].text = content_part
-                            for t in t_elems[1:]: t.text = ""
-                            
-                        # Clear others
-                        for i, (r, ts) in enumerate(text_bearing_runs):
-                            if i not in (idx1, idx2):
-                                for t in ts: t.text = ""
-                    else:
-                        has_colon_pattern = False
-                        
-                if not has_colon_pattern:
-                    # Simple case: put all new text in the original run that held the longest text
-                    if text_bearing_runs_filtered:
-                        # Find the index of the run with the longest text to inherit its formatting
-                        longest = max(text_bearing_runs_filtered, key=lambda x: x[3])
-                        target_idx = longest[0]
-                    else:
-                        target_idx = 0
-                        
-                    run, t_elems = text_bearing_runs[target_idx]
-                    if t_elems:
-                        t_elems[0].text = sanitized_text
-                        for t in t_elems[1:]: t.text = ""
-                        
-                    # Clear all other text-bearing runs
-                    for i, (r, ts) in enumerate(text_bearing_runs):
-                        if i != target_idx:
-                            for t in ts: t.text = ""
-                
-                # Mark this file as modified
-                modified_files.add(para_file)
-            
 
-            
-            # SMART MARGIN ADJUSTMENT: Try to keep the same page count as original
-            # by adjusting margins intelligently
-            # NOTE: Removed because this breaks absolute positioning of UI elements like 
-            # shaded backgrounds and sidebars in resumes.
-            # self._adjust_margins_for_page_count(
-            #     root, namespaces, document_xml_path, 
-            #     original_file_path, temp_dir, modified_files
-            # )
+                if not text_bearing_runs: continue
+                
+                # BOLDING LOGIC: Handle **bold** markers from AI output
+                # Check for Markdown Bold markers
+                md_bold_matches = list(re.finditer(r'\*\*(.*?)\*\*', raw_new_text))
+                
+                if md_bold_matches:
+                    # Use markdown segments to update runs
+                    segments = []
+                    last_idx = 0
+                    for match in md_bold_matches:
+                        # Add text before the bold part
+                        if match.start() > last_idx:
+                            segments.append((raw_new_text[last_idx:match.start()], False))
+                        # Add the bold part (content between **)
+                        segments.append((match.group(1), True))
+                        last_idx = match.end()
+                    # Add remaining text
+                    if last_idx < len(raw_new_text):
+                        segments.append((raw_new_text[last_idx:], False))
+                    
+                    # Map segments onto available runs
+                    for seg_idx, (seg_text, is_bold) in enumerate(segments):
+                        if seg_idx < len(text_bearing_runs):
+                            run, t_elems = text_bearing_runs[seg_idx]
+                            # Update text
+                            t_elems[0].text = self.sanitize_text(seg_text, strip_markdown=True)
+                            for t in t_elems[1:]: t.getparent().remove(t)
+                            
+                            # Update bold property strictly on this run
+                            rPr = run.find('w:rPr', namespaces)
+                            if rPr is None:
+                                rPr = etree.SubElement(run, f"{{{namespaces['w']}}}rPr")
+                            
+                            b_elem = rPr.find('w:b', namespaces)
+                            if is_bold:
+                                if b_elem is None:
+                                    # Add if missing
+                                    etree.SubElement(rPr, f"{{{namespaces['w']}}}b")
+                                else:
+                                    # Ensure it's not disabled
+                                    b_elem.attrib.clear() # Clear val="0" if it exists
+                            else:
+                                if b_elem is not None:
+                                    # Explicitly disable bold
+                                    b_elem.set(f"{{{namespaces['w']}}}val", "0")
+                        else:
+                            # If we have more segments than runs, append to the last run
+                            # (A more advanced implementation would create new runs)
+                            last_run, last_ts = text_bearing_runs[-1]
+                            last_ts[0].text += self.sanitize_text(seg_text, strip_markdown=True)
+                            
+                    # Clear any remaining runs that weren't used
+                    for i in range(len(segments), len(text_bearing_runs)):
+                        r, ts = text_bearing_runs[i]
+                        for t in ts: 
+                            if t.getparent() == r: r.remove(t)
+                        # Remove the run if it's basically empty
+                        if not any(child.tag in [f"{{{namespaces['w']}}}drawing", f"{{{namespaces['w']}}}pict", f"{{{namespaces['mc']}}}AlternateContent", f"{{{namespaces['w']}}}t"] for child in r):
+                            if r.getparent() is not None:
+                                r.getparent().remove(r)
+                else:
+                    # Fallback to colon pattern if no markdown markers but colon exists
+                    has_colon = ':' in raw_new_text and len(text_bearing_runs) >= 2
+                    sanitized_full = self.sanitize_text(raw_new_text, strip_markdown=True)
+                    
+                    if has_colon:
+                        label, content = sanitized_full.split(':', 1)
+                        # Label run
+                        r1, t1s = text_bearing_runs[0]
+                        t1s[0].text = label + ":"
+                        for t in t1s[1:]: t.getparent().remove(t)
+                        # Value run
+                        r2, t2s = text_bearing_runs[1]
+                        t2s[0].text = content
+                        for t in t2s[1:]: t.getparent().remove(t)
+                        
+                        # Set bold for label, normal for value
+                        for i, (r, ts) in enumerate(text_bearing_runs):
+                            rPr = r.find('w:rPr', namespaces)
+                            if rPr is None: rPr = etree.SubElement(r, f"{{{namespaces['w']}}}rPr")
+                            b_elem = rPr.find('w:b', namespaces)
+                            if i == 0: # label
+                                if b_elem is None: etree.SubElement(rPr, f"{{{namespaces['w']}}}b")
+                                else: b_elem.attrib.clear()
+                            elif i == 1: # content
+                                if b_elem is not None: b_elem.set(f"{{{namespaces['w']}}}val", "0")
+                            else: # clear others
+                                for t in ts: 
+                                    if t.getparent() == r: r.remove(t)
+                                if not any(child.tag in [f"{{{namespaces['w']}}}drawing", f"{{{namespaces['w']}}}pict", f"{{{namespaces['mc']}}}AlternateContent", f"{{{namespaces['w']}}}t"] for child in r):
+                                    if r.getparent() is not None:
+                                        r.getparent().remove(r)
+                    else:
+                        # Simple 1:1 replacement in the primary run
+                        target_idx = 0
+                        # Inherit formatting from the run that was longest originally
+                        lens = ["".join(t.text for t in ts if t.text) for r, ts in text_bearing_runs]
+                        target_idx = lens.index(max(lens)) if lens else 0
+                        
+                        for i, (r, ts) in enumerate(text_bearing_runs):
+                            if i == target_idx:
+                                ts[0].text = sanitized_full
+                                for t in ts[1:]: t.getparent().remove(t)
+                            else:
+                                for t in ts: 
+                                    if t.getparent() == r: r.remove(t)
+                                if not any(child.tag in [f"{{{namespaces['w']}}}drawing", f"{{{namespaces['w']}}}pict", f"{{{namespaces['mc']}}}AlternateContent", f"{{{namespaces['w']}}}t"] for child in r):
+                                    if r.getparent() is not None:
+                                        r.getparent().remove(r)
+                
+                modified_files.add(para_file)
+
+            # HEADER SHADING RECT ADJUSTMENT:
+            # After updating text, check if there is a shading rectangle covering the header
+            # and resize it so it always fully covers the header text (handles multi-line titles).
+            if self._adjust_header_shading_rect_height(root, namespaces, full_text_items):
+                modified_files.add(document_xml_path)
 
             # Write all modified XML files back
             for file_path in modified_files:
                 if file_path == document_xml_path:
                     tree.write(file_path, xml_declaration=True, encoding='UTF-8', standalone=True)
             
-            # Repackage as DOCX
-            with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as docx:
-                for folder_name, subfolders, filenames in os.walk(temp_dir):
-                    for filename in filenames:
-                        file_path = os.path.join(folder_name, filename)
-                        arcname = os.path.relpath(file_path, temp_dir)
-                        docx.write(file_path, arcname)
+            # Repackage as DOCX by copying the ORIGINAL zip, replacing only modified files
+            # This perfectly preserves Microsoft Word's specific compression methods and ZIP metadata
+            with zipfile.ZipFile(original_file_path, 'r') as zin, zipfile.ZipFile(output_path, 'w') as zout:
+                for item in zin.infolist():
+                    # Windows zip paths use forward slash, but os.path.join handles normalization
+                    temp_file_path = os.path.normpath(os.path.join(temp_dir, item.filename))
+                    
+                    # Normalize modified files for reliable checks
+                    normalized_modified = {os.path.normpath(f) for f in modified_files}
+                    
+                    if temp_file_path in normalized_modified:
+                        with open(temp_file_path, 'rb') as f:
+                            zout.writestr(item, f.read())
+                    else:
+                        zout.writestr(item, zin.read(item.filename))
             
             print(f"✓ Successfully updated {len(all_paragraphs)} paragraphs with XML-level preservation")
     
+    def _adjust_header_shading_rect_height(self, root, namespaces: dict, full_text_items: list) -> bool:
+        """
+        Detect a shading/background rectangle at the top of the document and adjust its height
+        so it always fully covers the header text block.
+
+        Strategy:
+        - Look for VML rects (v:rect) or WordprocessingShape rectangles (wps:wsp) in the first
+          few paragraphs of the body whose style contains a 'height' value.
+        - Measure the actual heights of all header paragraphs (those that sit within the original
+          shading rect's vertical span) by summing font-size × estimated line count × spacing.
+        - Update the height in the shape's style attribute if the content requires more (or less)
+          space than the original rectangle.
+
+        Returns True if any modification was made.
+        """
+        try:
+            W  = namespaces['w']
+            V  = namespaces['v']
+            MC = namespaces['mc']
+            WPS = namespaces['wps']
+            A   = namespaces['a']
+
+            body = root.find('w:body', namespaces)
+            if body is None:
+                return False
+
+            body_paragraphs = body.findall('w:p', namespaces)
+
+            # ------------------------------------------------------------------ #
+            # 1. Locate the shading rectangle and record its current height (pt). #
+            # ------------------------------------------------------------------ #
+            shape_elem = None          # The element whose style we will update
+            shape_style_attr = None    # The attribute name that holds the style string
+            original_height_pt = None  # Current height value in points
+
+            # Search within the first 10 paragraphs — the rect is almost always in the header block
+            for para in body_paragraphs[:10]:
+                # Check both VML (v:rect / v:shape) and DrawingML (wps:wsp) shapes
+                for elem in para.iter():
+                    local = etree.QName(elem.tag).localname if '}' in elem.tag else elem.tag
+
+                    if local in ('rect', 'shape', 'roundrect'):
+                        style_val = elem.get('style', '')
+                        if style_val and 'height' in style_val:
+                            # Parse the height from the style string, e.g. "height:57pt" or "height:1.5in"
+                            h_match = re.search(r'height\s*:\s*([\d.]+)(pt|in|cm|mm)?', style_val)
+                            if h_match:
+                                raw_val = float(h_match.group(1))
+                                unit = (h_match.group(2) or 'pt').lower()
+                                # Convert everything to points
+                                if unit == 'in':
+                                    raw_val *= 72
+                                elif unit == 'cm':
+                                    raw_val *= 28.3465
+                                elif unit == 'mm':
+                                    raw_val *= 2.83465
+                                original_height_pt = raw_val
+                                shape_elem = elem
+                                shape_style_attr = 'style'
+                                break
+
+                    elif local == 'spPr':  # DrawingML shape properties
+                        # Look for a:xfrm/a:ext with cy attribute (EMU units)
+                        xfrm = elem.find(f'{{{A}}}xfrm', namespaces) if A in namespaces else None
+                        if xfrm is None:
+                            xfrm = elem.find('.//{http://schemas.openxmlformats.org/drawingml/2006/main}xfrm')
+                        if xfrm is not None:
+                            ext = xfrm.find('{http://schemas.openxmlformats.org/drawingml/2006/main}ext')
+                            if ext is not None:
+                                cy_emu = ext.get('cy')
+                                if cy_emu:
+                                    # 914400 EMU = 1 inch = 72 pt
+                                    original_height_pt = int(cy_emu) * 72 / 914400
+                                    shape_elem = ext
+                                    shape_style_attr = 'cy'   # sentinel: means EMU attribute
+                                    break
+
+                if shape_elem is not None:
+                    break
+
+            if shape_elem is None or original_height_pt is None:
+                print("   ℹ️  No header shading rectangle detected — skipping height adjustment.")
+                return False
+
+            print(f"   📐 Header shading rect found. Current height: {original_height_pt:.1f}pt")
+
+            # ------------------------------------------------------------------ #
+            # 2. Estimate the total height required to cover all header content.  #
+            # ------------------------------------------------------------------ #
+            # We consider the paragraphs whose cumulative estimated height does   #
+            # not exceed the original rect height plus a reasonable overflow.     #
+            # Page width inside margins is typically ~468pt (6.5") for letter.   #
+
+            # Retrieve page/margin info for line-wrap estimation
+            sect_pr = body.find('w:sectPr', namespaces)
+            page_width_twips  = 12240  # default letter width
+            margin_left_twips = 1440
+            margin_right_twips = 1440
+            if sect_pr is not None:
+                pg_sz  = sect_pr.find('w:pgSz',  namespaces)
+                pg_mar = sect_pr.find('w:pgMar', namespaces)
+                if pg_sz  is not None: page_width_twips  = int(pg_sz.get(f'{{{W}}}w',  page_width_twips))
+                if pg_mar is not None:
+                    margin_left_twips  = int(pg_mar.get(f'{{{W}}}left',  margin_left_twips))
+                    margin_right_twips = int(pg_mar.get(f'{{{W}}}right', margin_right_twips))
+
+            # Usable text width in points (1 twip = 1/20 pt)
+            usable_width_pt = (page_width_twips - margin_left_twips - margin_right_twips) / 20
+
+            def _estimate_para_height_pt(para_elem, text_override=None) -> float:
+                """Rough height estimate for a paragraph in points."""
+                # Collect font size from the first text-bearing run's rPr, or pPr default
+                font_size_pt = 11.0  # fallback
+
+                # Check paragraph-level default
+                pPr = para_elem.find('w:pPr', namespaces)
+                if pPr is not None:
+                    pStyle = pPr.find('w:pStyle', namespaces)
+                    rPr_default = pPr.find('w:rPr', namespaces)
+                    if rPr_default is not None:
+                        sz = rPr_default.find('w:sz', namespaces)
+                        if sz is not None:
+                            val = sz.get(f'{{{W}}}val')
+                            if val:
+                                font_size_pt = int(val) / 2  # half-points
+
+                # Check first text run's rPr
+                for run in para_elem.findall('.//w:r', namespaces):
+                    rPr = run.find('w:rPr', namespaces)
+                    if rPr is not None:
+                        sz = rPr.find('w:sz', namespaces)
+                        if sz is not None:
+                            val = sz.get(f'{{{W}}}val')
+                            if val:
+                                font_size_pt = int(val) / 2
+                                break
+
+                # Line spacing — check for w:spacing w:line
+                line_spacing_factor = 1.15  # default
+                if pPr is not None:
+                    spacing = pPr.find('w:spacing', namespaces)
+                    if spacing is not None:
+                        line_rule = spacing.get(f'{{{W}}}lineRule', 'auto')
+                        line_val  = spacing.get(f'{{{W}}}line')
+                        if line_val and line_rule in ('auto', 'atLeast'):
+                            # 240 = single spacing
+                            line_spacing_factor = int(line_val) / 240
+
+                # Space before/after in pt
+                space_before_pt = 0.0
+                space_after_pt  = 0.0
+                if pPr is not None:
+                    spacing = pPr.find('w:spacing', namespaces)
+                    if spacing is not None:
+                        sb = spacing.get(f'{{{W}}}before')
+                        sa = spacing.get(f'{{{W}}}after')
+                        if sb: space_before_pt = int(sb) / 20
+                        if sa: space_after_pt  = int(sa) / 20
+
+                # Paragraph text (use override if provided, e.g. the new AI-generated text)
+                if text_override is not None:
+                    text = text_override
+                else:
+                    text = ''.join(t.text for t in para_elem.findall('.//w:t', namespaces) if t.text)
+                text = re.sub(r'\*\*', '', text)  # strip markdown bold markers
+
+                if not text.strip():
+                    return space_before_pt + space_after_pt  # empty paragraph = just spacing
+
+                # Estimate characters per line based on font size and usable width
+                # Average character width ≈ font_size_pt * 0.5 (rough heuristic for proportional fonts)
+                avg_char_width_pt = font_size_pt * 0.5
+                chars_per_line = max(1, int(usable_width_pt / avg_char_width_pt))
+
+                # Count lines (word-wrap aware)
+                words = text.split()
+                lines = 1
+                current_line_len = 0
+                for word in words:
+                    word_len = len(word) + 1  # +1 for space
+                    if current_line_len + word_len > chars_per_line:
+                        lines += 1
+                        current_line_len = word_len
+                    else:
+                        current_line_len += word_len
+
+                line_height_pt = font_size_pt * line_spacing_factor
+                return space_before_pt + (lines * line_height_pt) + space_after_pt
+
+            # Map AI text items back to paragraphs so we can use the new text for estimates
+            # all_paragraphs list is out of scope here, so we rebuild a para→new_text map
+            # by walking body paragraphs and matching them in order with full_text_items
+            ai_text_by_para = {}  # id(para_elem) -> new text string
+            text_iter = iter(full_text_items)
+            for para in body_paragraphs:
+                t_content = ''.join(t.text for t in para.findall('.//w:t', namespaces) if t.text)
+                if t_content.strip():
+                    new_t = next(text_iter, None)
+                    if new_t is not None:
+                        ai_text_by_para[id(para)] = str(new_t)
+
+            # Walk header paragraphs until cumulative estimated height exceeds
+            # 2× the original rect height (a generous upper bound search window)
+            cumulative_pt = 0.0
+            header_para_count = 0
+            search_limit_pt = original_height_pt * 2.5
+
+            for para in body_paragraphs:
+                est = _estimate_para_height_pt(
+                    para,
+                    text_override=ai_text_by_para.get(id(para))
+                )
+                cumulative_pt += est
+                header_para_count += 1
+
+                # Check if this paragraph has any non-header indicator (horizontal rule,
+                # long cap-letter section title, or if we've already gone well past original rect)
+                if cumulative_pt > search_limit_pt:
+                    break
+
+                # Stop when we've accounted for more than the original rect height
+                # — anything beyond that is body content, not header
+                if cumulative_pt >= original_height_pt:
+                    break
+
+            needed_height_pt = cumulative_pt
+            print(f"   📏 Estimated header content height: {needed_height_pt:.1f}pt (original rect: {original_height_pt:.1f}pt)")
+
+            # Add a small padding buffer beneath the last header line
+            PADDING_PT = 6.0
+            needed_height_pt += PADDING_PT
+
+            # Only update if the difference is significant (> 2pt) to avoid spurious changes
+            if abs(needed_height_pt - original_height_pt) < 2.0:
+                print("   ✅ Header shading rect height is already correct — no change needed.")
+                return False
+
+            # ------------------------------------------------------------------ #
+            # 3. Apply the new height to the shape element.                       #
+            # ------------------------------------------------------------------ #
+            if shape_style_attr == 'cy':
+                # DrawingML: update the 'cy' attribute in EMU
+                new_cy_emu = int(needed_height_pt * 914400 / 72)
+                shape_elem.set('cy', str(new_cy_emu))
+                print(f"   ✏️  Updated DrawingML shape cy: {new_cy_emu} EMU ({needed_height_pt:.1f}pt)")
+            else:
+                # VML: update the height in the style string
+                current_style = shape_elem.get('style', '')
+                # Replace height:XXXpt (or height:X.Xin etc.) with new value in pt
+                new_height_str = f'{needed_height_pt:.2f}pt'
+                new_style = re.sub(
+                    r'height\s*:\s*[\d.]+(?:pt|in|cm|mm)?',
+                    f'height:{new_height_str}',
+                    current_style
+                )
+                shape_elem.set('style', new_style)
+                print(f"   ✏️  Updated VML shape height: {new_height_str}")
+
+            return True
+
+        except Exception as e:
+            print(f"   ⚠️  Error adjusting header shading rect height: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+
     def _adjust_margins_for_page_count(self, root, namespaces: dict, document_xml_path: str, 
                                         original_file_path: str, temp_dir: str, modified_files: set):
         """

@@ -1803,13 +1803,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
 
             {activeTab === 'details' ? (
                 <>
-                <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'minmax(0, 2fr) minmax(300px, 1fr)', 
-                gap: '2.5rem', 
-                marginBottom: '3rem',
-                alignItems: 'start'
-            }}>
+                <div className="job-details-grid">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                     {/* Remarks moved up to header */}
                     
@@ -1850,7 +1844,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                             AI Insights & Tailoring Summary
                         </div>
                         
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                        <div className="two-col-grid">
                             {/* Resume Changes */}
                             <div>
                                 <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Resume Improvements</h4>

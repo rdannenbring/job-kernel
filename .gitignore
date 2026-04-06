@@ -42,3 +42,29 @@ build/
 # Secrets / local config — never commit these
 backend/config.json
 backend/*.db
+
+# Temporary and debug files
+*.xml
+*.txt
+*.docx
+!resources/*.docx
+!backend/templates/*.docx
+backend/tmp_docx/
+resources/test-output/
+test_*.py
+check_*.py
+compare_*.py
+get_*.py
+head_diff.py
+kill_8000.py
+parse_*.py
+verify_fix.py
+find_bg.py
+diff_xml.py
+base_para.xml
+tail_para.xml
+base_context.xml
+new_context.xml
+first_para_comparison.txt
+xml_base_formatted.xml
+xml_new_formatted.xml
