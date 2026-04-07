@@ -1,14 +1,17 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 import os
 import shutil
 import tempfile
+import hashlib
+import time
 from typing import Optional, List, Dict, Any
 from dotenv import load_dotenv
 import json
 import requests
+import httpx
 
 from services.document_service import DocumentService
 from services.ai_service import AIService
@@ -817,6 +820,7 @@ async def tailor_resume(
             "change_summary": change_summary,
             "diff_data": {
                 "original": original_text_content,
+                "ai_tailored": tailored_text_content,
                 "tailored": tailored_text_content
             },
             "resume_data": tailored_resume_data,
@@ -905,6 +909,7 @@ async def refine_resume(request: RefineRequest):
             "change_summary": change_summary,
             "diff_data": {
                 "original": prev_text,
+                "ai_tailored": new_text,
                 "tailored": new_text
             },
             "resume_data": refined_data,
@@ -1245,6 +1250,128 @@ async def download_file(filename: str):
         content_disposition_type=content_disposition_type
     )
 
+# ===== OnlyOffice Integration =====
+
+ONLYOFFICE_URL = os.getenv("ONLYOFFICE_URL", "http://localhost:8443")
+# Internal URL for OnlyOffice to reach the backend (inside Docker network)
+BACKEND_INTERNAL_URL = os.getenv("BACKEND_INTERNAL_URL", "http://backend:8000")
+# External URL for the browser to reach the backend
+BACKEND_EXTERNAL_URL = os.getenv("BACKEND_EXTERNAL_URL", "http://localhost:8000")
+
+@app.get("/api/onlyoffice/config/{filename:path}")
+async def get_onlyoffice_config(filename: str):
+    """
+    Returns OnlyOffice editor configuration for a given DOCX file.
+    The file must exist in outputs/ or uploads/.
+    """
+    # Find the file
+    file_path = f"outputs/{filename}"
+    if not os.path.exists(file_path):
+        file_path = f"uploads/{filename}"
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail=f"File not found: {filename}")
+    
+    # Generate a unique key based on filename + modification time
+    mtime = os.path.getmtime(file_path)
+    doc_key = hashlib.md5(f"{filename}_{mtime}".encode()).hexdigest()
+    
+    # Document URL that OnlyOffice server can access (internal Docker network)
+    document_url = f"{BACKEND_INTERNAL_URL}/api/download/{filename}"
+    
+    # Callback URL that OnlyOffice will POST to when saving
+    callback_url = f"{BACKEND_INTERNAL_URL}/api/onlyoffice/callback?filename={filename}"
+    
+    config = {
+        "document": {
+            "fileType": "docx",
+            "key": doc_key,
+            "title": filename,
+            "url": document_url,
+            "permissions": {
+                "download": True,
+                "edit": True,
+                "print": True,
+                "review": False,
+                "comment": False,
+            }
+        },
+        "editorConfig": {
+            "callbackUrl": callback_url,
+            "mode": "edit",
+            "lang": "en",
+            "customization": {
+                "autosave": True,
+                "forcesave": True,
+                "compactHeader": False,
+                "compactToolbar": False,
+                "toolbarNoTabs": False,
+                "hideRightMenu": True,
+                "chat": False,
+                "comments": False,
+                "help": False,
+                "plugins": False,
+            },
+            "user": {
+                "id": "user-1",
+                "name": "Resume Editor"
+            }
+        },
+        "type": "desktop",
+        "width": "100%",
+        "height": "100%",
+    }
+    
+    return config
+
+@app.post("/api/onlyoffice/callback")
+async def onlyoffice_callback(request: Request, filename: str = ""):
+    """
+    Callback endpoint for OnlyOffice Document Server.
+    Called when a document is saved or closed.
+    Status codes:
+      1 = editing
+      2 = ready for saving (doc closed)
+      4 = closed with no changes
+      6 = force save
+    """
+    try:
+        body = await request.json()
+        status = body.get("status")
+        download_url = body.get("url")
+        
+        print(f"📝 OnlyOffice callback: status={status}, filename={filename}")
+        
+        if status in (2, 6) and download_url:
+            # Document is ready to save - download the edited file
+            print(f"⬇️ Downloading edited file from: {download_url}")
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.get(download_url)
+                response.raise_for_status()
+                
+                file_path = f"outputs/{filename}"
+                with open(file_path, "wb") as f:
+                    f.write(response.content)
+                
+                print(f"✅ Saved edited file to: {file_path}")
+                
+                # Regenerate PDF from the updated DOCX
+                try:
+                    base_name = os.path.splitext(filename)[0]
+                    pdf_path = f"outputs/{base_name}.pdf"
+                    # Remove '_tailored' suffix if present for PDF naming consistency
+                    document_service.create_pdf_from_docx(file_path, pdf_path)
+                    print(f"✅ Regenerated PDF: {pdf_path}")
+                except Exception as pdf_err:
+                    print(f"⚠️ PDF regeneration failed: {pdf_err}")
+        
+        # OnlyOffice expects {"error": 0} to acknowledge
+        return JSONResponse(content={"error": 0})
+        
+    except Exception as e:
+        print(f"❌ OnlyOffice callback error: {e}")
+        return JSONResponse(content={"error": 0})  # Always return success to prevent retries
+
 @app.get("/api/check-job-url")
 async def check_job_url(url: str):
     """Check if a job URL has already been processed. Returns full application data if found."""
@@ -1458,6 +1585,27 @@ async def capture_job(request: CaptureJobRequest):
     except HTTPException:
         raise
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/resume/sync-manual")
+async def sync_manual_edits(filename: str):
+    """
+    Extract flat text from the potentially manually edited DOCX.
+    This lets the frontend synchronize and show three-way diffs for manual changes.
+    """
+    try:
+        if not filename.endswith('.docx') or '/' in filename or '\\' in filename:
+            raise HTTPException(status_code=400, detail="Invalid filename")
+            
+        file_path = os.path.join("outputs", filename)
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+            
+        text = document_service.extract_text(file_path)
+        return {"text": text}
+    except Exception as e:
+        print(f"Error syncing manual edits: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

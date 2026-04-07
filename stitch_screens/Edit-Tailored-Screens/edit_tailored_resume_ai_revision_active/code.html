@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Resume Pro - AI Revision Assistant</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "error": "#ef4444",
+                        "on-tertiary-fixed": "#4c0519",
+                        "on-secondary-fixed-variant": "#334155",
+                        "surface-bright": "#1e293b",
+                        "on-primary": "#ffffff",
+                        "on-secondary-container": "#cbd5e1",
+                        "error-container": "#450a0a",
+                        "tertiary-container": "#f43f5e22",
+                        "on-tertiary-container": "#fb7185",
+                        "on-surface-variant": "#94a3b8",
+                        "surface": "#101622",
+                        "secondary": "#334155",
+                        "secondary-container": "#1e293b",
+                        "surface-container-high": "#1e293b99",
+                        "outline-variant": "#1e293b",
+                        "on-background": "#f1f5f9",
+                        "surface-container-lowest": "#080c14",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#f43f5e",
+                        "surface-dim": "#0b0f18",
+                        "on-secondary-fixed": "#0f172a",
+                        "on-secondary": "#f8fafc",
+                        "inverse-primary": "#60a5fa",
+                        "outline": "#334155",
+                        "secondary-fixed": "#e2e8f0",
+                        "surface-container-highest": "#2d3748",
+                        "inverse-on-surface": "#0f172a",
+                        "surface-variant": "#1e293b",
+                        "tertiary-fixed": "#ffe4e6",
+                        "on-primary-fixed": "#1e3a8a",
+                        "background": "#101622",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "surface-tint": "#256af4",
+                        "surface-container": "#1e293b80",
+                        "on-error": "#ffffff",
+                        "on-surface": "#f1f5f9",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "inverse-surface": "#f8fafc",
+                        "primary": "#256af4",
+                        "primary-fixed": "#dbeafe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-glow {
+            text-shadow: 0 0 8px rgba(37, 106, 244, 0.4);
+        }
+        .atmosphere-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(37, 106, 244, 0.08) 0%, rgba(37, 106, 244, 0) 70%);
+            filter: blur(60px);
+            z-index: -1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen overflow-x-hidden">
+<div class="atmosphere-glow top-[-200px] left-[-200px]"></div>
+<div class="atmosphere-glow bottom-[-200px] right-[-200px]"></div>
+<!-- Main Layout Container -->
+<div class="relative flex min-h-screen w-full">
+<!-- Fixed Side Navigation (Grounding Anchor) -->
+<aside class="w-64 border-r border-outline-variant flex flex-col bg-surface-dim shrink-0">
+<div class="p-6 flex items-center gap-3">
+<div class="text-primary">
+<svg class="size-8" fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M39.5563 34.1455V13.8546C39.5563 15.708 36.8773 17.3437 32.7927 18.3189C30.2914 18.916 27.263 19.2655 24 19.2655C20.737 19.2655 17.7086 18.916 15.2073 18.3189C11.1227 17.3437 8.44365 15.708 8.44365 13.8546V34.1455C8.44365 35.9988 11.1227 37.6346 15.2073 38.6098C17.7086 39.2069 20.737 39.5564 24 39.5564C27.263 39.5564 30.2914 39.2069 32.7927 38.6098C36.8773 37.6346 39.5563 35.9988 39.5563 34.1455Z" fill="currentColor"></path>
+<path clip-rule="evenodd" d="M10.4485 13.8519C10.4749 13.9271 10.6203 14.246 11.379 14.7361C12.298 15.3298 13.7492 15.9145 15.6717 16.3735C18.0007 16.9296 20.8712 17.2655 24 17.2655C27.1288 17.2655 29.9993 16.9296 32.3283 16.3735C34.2508 15.9145 35.702 15.3298 36.621 14.7361C37.3796 14.246 37.5251 13.9271 37.5515 13.8519C37.5287 13.7876 37.4333 13.5973 37.0635 13.2931C36.5266 12.8516 35.6288 12.3647 34.343 11.9175C31.79 11.0295 28.1333 10.4437 24 10.4437C19.8667 10.4437 16.2099 11.0295 13.657 11.9175C12.3712 12.3647 11.4734 12.8516 10.9365 13.2931C10.5667 13.5973 10.4713 13.7876 10.4485 13.8519ZM37.5563 18.7877C36.3176 19.3925 34.8502 19.8839 33.2571 20.2642C30.5836 20.9025 27.3973 21.2655 24 21.2655C20.6027 21.2655 17.4164 20.9025 14.7429 20.2642C13.1498 19.8839 11.6824 19.3925 10.4436 18.7877V34.1275C10.4515 34.1545 10.5427 34.4867 11.379 35.027C12.298 35.6207 13.7492 36.2054 15.6717 36.6644C18.0007 37.2205 20.8712 37.5564 24 37.5564C27.1288 37.5564 29.9993 37.2205 32.3283 36.6644C34.2508 36.2054 35.702 35.6207 36.621 35.027C37.4573 34.4867 37.5485 34.1546 37.5563 34.1275V18.7877ZM41.5563 13.8546V34.1455C41.5563 36.1078 40.158 37.5042 38.7915 38.3869C37.3498 39.3182 35.4192 40.0389 33.2571 40.5551C30.5836 41.1934 27.3973 41.5564 24 41.5564C20.6027 41.5564 17.4164 41.1934 14.7429 40.5551C12.5808 40.0389 10.6502 39.3182 9.20848 38.3869C7.84205 37.5042 6.44365 36.1078 6.44365 34.1455L6.44365 13.8546C6.44365 12.2684 7.37223 11.0454 8.39581 10.2036C9.43325 9.3505 10.8137 8.67141 12.343 8.13948C15.4203 7.06909 19.5418 6.44366 24 6.44366C28.4582 6.44366 32.5797 7.06909 35.657 8.13948C37.1863 8.67141 38.5667 9.3505 39.6042 10.2036C40.6278 11.0454 41.5563 12.2684 41.5563 13.8546Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-white text-xl font-bold tracking-tight">Resume Pro</h2>
+</div>
+<nav class="flex-1 px-4 py-6 space-y-2">
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-primary-container text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">edit_note</span>
+<span class="text-sm font-semibold uppercase tracking-wider">Editor</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-on-surface-variant hover:bg-secondary-container transition-colors">
+<span class="material-symbols-outlined">dashboard_customize</span>
+<span class="text-sm font-medium tracking-wide">Templates</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-on-surface-variant hover:bg-secondary-container transition-colors">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-sm font-medium tracking-wide">Analysis</span>
+</div>
+<div class="pt-6 pb-2">
+<span class="px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-outline">Configuration</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-on-surface-variant hover:bg-secondary-container transition-colors">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium tracking-wide">Settings</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-on-surface-variant hover:bg-secondary-container transition-colors">
+<span class="material-symbols-outlined">help</span>
+<span class="text-sm font-medium tracking-wide">Help Support</span>
+</div>
+</nav>
+<div class="p-4 mt-auto">
+<div class="glass-panel p-3 rounded-2xl flex items-center gap-3 border-outline/10">
+<div class="size-10 rounded-full bg-cover bg-center ring-2 ring-primary/20" data-alt="professional male portrait with confident expression, neutral gray background, soft studio lighting" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAST1lgRJnX8ZFARVVpw9IZrcfTKIxf3l9LfJu4pznyD4BCStZLNrvAmJuykYfwQ_uMyQ-vWNPBB1f6Cr7489d4fKnXImWBe2vxSeDDZmhVL4UK8S4m6zlj0VC-zn58qQSUCKvmqM3onlRxw2gAIaH7Xxv6lhc9FeaG7uRLmXdC_VKPUoX9b8tsv1csb9R5PYCkWYzBsN9F-ckSGozEMGZk3uy2lXTehUth_oCxneBXUHiF4-6kv_FzDvrCxUZGg6QMTK-kl8FsmXI');"></div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-white">Alex Rivera</span>
+<span class="text-[10px] uppercase tracking-widest text-primary font-bold">Pro Member</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Stage -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- Global Header -->
+<header class="h-16 flex items-center justify-between px-8 border-b border-outline-variant bg-surface-dim/80 backdrop-blur-md">
+<div class="flex items-center gap-2">
+<span class="text-on-surface-variant text-sm font-medium">My Resumes</span>
+<span class="material-symbols-outlined text-outline text-sm">chevron_right</span>
+<span class="text-white text-sm font-bold neon-glow">Senior Product Designer</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-6 mr-4 border-r border-outline-variant pr-6">
+<button class="text-on-surface-variant text-sm font-medium hover:text-white transition-colors">History</button>
+<button class="text-on-surface-variant text-sm font-medium hover:text-white transition-colors">Share</button>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-xl text-sm font-bold tracking-wide transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        Export PDF
+                    </button>
+</div>
+</header>
+<!-- Workspace Content -->
+<div class="flex-1 p-8 overflow-y-auto">
+<div class="max-w-6xl mx-auto space-y-8">
+<!-- Hero/Context -->
+<div class="flex flex-col gap-2">
+<h1 class="text-4xl font-extrabold tracking-tight text-white headline neon-glow">AI Revision Assistant</h1>
+<p class="text-on-surface-variant max-w-2xl leading-relaxed">Direct the AI to refine your experience. Describe the tone, impact, or specific role you're targeting and watch the magic happen.</p>
+</div>
+<!-- Tab Switcher (Glass Container) -->
+<div class="flex items-center gap-2 bg-surface-container-low p-1.5 rounded-2xl w-fit glass-panel">
+<button class="px-6 py-2.5 rounded-xl text-sm font-bold text-on-surface-variant hover:text-white transition-all">
+                            Manual Edit
+                        </button>
+<button class="px-6 py-2.5 rounded-xl text-sm font-bold bg-primary text-white shadow-lg shadow-primary/10">
+                            AI Revision
+                        </button>
+</div>
+<!-- Main Interaction Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- AI Prompt Area (Left Side) -->
+<div class="lg:col-span-5 space-y-6">
+<div class="glass-panel p-6 rounded-3xl space-y-4">
+<div class="flex items-center justify-between">
+<label class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">Revision Instructions</label>
+<span class="text-[10px] text-on-surface-variant">0/500 characters</span>
+</div>
+<textarea class="w-full h-64 bg-surface-container-highest/30 border border-outline/20 rounded-2xl p-5 text-on-surface focus:ring-2 focus:ring-primary/40 focus:outline-none transition-all resize-none placeholder:text-outline" placeholder="E.g., 'Make my leadership experience sound more authoritative and highlight my impact on cross-functional team growth over the last 3 years...'"></textarea>
+<div class="space-y-3 pt-2">
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-outline">Quick Tone Presets</span>
+<div class="flex flex-wrap gap-2">
+<button class="px-4 py-2 bg-surface-container hover:bg-surface-container-high rounded-full text-xs font-semibold text-slate-300 border border-outline/10 transition-colors">Executive</button>
+<button class="px-4 py-2 bg-surface-container hover:bg-surface-container-high rounded-full text-xs font-semibold text-slate-300 border border-outline/10 transition-colors">Creative</button>
+<button class="px-4 py-2 bg-surface-container hover:bg-surface-container-high rounded-full text-xs font-semibold text-slate-300 border border-outline/10 transition-colors">Technical</button>
+<button class="px-4 py-2 bg-surface-container hover:bg-surface-container-high rounded-full text-xs font-semibold text-slate-300 border border-outline/10 transition-colors">Academic</button>
+</div>
+</div>
+<button class="w-full py-4 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold tracking-[0.05em] transition-all flex items-center justify-center gap-3 mt-4 group">
+<span class="material-symbols-outlined text-[20px] group-hover:rotate-180 transition-transform duration-500">auto_awesome</span>
+                                    REGENERATE RESUME
+                                </button>
+</div>
+<!-- Tips/Metadata Panel -->
+<div class="glass-panel p-6 rounded-3xl border-primary/10">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-primary">lightbulb</span>
+<h3 class="text-sm font-bold text-white">AI Pro Tip</h3>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                                    For better results, mention the specific industry keywords you'd like to emphasize. Our engine works best when targeting 3-5 core competencies.
+                                </p>
+</div>
+</div>
+<!-- Preview Canvas (Right Side) -->
+<div class="lg:col-span-7">
+<div class="relative group">
+<!-- Ghost Border effect -->
+<div class="absolute -inset-0.5 bg-gradient-to-b from-primary/20 to-transparent rounded-[33px] blur opacity-30"></div>
+<div class="relative glass-panel rounded-[32px] overflow-hidden min-h-[800px] bg-[#f8fafc] dark:bg-slate-50 flex flex-col">
+<!-- Resume Toolbar Overlay (Editorial feel) -->
+<div class="h-12 border-b border-slate-200 bg-slate-100/80 backdrop-blur px-6 flex items-center justify-between text-slate-600">
+<span class="text-[10px] font-bold uppercase tracking-widest">LIVE PREVIEW</span>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[18px] cursor-pointer hover:text-primary">zoom_in</span>
+<span class="material-symbols-outlined text-[18px] cursor-pointer hover:text-primary">zoom_out</span>
+<span class="material-symbols-outlined text-[18px] cursor-pointer hover:text-primary">fullscreen</span>
+</div>
+</div>
+<!-- Resume Content Placeholder -->
+<div class="p-16 flex-1 text-slate-900 font-serif">
+<div class="flex flex-col items-center text-center mb-12">
+<h2 class="text-4xl font-bold mb-2">Alex Rivera</h2>
+<p class="text-slate-500 text-sm italic">San Francisco, CA • alex.rivera@example.com • (555) 0123-4567</p>
+</div>
+<div class="space-y-8">
+<section>
+<h3 class="text-lg font-bold border-b-2 border-slate-900 mb-4 pb-1">Professional Summary</h3>
+<p class="text-sm leading-relaxed text-slate-700">
+                                                    Results-driven Senior Product Designer with over 8 years of experience leading cross-functional teams in the development of scalable SaaS platforms. Expertise in design systems, user-centric research, and high-fidelity prototyping.
+                                                </p>
+</section>
+<section>
+<h3 class="text-lg font-bold border-b-2 border-slate-900 mb-4 pb-1">Experience</h3>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between items-baseline mb-1">
+<h4 class="font-bold text-md">Lead Product Designer — Stellar Cloud Systems</h4>
+<span class="text-xs font-medium">2020 – Present</span>
+</div>
+<ul class="list-disc list-inside text-sm text-slate-700 space-y-2">
+<li>Spearheaded the complete redesign of the core dashboard, resulting in a 35% increase in user engagement.</li>
+<li>Managed a team of 6 designers across 3 time zones to deliver a unified design system.</li>
+<li>Collaborated with engineering leads to implement accessible UI components using React and Tailwind CSS.</li>
+</ul>
+</div>
+<div>
+<div class="flex justify-between items-baseline mb-1">
+<h4 class="font-bold text-md">Senior Designer — Vertex Digital</h4>
+<span class="text-xs font-medium">2017 – 2020</span>
+</div>
+<ul class="list-disc list-inside text-sm text-slate-700 space-y-2">
+<li>Developed mobile-first interfaces for Fortune 500 clients in the fintech sector.</li>
+<li>Reduced design-to-development handoff time by 50% through automated documentation processes.</li>
+</ul>
+</div>
+</div>
+</section>
+<section>
+<h3 class="text-lg font-bold border-b-2 border-slate-900 mb-4 pb-1">Skills</h3>
+<div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-700">
+<span>UI/UX Design</span>
+<span>Prototyping (Figma)</span>
+<span>Design Systems</span>
+<span>User Research</span>
+<span>Product Strategy</span>
+<span>Frontend Dev (HTML/CSS)</span>
+</div>
+</section>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

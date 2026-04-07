@@ -41,7 +41,25 @@ const ResumeScoringView = ({ diffData, scoreData, onPreview, onEdit, onFinalize 
                 tailoredNodes: diffData?.tailored || "No tailored text available."
             };
         }
-        const differences = diffWords(diffData.original, diffData.tailored);
+        
+        const currentText = diffData.manual_tailored || diffData.tailored || diffData.ai_tailored;
+        const differences = diffWords(diffData.original, currentText);
+        
+        const isAIAddition = (chunkValue) => {
+            const aiText = diffData.ai_tailored || diffData.tailored;
+            if (!aiText) return true; // Default to AI if no baseline
+
+            if (aiText.includes(chunkValue)) return true;
+            
+            // Check word inclusion density for slight formatting diffs
+            const words = chunkValue.trim().split(/\s+/).filter(w => w.length > 2);
+            if (words.length === 0) return true;
+            let matchCount = 0;
+            words.forEach(w => {
+                if (aiText.includes(w)) matchCount++;
+            });
+            return (matchCount / words.length) >= 0.8;
+        };
         
         const originalNodes = differences.map((part, index) => {
             if (part.removed) {
@@ -54,7 +72,12 @@ const ResumeScoringView = ({ diffData, scoreData, onPreview, onEdit, onFinalize 
 
         const tailoredNodes = differences.map((part, index) => {
             if (part.added) {
-                return <span key={index} className="bg-emerald-500/20 text-emerald-300 font-bold px-0.5 rounded">{part.value}</span>;
+                const isAI = isAIAddition(part.value);
+                if (isAI) {
+                    return <span key={index} className="bg-emerald-500/20 text-emerald-300 font-bold px-0.5 rounded border-b border-emerald-500/30" title="AI Added">{part.value}</span>;
+                } else {
+                    return <span key={index} className="bg-purple-500/20 text-purple-300 font-bold px-0.5 rounded border-b border-purple-500/30" title="Manually Added">{part.value}</span>;
+                }
             } else if (!part.removed) {
                 return <span key={index}>{part.value}</span>;
             }
@@ -97,14 +120,17 @@ const ResumeScoringView = ({ diffData, scoreData, onPreview, onEdit, onFinalize 
                             </p>
                         </div>
                         <div className="job-match-glass rounded-2xl overflow-hidden grid grid-cols-2">
-                            {/* Base Header */}
-                            <div className="p-4 border-b border-r border-white/5 bg-white/5">
-                                <span className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Base Resume</span>
-                            </div>
-                            {/* Tailored Header */}
-                            <div className="p-4 border-b border-white/5 bg-white/5 flex justify-between items-center">
-                                <span className="text-[10px] uppercase tracking-widest font-bold job-match-primary">AI-Tailored Resume</span>
-                                <span className="bg-[#256af4]/10 job-match-primary text-[10px] px-2 py-0.5 rounded border border-[#256af4]/20 font-bold">TAILORED DRAFT</span>
+                            {/* Sticky Headers */}
+                            <div className="col-span-2 grid grid-cols-2 border-b border-white/5 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
+                                <span className="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded ml-6 my-4 border border-white/5 font-bold justify-self-start">ORIGINAL DRAFT</span>
+                                <div className="flex items-center gap-4 ml-6 my-4 justify-self-start">
+                                    <span className="bg-[#256af4]/10 job-match-primary text-[10px] px-2 py-0.5 rounded border border-[#256af4]/20 font-bold">TAILORED DRAFT</span>
+                                    <div className="flex gap-3 text-[10px] font-bold tracking-wider">
+                                        <span className="flex items-center gap-1 text-emerald-400"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> AI ADDED</span>
+                                        <span className="flex items-center gap-1 text-purple-400"><span className="w-2 h-2 rounded-full bg-purple-500"></span> MANUALLY ADDED</span>
+                                        <span className="flex items-center gap-1 text-rose-400"><span className="w-2 h-2 rounded-full bg-rose-500"></span> REMOVED</span>
+                                    </div>
+                                </div>
                             </div>
                             {/* Base Side */}
                             <div className="p-6 border-r border-white/5 bg-slate-900/20">

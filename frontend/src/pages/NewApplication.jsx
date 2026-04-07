@@ -82,6 +82,7 @@ function NewApplication({ onComplete }) {
     // Process State
     const [isProcessing, setIsProcessing] = useState(false)
     const [processingMode, setProcessingMode] = useState('resume') // 'resume' or 'cover_letter'
+    const [isRefining, setIsRefining] = useState(false)
     const [error, setError] = useState(null)
     const [isDragging, setIsDragging] = useState(false)
 
@@ -303,7 +304,7 @@ function NewApplication({ onComplete }) {
 
     const handleRefineResume = async () => {
         if (!refineInstructions.trim()) return
-        setIsProcessing(true)
+        setIsRefining(true)
         setError(null)
         try {
             const response = await fetch(`${API_URL}/api/refine-resume`, {
@@ -324,7 +325,7 @@ function NewApplication({ onComplete }) {
         } catch (err) {
             setError(err.message)
         } finally {
-            setIsProcessing(false)
+            setIsRefining(false)
         }
     }
 
@@ -582,8 +583,48 @@ function NewApplication({ onComplete }) {
         )
     }
 
+    const handleFinishEdit = async () => {
+        // Leaving manual edit — sync manually edited text back to state
+        try {
+            const docxPath = result?.files?.docx || '';
+            const docxFilename = docxPath.split('/').pop();
+            
+            if (docxFilename) {
+                const res = await fetch(`${API_URL}/api/resume/sync-manual?filename=${docxFilename}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.text) {
+                        // We split the parsed text by newlines (ignoring empty lines) 
+                        // to reconstruct a 'full_text' array that the AI can use later.
+                        const newFullText = data.text.split('\n').map(s => s.trim()).filter(s => s);
+                        
+                        setResult(prev => ({
+                            ...prev,
+                            diff_data: {
+                                ...prev.diff_data,
+                                manual_tailored: data.text
+                            },
+                            resume_data: {
+                                ...prev.resume_data,
+                                full_text: newFullText.length > 0 ? newFullText : prev.resume_data.full_text
+                            }
+                        }));
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Failed to sync manual edits:", err);
+        }
+        
+        setAppStage('match_scoring');
+    }
+
     // 2.7 Resume Visual Editor
     if (appStage === 'resume_edit') {
+        // Extract just the filename from the API path (e.g. "/api/download/file.docx" -> "file.docx")
+        const docxPath = result?.files?.docx || '';
+        const docxFilename = docxPath.split('/').pop();
+        
         return (
             <ResumeEditor 
                 pdfUrl={result?.files?.pdf ? `${API_URL}${result.files.pdf}` : null}
@@ -592,8 +633,9 @@ function NewApplication({ onComplete }) {
                 refineInstructions={refineInstructions}
                 setRefineInstructions={setRefineInstructions}
                 onRegenerate={handleRefineResume}
-                isRegenerating={isProcessing}
-                onBack={() => setAppStage('match_scoring')}
+                isRegenerating={isRefining}
+                onBack={handleFinishEdit}
+                docxFilename={docxFilename}
             />
         )
     }

@@ -15,6 +15,18 @@ fi
 # We rely on docker-compose.yml reading from shell env or defining it.
 # Ideally, we pass the API KEY.
 
+echo "📦 Syncing frontend dependencies for host IDE..."
+(cd ./frontend && npm install)
+
+echo "📦 Syncing backend dependencies for host IDE..."
+if [ -d "./backend/.venv" ]; then
+    ./backend/.venv/bin/pip install -r ./backend/requirements.txt
+else
+    # Create venv if missing
+    python3 -m venv ./backend/.venv
+    ./backend/.venv/bin/pip install -r ./backend/requirements.txt
+fi
+
 echo "🐳 Building and starting Docker containers..."
 
 # Check if docker needs sudo
@@ -24,3 +36,4 @@ if ! docker info > /dev/null 2>&1; then
 else
     docker-compose --env-file ./backend/.env up --build
 fi
+

@@ -1,104 +1,553 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './JobMatchStyles.css';
 
-const ResumeEditor = ({ pdfUrl, resumeData, refineInstructions, setRefineInstructions, onRegenerate, isRegenerating, onBack }) => {
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const ONLYOFFICE_URL = 'http://localhost:8443';
+
+const ResumeEditor = ({ 
+    pdfUrl, 
+    resumeData, 
+    refineInstructions, 
+    setRefineInstructions, 
+    onRegenerate, 
+    isRegenerating, 
+    onBack,
+    docxFilename
+}) => {
+    const [activeTab, setActiveTab] = useState('manual');
+    const [editorReady, setEditorReady] = useState(false);
+    const [editorError, setEditorError] = useState(null);
+    const [editorLoading, setEditorLoading] = useState(false);
+    const [regenerateStage, setRegenerateStage] = useState(0);
+    const [regenerateText, setRegenerateText] = useState('');
+    const [binaryStream, setBinaryStream] = useState('010101');
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const editorRef = useRef(null);
+    const editorInstanceRef = useRef(null);
+    const initAttemptedRef = useRef(false);
     
-    // Safely parse instructions incase prop is null/undefined
     const safeInstructions = typeof refineInstructions === 'string' ? refineInstructions : '';
-    
-    return (
-        <div className="job-match-bg text-slate-200 font-sans min-h-screen overflow-hidden flex flex-col relative z-50">
-            {/* Top Bar */}
-            <header className="fixed top-0 w-full z-50 job-match-glass border-b border-white/10 flex justify-between items-center px-8 py-4 shadow-lg transition-all">
-                <div className="flex items-center gap-4">
-                    <button onClick={onBack} className="flex items-center gap-2 hover:bg-white/10 p-2 rounded-xl transition-colors">
-                        <span className="material-symbols-outlined text-slate-300">arrow_back</span>
-                        <span className="font-bold text-slate-300">Back</span>
-                    </button>
-                    <span className="text-xl font-bold tracking-tight text-white">Midnight Editor</span>
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 job-match-glass rounded-full text-sm">
-                        <span className="material-symbols-outlined text-sm job-match-primary">auto_awesome</span>
-                        <span className="text-slate-300 font-medium">AI Optimization Mode</span>
+
+    // Tone presets
+    const tonePresets = [
+        { label: 'Executive', prompt: 'Rewrite with an executive tone — emphasize strategic leadership, high-level decision-making, and organizational impact.' },
+        { label: 'Creative', prompt: 'Rewrite with a creative tone — emphasize innovation, design thinking, and unique problem-solving approaches.' },
+        { label: 'Technical', prompt: 'Rewrite with a technical tone — emphasize specific technologies, engineering methodologies, and quantifiable technical achievements.' },
+        { label: 'Academic', prompt: 'Rewrite with an academic tone — emphasize research contributions, publications, and scholarly achievements.' },
+    ];
+
+    // Regeneration animation stages
+    useEffect(() => {
+        if (!isRegenerating) {
+            setRegenerateStage(0);
+            setRegenerateText('');
+            return;
+        }
+
+        const stages = [
+            { stage: 0, text: 'Analyzing revision instructions...', duration: 2000 },
+            { stage: 1, text: 'Extracting key themes & keywords...', duration: 2000 },
+            { stage: 2, text: 'AI Neural Optimization...', duration: 3000 },
+            { stage: 3, text: 'Synthesizing revised resume...', duration: 60000 },
+        ];
+
+        let currentIndex = 0;
+        setRegenerateStage(stages[0].stage);
+        setRegenerateText(stages[0].text);
+
+        const runStage = () => {
+            if (currentIndex >= stages.length) return;
+            setRegenerateStage(stages[currentIndex].stage);
+            setRegenerateText(stages[currentIndex].text);
+            setTimeout(() => {
+                currentIndex++;
+                if (currentIndex < stages.length) runStage();
+            }, stages[currentIndex].duration);
+        };
+        runStage();
+
+        const interval = setInterval(() => {
+            setBinaryStream(Math.random().toString(2).substr(2, 8));
+        }, 100);
+
+        return () => clearInterval(interval);
+    }, [isRegenerating]);
+
+    // Initialize OnlyOffice editor
+    const initEditor = useCallback(async () => {
+        if (!docxFilename || editorInstanceRef.current) return;
+        
+        setEditorLoading(true);
+        setEditorError(null);
+        
+        try {
+            if (typeof window.DocsAPI === 'undefined') {
+                throw new Error('OnlyOffice Document Server is not available. Make sure the onlyoffice container is running.');
+            }
+
+            const res = await fetch(`${API_URL}/api/onlyoffice/config/${docxFilename}`);
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.detail || `Failed to get editor config (${res.status})`);
+            }
+            const config = await res.json();
+
+            if (!editorRef.current) throw new Error('Editor container not ready');
+
+            editorRef.current.innerHTML = '';
+            const placeholderId = 'onlyoffice-editor-' + Date.now();
+            const placeholder = document.createElement('div');
+            placeholder.id = placeholderId;
+            placeholder.style.width = '100%';
+            placeholder.style.height = '100%';
+            editorRef.current.appendChild(placeholder);
+
+            config.events = {
+                onDocumentReady: () => {
+                    setEditorReady(true);
+                    setEditorLoading(false);
+                },
+                onError: (event) => {
+                    setEditorError('Editor error: ' + (event?.data?.message || 'Unknown error'));
+                    setEditorLoading(false);
+                },
+                onDocumentStateChange: (event) => {
+                    // event.data is true if document has unsaved changes
+                    setHasUnsavedChanges(event.data);
+                }
+            };
+
+            editorInstanceRef.current = new window.DocsAPI.DocEditor(placeholderId, config);
+        } catch (err) {
+            setEditorError(err.message);
+            setEditorLoading(false);
+        }
+    }, [docxFilename]);
+
+    const destroyEditor = useCallback(() => {
+        if (editorInstanceRef.current) {
+            try { editorInstanceRef.current.destroyEditor(); } catch (e) {}
+            editorInstanceRef.current = null;
+        }
+        setEditorReady(false);
+        initAttemptedRef.current = false;
+    }, []);
+
+    useEffect(() => {
+        if (activeTab === 'manual' && !initAttemptedRef.current) {
+            initAttemptedRef.current = true;
+            const timer = setTimeout(() => initEditor(), 300);
+            return () => clearTimeout(timer);
+        }
+    }, [activeTab, initEditor]);
+
+    useEffect(() => {
+        return () => destroyEditor();
+    }, [destroyEditor]);
+
+    const handleTabSwitch = (tab) => {
+        if (tab === activeTab) return;
+        if (activeTab === 'manual') destroyEditor();
+        setActiveTab(tab);
+        if (tab === 'manual') initAttemptedRef.current = false;
+    };
+
+    const applyPreset = (preset) => {
+        setRefineInstructions(preset.prompt);
+    };
+
+    // Inline regeneration overlay 
+    const renderRegeneratingOverlay = () => {
+        if (!isRegenerating) return null;
+        return (
+            <div style={{
+                position: 'absolute', inset: 0, zIndex: 50,
+                background: 'var(--bg-overlay, rgba(0,0,0,0.85))',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                borderRadius: '2rem', backdropFilter: 'blur(12px)',
+            }}>
+                {/* Animation */}
+                <div style={{ position: 'relative', width: '140px', height: '140px', marginBottom: '2rem' }}>
+                    {/* Orbiting ring */}
+                    <div style={{
+                        position: 'absolute', inset: 0,
+                        border: '3px solid transparent',
+                        borderTopColor: 'var(--primary, #256af4)',
+                        borderRightColor: 'rgba(37,106,244,0.3)',
+                        borderRadius: '50%',
+                        animation: 'oo-spin 1.2s linear infinite',
+                    }} />
+                    <div style={{
+                        position: 'absolute', inset: '12px',
+                        border: '3px solid transparent',
+                        borderBottomColor: 'var(--primary, #256af4)',
+                        borderLeftColor: 'rgba(37,106,244,0.2)',
+                        borderRadius: '50%',
+                        animation: 'oo-spin 1.8s linear infinite reverse',
+                    }} />
+                    {/* Center icon */}
+                    <div style={{
+                        position: 'absolute', inset: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                        {regenerateStage <= 1 && (
+                            <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', color: 'var(--primary, #256af4)' }}>search</span>
+                        )}
+                        {regenerateStage === 2 && (
+                            <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', color: 'var(--primary, #256af4)', animation: 'pulse-icon 1.5s ease infinite' }}>psychology</span>
+                        )}
+                        {regenerateStage >= 3 && (
+                            <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', color: 'var(--primary, #256af4)' }}>edit_document</span>
+                        )}
                     </div>
+
+                    {/* Synaptic particles for stage 2 */}
+                    {regenerateStage === 2 && [0, 60, 120, 180, 240, 300].map(deg => (
+                        <div key={deg} style={{
+                            position: 'absolute', top: '50%', left: '50%',
+                            width: '6px', height: '6px', borderRadius: '50%',
+                            background: 'var(--primary, #256af4)',
+                            transform: `rotate(${deg}deg) translateX(55px)`,
+                            animation: `pulse-network 1s infinite ${deg % 2 === 0 ? 'ease-in' : 'ease-out'}`,
+                            opacity: 0.7,
+                        }} />
+                    ))}
+                </div>
+
+                {/* Binary stream */}
+                <div style={{
+                    fontFamily: 'monospace', fontSize: '0.7rem',
+                    color: 'rgba(37, 106, 244, 0.4)', letterSpacing: '0.3em',
+                    marginBottom: '1rem',
+                }}>
+                    {binaryStream}
+                </div>
+
+                {/* Status text */}
+                <p style={{
+                    fontSize: '1rem', fontWeight: 600,
+                    color: 'var(--text-primary, #f1f5f9)',
+                    textAlign: 'center', animation: 'fadeInUp 0.4s ease',
+                }}>
+                    {regenerateText}
+                </p>
+
+                {/* Progress dots */}
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+                    {[0, 1, 2, 3].map(i => (
+                        <div key={i} style={{
+                            width: '8px', height: '8px', borderRadius: '50%',
+                            background: i <= regenerateStage ? 'var(--primary, #256af4)' : 'rgba(148, 163, 184, 0.3)',
+                            transition: 'all 0.3s ease',
+                            boxShadow: i <= regenerateStage ? '0 0 8px var(--primary, #256af4)' : 'none',
+                        }} />
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="midnight-editor flex flex-col" style={{ height: '100%', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+            {/* Header Bar */}
+            <header style={{
+                position: 'relative', zIndex: 10,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '0 2rem', height: '60px',
+                background: 'var(--bg-card)',
+                borderBottom: '1px solid var(--border-color-card)',
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button onClick={onBack} style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'var(--text-secondary)', padding: '0.5rem 0.75rem',
+                        borderRadius: '0.75rem', transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                    >
+                        <span className="material-symbols-outlined">arrow_back</span>
+                        <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Back to Scoring</span>
+                    </button>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    {activeTab === 'manual' && editorReady && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', animation: 'pulse-icon 2s infinite' }}></span>
+                            <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>
+                                Live Sync Enabled
+                            </span>
+                        </div>
+                    )}
                 </div>
             </header>
 
-            <div className="flex pt-[72px] h-screen w-full">
-                {/* Editor Panel (Left) */}
-                <section className="w-full lg:w-1/2 p-8 overflow-y-auto job-match-scroll bg-[#0b0f18] flex flex-col h-full">
-                    <div className="flex justify-between items-end mb-8">
-                        <div>
-                            <h1 className="text-3xl font-extrabold text-white tracking-tight mb-1">Editor</h1>
-                            <p className="text-slate-400 text-sm">Refine your AI-tailored resume via instructions</p>
-                        </div>
-                    </div>
+            {/* Main Content */}
+            <div style={{ position: 'relative', zIndex: 5, flex: 1, padding: '1.5rem 2rem', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {/* Tab Switcher */}
+                <div style={{
+                    display: 'flex', alignItems: 'center', gap: '0.25rem',
+                    padding: '0.375rem', borderRadius: '1rem', width: 'fit-content',
+                    background: 'var(--bg-card)', border: '1px solid var(--border-color-card)',
+                }}>
+                    <button 
+                        onClick={() => handleTabSwitch('manual')}
+                        style={{
+                            padding: '0.625rem 1.5rem', borderRadius: '0.75rem',
+                            fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase',
+                            letterSpacing: '0.1em', cursor: 'pointer', border: 'none',
+                            transition: 'all 0.2s',
+                            background: activeTab === 'manual' ? 'var(--primary)' : 'transparent',
+                            color: activeTab === 'manual' ? '#fff' : 'var(--text-muted)',
+                            boxShadow: activeTab === 'manual' ? '0 4px 15px -3px rgba(37, 106, 244, 0.3)' : 'none',
+                        }}
+                    >
+                        Manual Edit
+                    </button>
+                    <button 
+                        onClick={() => handleTabSwitch('ai')}
+                        style={{
+                            padding: '0.625rem 1.5rem', borderRadius: '0.75rem',
+                            fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase',
+                            letterSpacing: '0.1em', cursor: 'pointer', border: 'none',
+                            transition: 'all 0.2s',
+                            background: activeTab === 'ai' ? 'var(--primary)' : 'transparent',
+                            color: activeTab === 'ai' ? '#fff' : 'var(--text-muted)',
+                            boxShadow: activeTab === 'ai' ? '0 4px 15px -3px rgba(37, 106, 244, 0.3)' : 'none',
+                        }}
+                    >
+                        AI Revision
+                    </button>
+                </div>
 
-                    <div className="space-y-8 flex-1">
-                        {/* Refinement Tool Section */}
-                        <div className="job-match-glass p-6 rounded-2xl relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-[#256af4]/5 blur-3xl -z-10 transition-all group-hover:bg-[#256af4]/10"></div>
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-lg font-bold text-white job-match-neon flex items-center gap-2">
-                                    <span className="material-symbols-outlined">edit_note</span> Prompt Tuning
-                                </h2>
+                {/* ===== MANUAL EDIT TAB ===== */}
+                {activeTab === 'manual' && (
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                        <div style={{
+                            flex: 1, borderRadius: '1rem', overflow: 'hidden',
+                            display: 'flex', flexDirection: 'column', minHeight: '500px',
+                            background: 'var(--bg-card)', border: '1px solid var(--border-color-card)',
+                        }}>
+                            <div style={{
+                                padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                                background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning, #f59e0b)', borderBottom: '1px solid rgba(245, 158, 11, 0.2)',
+                                fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em'
+                            }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>save</span>
+                                Remember to click the Save icon within the editor before returning to scoring
                             </div>
-                            <div className="space-y-4">
-                                <p className="text-sm text-slate-400">The underlying layout is built via Word templates. To make changes, describe exactly what you want the AI to rewrite, add, or remove, then regenerate.</p>
-                                <textarea 
-                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-4 text-slate-300 text-sm focus:outline-none focus:border-[#256af4] focus:ring-1 focus:ring-[#256af4] transition-all min-h-[160px]" 
-                                    placeholder="e.g. 'Shorten the summary', 'Add my experience with React to the PixelVault job', 'Make the tone more aggressive'..."
-                                    value={safeInstructions}
-                                    onChange={(e) => setRefineInstructions(e.target.value)}
-                                />
-                                <button 
-                                    onClick={onRegenerate}
-                                    disabled={isRegenerating || !safeInstructions.trim()}
-                                    className="w-full job-match-primary-bg text-white px-4 py-3 rounded-lg text-sm font-bold uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
-                                >
-                                    {isRegenerating ? <span className="material-symbols-outlined animate-spin text-lg">sync</span> : <span className="material-symbols-outlined text-lg">auto_awesome</span>}
-                                    {isRegenerating ? 'Regenerating...' : 'Apply & Regenerate'}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Read-only Data Section (To mimic the layout while exposing raw info) */}
-                        <div className="job-match-glass p-6 rounded-2xl opacity-75">
-                            <h2 className="text-lg font-bold text-white mb-4">Underlying Data Snapshot</h2>
-                            <textarea 
-                                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-slate-400 text-xs font-mono h-[300px]" 
-                                readOnly
-                                value={resumeData?.full_text || JSON.stringify(resumeData, null, 2)}
+                            {editorError ? (
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', padding: '2rem' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', color: 'var(--error)' }}>error_outline</span>
+                                    <p style={{ color: 'var(--text-secondary)', textAlign: 'center', maxWidth: '30rem' }}>{editorError}</p>
+                                    <button 
+                                        onClick={() => { destroyEditor(); initAttemptedRef.current = false; setEditorError(null); }}
+                                        style={{
+                                            padding: '0.625rem 1.5rem', borderRadius: '0.75rem',
+                                            fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer',
+                                            background: 'var(--bg-tertiary)', border: '1px solid var(--border-color-card)',
+                                            color: 'var(--text-primary)', transition: 'all 0.2s',
+                                        }}
+                                    >
+                                        Retry
+                                    </button>
+                                </div>
+                            ) : editorLoading ? (
+                                <div className="oo-loading" style={{ flex: 1 }}>
+                                    <div className="spinner"></div>
+                                    <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Loading document editor...</span>
+                                </div>
+                            ) : null}
+                            <div 
+                                ref={editorRef} 
+                                className="onlyoffice-container"
+                                style={{ flex: 1, display: editorError ? 'none' : 'block', minHeight: '500px' }}
                             />
                         </div>
-                    </div>
-                </section>
 
-                {/* Preview Panel (Right) */}
-                <section className="hidden lg:flex w-1/2 p-8 flex-col items-center overflow-y-auto job-match-scroll relative bg-slate-900 border-l border-white/5">
-                    <div className="absolute top-1/4 right-0 w-96 h-96 bg-[#256af4]/5 blur-[120px] rounded-full pointer-events-none"></div>
-                    <div className="w-full max-w-[800px] mb-6 flex justify-between items-center px-4">
-                        <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Live Document File</span>
+                        {/* Status Bar */}
+                        <div style={{
+                            height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '0 1.5rem',
+                            borderTop: '1px solid var(--border-color-card)',
+                            background: 'var(--bg-secondary)',
+                        }}>
+                            <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>
+                                {docxFilename || 'No file loaded'}
+                            </span>
+                            <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--primary)' }}>
+                                Manual Editing Mode
+                            </span>
+                        </div>
                     </div>
+                )}
 
-                    {/* PDF Layout Mockup */}
-                    <div className="w-full max-w-[800px] flex-1 bg-slate-800/50 rounded-lg overflow-hidden border border-white/10 relative shadow-2xl">
-                         {pdfUrl ? (
-                            <iframe 
-                                src={`${pdfUrl}#toolbar=0&navpanes=0`} 
-                                className="w-full h-[800px]"
-                                title="Resume PDF Split"
-                                style={{ background: 'white' }}
-                            />
-                        ) : (
-                            <div className="text-slate-400 m-auto flex flex-col items-center mt-32">
-                                <span className="material-symbols-outlined text-4xl mb-2">error</span>
-                                <p>Preview not available right now.</p>
+                {/* ===== AI REVISION TAB ===== */}
+                {activeTab === 'ai' && (
+                    <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+                        {renderRegeneratingOverlay()}
+                        
+                        <div style={{
+                            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem',
+                            height: '100%', alignItems: 'start',
+                        }}>
+                            {/* Left Column: AI Prompt */}
+                            <div className="midnight-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', overflow: 'auto', maxHeight: 'calc(100vh - 200px)' }}>
+                                {/* Revision Instructions Card */}
+                                <div style={{
+                                    padding: '1.5rem', borderRadius: '1.5rem',
+                                    background: 'var(--bg-card)', border: '1px solid var(--border-color-card)',
+                                    display: 'flex', flexDirection: 'column', gap: '1rem',
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <label style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--primary)' }}>
+                                            Revision Instructions
+                                        </label>
+                                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                                            {safeInstructions.length}/500 characters
+                                        </span>
+                                    </div>
+                                    <textarea 
+                                        className="form-textarea"
+                                        style={{
+                                            height: '14rem', resize: 'none',
+                                            borderRadius: '1rem',
+                                            background: 'var(--bg-input)',
+                                            border: '1px solid var(--border-color-input)',
+                                            color: 'var(--text-primary)',
+                                            padding: '1.25rem',
+                                        }}
+                                        placeholder="E.g., 'Make my leadership experience sound more authoritative and highlight my impact on cross-functional team growth over the last 3 years...'"
+                                        value={safeInstructions}
+                                        onChange={(e) => setRefineInstructions(e.target.value.slice(0, 500))}
+                                    />
+                                    
+                                    {/* Tone Presets */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '0.5rem' }}>
+                                        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)' }}>
+                                            Quick Tone Presets
+                                        </span>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                            {tonePresets.map((preset) => (
+                                                <button 
+                                                    key={preset.label}
+                                                    onClick={() => applyPreset(preset)}
+                                                    style={{
+                                                        padding: '0.5rem 1rem', borderRadius: '9999px',
+                                                        fontSize: '0.75rem', fontWeight: 600,
+                                                        color: 'var(--text-secondary)',
+                                                        background: 'var(--bg-tertiary)',
+                                                        border: '1px solid var(--border-color-card)',
+                                                        cursor: 'pointer', transition: 'all 0.2s',
+                                                    }}
+                                                    onMouseEnter={e => {
+                                                        e.currentTarget.style.borderColor = 'rgba(37,106,244,0.4)';
+                                                        e.currentTarget.style.color = 'var(--primary)';
+                                                    }}
+                                                    onMouseLeave={e => {
+                                                        e.currentTarget.style.borderColor = 'var(--border-color-card)';
+                                                        e.currentTarget.style.color = 'var(--text-secondary)';
+                                                    }}
+                                                >
+                                                    {preset.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Regenerate Button */}
+                                    <button 
+                                        onClick={onRegenerate}
+                                        disabled={isRegenerating || !safeInstructions.trim()}
+                                        className="btn btn-primary"
+                                        style={{
+                                            width: '100%', padding: '1rem',
+                                            borderRadius: '1rem', fontWeight: 700,
+                                            letterSpacing: '0.05em', fontSize: '0.9rem',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
+                                            marginTop: '0.5rem',
+                                        }}
+                                    >
+                                        {isRegenerating ? (
+                                            <>
+                                                <span className="material-symbols-outlined" style={{ fontSize: '20px', animation: 'oo-spin 0.8s linear infinite' }}>sync</span>
+                                                REGENERATING...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>auto_awesome</span>
+                                                REGENERATE RESUME
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* AI Pro Tip */}
+                                <div style={{
+                                    padding: '1.5rem', borderRadius: '1.5rem',
+                                    background: 'var(--bg-card)', border: '1px solid var(--border-color-card)',
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                                        <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>lightbulb</span>
+                                        <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>AI Pro Tip</h3>
+                                    </div>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.7 }}>
+                                        For better results, mention the specific industry keywords you'd like to emphasize. 
+                                        Our engine works best when targeting 3-5 core competencies.
+                                    </p>
+                                </div>
                             </div>
-                        )}
+
+                            {/* Right Column: Live Preview */}
+                            <div style={{ height: 'calc(100vh - 200px)' }}>
+                                <div className="preview-ghost-border" style={{
+                                    height: '100%', borderRadius: '2rem', overflow: 'hidden',
+                                    display: 'flex', flexDirection: 'column',
+                                    background: '#f8fafc',
+                                    border: '1px solid var(--border-color-card)',
+                                }}>
+                                    {/* Preview Toolbar */}
+                                    <div style={{
+                                        height: '3rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                        padding: '0 1.5rem',
+                                        borderBottom: '1px solid #e2e8f0', background: 'rgba(241, 245, 249, 0.8)',
+                                        backdropFilter: 'blur(8px)',
+                                    }}>
+                                        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#64748b' }}>
+                                            LIVE PREVIEW
+                                        </span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                            {pdfUrl && (
+                                                <a href={pdfUrl} target="_blank" rel="noreferrer" 
+                                                   className="material-symbols-outlined" 
+                                                   style={{ fontSize: '18px', color: '#64748b', textDecoration: 'none', cursor: 'pointer' }}>
+                                                    open_in_new
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* PDF Preview */}
+                                    <div style={{ flex: 1 }}>
+                                        {pdfUrl ? (
+                                            <iframe 
+                                                src={`${pdfUrl}#toolbar=0&navpanes=0`}
+                                                style={{ width: '100%', height: '100%', border: 'none', background: 'white' }}
+                                                title="Resume PDF Preview"
+                                            />
+                                        ) : (
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '0.5rem', color: '#94a3b8' }}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: '2.5rem' }}>description</span>
+                                                <p>Preview will appear after generation</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </section>
+                )}
             </div>
         </div>
     );
