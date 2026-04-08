@@ -46,24 +46,30 @@ const ResumeScoringView = ({ diffData, scoreData, onPreview, onEdit, onFinalize 
         const differences = diffWords(diffData.original, currentText);
         
         const isAIAddition = (chunkValue) => {
-            const aiText = diffData.ai_tailored || diffData.tailored;
+            const aiText = (diffData.ai_tailored || diffData.tailored || "").trim();
             if (!aiText) return true; // Default to AI if no baseline
-
-            if (aiText.includes(chunkValue)) return true;
             
-            // Check word inclusion density for slight formatting diffs
-            const words = chunkValue.trim().split(/\s+/).filter(w => w.length > 2);
-            if (words.length === 0) return true;
-            let matchCount = 0;
-            words.forEach(w => {
-                if (aiText.includes(w)) matchCount++;
-            });
-            return (matchCount / words.length) >= 0.8;
+            const trimmedChunk = chunkValue.trim();
+            if (!trimmedChunk) return true; // Whitespace only
+
+            if (aiText.includes(trimmedChunk)) return true;
+            
+            // If the chunk is very short, just rely on the above.
+            // If it's longer and not found exactly, it's likely manual.
+            return false;
         };
         
         const originalNodes = differences.map((part, index) => {
             if (part.removed) {
-                return <span key={index} className="bg-rose-500/20 text-rose-300 line-through px-0.5 rounded">{part.value}</span>;
+                // If it was removed from original, but was PRESENT in AI tailored, then USER removed it.
+                // If it was NOT in AI tailored, then AI removed it.
+                const aiText = diffData.ai_tailored || diffData.tailored || "";
+                const isUserRemoval = aiText.includes(part.value.trim());
+                
+                if (isUserRemoval && part.value.trim().length > 0) {
+                    return <span key={index} className="bg-purple-500/20 text-purple-300 line-through px-0.5 rounded" title="Manually Removed">{part.value}</span>;
+                }
+                return <span key={index} className="bg-rose-500/20 text-rose-300 line-through px-0.5 rounded" title="AI Removed">{part.value}</span>;
             } else if (!part.added) {
                 return <span key={index}>{part.value}</span>;
             }
@@ -127,8 +133,8 @@ const ResumeScoringView = ({ diffData, scoreData, onPreview, onEdit, onFinalize 
                                     <span className="bg-[#256af4]/10 job-match-primary text-[10px] px-2 py-0.5 rounded border border-[#256af4]/20 font-bold">TAILORED DRAFT</span>
                                     <div className="flex gap-3 text-[10px] font-bold tracking-wider">
                                         <span className="flex items-center gap-1 text-emerald-400"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> AI ADDED</span>
-                                        <span className="flex items-center gap-1 text-purple-400"><span className="w-2 h-2 rounded-full bg-purple-500"></span> MANUALLY ADDED</span>
-                                        <span className="flex items-center gap-1 text-rose-400"><span className="w-2 h-2 rounded-full bg-rose-500"></span> REMOVED</span>
+                                        <span className="flex items-center gap-1 text-purple-400"><span className="w-2 h-2 rounded-full bg-purple-500"></span> MANUAL CHANGES</span>
+                                        <span className="flex items-center gap-1 text-rose-400"><span className="w-2 h-2 rounded-full bg-rose-500"></span> AI REMOVED</span>
                                     </div>
                                 </div>
                             </div>

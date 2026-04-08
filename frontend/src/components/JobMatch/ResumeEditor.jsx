@@ -12,9 +12,14 @@ const ResumeEditor = ({
     onRegenerate, 
     isRegenerating, 
     onBack,
-    docxFilename
+    docxFilename,
+    pendingRefinement,
+    onApproveRefinement,
+    onDeclineRefinement,
+    onSync,
+    initialTab = null
 }) => {
-    const [activeTab, setActiveTab] = useState('manual');
+    const [activeTab, setActiveTab] = useState(initialTab || (pendingRefinement ? 'ai' : 'manual'));
     const [editorReady, setEditorReady] = useState(false);
     const [editorError, setEditorError] = useState(null);
     const [editorLoading, setEditorLoading] = useState(false);
@@ -22,6 +27,7 @@ const ResumeEditor = ({
     const [regenerateText, setRegenerateText] = useState('');
     const [binaryStream, setBinaryStream] = useState('010101');
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [previewTimestamp, setPreviewTimestamp] = useState(Date.now());
     const editorRef = useRef(null);
     const editorInstanceRef = useRef(null);
     const initAttemptedRef = useRef(false);
@@ -35,6 +41,10 @@ const ResumeEditor = ({
         { label: 'Technical', prompt: 'Rewrite with a technical tone — emphasize specific technologies, engineering methodologies, and quantifiable technical achievements.' },
         { label: 'Academic', prompt: 'Rewrite with an academic tone — emphasize research contributions, publications, and scholarly achievements.' },
     ];
+
+    useEffect(() => {
+        setPreviewTimestamp(Date.now());
+    }, [pdfUrl, pendingRefinement]);
 
     // Regeneration animation stages
     useEffect(() => {
@@ -85,7 +95,13 @@ const ResumeEditor = ({
                 throw new Error('OnlyOffice Document Server is not available. Make sure the onlyoffice container is running.');
             }
 
-            const res = await fetch(`${API_URL}/api/onlyoffice/config/${docxFilename}`);
+            const configUrl = new URL(`${API_URL}/api/onlyoffice/config/${docxFilename}`);
+            configUrl.searchParams.append('t', Date.now());
+            if (applicationId) {
+                configUrl.searchParams.append('application_id', applicationId);
+            }
+
+            const res = await fetch(configUrl.toString());
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
                 throw new Error(errData.detail || `Failed to get editor config (${res.status})`);
@@ -134,12 +150,14 @@ const ResumeEditor = ({
     }, []);
 
     useEffect(() => {
-        if (activeTab === 'manual' && !initAttemptedRef.current) {
+        if (activeTab === 'manual') {
+            // If filename changed, we MUST destroy the old editor session first
+            destroyEditor();
             initAttemptedRef.current = true;
             const timer = setTimeout(() => initEditor(), 300);
             return () => clearTimeout(timer);
         }
-    }, [activeTab, initEditor]);
+    }, [activeTab, initEditor, docxFilename, destroyEditor]);
 
     useEffect(() => {
         return () => destroyEditor();
@@ -147,13 +165,23 @@ const ResumeEditor = ({
 
     const handleTabSwitch = (tab) => {
         if (tab === activeTab) return;
-        if (activeTab === 'manual') destroyEditor();
+        if (activeTab === 'manual') {
+            destroyEditor();
+            if (onSync) onSync();
+        }
         setActiveTab(tab);
         if (tab === 'manual') initAttemptedRef.current = false;
     };
 
     const applyPreset = (preset) => {
         setRefineInstructions(preset.prompt);
+    };
+
+    const handleBackClick = () => {
+        if (activeTab === 'manual' && onSync) {
+            onSync();
+        }
+        onBack();
     };
 
     // Inline regeneration overlay 
@@ -258,14 +286,16 @@ const ResumeEditor = ({
                 borderBottom: '1px solid var(--border-color-card)',
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <button onClick={onBack} style={{
-                        display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: 'var(--text-secondary)', padding: '0.5rem 0.75rem',
-                        borderRadius: '0.75rem', transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                    <button 
+                        onClick={handleBackClick} 
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '0.5rem',
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            color: 'var(--text-secondary)', padding: '0.5rem 0.75rem',
+                            borderRadius: '0.75rem', transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
                     >
                         <span className="material-symbols-outlined">arrow_back</span>
                         <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Back to Scoring</span>
@@ -394,6 +424,55 @@ const ResumeEditor = ({
                         }}>
                             {/* Left Column: AI Prompt */}
                             <div className="midnight-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', overflow: 'auto', maxHeight: 'calc(100vh - 200px)' }}>
+                                {pendingRefinement && (
+                                    <div style={{
+                                        padding: '1.5rem', borderRadius: '1.5rem',
+                                        background: 'rgba(37, 106, 244, 0.05)', border: '1px solid var(--primary)',
+                                        display: 'flex', flexDirection: 'column', gap: '1rem',
+                                        animation: 'fadeInUp 0.4s ease'
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>auto_awesome</span>
+                                            <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>Proposed Changes</h3>
+                                        </div>
+                                        
+                                        <ul style={{ margin: 0, paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                            {(pendingRefinement.change_summary || []).length > 0 ? (
+                                                pendingRefinement.change_summary.map((change, i) => (
+                                                    <li key={i} style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.5 }}>
+                                                        {change}
+                                                    </li>
+                                                ))
+                                            ) : (
+                                                <li style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                                                    The AI has optimized your resume based on your instructions.
+                                                </li>
+                                            )}
+                                        </ul>
+
+                                        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                                            <button 
+                                                onClick={onApproveRefinement}
+                                                disabled={isRegenerating}
+                                                className="btn btn-primary"
+                                                style={{ flex: 1, padding: '0.75rem', fontSize: '0.8rem', gap: '0.4rem' }}
+                                            >
+                                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
+                                                KEEP CHANGES
+                                            </button>
+                                            <button 
+                                                onClick={onDeclineRefinement}
+                                                disabled={isRegenerating}
+                                                className="btn-util"
+                                                style={{ flex: 1, padding: '0.75rem', fontSize: '0.8rem', background: 'transparent', border: '1px solid var(--border-color-card)', gap: '0.4rem' }}
+                                            >
+                                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>cancel</span>
+                                                DISCARD
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Revision Instructions Card */}
                                 <div style={{
                                     padding: '1.5rem', borderRadius: '1.5rem',
@@ -402,7 +481,7 @@ const ResumeEditor = ({
                                 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                         <label style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--primary)' }}>
-                                            Revision Instructions
+                                            {pendingRefinement ? 'Refine Instructions Further' : 'Revision Instructions'}
                                         </label>
                                         <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
                                             {safeInstructions.length}/500 characters
@@ -411,50 +490,53 @@ const ResumeEditor = ({
                                     <textarea 
                                         className="form-textarea"
                                         style={{
-                                            height: '14rem', resize: 'none',
+                                            height: pendingRefinement ? '8rem' : '14rem', resize: 'none',
                                             borderRadius: '1rem',
                                             background: 'var(--bg-input)',
                                             border: '1px solid var(--border-color-input)',
                                             color: 'var(--text-primary)',
                                             padding: '1.25rem',
+                                            transition: 'height 0.3s ease'
                                         }}
                                         placeholder="E.g., 'Make my leadership experience sound more authoritative and highlight my impact on cross-functional team growth over the last 3 years...'"
                                         value={safeInstructions}
                                         onChange={(e) => setRefineInstructions(e.target.value.slice(0, 500))}
                                     />
                                     
-                                    {/* Tone Presets */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '0.5rem' }}>
-                                        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)' }}>
-                                            Quick Tone Presets
-                                        </span>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                            {tonePresets.map((preset) => (
-                                                <button 
-                                                    key={preset.label}
-                                                    onClick={() => applyPreset(preset)}
-                                                    style={{
-                                                        padding: '0.5rem 1rem', borderRadius: '9999px',
-                                                        fontSize: '0.75rem', fontWeight: 600,
-                                                        color: 'var(--text-secondary)',
-                                                        background: 'var(--bg-tertiary)',
-                                                        border: '1px solid var(--border-color-card)',
-                                                        cursor: 'pointer', transition: 'all 0.2s',
-                                                    }}
-                                                    onMouseEnter={e => {
-                                                        e.currentTarget.style.borderColor = 'rgba(37,106,244,0.4)';
-                                                        e.currentTarget.style.color = 'var(--primary)';
-                                                    }}
-                                                    onMouseLeave={e => {
-                                                        e.currentTarget.style.borderColor = 'var(--border-color-card)';
-                                                        e.currentTarget.style.color = 'var(--text-secondary)';
-                                                    }}
-                                                >
-                                                    {preset.label}
-                                                </button>
-                                            ))}
+                                    {/* Tone Presets (Only show if NOT currently reviewing a refinement) */}
+                                    {!pendingRefinement && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '0.5rem' }}>
+                                            <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--text-muted)' }}>
+                                                Quick Tone Presets
+                                            </span>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                                {tonePresets.map((preset) => (
+                                                    <button 
+                                                        key={preset.label}
+                                                        onClick={() => applyPreset(preset)}
+                                                        style={{
+                                                            padding: '0.5rem 1rem', borderRadius: '9999px',
+                                                            fontSize: '0.75rem', fontWeight: 600,
+                                                            color: 'var(--text-secondary)',
+                                                            background: 'var(--bg-tertiary)',
+                                                            border: '1px solid var(--border-color-card)',
+                                                            cursor: 'pointer', transition: 'all 0.2s',
+                                                        }}
+                                                        onMouseEnter={e => {
+                                                            e.currentTarget.style.borderColor = 'rgba(37,106,244,0.4)';
+                                                            e.currentTarget.style.color = 'var(--primary)';
+                                                        }}
+                                                        onMouseLeave={e => {
+                                                            e.currentTarget.style.borderColor = 'var(--border-color-card)';
+                                                            e.currentTarget.style.color = 'var(--text-secondary)';
+                                                        }}
+                                                    >
+                                                        {preset.label}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
 
                                     {/* Regenerate Button */}
                                     <button 
@@ -472,12 +554,12 @@ const ResumeEditor = ({
                                         {isRegenerating ? (
                                             <>
                                                 <span className="material-symbols-outlined" style={{ fontSize: '20px', animation: 'oo-spin 0.8s linear infinite' }}>sync</span>
-                                                REGENERATING...
+                                                {pendingRefinement ? 'UPDATING...' : 'REGENERATING...'}
                                             </>
                                         ) : (
                                             <>
                                                 <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>auto_awesome</span>
-                                                REGENERATE RESUME
+                                                {pendingRefinement ? 'UPDATE SUGGESTION' : 'REGENERATE RESUME'}
                                             </>
                                         )}
                                     </button>
@@ -514,8 +596,8 @@ const ResumeEditor = ({
                                         borderBottom: '1px solid #e2e8f0', background: 'rgba(241, 245, 249, 0.8)',
                                         backdropFilter: 'blur(8px)',
                                     }}>
-                                        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#64748b' }}>
-                                            LIVE PREVIEW
+                                        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: pendingRefinement ? 'var(--primary)' : '#64748b' }}>
+                                            {pendingRefinement ? 'PROPOSED REVISION' : 'LIVE PREVIEW'}
                                         </span>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                             {pdfUrl && (
@@ -530,10 +612,11 @@ const ResumeEditor = ({
 
                                     {/* PDF Preview */}
                                     <div style={{ flex: 1 }}>
-                                        {pdfUrl ? (
+                                        { (pendingRefinement ? `${API_URL}${pendingRefinement.files.pdf}` : pdfUrl) ? (
                                             <iframe 
-                                                src={`${pdfUrl}#toolbar=0&navpanes=0`}
+                                                src={`${pendingRefinement ? `${API_URL}${pendingRefinement.files.pdf}` : pdfUrl}?t=${previewTimestamp}#toolbar=0&navpanes=0`}
                                                 style={{ width: '100%', height: '100%', border: 'none', background: 'white' }}
+                                                key={pendingRefinement ? pendingRefinement.files.pdf : pdfUrl}
                                                 title="Resume PDF Preview"
                                             />
                                         ) : (

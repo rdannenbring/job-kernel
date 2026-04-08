@@ -98,7 +98,9 @@ CRITICAL RULES:
 4. **PRESERVE ALL FORMATTING AND MARKUP**: You MUST exactly preserve any markdown or formatting characters from the original content. Only replace text content to address the instruction, leaving any markup around it unchanged.
 5. **URL CLEANING**: Continue cleaning web addresses by removing "http://", "https://", and "www.".
 
-Return the updated resume in the same JSON structure.""",
+Return the updated resume in the SAME JSON structure as the input, with only the text content modified.
+
+Additionally, include a "change_summary" field with a concise list of 3-5 bullet points explaining exactly what was updated based on the instructions (e.g. "Increased technical depth in the Experience section", "Emphasized leadership skills per your request").""",
     "extract_profile": """Extract structured data from the resume text below.
         
 RESUME TEXT:

@@ -1259,7 +1259,7 @@ BACKEND_INTERNAL_URL = os.getenv("BACKEND_INTERNAL_URL", "http://backend:8000")
 BACKEND_EXTERNAL_URL = os.getenv("BACKEND_EXTERNAL_URL", "http://localhost:8000")
 
 @app.get("/api/onlyoffice/config/{filename:path}")
-async def get_onlyoffice_config(filename: str):
+async def get_onlyoffice_config(filename: str, application_id: Optional[int] = None):
     """
     Returns OnlyOffice editor configuration for a given DOCX file.
     The file must exist in outputs/ or uploads/.
@@ -1271,15 +1271,20 @@ async def get_onlyoffice_config(filename: str):
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail=f"File not found: {filename}")
     
-    # Generate a unique key based on filename + modification time
+    # Generate a unique key based on filename + modification time + random salt
+    # Using a high-resolution salt ensures that every time the editor is opened, 
+    # it's a fresh session, which avoids "Version Changed" errors after saves.
     mtime = os.path.getmtime(file_path)
-    doc_key = hashlib.md5(f"{filename}_{mtime}".encode()).hexdigest()
+    doc_key = hashlib.md5(f"{filename}_{mtime}_{time.time_ns()}".encode()).hexdigest()
     
     # Document URL that OnlyOffice server can access (internal Docker network)
-    document_url = f"{BACKEND_INTERNAL_URL}/api/download/{filename}"
+    # Add a version parameter to force clearing of OnlyOffice internal cache
+    document_url = f"{BACKEND_INTERNAL_URL}/api/download/{filename}?v={int(mtime)}"
     
-    # Callback URL that OnlyOffice will POST to when saving
-    callback_url = f"{BACKEND_INTERNAL_URL}/api/onlyoffice/callback?filename={filename}"
+    # Add application_id to callback if provided
+    callback_query = f"filename={filename}"
+    if application_id:
+        callback_query += f"&application_id={application_id}"
     
     config = {
         "document": {
@@ -1296,7 +1301,7 @@ async def get_onlyoffice_config(filename: str):
             }
         },
         "editorConfig": {
-            "callbackUrl": callback_url,
+            "callbackUrl": f"{BACKEND_INTERNAL_URL}/api/onlyoffice/callback?{callback_query}",
             "mode": "edit",
             "lang": "en",
             "customization": {
@@ -1324,7 +1329,7 @@ async def get_onlyoffice_config(filename: str):
     return config
 
 @app.post("/api/onlyoffice/callback")
-async def onlyoffice_callback(request: Request, filename: str = ""):
+async def onlyoffice_callback(request: Request, filename: str, application_id: Optional[int] = None):
     """
     Callback endpoint for OnlyOffice Document Server.
     Called when a document is saved or closed.
@@ -1359,11 +1364,47 @@ async def onlyoffice_callback(request: Request, filename: str = ""):
                 try:
                     base_name = os.path.splitext(filename)[0]
                     pdf_path = f"outputs/{base_name}.pdf"
-                    # Remove '_tailored' suffix if present for PDF naming consistency
                     document_service.create_pdf_from_docx(file_path, pdf_path)
                     print(f"✅ Regenerated PDF: {pdf_path}")
                 except Exception as pdf_err:
                     print(f"⚠️ PDF regeneration failed: {pdf_err}")
+                
+                # Sync updated text to database if application_id is provided
+                if application_id:
+                    try:
+                        print(f"🔄 Syncing manual edits to database for application {application_id}")
+                        doc_data = document_service.parse_docx(file_path)
+                        manual_text = "\n\n".join(doc_data.get("full_text", []))
+                        
+                        # Get current application
+                        app = database_service.get_application_by_id(application_id)
+                        if app:
+                            resume_data = app.get("resume_data", {})
+                            if isinstance(resume_data, str):
+                                resume_data = json.loads(resume_data)
+                            
+                            # Update the tailored_text in resume_data
+                            resume_data["tailored_text"] = manual_text
+                            
+                            # Also update diff_data to reflect manual changes
+                            diff_data = app.get("diff_data", {})
+                            if not diff_data:
+                                diff_data = {
+                                    "original": resume_data.get("original_text", ""),
+                                    "ai_tailored": resume_data.get("tailored_text", ""),
+                                }
+                            
+                            diff_data["manual_tailored"] = manual_text
+                            diff_data["tailored"] = manual_text # Update primary tailored text for view
+                            
+                            database_service.update_application(application_id, {
+                                "resume_data": resume_data,
+                                "diff_data": diff_data,
+                                "match_details": app.get("match_details") # Keep existing
+                            })
+                            print(f"✅ Database synced for application {application_id}")
+                    except Exception as sync_err:
+                        print(f"⚠️ Manual edit sync failed: {sync_err}")
         
         # OnlyOffice expects {"error": 0} to acknowledge
         return JSONResponse(content={"error": 0})

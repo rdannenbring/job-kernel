@@ -36,6 +36,7 @@ class Application(Base):
     remarks = Column(Text)
     is_archived = Column(String, default='false')  # 'true'/'false'
     kanban_order = Column(Integer, default=0)
+    diff_data = Column(Text) # JSON string
     
     # Override fields for final versions
     override_resume_path = Column(String)
@@ -224,6 +225,7 @@ class DatabaseService:
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS commute_time_mins INTEGER",
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS commute_distance_miles REAL",
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS commute_details TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS diff_data TEXT",
             # Ensure tables are created if not already (Base.metadata.create_all handles this mostly, but explicit for clarity in migrations)
             """
             CREATE TABLE IF NOT EXISTS application_sub_steps (
@@ -326,6 +328,7 @@ class DatabaseService:
                     if data.get('tailored_resume_path'): app.tailored_resume_path = data.get('tailored_resume_path')
                     if data.get('cover_letter_path'): app.cover_letter_path = data.get('cover_letter_path')
                     if data.get('resume_data'): app.resume_data = json.dumps(data.get('resume_data'))
+                    if data.get('diff_data'): app.diff_data = json.dumps(data.get('diff_data'))
                     if data.get('cover_letter_text'): app.cover_letter_text = data.get('cover_letter_text')
                     if data.get('salary_range'): app.salary_range = data.get('salary_range')
                     if data.get('date_posted'): app.date_posted = data.get('date_posted')
@@ -483,6 +486,8 @@ class DatabaseService:
             "tailored_resume_path": app.tailored_resume_path,
             "cover_letter_path": app.cover_letter_path,
             "cover_letter_text": app.cover_letter_text,
+            "resume_data": json.loads(app.resume_data) if app.resume_data else {},
+            "diff_data": json.loads(app.diff_data) if app.diff_data else {},
             "resume_changes_summary": app.resume_changes_summary,
             "cover_letter_changes_summary": app.cover_letter_changes_summary,
             "match_score": app.match_score,
@@ -580,6 +585,9 @@ class DatabaseService:
             if 'resume_data' in data: 
                 val = data['resume_data']
                 app.resume_data = json.dumps(val) if isinstance(val, (dict, list)) else val
+            if 'diff_data' in data:
+                val = data['diff_data']
+                app.diff_data = json.dumps(val) if isinstance(val, (dict, list)) else val
             if 'resume_changes_summary' in data:
                 val = data['resume_changes_summary']
                 app.resume_changes_summary = json.dumps(val) if isinstance(val, (dict, list)) else val

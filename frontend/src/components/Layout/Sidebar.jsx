@@ -64,21 +64,26 @@ const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle }) => {
 
                 {/* Logo + collapse toggle */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', justifyContent: collapsed ? 'center' : 'space-between' }}>
-                    {!collapsed && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
-                            <img src={logoImgDark} alt="JobKernel logo" className="logo-dark" style={{ width: '2.4rem', height: '2.4rem', objectFit: 'contain', flexShrink: 0 }} />
-                            <img src={logoImgLight} alt="JobKernel logo" className="logo-light" style={{ width: '2.4rem', height: '2.4rem', objectFit: 'contain', flexShrink: 0 }} />
-                            <h1 style={{ margin: 0, lineHeight: 1, whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif", letterSpacing: '-0.02em', fontSize: '1.05rem' }}>
-                                <span style={{ fontWeight: 700, color: 'var(--text-brand)' }}>Job</span><span style={{ fontWeight: 400, color: '#5BA4B5' }}>Kernel</span>
-                            </h1>
-                        </div>
-                    )}
-                    {collapsed && (
-                        <>
-                            <img src={logoImgDark} alt="JobKernel logo" className="logo-dark" style={{ width: '2.2rem', height: '2.2rem', objectFit: 'contain' }} />
-                            <img src={logoImgLight} alt="JobKernel logo" className="logo-light" style={{ width: '2.2rem', height: '2.2rem', objectFit: 'contain' }} />
-                        </>
-                    )}
+                    <div 
+                        onClick={() => setScreen('dashboard')}
+                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}
+                    >
+                        {!collapsed && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
+                                <img src={logoImgDark} alt="JobKernel logo" className="logo-dark" style={{ width: '2.4rem', height: '2.4rem', objectFit: 'contain', flexShrink: 0 }} />
+                                <img src={logoImgLight} alt="JobKernel logo" className="logo-light" style={{ width: '2.4rem', height: '2.4rem', objectFit: 'contain', flexShrink: 0 }} />
+                                <h1 style={{ margin: 0, lineHeight: 1, whiteSpace: 'nowrap', fontFamily: "'Montserrat', sans-serif", letterSpacing: '-0.02em', fontSize: '1.05rem' }}>
+                                    <span style={{ fontWeight: 700, color: 'var(--text-brand)' }}>Job</span><span style={{ fontWeight: 400, color: '#5BA4B5' }}>Kernel</span>
+                                </h1>
+                            </div>
+                        )}
+                        {collapsed && (
+                            <>
+                                <img src={logoImgDark} alt="JobKernel logo" className="logo-dark" style={{ width: '2.2rem', height: '2.2rem', objectFit: 'contain' }} />
+                                <img src={logoImgLight} alt="JobKernel logo" className="logo-light" style={{ width: '2.2rem', height: '2.2rem', objectFit: 'contain' }} />
+                            </>
+                        )}
+                    </div>
                     {!collapsed && (
                         <button onClick={() => setCollapsed(true)} title="Collapse sidebar" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}
                             onMouseOver={e => e.currentTarget.style.color = 'var(--text-primary)'}

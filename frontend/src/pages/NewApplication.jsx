@@ -91,6 +91,7 @@ function NewApplication({ onComplete }) {
     const [coverLetterResult, setCoverLetterResult] = useState(null) // Cover Letter Result
     const [coverLetterChanges, setCoverLetterChanges] = useState([]) // Track refinement history
     const [matchScoreResult, setMatchScoreResult] = useState(null) // Match Score Result
+    const [pendingRefinement, setPendingRefinement] = useState(null) // Proposed AI changes
 
     // UI State
     const [refineInstructions, setRefineInstructions] = useState('')
@@ -319,14 +320,55 @@ function NewApplication({ onComplete }) {
             })
             if (!response.ok) throw new Error('Refinement failed')
             const data = await response.json()
-            setResult(data)
-            setRefineInstructions('')
-            setViewMode('redline')
+            // Set as pending rather than final
+            setPendingRefinement(data)
+            setViewMode('pdf') // Default to PDF for previewing the new version
         } catch (err) {
             setError(err.message)
         } finally {
             setIsRefining(false)
         }
+    }
+
+    const refetchApplication = async () => {
+        if (!result?.id) return
+        try {
+            const res = await fetch(`${API_URL}/api/applications/${result.id}`)
+            if (res.ok) {
+                const updatedApp = await res.json()
+                setResult(updatedApp)
+            }
+        } catch (err) {
+            console.error("Failed to refetch application:", err)
+        }
+    }
+
+    const handleApproveRefinement = () => {
+        if (pendingRefinement) {
+            setResult(pendingRefinement)
+            setPendingRefinement(null)
+            // Force a hard refresh of the PDF view by toggling it
+            setViewMode('scoring') 
+            setTimeout(() => setViewMode('pdf'), 0)
+        }
+    }
+
+    const handleDeclineRefinement = () => {
+        setPendingRefinement(null)
+        // Ensure we force a refresh of the PDF preview state by toggling view mode
+        // and force a re-render of the editor with the original document
+        setViewMode('scoring')
+        setTimeout(() => setViewMode('pdf'), 0)
+    }
+
+    const handleSyncEdits = async () => {
+        // Leaving manual edit — sync manually edited text back to state
+        setIsProcessing(true);
+        // Small delay to ensure OnlyOffice callback has time to finish on backend
+        setTimeout(async () => {
+            await refetchApplication();
+            setIsProcessing(false);
+        }, 3000);
     }
 
     const handleAcceptResume = async () => {
@@ -583,42 +625,6 @@ function NewApplication({ onComplete }) {
         )
     }
 
-    const handleFinishEdit = async () => {
-        // Leaving manual edit — sync manually edited text back to state
-        try {
-            const docxPath = result?.files?.docx || '';
-            const docxFilename = docxPath.split('/').pop();
-            
-            if (docxFilename) {
-                const res = await fetch(`${API_URL}/api/resume/sync-manual?filename=${docxFilename}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.text) {
-                        // We split the parsed text by newlines (ignoring empty lines) 
-                        // to reconstruct a 'full_text' array that the AI can use later.
-                        const newFullText = data.text.split('\n').map(s => s.trim()).filter(s => s);
-                        
-                        setResult(prev => ({
-                            ...prev,
-                            diff_data: {
-                                ...prev.diff_data,
-                                manual_tailored: data.text
-                            },
-                            resume_data: {
-                                ...prev.resume_data,
-                                full_text: newFullText.length > 0 ? newFullText : prev.resume_data.full_text
-                            }
-                        }));
-                    }
-                }
-            }
-        } catch (err) {
-            console.error("Failed to sync manual edits:", err);
-        }
-        
-        setAppStage('match_scoring');
-    }
-
     // 2.7 Resume Visual Editor
     if (appStage === 'resume_edit') {
         // Extract just the filename from the API path (e.g. "/api/download/file.docx" -> "file.docx")
@@ -626,17 +632,24 @@ function NewApplication({ onComplete }) {
         const docxFilename = docxPath.split('/').pop();
         
         return (
-            <ResumeEditor 
-                pdfUrl={result?.files?.pdf ? `${API_URL}${result.files.pdf}` : null}
-                resumeData={result?.resume_data}
-                diffData={result?.diff_data}
-                refineInstructions={refineInstructions}
-                setRefineInstructions={setRefineInstructions}
-                onRegenerate={handleRefineResume}
-                isRegenerating={isRefining}
-                onBack={handleFinishEdit}
-                docxFilename={docxFilename}
-            />
+            <div key={pendingRefinement ? 'refining' : 'normal'} style={{ height: 'calc(100vh - 120px)' }}>
+                    <ResumeEditor 
+                        resumeData={result?.resume_data || {}} 
+                        pdfUrl={pendingRefinement ? (pendingRefinement.tailored_resume_path || (pendingRefinement.files?.pdf ? `${API_URL}${pendingRefinement.files.pdf}` : null)) : (result?.tailored_resume_path || result?.resume_data?.tailored_resume_path)}
+                        docxFilename={result?.resume_data?.word_filename}
+                        refineInstructions={refineInstructions}
+                        setRefineInstructions={setRefineInstructions}
+                        isRegenerating={isRefining}
+                        onRegenerate={handleRefineResume}
+                        onBack={() => setAppStage('match_scoring')}
+                        pendingRefinement={pendingRefinement}
+                        onApproveRefinement={handleApproveRefinement}
+                        onDeclineRefinement={handleDeclineRefinement}
+                        applicationId={result?.id}
+                        onSync={handleSyncEdits}
+                        initialTab={isRefining || pendingRefinement ? 'ai' : 'manual'}
+                    />
+            </div>
         )
     }
 
