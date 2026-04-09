@@ -33,14 +33,17 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
     const [panStart, setPanStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
     const [dropPlaceholder, setDropPlaceholder] = useState({ column: null, index: null });
     const [draggedAppId, setDraggedAppId] = useState(null);
+    const [connectionCounts, setConnectionCounts] = useState({});
+    const [filterHasConnections, setFilterHasConnections] = useState(false);
 
     // Persist state to sessionStorage whenever it changes
     useEffect(() => {
         sessionStorage.setItem(DASH_STORAGE_KEY, JSON.stringify({ 
             viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, 
-            filterLocationTypes, filterInterestLevels, filterRelocation, showArchived 
+            filterLocationTypes, filterInterestLevels, filterRelocation, showArchived,
+            filterHasConnections 
         }));
-    }, [viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, filterLocationTypes, filterInterestLevels, filterRelocation, showArchived]);
+    }, [viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, filterLocationTypes, filterInterestLevels, filterRelocation, showArchived, filterHasConnections]);
 
     useEffect(() => {
         fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile`)
@@ -48,12 +51,42 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
             .then(data => {
                 if (data.preferences) {
                     try {
-                        setProfilePrefs(JSON.parse(data.preferences));
-                    } catch (e) { console.error('Error parsing profile prefs in dashboard'); }
+                        const prefs = typeof data.preferences === 'string' 
+                            ? JSON.parse(data.preferences) 
+                            : data.preferences;
+                        setProfilePrefs(prefs);
+                    } catch (e) { 
+                        console.error('Error parsing profile prefs in dashboard:', e); 
+                    }
                 }
             })
             .catch(err => console.error('Failed to load profile for dashboard filtering', err));
     }, []);
+
+    // Batch fetch LinkedIn connection counts for all apps
+    useEffect(() => {
+        if (!apps || apps.length === 0) return;
+        
+        const companies = [...new Set(apps.map(a => a.company).filter(Boolean))];
+        if (companies.length === 0) return;
+
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/linkedin/matches/batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(companies)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.results) {
+                const counts = {};
+                Object.entries(data.results).forEach(([name, matches]) => {
+                    counts[name] = matches.length;
+                });
+                setConnectionCounts(counts);
+            }
+        })
+        .catch(err => console.warn("Failed to fetch batch LinkedIn connections", err));
+    }, [apps]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -133,7 +166,10 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
             'Not Provided'
         );
         
-        return matchesSearch && matchesStatus && matchesJobType && matchesLocType && matchesInterest && matchesRelocation;
+        const hasConnections = connectionCounts[app.company] > 0;
+        const matchesHasConnections = !filterHasConnections || hasConnections;
+
+        return matchesSearch && matchesStatus && matchesJobType && matchesLocType && matchesInterest && matchesRelocation && matchesHasConnections;
     }).sort((a, b) => {
         if (sortBy === 'custom') {
             return (a.kanban_order || 0) - (b.kanban_order || 0);
@@ -177,6 +213,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         setFilterLocationTypes([]);
         setFilterInterestLevels([]);
         setFilterRelocation([]);
+        setFilterHasConnections(false);
         setSearchTerm('');
         setSortBy('newest');
     };
@@ -212,7 +249,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
     };
 
     const updateAppOrders = async (columnApps, newStatus) => {
-        // Update local order first
+        // Update local order first (optimistic)
         columnApps.forEach((app, index) => {
             onUpdate(app.id, { status: newStatus, kanban_order: index });
             
@@ -221,7 +258,14 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus, kanban_order: index })
-            }).catch(err => console.error("Failed to sync order", err));
+            })
+            .then(res => res.ok ? res.json() : null)
+            .then(updatedApp => {
+                if (updatedApp) {
+                    onUpdate(updatedApp.id, updatedApp);
+                }
+            })
+            .catch(err => console.error("Failed to sync order", err));
         });
     };
 
@@ -380,9 +424,9 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                 } hover:border-slate-400 dark:hover:border-white/20 pl-10 pr-8 py-1.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer h-full flex items-center w-52 justify-between shadow-sm`}
                             >
                                 <span className="material-symbols-outlined text-lg absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400">filter_list</span>
-                                <span>{(filterStatuses.length + filterJobTypes.length + filterLocationTypes.length + filterInterestLevels.length + filterRelocation.length) === 0 
+                                <span>{(filterStatuses.length + filterJobTypes.length + filterLocationTypes.length + filterInterestLevels.length + filterRelocation.length + (filterHasConnections ? 1 : 0)) === 0 
                                     ? 'Filter Jobs' 
-                                    : `${filterStatuses.length + filterJobTypes.length + filterLocationTypes.length + filterInterestLevels.length + filterRelocation.length} Filtered`}</span>
+                                    : `${filterStatuses.length + filterJobTypes.length + filterLocationTypes.length + filterInterestLevels.length + filterRelocation.length + (filterHasConnections ? 1 : 0)} Filtered`}</span>
                                 <span className="material-symbols-outlined text-lg text-slate-500 dark:text-slate-400">expand_more</span>
                             </button>
                             
@@ -492,6 +536,23 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                             );
                                         })}
                                     </div>
+                                    <div className="flex flex-col gap-1 border-t border-slate-200 dark:border-white/10 pt-2">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 px-1">Networking</div>
+                                        <button 
+                                            onClick={() => setFilterHasConnections(!filterHasConnections)}
+                                            className={`flex items-center justify-between px-3 py-1.5 cursor-pointer rounded-lg text-xs font-medium transition-all ${
+                                                filterHasConnections 
+                                                    ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30' 
+                                                    : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-[14px]">group</span>
+                                                <span>Has Connections</span>
+                                            </div>
+                                            {filterHasConnections && <span className="material-symbols-outlined text-[14px]">check</span>}
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -593,6 +654,13 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                 <button onClick={() => setFilterJobTypes(prev => prev.filter(t => t !== type))} className="hover:text-white material-symbols-outlined text-[14px] ml-1">close</button>
                             </span>
                         ))}
+                         {filterHasConnections && (
+                            <span className="bg-emerald-500/10 text-emerald-300 px-3 py-1 rounded-full flex items-center gap-2 border border-emerald-500/20 text-xs font-medium">
+                                <span className="material-symbols-outlined text-[14px]">group</span>
+                                Networking Only
+                                <button onClick={() => setFilterHasConnections(false)} className="hover:text-white material-symbols-outlined text-[14px] ml-1">close</button>
+                            </span>
+                        )}
                         {sortBy !== 'newest' && (
                             <span className="bg-slate-200 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-700 dark:text-slate-200 px-3 py-1 rounded-full flex items-center gap-2 text-xs">
                                 <span className="opacity-50">Sort:</span> 
@@ -678,12 +746,20 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                             <div className="flex justify-between items-start pointer-events-none">
                                                 <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 flex items-center justify-center overflow-hidden shrink-0">
                                                     {app.company_logo
-                                                        ? <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'white', padding: '1px' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'block'; }} />
+                                                        ? <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'transparent', padding: '0' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'block'; }} />
                                                         : null}
                                                     <span className="material-symbols-outlined text-slate-400 dark:text-white text-base" style={{ display: app.company_logo ? 'none' : 'block' }}>corporate_fare</span>
                                                 </div>
                                                 <div className="flex flex-col gap-1 items-end">
-                                                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full ml-auto ${getStatusStyle(app.status)}`}>{getStatusText(app.status)}</span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        {connectionCounts[app.company] > 0 && (
+                                                            <div className="flex items-center gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded-full text-[9px] font-bold" title={`${connectionCounts[app.company]} LinkedIn Connection(s)`}>
+                                                                <span className="material-symbols-outlined text-[11px]">group</span>
+                                                                {connectionCounts[app.company]}
+                                                            </div>
+                                                        )}
+                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${getStatusStyle(app.status)}`}>{getStatusText(app.status)}</span>
+                                                    </div>
                                                     <div className="mt-auto">
                                                         <InterestStars level={app.interest_level} size="0.9rem" />
                                                     </div>
@@ -735,7 +811,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                     <div className="flex items-start gap-4 flex-1">
                                         <div className="size-11 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
                                             {app.company_logo
-                                                ? <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'white', padding: '2px' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'block'; }} />
+                                                ? <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'transparent', padding: '0' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'block'; }} />
                                                 : null}
                                             <span className="material-symbols-outlined text-slate-400 dark:text-white text-lg" style={{ display: app.company_logo ? 'none' : 'block' }}>corporate_fare</span>
                                         </div>
@@ -743,6 +819,12 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                             <div className="flex items-center gap-2 flex-wrap mb-0.5">
                                                 <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 group-hover:text-primary transition-colors leading-tight">{app.job_title || 'Unknown'}</h3>
                                                 <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getStatusStyle(app.status)}`}>{getStatusText(app.status)}</span>
+                                                {connectionCounts[app.company] > 0 && (
+                                                    <div className="flex items-center gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                                        <span className="material-symbols-outlined text-[14px]">group</span>
+                                                        {connectionCounts[app.company]} Connection{connectionCounts[app.company] > 1 ? 's' : ''}
+                                                    </div>
+                                                )}
                                                 <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
                                                     <InterestStars level={app.interest_level} size="0.9rem" />
                                                     {app.interest_level && (
@@ -808,11 +890,17 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                             <div className="flex items-center gap-3">
                                 <div className="size-10 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center overflow-hidden shrink-0">
                                     {app.company_logo
-                                        ? <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'white', padding: '2px' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'block'; }} />
+                                        ? <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'transparent', padding: '0' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'block'; }} />
                                         : null}
                                     <span className="material-symbols-outlined text-slate-400 dark:text-white" style={{ display: app.company_logo ? 'none' : 'block' }}>corporate_fare</span>
                                 </div>
                                 <span className="font-bold text-slate-800 dark:text-slate-100">{app.company || 'Unknown'}</span>
+                                {connectionCounts[app.company] > 0 && (
+                                    <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] px-2 py-0.5 font-bold flex items-center gap-1" title={`${connectionCounts[app.company]} Connections`}>
+                                        <span className="material-symbols-outlined text-[12px]">group</span>
+                                        {connectionCounts[app.company]}
+                                    </span>
+                                )}
                             </div>
                         </td>
                         <td className="px-6 py-4"><span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors">{app.job_title || 'Unknown'}</span></td>

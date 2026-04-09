@@ -7,6 +7,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = false }) {
   const [app, setApp] = useState(initialApp);
   const [loading, setLoading] = useState(false);
+  const [connections, setConnections] = useState([]);
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [contactSearch, setContactSearch] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     // Refresh app data to get sub-steps, contacts, etc.
@@ -20,7 +25,19 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
       }
     };
     fetchFullApp();
-  }, [initialApp.id]);
+
+    // Fetch LinkedIn connections
+    const fetchConnections = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/linkedin/matches/name/${encodeURIComponent(initialApp.company)}`);
+        const data = await res.json();
+        setConnections(data.matches || []);
+      } catch (e) {
+        console.warn("Failed to fetch LinkedIn connections for lifecycle", e);
+      }
+    };
+    if (initialApp.company) fetchConnections();
+  }, [initialApp.id, initialApp.company]);
 
   const updateStage = async (newStage) => {
     try {
@@ -31,8 +48,9 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
         body: JSON.stringify({ ...app, pipeline_stage: newStage, status: newStatus })
       });
       if (res.ok) {
-        setApp({ ...app, pipeline_stage: newStage, status: newStatus });
-        if (onUpdate) onUpdate(app.id, { pipeline_stage: newStage, status: newStatus });
+        const updatedFullApp = await res.json();
+        setApp(updatedFullApp);
+        if (onUpdate) onUpdate(app.id, updatedFullApp);
       }
     } catch (e) {
       console.error("Failed to update pipeline stage", e);
@@ -62,7 +80,7 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
           
-          <div className="card" style={{ padding: '1rem', width: '80px', height: '80px', display: 'flex', alignItems: 'center', justifyCenter: 'center', margin: 0, overflow: 'hidden' }}>
+          <div className="card" style={{ padding: '0', width: '80px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0, overflow: 'hidden', background: 'transparent' }}>
             {app.company_logo ? (
               <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: 'auto', objectFit: 'contain' }} />
             ) : (
@@ -203,10 +221,113 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
               )) : (
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textAlign: 'center', padding: '1rem 0' }}>No contacts added.</p>
               )}
-              <button className="btn btn-secondary" style={{ width: '100%', fontSize: '0.875rem', padding: '0.6rem' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_add</span>
-                Add Contact
+              <button 
+                className={`btn ${showAddContact ? 'btn-secondary' : 'btn-secondary'}`}
+                style={{ width: '100%', fontSize: '0.875rem', padding: '0.6rem' }}
+                onClick={() => setShowAddContact(!showAddContact)}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                  {showAddContact ? 'close' : 'person_add'}
+                </span>
+                {showAddContact ? 'Cancel' : 'Add Contact'}
               </button>
+
+              {showAddContact && (
+                <div style={{ padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Search LinkedIn connections..."
+                      style={{ width: '100%', padding: '0.6rem 2rem 0.6rem 0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color-card)', background: 'var(--bg-primary)', fontSize: '0.875rem' }}
+                      value={contactSearch}
+                      onChange={(e) => {
+                        setContactSearch(e.target.value);
+                        if (e.target.value.length > 2) {
+                          setIsSearching(true);
+                          fetch(`${API_URL}/api/linkedin/search?q=${encodeURIComponent(e.target.value)}`)
+                            .then(res => res.json())
+                            .then(data => {
+                              setSearchResults(data.results || []);
+                              setIsSearching(false);
+                            });
+                        } else {
+                          setSearchResults([]);
+                        }
+                      }}
+                    />
+                    {isSearching && (
+                      <div className="spinner" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', border: '2px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                    )}
+                  </div>
+
+                  {searchResults.length > 0 && (
+                    <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {searchResults.map(res => (
+                        <div 
+                          key={res.id} 
+                          className="contact-search-result"
+                          style={{ padding: '0.5rem', borderRadius: '0.4rem', border: '1px solid var(--border-color-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
+                          onClick={() => {
+                            // Save contact manually
+                            fetch(`${API_URL}/api/applications/${initialApp.id}/contacts`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                name: res.name,
+                                role: res.headline,
+                                linkedin_url: res.profile_url,
+                                headline: res.headline
+                              })
+                            }).then(resp => resp.json())
+                              .then(newContact => {
+                                setApp({ ...app, contacts: [...(app.contacts || []), newContact] });
+                                setShowAddContact(false);
+                                setContactSearch('');
+                                setSearchResults([]);
+                              });
+                          }}
+                        >
+                          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700 }}>
+                            {res.name.charAt(0)}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{res.name}</div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{res.headline}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={{ fontSize: '10px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    Or <span style={{ color: 'var(--primary)', cursor: 'pointer' }}>add a custom contact</span>
+                  </div>
+                </div>
+              )}
+
+              {connections && connections.length > 0 && (
+                <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color-card)', paddingTop: '1.5rem' }}>
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '1rem', letterSpacing: '0.05em' }}>
+                    LinkedIn Network ({connections.length})
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {connections.map((conn, i) => (
+                      <a key={i} href={conn.profile_url} target="_blank" rel="noopener noreferrer" 
+                         style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '1rem' }}
+                         className="contact-row"
+                      >
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #0077b5, #00a0dc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'white', flexShrink: 0, fontSize: '0.75rem' }}>
+                          {conn.name?.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <h5 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{conn.name}</h5>
+                          <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{conn.headline}</p>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

@@ -992,6 +992,9 @@ document.addEventListener('DOMContentLoaded', () => {
               applyDiffHighlights(appRecord, scrapedData);
                // Apply status-based editability rules
                applyStatusRules(appRecord.status);
+               
+               // Automatic sync of on-page connections
+               autoSyncLeads();
  
                // Intelligent syncing: If we just found a matching record for the current page,
                // ensure the Apply mode is synced to this job too.
@@ -1116,37 +1119,91 @@ document.addEventListener('DOMContentLoaded', () => {
    }
  
    function renderSideConnections(matches) {
-     if (!matches || matches.length === 0) {
+     if ((!matches || matches.length === 0) && (!scrapedData?.onPageConnections || scrapedData.onPageConnections.length === 0)) {
        sideConnectionBanner.style.display = 'none';
        return;
      }
- 
+
      sideConnectionList.innerHTML = '';
-     matches.forEach(conn => {
-       const item = document.createElement('a');
-       item.className = 'side-conn-item';
-       item.href = conn.profile_url;
-       item.target = '_blank';
+     
+     if (matches && matches.length > 0) {
+       matches.forEach(conn => {
+         const item = document.createElement('a');
+         item.className = 'side-conn-item';
+         item.href = conn.profile_url;
+         item.target = '_blank';
+         
+         const initials = conn.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+         
+         item.innerHTML = `
+           <div class="side-conn-avatar">${initials}</div>
+           <div class="side-conn-info">
+             <div class="side-conn-name">${conn.name}</div>
+             <div class="side-conn-headline">${conn.headline || ''}</div>
+           </div>
+         `;
+         
+         sideConnectionList.appendChild(item);
+       });
+     }
+
+     // Also check for on-page connections from scrapedData
+     const opc = scrapedData?.onPageConnections || [];
+     if (opc.length > 0) {
+       const opcContainer = document.createElement('div');
+       opcContainer.className = 'side-networking-subtitle';
+       opcContainer.innerHTML = `<span class="material-symbols-outlined" style="font-size: 14px;">visibility</span> Found on page (${opc.length})`;
+       opcContainer.style.marginTop = '1rem';
+       opcContainer.style.marginBottom = '0.5rem';
+       opcContainer.style.fontSize = '11px';
+       opcContainer.style.fontWeight = '700';
+       opcContainer.style.textTransform = 'uppercase';
+       opcContainer.style.color = 'var(--text-muted)';
+       opcContainer.style.display = 'flex';
+       opcContainer.style.alignItems = 'center';
+       opcContainer.style.gap = '4px';
        
-       const initials = conn.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+       sideConnectionList.appendChild(opcContainer);
        
-       item.innerHTML = `
-         <div class="side-conn-avatar">${initials}</div>
-         <div class="side-conn-info">
-           <div class="side-conn-name">${conn.name}</div>
-           <div class="side-conn-headline">${conn.headline || ''}</div>
-         </div>
-       `;
-       
-       sideConnectionList.appendChild(item);
-     });
- 
+       opc.forEach(conn => {
+         // Avoid duplicates if already in matches
+         if (matches.some(m => m.profile_url === conn.profile_url)) return;
+         
+         const item = document.createElement('a');
+         item.className = 'side-conn-item';
+         item.href = conn.profile_url;
+         item.target = '_blank';
+         
+         const initials = conn.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+         
+          item.innerHTML = `
+            <div class="side-conn-avatar" style="background: linear-gradient(135deg, #10b981, #059669);">${initials}</div>
+            <div class="side-conn-info">
+              <div class="side-conn-name">${conn.name} ${conn.is_poster ? "<span class=\"badge badge-emerald\" style=\"font-size: 9px; margin-left: 4px;\">Poster</span>" : ""}</div>
+              <div class="side-conn-headline">${conn.headline || ""}</div>
+            </div>
+            <button class="side-conn-add-btn" title="Add to contacts">
+              <span class="material-symbols-outlined">person_add</span>
+            </button>
+          `;
+          
+          const addBtn = item.querySelector(".side-conn-add-btn");
+          addBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            linkContact(conn, addBtn);
+          };
+         
+         sideConnectionList.appendChild(item);
+       });
+     }
+
      sideConnectionBanner.style.display = 'block';
 
-    if (sideConnCountBadge) {
-      sideConnCountBadge.textContent = matches.length;
-      sideConnCountBadge.style.display = 'inline-flex';
-    }
+     if (sideConnCountBadge) {
+       sideConnCountBadge.textContent = matches.length + opc.filter(o => !matches.some(m => m.profile_url === o.profile_url)).length;
+       sideConnCountBadge.style.display = 'inline-flex';
+     }
     
     if (sideConnectionList) {
       const shouldExpand = matches.length <= 3;
@@ -1163,6 +1220,69 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         };
       }
+    }
+
+    async function linkContact(contact, btn) {
+        if (!currentAppRecord) return; // Silent return for automated sync
+        
+        const originalContent = btn?.innerHTML;
+        if (btn) {
+            btn.innerHTML = '<span class="material-symbols-outlined">sync</span>';
+            btn.classList.add('syncing');
+        }
+        
+        try {
+            // STEP 1: Sync to Global Network (linkedin_connections table)
+            // This ensures they show up as "Matched" for ALL future jobs at this company
+            await fetch(`${API_URL}/api/linkedin/sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    connections: [{
+                        name: contact.name,
+                        headline: contact.headline,
+                        profile_url: contact.profile_url,
+                        company_name: currentAppRecord.company
+                    }]
+                })
+            });
+
+            // STEP 2: Link to this specific Application (application_contacts table)
+            if (!currentAppRecord.contacts?.some(c => c.linkedin_url === contact.profile_url)) {
+                const res = await fetch(`${API_URL}/api/applications/${currentAppRecord.id}/contacts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: contact.name,
+                        headline: contact.headline,
+                        role: contact.is_poster ? 'Job Poster' : contact.headline,
+                        linkedin_url: contact.profile_url
+                    })
+                });
+                
+                if (res.ok) {
+                    if (btn) {
+                        btn.innerHTML = '<span class="material-symbols-outlined" style="color: var(--success)">check</span>';
+                        btn.classList.remove('syncing');
+                        btn.disabled = true;
+                        showStatus(`Linked ${contact.name}!`, 'success');
+                    }
+                }
+            } else if (btn) {
+                btn.innerHTML = '<span class="material-symbols-outlined" style="color: var(--success)">check</span>';
+                btn.disabled = true;
+            }
+
+            // ALWAYS refresh data to show them in the main connections list
+            loadData({ silent: true });
+        } catch (e) {
+            console.error(e);
+            if (btn) {
+                btn.innerHTML = originalContent;
+                btn.classList.remove('syncing');
+                showStatus('Failed to link contact.', 'error');
+            }
+        }
     }
    }
  
@@ -1204,8 +1324,32 @@ document.addEventListener('DOMContentLoaded', () => {
       finishSync(message.count);
     } else if (message.action === 'LINKEDIN_SYNC_ERROR') {
       failSync(message.error);
+    } else if (message.action === 'refresh_on_page_connections') {
+      if (scrapedData) {
+        scrapedData.onPageConnections = message.onPageConnections;
+        
+        // AUTOMATIC SYNC: Link leads if app is ready, otherwise they'll be sync'd when loadData finishes
+        if (currentAppRecord && scrapedData.onPageConnections && scrapedData.onPageConnections.length > 0) {
+            console.log(`[JobKernel] Active job found, auto-syncing leads...`);
+            scrapedData.onPageConnections.forEach(conn => linkContact(conn, null));
+        }
+
+        if (typeof renderSideConnections === 'function') {
+            loadData({ silent: true });
+        }
+      }
     }
   });
+
+  // Call auto-sync after every loadData or save
+  async function autoSyncLeads() {
+    if (!currentAppRecord || !scrapedData?.onPageConnections || scrapedData.onPageConnections.length === 0) return;
+    
+    console.log(`[JobKernel] Triggering auto-sync for ${scrapedData.onPageConnections.length} leads...`);
+    for (const conn of scrapedData.onPageConnections) {
+        await linkContact(conn, null);
+    }
+  }
 
   function startSync() {
     btnSyncLinkedin.classList.add('syncing');

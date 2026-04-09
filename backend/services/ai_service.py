@@ -68,7 +68,7 @@ CRITICAL INSTRUCTIONS - MUST FOLLOW EXACTLY:
 9. Add relevant keywords from the job description naturally into existing bullet points
 10. Do NOT add new bullet points or sections
 11. Do NOT remove bullet points or sections
-12. DO NOT fabricate experience or skills
+12. **NO EMBELLISHMENT OR FABRICATION**: You MUST NOT hallucinate, invent, or fabricate any skills, experiences, metrics, or technologies that are not explicitly present in the ORIGINAL RESUME CONTENT or the ADDITIONAL CONTEXT DOCUMENTS. Your rewording must be strictly grounded in the actual data provided.
 13. **URL FORMATTING**: If any web addresses are included (e.g., in Projects or Summary), CLEAN them by removing "http://", "https://", and "www." prefixes.
 14. **PRESERVE ALL FORMATTING AND MARKUP**: You MUST keep all markdown syntax and formatting markers that were present in the original exactly as they were. Do not strip markdown formatting. Be precise in replacing ONLY the words/text content and NEVER the markup, structure, spacing, or special characters.
 
@@ -97,6 +97,7 @@ CRITICAL RULES:
 3. **USE ADDITIONAL CONTEXT**: If additional context is provided above, use it to support the requested refinements.
 4. **PRESERVE ALL FORMATTING AND MARKUP**: You MUST exactly preserve any markdown or formatting characters from the original content. Only replace text content to address the instruction, leaving any markup around it unchanged.
 5. **URL CLEANING**: Continue cleaning web addresses by removing "http://", "https://", and "www.".
+6. **STRICTLY GROUNDED**: Do not fabricate, embellish, or hallucinate skills, metrics, or experiences. All changes and additions must be strictly grounded in the CURRENT RESUME DATA or the ADDITIONAL CONTEXT provided.
 
 Return the updated resume in the SAME JSON structure as the input, with only the text content modified.
 
@@ -178,7 +179,7 @@ INSTRUCTIONS:
      b) If not found, use your internal knowledge to find the company's Headquarters address.
      c) **CRITICAL**: If you absolutely cannot find the address, **OMIT THE ADDRESS BLOCK ENTIRELY**.
      d) **ALWAYS** include the Company Name if known.
-5. **CONTENT**: Highlight specific achievements from the resume that align with the required skills. Use details from the additional context documents if provided to add more depth and personalization to the letter. Keep it to 3-4 paragraphs.
+5. **CONTENT**: Highlight specific achievements from the resume that align with the required skills. Use details from the additional context documents if provided to add more depth and personalization to the letter. Keep it to 3-4 paragraphs. **CRITICAL**: Do not invent, embellish, or fabricate any experiences, skills, or metrics not explicitly present in the provided resume or additional context.
 
 Return the result as a JSON object with:
    - "content": The full text of the letter.

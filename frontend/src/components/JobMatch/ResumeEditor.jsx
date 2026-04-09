@@ -17,7 +17,8 @@ const ResumeEditor = ({
     onApproveRefinement,
     onDeclineRefinement,
     onSync,
-    initialTab = null
+    initialTab = null,
+    applicationId = null
 }) => {
     const [activeTab, setActiveTab] = useState(initialTab || (pendingRefinement ? 'ai' : 'manual'));
     const [editorReady, setEditorReady] = useState(false);
@@ -138,7 +139,7 @@ const ResumeEditor = ({
             setEditorError(err.message);
             setEditorLoading(false);
         }
-    }, [docxFilename]);
+    }, [docxFilename, applicationId]);
 
     const destroyEditor = useCallback(() => {
         if (editorInstanceRef.current) {
@@ -157,7 +158,8 @@ const ResumeEditor = ({
             const timer = setTimeout(() => initEditor(), 300);
             return () => clearTimeout(timer);
         }
-    }, [activeTab, initEditor, docxFilename, destroyEditor]);
+    }, [activeTab, initEditor, docxFilename, destroyEditor, applicationId]);
+
 
     useEffect(() => {
         return () => destroyEditor();

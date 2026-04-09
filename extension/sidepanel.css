@@ -967,6 +967,34 @@ input:checked + .slider:before { transform: translateX(20px); }
   box-shadow: none !important;
 }
 
+.side-conn-add-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    margin-left: auto;
+}
+
+.side-conn-add-btn:hover {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.side-conn-add-btn.syncing span {
+    animation: side-spin 1s linear infinite;
+}
+
+@keyframes side-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-primary); }

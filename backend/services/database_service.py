@@ -90,6 +90,8 @@ class ApplicationContact(Base):
     role = Column(String)
     email = Column(String)
     phone = Column(String)
+    linkedin_url = Column(String)
+    headline = Column(String)
     application = relationship("Application", back_populates="contacts")
 
 class ApplicationEvent(Base):
@@ -226,6 +228,8 @@ class DatabaseService:
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS commute_distance_miles REAL",
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS commute_details TEXT",
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS diff_data TEXT",
+            "ALTER TABLE application_contacts ADD COLUMN IF NOT EXISTS linkedin_url TEXT",
+            "ALTER TABLE application_contacts ADD COLUMN IF NOT EXISTS headline TEXT",
             # Ensure tables are created if not already (Base.metadata.create_all handles this mostly, but explicit for clarity in migrations)
             """
             CREATE TABLE IF NOT EXISTS application_sub_steps (
@@ -274,10 +278,11 @@ class DatabaseService:
         with self.engine.connect() as conn:
             for sql in migrations:
                 try:
-                    conn.execute(text(sql))
-                    conn.commit()
+                    with conn.begin():
+                        conn.execute(text(sql))
+                    print(f"Migration successful: {sql[:100]}...")
                 except Exception as e:
-                    print(f"Migration skipped or failed (may already exist): {e}")
+                    print(f"Migration skipped or failed: {e}")
         
     def _get_stage_from_status(self, status: str) -> str:
         """Helper to map legacy status strings to pipeline stages."""
@@ -318,6 +323,12 @@ class DatabaseService:
             if app_id:
                 app = session.query(Application).filter(Application.id == app_id).first()
                 if app:
+                    # Check for status change
+                    if data.get('status') and data.get('status') != app.status:
+                        self._log_event(app.id, 'stage_change', f"Status updated to {data['status']}", session=session)
+                    elif data.get('pipeline_stage') and data.get('pipeline_stage') != app.pipeline_stage:
+                        self._log_event(app.id, 'stage_change', f"Pipeline stage updated to {data['pipeline_stage']}", session=session)
+
                     app.status = data.get('status', 'Generated')
                     app.job_title = data.get('job_title', app.job_title)
                     app.company = data.get('company', app.company)
@@ -414,9 +425,16 @@ class DatabaseService:
                 override_cover_letter_path=data.get('override_cover_letter_path'),
                 active_resume_type=data.get('active_resume_type', 'generated'),
                 active_cover_letter_type=data.get('active_cover_letter_type', 'generated'),
-                pipeline_stage=data.get('pipeline_stage') or self._get_stage_from_status(data.get('status', 'Saved'))
+                pipeline_stage=data.get('pipeline_stage') or self._get_stage_from_status(data.get('status', 'Saved')),
+                diff_data=json.dumps(data.get('diff_data')) if data.get('diff_data') else None,
+                commute_time_mins=data.get('commute_time_mins'),
+                commute_distance_miles=data.get('commute_distance_miles'),
+                commute_details=json.dumps(data.get('commute_details')) if data.get('commute_details') else None
             )
+
             session.add(new_app)
+            session.flush() # Get the new ID
+            self._log_event(new_app.id, 'stage_change', f"Application {new_app.status}", session=session)
             session.commit()
             return new_app.id
         finally:
@@ -427,6 +445,8 @@ class DatabaseService:
         try:
             app = session.query(Application).filter(Application.id == app_id).first()
             if app:
+                if app.status != new_status:
+                    self._log_event(app.id, 'stage_change', f"Status updated to {new_status}", session=session)
                 app.status = new_status
                 # Sync pipeline stage
                 app.pipeline_stage = self._get_stage_from_status(new_status)
@@ -448,6 +468,37 @@ class DatabaseService:
         finally:
             session.close()
         
+    def add_application_contact(self, application_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Add a manual contact to an application."""
+        session = self.Session()
+        try:
+            contact = ApplicationContact(
+                application_id=application_id,
+                name=data.get('name'),
+                role=data.get('role'),
+                email=data.get('email'),
+                phone=data.get('phone'),
+                linkedin_url=data.get('linkedin_url'),
+                headline=data.get('headline')
+            )
+            session.add(contact)
+            session.commit()
+            return {
+                "id": contact.id,
+                "name": contact.name,
+                "role": contact.role,
+                "email": contact.email,
+                "phone": contact.phone,
+                "linkedin_url": contact.linkedin_url,
+                "headline": contact.headline
+            }
+        except Exception as e:
+            session.rollback()
+            print(f"Error adding contact: {e}")
+            raise e
+        finally:
+            session.close()
+
     def get_applications(self) -> List[Dict[str, Any]]:
         session = self.Session()
         try:
@@ -458,8 +509,25 @@ class DatabaseService:
 
     def normalize_url(self, url: str) -> str:
         if not url: return ""
-        # Remove whitespace and trailing slash
-        return url.strip().rstrip('/')
+        url = url.strip().rstrip('/')
+        
+        # Special handling for LinkedIn job URLs
+        if 'linkedin.com' in url:
+            # If it has a currentJobId param, that is the truth
+            if 'currentJobId=' in url:
+                import re
+                match = re.search(r'currentJobId=(\d+)', url)
+                if match:
+                    return f"linkedin_job_{match.group(1)}"
+            
+            # If it is a direct /jobs/view/ID URL
+            if '/jobs/view/' in url:
+                import re
+                match = re.search(r'/jobs/view/(\d+)', url)
+                if match:
+                    return f"linkedin_job_{match.group(1)}"
+        
+        return url
 
     def _app_to_dict(self, app) -> Dict[str, Any]:
         """Convert an Application ORM object to a dict."""
@@ -504,11 +572,28 @@ class DatabaseService:
             "commute_distance_miles": app.commute_distance_miles,
             "commute_details": json.loads(app.commute_details) if app.commute_details else {},
             "sub_steps": [{"id": s.id, "title": s.title, "description": s.description, "status": s.status, "date": s.date} for s in app.sub_steps],
-            "contacts": [{"id": c.id, "name": c.name, "role": c.role, "email": c.email, "phone": c.phone} for c in app.contacts],
+            "contacts": [{"id": c.id, "name": c.name, "role": c.role, "email": c.email, "phone": c.phone, "linkedin_url": c.linkedin_url, "headline": c.headline} for c in app.contacts],
             "events": [{"id": e.id, "event_type": e.event_type, "description": e.description, "timestamp": e.timestamp} for e in app.events]
         }
 
+    def get_application_by_resume_path(self, filename: str) -> Dict[str, Any]:
+        """Find an application by its tailored resume filename."""
+        if not filename: return None
+        session = self.Session()
+        try:
+            # Check both tailored_resume_path and override_resume_path
+            app = session.query(Application).filter(
+                (Application.tailored_resume_path == filename) | 
+                (Application.override_resume_path == filename)
+            ).first()
+            if app:
+                return self._app_to_dict(app)
+            return None
+        finally:
+            session.close()
+
     def get_application_by_url(self, url: str) -> Dict[str, Any]:
+
         """Check if an application with this URL already exists. Returns full application data."""
         if not url: return None
         
@@ -553,6 +638,14 @@ class DatabaseService:
             app = session.query(Application).filter(Application.id == app_id).first()
             if not app:
                 return False
+            
+            # Check for status change
+            if 'status' in data and data['status'] != app.status:
+                self._log_event(app.id, 'stage_change', f"Status updated to {data['status']}", session=session)
+            elif 'pipeline_stage' in data and data['pipeline_stage'] != app.pipeline_stage:
+                # If stage changes but status doesn't (or status isn't provided)
+                self._log_event(app.id, 'stage_change', f"Pipeline stage updated to {data['pipeline_stage']}", session=session)
+
             if 'job_title' in data: app.job_title = data['job_title']
             if 'company' in data: app.company = data['company']
             if 'company_logo' in data: app.company_logo = data['company_logo']
@@ -839,17 +932,154 @@ class DatabaseService:
         finally:
             session.close()
 
+    def _normalize_company_name(self, name: str) -> str:
+        """Helper to strip common suffixes and punctuation from company names for better matching."""
+        if not name: return ""
+        import re
+        # Convert to lowercase
+        n = name.lower().strip()
+        # Remove punctuation
+        n = re.sub(r'[.,!?:;]', '', n)
+        # Remove common suffixes
+        suffixes = [
+            r'\binc\b', r'\bllc\b', r'\bcorp\b', r'\bcorporation\b', 
+            r'\bco\b', r'\bcompany\b', r'\blimited\b', r'\bltd\b',
+            r'\bgroup\b', r'\bplc\b', r'\bservices\b'
+        ]
+        for s in suffixes:
+            n = re.sub(s, '', n)
+        # Clean up double spaces and return
+        return ' '.join(n.split()).strip()
+
     def get_linkedin_connections_by_company_name(self, company_name: str) -> List[Dict[str, Any]]:
-        """Get connections matching a specific company name (fuzzy)."""
+        """Get connections matching a specific company name (improved fuzzy with headline fallback)."""
         session = self.Session()
         try:
-            # Simple case-insensitive partial match
-            search = f"%{company_name}%"
-            conns = session.query(LinkedInConnection).filter(
-                LinkedInConnection.company_name.ilike(search)
-            ).all()
+            # Normalize the search name
+            norm_search = self._normalize_company_name(company_name)
+            
+            # Handle specific acronyms (could be expanded or automated)
+            acronyms = {
+                "new york power authority": "nypa",
+                "nypa": "new york power authority",
+                "metropolitan transportation authority": "mta",
+                "mta": "metropolitan transportation authority"
+            }
+            extra_search = acronyms.get(norm_search)
+            
+            # 1. Try direct and normalized ilike match on company_name
+            # If the search term is short (e.g. "Ro"), we must enforce word boundaries
+            if len(company_name) <= 4:
+                conditions = [
+                    LinkedInConnection.company_name.ilike(company_name),
+                    LinkedInConnection.company_name.ilike(f"{company_name} %"),
+                    LinkedInConnection.company_name.ilike(f"% {company_name}"),
+                    LinkedInConnection.company_name.ilike(f"% {company_name} %")
+                ]
+            else:
+                # For longer names, we can keep the fuzzy match
+                conditions = [
+                    LinkedInConnection.company_name.ilike(f"%{company_name}%")
+                ]
+            
+            if norm_search and len(norm_search) > 2:
+                if len(norm_search) <= 4:
+                    conditions.extend([
+                      LinkedInConnection.company_name.ilike(norm_search),
+                      LinkedInConnection.company_name.ilike(f"{norm_search} %"),
+                      LinkedInConnection.company_name.ilike(f"% {norm_search}"),
+                      LinkedInConnection.company_name.ilike(f"% {norm_search} %")
+                   ])
+                else:
+                    conditions.append(LinkedInConnection.company_name.ilike(f"%{norm_search}%"))
+            
+            if extra_search:
+                conditions.append(LinkedInConnection.company_name.ilike(f"%{extra_search}%"))
+                
+            from sqlalchemy import or_
+            conns = session.query(LinkedInConnection).filter(or_(*conditions)).all()
+            
+            # 2. Inverse check if needed (small set only)
+            if not conns:
+                all_conns = session.query(LinkedInConnection).all()
+                matches = []
+                for c in all_conns:
+                    c_norm = self._normalize_company_name(c.company_name)
+                    if c_norm and norm_search:
+                        if len(norm_search) <= 4:
+                            # For short names, require exact normalized match
+                            if c_norm == norm_search:
+                                matches.append(c)
+                        else:
+                            # Original fuzzy logic for longer names
+                            if c_norm in norm_search or norm_search in c_norm:
+                                matches.append(c)
+                    elif extra_search and c_norm and (c_norm in extra_search or extra_search in c_norm):
+                        matches.append(c)
+                conns = matches
+
+            # 3. Fallback: Search HEADLINE if company_name is empty or we have few matches
+            if len(conns) < 5:
+                if len(company_name) <= 4:
+                    headline_conditions = [
+                        LinkedInConnection.headline.ilike(company_name),
+                        LinkedInConnection.headline.ilike(f"% at {company_name}%"),
+                        LinkedInConnection.headline.ilike(f"% @ {company_name}%"),
+                        LinkedInConnection.headline.ilike(f"% {company_name} %")
+                    ]
+                else:
+                    headline_conditions = [
+                        LinkedInConnection.headline.ilike(f"%{company_name}%")
+                    ]
+                
+                if norm_search and len(norm_search) > 2:
+                    if len(norm_search) <= 4:
+                        headline_conditions.extend([
+                            LinkedInConnection.headline.ilike(norm_search),
+                            LinkedInConnection.headline.ilike(f"% at {norm_search}%"),
+                            LinkedInConnection.headline.ilike(f"% @ {norm_search}%")
+                        ])
+                    else:
+                        headline_conditions.append(LinkedInConnection.headline.ilike(f"%{norm_search}%"))
+
+                if extra_search:
+                    headline_conditions.append(LinkedInConnection.headline.ilike(f"%{extra_search}%"))
+                
+                headline_conns = session.query(LinkedInConnection).filter(or_(*headline_conditions)).all()
+                conns.extend(headline_conns)
+
+            # --- DEFINITIVE WORD BOUNDARY FILTER ---
+            # For short names like "Ro", SQL ILIKE is too loose. 
+            # We enforce strict word boundaries in Python to avoid "Metro" vs "Ro".
+            if len(norm_search) <= 5:
+                import re
+                # Pattern: Word boundary, then name, then word boundary.
+                # Avoids matching "ro" in "Metro", "Brooklyn", "Recruiter for..."
+                pattern = re.compile(rf'\b{re.escape(norm_search)}\b', re.IGNORECASE)
+                
+                filtered = []
+                seen_urls = set()
+                for c in conns:
+                    if c.profile_url in seen_urls: continue
+                    
+                    # Must find the standalone word in Company OR Headline
+                    if pattern.search(c.company_name or "") or pattern.search(c.headline or ""):
+                        filtered.append(c)
+                        seen_urls.add(c.profile_url)
+                conns = filtered
+            else:
+                # Simple deduplication for longer names
+                unique = []
+                seen = set()
+                for c in conns:
+                    if c.profile_url not in seen:
+                        unique.append(c)
+                        seen.add(c.profile_url)
+                conns = unique
+
             return [
                 {
+                    "id": c.id,
                     "name": c.name,
                     "headline": c.headline,
                     "profile_url": c.profile_url,
@@ -887,6 +1117,56 @@ class DatabaseService:
             return True
         finally:
             session.close()
+
+    def search_linkedin_connections(self, query: str) -> List[Dict[str, Any]]:
+        """Search for LinkedIn connections by name or headline."""
+        session = self.Session()
+        try:
+            from sqlalchemy import or_
+            conns = session.query(LinkedInConnection).filter(
+                or_(
+                    LinkedInConnection.name.ilike(f"%{query}%"),
+                    LinkedInConnection.headline.ilike(f"%{query}%"),
+                    LinkedInConnection.company_name.ilike(f"%{query}%")
+                )
+            ).limit(20).all()
+            
+            return [
+                {
+                    "id": c.id,
+                    "name": c.name,
+                    "headline": c.headline,
+                    "profile_url": c.profile_url,
+                    "company_name": c.company_name
+                } for c in conns
+            ]
+        finally:
+            session.close()
+
+    def _log_event(self, app_id: int, event_type: str, description: str, session=None):
+        """Helper to create an application event."""
+        own_session = False
+        if session is None:
+            session = self.Session()
+            own_session = True
+        
+        try:
+            event = ApplicationEvent(
+                application_id=app_id,
+                event_type=event_type,
+                description=description,
+                timestamp=datetime.now().isoformat()
+            )
+            session.add(event)
+            if own_session:
+                session.commit()
+        except Exception as e:
+            print(f"Failed to log event: {e}")
+            if own_session:
+                session.rollback()
+        finally:
+            if own_session:
+                session.close()
 
 
 if __name__ == "__main__":

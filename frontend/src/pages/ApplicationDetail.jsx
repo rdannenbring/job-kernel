@@ -387,8 +387,8 @@ const LogoPickerModal = ({ companyName, onSelect, onClose }) => {
                                             onClick={() => handleSelectResult(r.domain)}
                                             title={r.name || r.domain}
                                             style={{
-                                                background: 'white', border: '2px solid var(--border-color)',
-                                                borderRadius: '0.6rem', padding: '0.6rem',
+                                                background: 'transparent', border: '2px solid var(--border-color)',
+                                                borderRadius: '0.6rem', padding: '0',
                                                 cursor: 'pointer', display: 'flex', flexDirection: 'column',
                                                 alignItems: 'center', gap: '0.4rem',
                                                 transition: 'all 0.15s', aspectRatio: '1 / 1.2',
@@ -437,7 +437,7 @@ const LogoPickerModal = ({ companyName, onSelect, onClose }) => {
                             {urlValue && !urlError && (
                                 <div style={{
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    background: 'white', borderRadius: '0.6rem', padding: '1rem',
+                                    background: 'transparent', borderRadius: '0.6rem', padding: '0',
                                     marginBottom: '1rem', border: '1px solid var(--border-color)',
                                     minHeight: '100px',
                                 }}>
@@ -501,7 +501,8 @@ const LogoPickerModal = ({ companyName, onSelect, onClose }) => {
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate, onViewLifecycle }) => {
+const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate, onViewLifecycle, onStartFullGeneration }) => {
+    const needsGeneration = !app.tailored_resume_path && !app.cover_letter_path;
     const [previewFile, setPreviewFile] = React.useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
     const [deleting, setDeleting] = React.useState(false);
@@ -519,6 +520,9 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     const [expandedCL, setExpandedCL] = React.useState(false);
     const [resumeInstructions, setResumeInstructions] = React.useState('');
     const [clInstructions, setClInstructions] = React.useState('');
+    const [showInstructionsModal, setShowInstructionsModal] = React.useState(false);
+    const [modalResumeInstructions, setModalResumeInstructions] = React.useState('');
+    const [modalClInstructions, setModalClInstructions] = React.useState('');
 
     
     const [showResumeOverrideConfirm, setShowResumeOverrideConfirm] = React.useState(false);
@@ -1219,8 +1223,8 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                             title="Click to set a logo"
                             style={{
                                 width: '72px', height: '72px', borderRadius: '12px', flexShrink: 0,
-                                background: logoUrl ? 'white' : 'rgba(255,255,255,0.05)',
-                                padding: logoUrl ? '6px' : '0',
+                                background: logoUrl ? 'transparent' : 'rgba(255,255,255,0.05)',
+                                padding: '0',
                                 border: '1px dashed var(--border-color)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 cursor: 'pointer', overflow: 'hidden', position: 'relative',
@@ -1719,6 +1723,115 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
 
             </header>
 
+            {needsGeneration && (
+                <>
+                    <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(16, 185, 129, 0.1))', borderRadius: '1rem', border: '1px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                            <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>auto_awesome</span>
+                                Generate Documents
+                            </h3>
+                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Use AI to tailor your resume and write a cover letter based on this job.</p>
+                        </div>
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={() => setShowInstructionsModal(true)}
+                            style={{ padding: '0.75rem 1.5rem', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        >
+                            Generate Now
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>arrow_forward</span>
+                        </button>
+                    </div>
+
+                    {/* Pre-launch Instructions Modal */}
+                    {showInstructionsModal && (
+                        <div style={{
+                            position: 'fixed', inset: 0, zIndex: 9000,
+                            background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                            <div style={{
+                                background: 'var(--bg-card)', borderRadius: '1rem',
+                                border: '1px solid var(--border-color)',
+                                padding: '2rem', width: '100%', maxWidth: '520px',
+                                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.6)',
+                                display: 'flex', flexDirection: 'column', gap: '1.5rem'
+                            }}>
+                                <div>
+                                    <h2 style={{ margin: '0 0 0.35rem', fontSize: '1.4rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>tune</span>
+                                        Any special instructions?
+                                    </h2>
+                                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                                        Optionally guide the AI before it tailors your documents. Leave blank to use default settings.
+                                    </p>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>description</span>
+                                        Resume Instructions
+                                    </label>
+                                    <textarea
+                                        className="form-textarea"
+                                        rows={3}
+                                        placeholder="e.g. 'Emphasize my leadership roles' or 'Highlight Python experience'"
+                                        value={modalResumeInstructions}
+                                        onChange={e => setModalResumeInstructions(e.target.value)}
+                                        style={{ resize: 'vertical', fontSize: '0.9rem' }}
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>mail</span>
+                                        Cover Letter Instructions
+                                    </label>
+                                    <textarea
+                                        className="form-textarea"
+                                        rows={3}
+                                        placeholder="e.g. 'Keep it under one page' or 'Formal and concise tone'"
+                                        value={modalClInstructions}
+                                        onChange={e => setModalClInstructions(e.target.value)}
+                                        style={{ resize: 'vertical', fontSize: '0.9rem' }}
+                                    />
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <button
+                                        className="btn btn-secondary"
+                                        onClick={() => {
+                                            setShowInstructionsModal(false);
+                                            setModalResumeInstructions('');
+                                            setModalClInstructions('');
+                                        }}
+                                        style={{ flex: 1, justifyContent: 'center' }}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={() => {
+                                            setShowInstructionsModal(false);
+                                            if (onStartFullGeneration) {
+                                                onStartFullGeneration(app, modalResumeInstructions, modalClInstructions);
+                                            }
+                                            setModalResumeInstructions('');
+                                            setModalClInstructions('');
+                                        }}
+                                        style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                                    >
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>auto_awesome</span>
+                                        Generate
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
+
             <PipelineProgressBar
                 currentStage={app.pipeline_stage}
                 isArchived={isArchived}
@@ -1783,18 +1896,18 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     Details & Documents
                 </button>
                 <button 
+                    onClick={() => setActiveTab('lifecycle')}
                     style={{
                         padding: '0.75rem 0',
                         background: 'none',
-                        color: 'var(--text-muted)',
+                        color: activeTab === 'lifecycle' ? 'var(--primary)' : 'var(--text-muted)',
                         border: 'none',
-                        borderBottom: '2px solid transparent',
+                        borderBottom: `2px solid ${activeTab === 'lifecycle' ? 'var(--primary)' : 'transparent'}`,
                         cursor: 'pointer',
                         fontWeight: 600,
                         fontSize: '1rem',
                         transition: 'all 0.2s',
-                        marginBottom: '-1px',
-                        opacity: 0.6
+                        marginBottom: '-1px'
                     }}
                 >
                     Interviewer Profiles
@@ -2025,29 +2138,12 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                                         <div style={{ fontWeight: 600 }}>Tailored Resume</div>
                                                         <div style={{ fontSize: '0.7rem', opacity: 0.7 }}>Not generated yet</div>
                                                     </div>
-                                                    <button className="btn-util" style={{ marginLeft: 'auto' }} onClick={handleRegenerateResume} disabled={regeneratingResume}>
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>auto_awesome</span>
-                                                        {regeneratingResume ? 'Generating' : 'Generate Now'}
-                                                    </button>
-                                                </div>
-                                                <div style={{ width: '100%', borderTop: '1px solid rgba(var(--primary-rgb), 0.1)', paddingTop: '0.5rem' }}>
-                                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.3rem', fontWeight: 600 }}>ADDITIONAL AI INSTRUCTIONS</div>
-                                                    <textarea 
-                                                        className="ai-instructions-textarea"
-                                                        placeholder="Custom instructions for AI (e.g., 'Highlight my leadership skills')..."
-                                                        defaultValue={resumeInstructions}
-                                                        onBlur={(e) => setResumeInstructions(e.target.value)}
-                                                        style={{ 
-                                                            width: '100%', 
-                                                            fontSize: '0.75rem', 
-                                                            padding: '0.4rem', 
-                                                            borderRadius: '4px', 
-                                                            border: '1px solid var(--border-color)',
-                                                            backgroundColor: 'white',
-                                                            resize: 'vertical',
-                                                            minHeight: '40px'
-                                                        }}
-                                                    />
+                                                    {!needsGeneration && (
+                                                        <button className="btn-util" style={{ marginLeft: 'auto' }} onClick={handleRegenerateResume} disabled={regeneratingResume}>
+                                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>auto_awesome</span>
+                                                            {regeneratingResume ? 'Generating' : 'Generate Now'}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
@@ -2127,33 +2223,15 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                                             <div style={{ flex: 1, fontSize: '0.85rem', color: 'var(--text-muted)', padding: '0.5rem', border: '1px dashed var(--border-color)', borderRadius: '4px' }}>Not generated yet</div>
-                                                            <button className="btn-util" onClick={handleRegenerateResume} disabled={regeneratingResume}>
-                                                                <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>auto_awesome</span>
-                                                                Generate
-                                                            </button>
+                                                            {!needsGeneration && (
+                                                                <button className="btn-util" onClick={handleRegenerateResume} disabled={regeneratingResume}>
+                                                                    <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>auto_awesome</span>
+                                                                    Generate
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 )}
-                                                {/* Global Instructions that apply when generating/regenerating */}
-                                                <div style={{ marginTop: '0.5rem' }}>
-                                                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '0.2rem', fontWeight: 600 }}>AI TAILORING INSTRUCTIONS</div>
-                                                    <textarea 
-                                                        className="ai-instructions-textarea"
-                                                        placeholder="e.g. 'Focus on my Python skills', 'Maintain a professional tone'..."
-                                                        defaultValue={resumeInstructions}
-                                                        onBlur={(e) => setResumeInstructions(e.target.value)}
-                                                        style={{ 
-                                                            width: '100%', 
-                                                            fontSize: '0.75rem', 
-                                                            padding: '0.4rem', 
-                                                            borderRadius: '4px', 
-                                                            border: '1px solid var(--border-color)',
-                                                            backgroundColor: 'var(--bg-tertiary)',
-                                                            resize: 'vertical',
-                                                            minHeight: '50px'
-                                                        }}
-                                                    />
-                                                </div>
                                             </div>
                                         </div>
 
@@ -2231,29 +2309,12 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                                         <div style={{ fontWeight: 600 }}>Tailored Letter</div>
                                                         <div style={{ fontSize: '0.7rem', opacity: 0.7 }}>Not generated yet</div>
                                                     </div>
-                                                    <button className="btn-util" style={{ marginLeft: 'auto' }} onClick={handleRegenerateCL} disabled={regeneratingCL}>
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>auto_awesome</span>
-                                                        {regeneratingCL ? 'Generating' : 'Generate Now'}
-                                                    </button>
-                                                </div>
-                                                <div style={{ width: '100%', borderTop: '1px solid rgba(var(--primary-rgb), 0.1)', paddingTop: '0.5rem' }}>
-                                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.3rem', fontWeight: 600 }}>ADDITIONAL AI INSTRUCTIONS</div>
-                                                    <textarea 
-                                                        className="ai-instructions-textarea"
-                                                        placeholder="Custom instructions for AI (e.g., 'Make it short and punchy')..."
-                                                        defaultValue={clInstructions}
-                                                        onBlur={(e) => setClInstructions(e.target.value)}
-                                                        style={{ 
-                                                            width: '100%', 
-                                                            fontSize: '0.75rem', 
-                                                            padding: '0.4rem', 
-                                                            borderRadius: '4px', 
-                                                            border: '1px solid var(--border-color)',
-                                                            backgroundColor: 'white',
-                                                            resize: 'vertical',
-                                                            minHeight: '40px'
-                                                        }}
-                                                    />
+                                                    {!needsGeneration && (
+                                                        <button className="btn-util" style={{ marginLeft: 'auto' }} onClick={handleRegenerateCL} disabled={regeneratingCL}>
+                                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>auto_awesome</span>
+                                                            {regeneratingCL ? 'Generating' : 'Generate Now'}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
@@ -2311,33 +2372,15 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                                         <div style={{ flex: 1, fontSize: '0.85rem', color: 'var(--text-muted)', padding: '0.5rem', border: '1px dashed var(--border-color)', borderRadius: '4px' }}>Not generated yet</div>
-                                                        <button className="btn-util" onClick={handleRegenerateCL} disabled={regeneratingCL}>
-                                                            <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>auto_awesome</span>
-                                                            Generate
-                                                        </button>
+                                                        {!needsGeneration && (
+                                                            <button className="btn-util" onClick={handleRegenerateCL} disabled={regeneratingCL}>
+                                                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>auto_awesome</span>
+                                                                Generate
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
-                                            {/* Global Instructions that apply when generating/regenerating */}
-                                            <div style={{ marginTop: '0.5rem' }}>
-                                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '0.2rem', fontWeight: 600 }}>AI WRITING INSTRUCTIONS</div>
-                                                <textarea 
-                                                    className="ai-instructions-textarea"
-                                                    placeholder="e.g. 'Keep it under 300 words', 'Mention my specific interest in their culture'..."
-                                                    defaultValue={clInstructions}
-                                                    onBlur={(e) => setClInstructions(e.target.value)}
-                                                    style={{ 
-                                                        width: '100%', 
-                                                        fontSize: '0.75rem', 
-                                                        padding: '0.4rem', 
-                                                        borderRadius: '4px', 
-                                                        border: '1px solid var(--border-color)',
-                                                        backgroundColor: 'var(--bg-tertiary)',
-                                                        resize: 'vertical',
-                                                        minHeight: '50px'
-                                                    }}
-                                                />
-                                            </div>
                                         </div>
 
                                         {/* Custom Final */}

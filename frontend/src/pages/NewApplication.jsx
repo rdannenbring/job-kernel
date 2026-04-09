@@ -17,7 +17,7 @@ function NewApplication({ onComplete }) {
     const [resumeFile, setResumeFile] = useState(null)
     const [jobDescription, setJobDescription] = useState('')
     const [jobUrl, setJobUrl] = useState('')
-    const [inputMode, setInputMode] = useState('text')
+    const [inputMode, setInputMode] = useState('url')
     const [extensionMetadata, setExtensionMetadata] = useState(null)
 
     const [configDefaults, setConfigDefaults] = useState({})
@@ -127,6 +127,13 @@ function NewApplication({ onComplete }) {
                 } else if (extData.description) {
                     setJobDescription(extData.description)
                     setInputMode('text')
+                }
+
+                if (extData.resumeInstructions) {
+                    setResumeInstructions(extData.resumeInstructions)
+                }
+                if (extData.clInstructions) {
+                    setClInstructions(extData.clInstructions)
                 }
                 
                 // Start processing after a brief delay to ensure state updates
@@ -293,7 +300,37 @@ function NewApplication({ onComplete }) {
                 console.warn('Scoring failed, continuing anyway:', scoreErr)
             }
             
+            // Perform an initial save to create a database record
+            // This enables OnlyOffice persistence during manual edits on the scoring screen
+            try {
+                const savePayload = {
+                    job_url: jobUrl?.trim() || '',
+                    job_description: jobDescription,
+                    job_title: data.job_metadata?.title || "Unknown Job",
+                    company: data.job_metadata?.company || "Unknown Company",
+                    tailored_resume_path: data.files.docx.split('/').pop(),
+                    resume_data: data.resume_data,
+                    diff_data: data.diff_data,
+                    status: 'Draft',
+                    pipeline_stage: 'saved'
+                };
+                const saveRes = await fetch(`${API_URL}/api/save-application`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(savePayload)
+                });
+                if (saveRes.ok) {
+                    const savedAppData = await saveRes.json();
+                    // Update result with the new database ID
+                    setResult(prev => ({ ...prev, id: savedAppData.id }));
+                    console.log("✅ Initial save successful, database ID:", savedAppData.id);
+                }
+            } catch (saveErr) {
+                console.warn('Initial save failed:', saveErr);
+            }
+            
             setAppStage('match_scoring')
+
         } catch (err) {
             setError(err.message || 'An error occurred while processing your resume')
         } finally {
@@ -315,6 +352,7 @@ function NewApplication({ onComplete }) {
                     current_resume_data: result.resume_data,
                     instructions: refineInstructions,
                     original_filename: result.original_filename,
+                    original_text_content: result.diff_data?.original, // Preserve the baseline
                     additional_context: extractedContext
                 })
             })
@@ -365,11 +403,16 @@ function NewApplication({ onComplete }) {
         // Leaving manual edit — sync manually edited text back to state
         setIsProcessing(true);
         // Small delay to ensure OnlyOffice callback has time to finish on backend
+        // We do multiple refetches to handle eventual consistency
         setTimeout(async () => {
             await refetchApplication();
-            setIsProcessing(false);
+            setTimeout(async () => {
+                await refetchApplication();
+                setIsProcessing(false);
+            }, 2000);
         }, 3000);
     }
+
 
     const handleAcceptResume = async () => {
         setIsProcessing(true)
@@ -458,6 +501,7 @@ function NewApplication({ onComplete }) {
                 application_id: extensionMetadata?.id || duplicateApp?.application_id || null,
                 job_title: extensionMetadata?.title || metadata.job_title || "Unknown Role",
                 company: extensionMetadata?.company || metadata.company || "Unknown Company",
+                company_logo: extensionMetadata?.logo || metadata.company_logo || "",
                 job_url: extensionMetadata?.link || result.job_url || (inputMode === 'url' ? jobUrl : ""),
                 apply_url: extensionMetadata?.applyLink || metadata.apply_url || "",
                 job_description: extensionMetadata?.description || result.job_description || (inputMode === 'text' ? jobDescription : "No description captured"),
@@ -635,8 +679,8 @@ function NewApplication({ onComplete }) {
             <div key={pendingRefinement ? 'refining' : 'normal'} style={{ height: 'calc(100vh - 120px)' }}>
                     <ResumeEditor 
                         resumeData={result?.resume_data || {}} 
-                        pdfUrl={pendingRefinement ? (pendingRefinement.tailored_resume_path || (pendingRefinement.files?.pdf ? `${API_URL}${pendingRefinement.files.pdf}` : null)) : (result?.tailored_resume_path || result?.resume_data?.tailored_resume_path)}
-                        docxFilename={result?.resume_data?.word_filename}
+                        pdfUrl={pendingRefinement ? (pendingRefinement.files?.pdf ? `${API_URL}${pendingRefinement.files.pdf}` : null) : (result?.files?.pdf ? `${API_URL}${result.files.pdf}` : null)}
+                        docxFilename={docxFilename}
                         refineInstructions={refineInstructions}
                         setRefineInstructions={setRefineInstructions}
                         isRegenerating={isRefining}
@@ -746,7 +790,7 @@ function NewApplication({ onComplete }) {
                             </div>
                         )}
 
-                        <div style={{ flex: 1, background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                        <div style={{ flex: 1, background: 'transparent', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                             <iframe
                                 src={`${API_URL}${coverLetterResult.files.pdf}?t=${Date.now()}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
                                 style={{ width: '100%', height: '100%', border: 'none' }}

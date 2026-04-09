@@ -152,8 +152,15 @@ class DocumentService:
             for table in doc.tables:
                 table_data = []
                 for row in table.rows:
-                    row_data = [cell.text.strip() for cell in row.cells]
-                    table_data.append(row_data)
+                    row_content = []
+                    for cell in row.cells:
+                        cell_text = cell.text.strip()
+                        row_content.append(cell_text)
+                        # Also add cell text to full_text for comparison baselines
+                        if cell_text and cell_text not in resume_data["full_text"]:
+                            resume_data["full_text"].append(cell_text)
+                    table_data.append(row_content)
+                
                 resume_data["sections"].append({
                     "title": "Table",
                     "type": "table",

@@ -472,6 +472,98 @@ const LINKEDIN_SCRAPER = {
       if (cardImg && cardImg.src && cardImg.src.includes('http')) return cardImg.src;
     }
     return null;
+  },
+  
+  networking: () => {
+    const connections = [];
+    
+    // 1. Check for LinkedIn Modals (most important for "Show all")
+    const modals = document.querySelectorAll('.artdeco-modal, [role="dialog"]');
+    modals.forEach(modal => {
+        // Look for connection items in the modal
+        const items = modal.querySelectorAll('.artdeco-entity-lockup, .entity-result, [class*="result-item"]');
+        items.forEach(item => {
+            const nameLink = item.querySelector('a[href*="/in/"]');
+            const nameEl = item.querySelector('strong, .artdeco-entity-lockup__title, [class*="name"]');
+            const headlineEl = item.querySelector('[class*="headline"], .artdeco-entity-lockup__subtitle, .entity-result__primary-subtitle');
+            
+            if (nameEl && nameLink) {
+                // LinkedIn often has hidden name text for screen readers; try to get only the visible portion
+                const name = nameEl.querySelector('strong')?.innerText || nameEl.innerText.split('\n')[0].trim();
+                connections.push({
+                    name: name,
+                    headline: headlineEl?.innerText.trim() || '',
+                    profile_url: nameLink.href.split('?')[0]
+                });
+            }
+        });
+    });
+
+    // 2. Check the Job Details pane (root)
+    const root = getLIRoot();
+    // Look for various networking sections
+    // Section 1: "People you can reach out to" cards
+    const networkCards = root.querySelectorAll('[class*="networking-card"], [class*="facepile-item"], .job-details-people-who-can-help__connections-card-summary');
+    
+    networkCards.forEach(card => {
+        const nameEl = card.querySelector('[class*="name"], [class*="title"], .job-details-people-who-can-help__connections-card-summary-text');
+        const headlineEl = card.querySelector('[class*="headline"], [class*="subtitle"]');
+        const linkEl = card.querySelector('a[href*="/in/"]');
+        
+        if (nameEl && linkEl) {
+            connections.push({
+                name: nameEl.innerText.split(' and ')[0].split(' in your network')[0].trim(),
+                headline: headlineEl?.innerText.trim() || '',
+                profile_url: linkEl.href.split('?')[0]
+            });
+        }
+    });
+    
+    // Section 2: "Meet the hiring team" (Job Poster)
+    const posterSections = root.querySelectorAll('.jobs-poster, [class*="job-poster"], .hirer-card__container');
+    posterSections.forEach(posterEl => {
+        const nameEl = posterEl.querySelector('[class*="name"], .jobs-poster__name, .hirer-card__name');
+        const headlineEl = posterEl.querySelector('[class*="headline"], .jobs-poster__headline, .hirer-card__headline');
+        const linkEl = posterEl.querySelector('a[href*="/in/"]');
+        if (nameEl && linkEl) {
+            connections.push({
+                name: nameEl.innerText.trim(),
+                headline: headlineEl?.innerText.trim() || 'Job Poster',
+                profile_url: linkEl.href.split('?')[0],
+                is_poster: true
+            });
+        }
+    });
+
+    // Strategy 3: Just find ANY /in/ link inside ANY networking area in the whole document
+    const networkingAreas = document.querySelectorAll('.jobs-details__networking, .job-details-people-who-can-help, .jobs-search-connections-list');
+    networkingAreas.forEach(area => {
+        const links = area.querySelectorAll('a[href*="/in/"]');
+        links.forEach(link => {
+            const container = link.closest('div, li, .artdeco-entity-lockup');
+            const name = link.innerText.trim();
+            if (name && name.split(' ').length >= 2 && name.split(' ').length <= 4) { 
+                const headlineEl = container?.querySelector('[class*="headline"], [class*="subtitle"], .artdeco-entity-lockup__subtitle');
+                connections.push({
+                    name,
+                    headline: headlineEl?.innerText.trim() || '',
+                    profile_url: link.href.split('?')[0]
+                });
+            }
+        });
+    });
+
+    // Deduplicate
+    const unique = [];
+    const seen = new Set();
+    connections.forEach(c => {
+        if (!seen.has(c.profile_url)) {
+            seen.add(c.profile_url);
+            unique.push(c);
+        }
+    });
+    
+    return unique;
   }
 };
 
@@ -878,6 +970,7 @@ function scrapeJobData() {
     relocation: null,
     interestLevel: null,
     remarks: '',
+    onPageConnections: scraper.networking?.() || [],
   };
 }
 
@@ -1419,7 +1512,21 @@ async function processLinkedInConnections() {
     }
   }
   
-  // 2. Job List Highlights
+  // 2. Proactively update side panel on-page connections
+  const onPage = LINKEDIN_SCRAPER.networking?.() || [];
+  if (onPage.length > 0) {
+    // Also update the local latestJobData so side panel refresh works
+    chrome.storage.local.get(['latestJobData'], (result) => {
+      if (result.latestJobData) {
+        const updatedData = { ...result.latestJobData, onPageConnections: onPage };
+        chrome.storage.local.set({ latestJobData: updatedData }, () => {
+          chrome.runtime.sendMessage({ action: 'refresh_on_page_connections', onPageConnections: onPage });
+        });
+      }
+    });
+  }
+
+  // 3. Job List Highlights
   highlightConnectionsInList();
 }
 

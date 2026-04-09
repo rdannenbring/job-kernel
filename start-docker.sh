@@ -32,8 +32,8 @@ echo "🐳 Building and starting Docker containers..."
 # Check if docker needs sudo
 if ! docker info > /dev/null 2>&1; then
     echo "⚠️  Docker permission denied. Trying with sudo..."
-    sudo docker-compose --env-file ./backend/.env up --build
+    sudo docker-compose --env-file ./backend/.env up --build -d
 else
-    docker-compose --env-file ./backend/.env up --build
+    docker-compose --env-file ./backend/.env up --build -d
 fi
 

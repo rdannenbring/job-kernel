@@ -241,13 +241,17 @@ function App() {
     handleAppUpdate(appId, updates);
 
     try {
-      await fetch(`${API_URL}/api/applications/${appId}`, {
+      const res = await fetch(`${API_URL}/api/applications/${appId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(updates)
       });
+      if (res.ok) {
+        const updatedFullApp = await res.json();
+        handleAppUpdate(appId, updatedFullApp);
+      }
     } catch (e) {
       console.error("Failed to update status", e);
       loadApplications(); // revert on failure
@@ -309,7 +313,38 @@ function App() {
             </div>
           );
         }
-        return <ApplicationDetail app={selectedApp} onBack={() => setScreen('dashboard')} onDelete={handleDeleteApp} onArchive={handleArchiveApp} onStatusUpdate={handleStatusUpdate} onUpdate={handleAppUpdate} onViewLifecycle={() => setScreen('lifecycle')} />
+        return <ApplicationDetail 
+                 app={selectedApp} 
+                 onBack={() => setScreen('dashboard')} 
+                 onDelete={handleDeleteApp} 
+                 onArchive={handleArchiveApp} 
+                 onStatusUpdate={handleStatusUpdate} 
+                 onUpdate={handleAppUpdate} 
+                 onViewLifecycle={() => setScreen('lifecycle')}
+                 onStartFullGeneration={(appToGen, resumeInst, clInst) => {
+                   sessionStorage.setItem('extensionJobData', JSON.stringify({
+                     id: appToGen.id,
+                     title: appToGen.job_title,
+                     company: appToGen.company,
+                     logo: appToGen.company_logo,
+                     link: appToGen.job_url,
+                     applyLink: appToGen.apply_url,
+                     description: appToGen.job_description,
+                     salaryRange: appToGen.salary_range,
+                     datePosted: appToGen.date_posted,
+                     deadline: appToGen.deadline,
+                     jobType: appToGen.job_type,
+                     locationType: appToGen.location_type,
+                     location: appToGen.location,
+                     relocation: appToGen.relocation,
+                     interestLevel: appToGen.interest_level,
+                     remarks: appToGen.remarks,
+                     resumeInstructions: resumeInst,
+                     clInstructions: clInst
+                   }));
+                   setScreen('new_app');
+                 }} 
+               />
       case 'lifecycle':
         if (!selectedApp) {
           setScreen('dashboard', { replace: true });

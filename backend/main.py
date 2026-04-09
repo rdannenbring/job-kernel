@@ -908,7 +908,7 @@ async def refine_resume(request: RefineRequest):
             "preview": preview_text,
             "change_summary": change_summary,
             "diff_data": {
-                "original": prev_text,
+                "original": request.original_text_content or prev_text,
                 "ai_tailored": new_text,
                 "tailored": new_text
             },
@@ -1029,7 +1029,8 @@ async def update_application(app_id: int, request: ApplicationSaveRequest, backg
         if success:
             if 'location' in request.dict(exclude_unset=True) or 'location_type' in request.dict(exclude_unset=True):
                 background_tasks.add_task(calculate_commute_for_app, app_id)
-            return {"message": "Application updated", "id": app_id}
+            updated_app = database_service.get_application_by_id(app_id)
+            return updated_app
         raise HTTPException(status_code=404, detail="Application not found")
     except HTTPException:
         raise
@@ -1041,6 +1042,151 @@ async def get_applications():
     try:
         apps = database_service.get_applications()
         return apps
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/analytics")
+async def get_analytics():
+    """Return aggregated analytics data from the applications database."""
+    try:
+        from datetime import datetime, timedelta
+        from collections import defaultdict
+
+        apps = database_service.get_applications()
+        active_apps = [a for a in apps if not a.get('is_archived', False)]
+        total = len(active_apps)
+
+        # --- Pipeline stage counts ---
+        stage_order = ['saved', 'generated', 'applied', 'interviewing', 'decision', 'accepted', 'rejected', 'declined']
+        stage_counts = defaultdict(int)
+        for a in active_apps:
+            stage = (a.get('pipeline_stage') or 'saved').lower()
+            stage_counts[stage] += 1
+
+        # --- Interest level counts ---
+        interest_counts = defaultdict(int)
+        for a in active_apps:
+            lvl = (a.get('interest_level') or 'Not Set').strip()
+            if not lvl:
+                lvl = 'Not Set'
+            interest_counts[lvl] += 1
+
+        # --- Job type counts ---
+        job_type_counts = defaultdict(int)
+        for a in active_apps:
+            jt = (a.get('job_type') or 'Not Set').strip()
+            if not jt:
+                jt = 'Not Set'
+            job_type_counts[jt] += 1
+
+        # --- Location type counts ---
+        location_type_counts = defaultdict(int)
+        for a in active_apps:
+            lt = (a.get('location_type') or 'Not Set').strip()
+            if not lt:
+                lt = 'Not Set'
+            location_type_counts[lt] += 1
+
+        # --- Weekly activity: applications added per day over last 8 weeks ---
+        today = datetime.now().date()
+        eight_weeks_ago = today - timedelta(weeks=8)
+        # Build a dict of date -> count
+        daily_counts = defaultdict(int)
+        for a in active_apps:
+            ds = a.get('date_saved')
+            if ds:
+                try:
+                    d = datetime.fromisoformat(ds[:10]).date()
+                    if d >= eight_weeks_ago:
+                        daily_counts[d.isoformat()] += 1
+                except Exception:
+                    pass
+
+        # Build last 8 weeks as a list of {date, count, day_of_week}
+        weekly_activity = []
+        for i in range(56):
+            d = eight_weeks_ago + timedelta(days=i)
+            weekly_activity.append({
+                "date": d.isoformat(),
+                "count": daily_counts.get(d.isoformat(), 0),
+                "day": d.strftime("%a"),
+            })
+
+        # --- Match score stats ---
+        scores = [a.get('match_score') for a in active_apps if a.get('match_score') is not None]
+        avg_score = round(sum(scores) / len(scores)) if scores else None
+
+        # --- Top companies (by count) ---
+        company_counts = defaultdict(int)
+        for a in active_apps:
+            c = (a.get('company') or '').strip()
+            if c:
+                company_counts[c] += 1
+        top_companies = sorted(company_counts.items(), key=lambda x: -x[1])[:10]
+
+        # --- LinkedIn Connections stats ---
+        all_conns = database_service.get_all_linkedin_connections(limit=5000)
+        total_unique_conns = len(all_conns)
+        
+        # Match apps with connections
+        conn_map = defaultdict(int)
+        for conn in all_conns:
+            cname = (conn.get('company_name') or '').strip().lower()
+            if cname:
+                conn_map[cname] += 1
+        
+        apps_with_conns_count = 0
+        conn_distribution = defaultdict(int) # Number of apps with N connections
+        for a in active_apps:
+            aname = (a.get('company') or '').strip().lower()
+            count = conn_map.get(aname, 0)
+            if count > 0:
+                apps_with_conns_count += 1
+                conn_distribution[count] += 1
+            else:
+                conn_distribution[0] += 1
+
+        # --- Recent applications (last 10 by date_saved) ---
+        sorted_apps = sorted(
+            active_apps,
+            key=lambda a: a.get('date_saved') or '',
+            reverse=True
+        )[:10]
+        recent = [
+            {
+                "id": a.get('id'),
+                "job_title": a.get('job_title'),
+                "company": a.get('company'),
+                "company_logo": a.get('company_logo'),
+                "date_saved": a.get('date_saved'),
+                "pipeline_stage": a.get('pipeline_stage'),
+                "interest_level": a.get('interest_level'),
+                "match_score": a.get('match_score'),
+                "location": a.get('location'),
+                "location_type": a.get('location_type'),
+                "connection_count": conn_map.get((a.get('company') or '').strip().lower(), 0)
+            }
+            for a in sorted_apps
+        ]
+
+        return {
+            "total_applications": total,
+            "pipeline_stages": dict(stage_counts),
+            "interest_levels": dict(interest_counts),
+            "job_types": dict(job_type_counts),
+            "location_types": dict(location_type_counts),
+            "weekly_activity": weekly_activity,
+            "avg_match_score": avg_score,
+            "scores_count": len(scores),
+            "top_companies": [{"company": c, "count": n} for c, n in top_companies],
+            "recent_applications": recent,
+            "linkedin_stats": {
+                "total_connections": total_unique_conns,
+                "apps_with_connections": apps_with_conns_count,
+                "percentage_with_connections": round((apps_with_conns_count / total * 100) if total > 0 else 0),
+                "distribution": dict(conn_distribution)
+            }
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1255,15 +1401,19 @@ async def download_file(filename: str):
 ONLYOFFICE_URL = os.getenv("ONLYOFFICE_URL", "http://localhost:8443")
 # Internal URL for OnlyOffice to reach the backend (inside Docker network)
 BACKEND_INTERNAL_URL = os.getenv("BACKEND_INTERNAL_URL", "http://backend:8000")
+ONLYOFFICE_INTERNAL_URL = os.getenv("ONLYOFFICE_INTERNAL_URL", "onlyoffice:80")
+
 # External URL for the browser to reach the backend
 BACKEND_EXTERNAL_URL = os.getenv("BACKEND_EXTERNAL_URL", "http://localhost:8000")
 
 @app.get("/api/onlyoffice/config/{filename:path}")
-async def get_onlyoffice_config(filename: str, application_id: Optional[int] = None):
+async def get_onlyoffice_config(filename: str, application_id: Optional[str] = None):
     """
     Returns OnlyOffice editor configuration for a given DOCX file.
     The file must exist in outputs/ or uploads/.
     """
+    print(f"📄 Requesting OnlyOffice config for: {filename}, application_id: {application_id}")
+    
     # Find the file
     file_path = f"outputs/{filename}"
     if not os.path.exists(file_path):
@@ -1272,19 +1422,17 @@ async def get_onlyoffice_config(filename: str, application_id: Optional[int] = N
         raise HTTPException(status_code=404, detail=f"File not found: {filename}")
     
     # Generate a unique key based on filename + modification time + random salt
-    # Using a high-resolution salt ensures that every time the editor is opened, 
-    # it's a fresh session, which avoids "Version Changed" errors after saves.
     mtime = os.path.getmtime(file_path)
     doc_key = hashlib.md5(f"{filename}_{mtime}_{time.time_ns()}".encode()).hexdigest()
-    
-    # Document URL that OnlyOffice server can access (internal Docker network)
-    # Add a version parameter to force clearing of OnlyOffice internal cache
-    document_url = f"{BACKEND_INTERNAL_URL}/api/download/{filename}?v={int(mtime)}"
     
     # Add application_id to callback if provided
     callback_query = f"filename={filename}"
     if application_id:
         callback_query += f"&application_id={application_id}"
+    
+    # Document URL that OnlyOffice server can access (internal Docker network)
+    document_url = f"{BACKEND_INTERNAL_URL}/api/download/{filename}?v={int(mtime)}"
+
     
     config = {
         "document": {
@@ -1344,14 +1492,31 @@ async def onlyoffice_callback(request: Request, filename: str, application_id: O
         status = body.get("status")
         download_url = body.get("url")
         
-        print(f"📝 OnlyOffice callback: status={status}, filename={filename}")
+        print(f"📝 OnlyOffice callback: status={status}, filename={filename}, application_id={application_id}")
+        
+        # FALLBACK: If application_id is missing, try to find it by tailored_resume_path
+        if not application_id and filename:
+            print(f"🔍 application_id missing in callback for {filename}, attempting fallback lookup...")
+            app_obj = database_service.get_application_by_resume_path(filename)
+            if app_obj:
+                application_id = app_obj.id
+                print(f"✅ Fallback successful: Found application {application_id}")
+            else:
+                print(f"⚠️ Fallback failed: No application found with tailored_resume_path='{filename}'")
+
         
         if status in (2, 6) and download_url:
             # Document is ready to save - download the edited file
-            print(f"⬇️ Downloading edited file from: {download_url}")
+            # Rewrite URL if it points to localhost (as seen from outside) but we are in the backend container
+            internal_download_url = download_url.replace("localhost:8443", ONLYOFFICE_INTERNAL_URL)
+            if "localhost" in download_url and "onlyoffice" not in internal_download_url:
+                # Fallback if port 8443 wasn't in the string for some reason
+                internal_download_url = download_url.replace("localhost", "onlyoffice")
+
+            print(f"⬇️ Downloading edited file from: {internal_download_url}")
             
             async with httpx.AsyncClient() as client:
-                response = await client.get(download_url)
+                response = await client.get(internal_download_url)
                 response.raise_for_status()
                 
                 file_path = f"outputs/{filename}"
@@ -1359,6 +1524,7 @@ async def onlyoffice_callback(request: Request, filename: str, application_id: O
                     f.write(response.content)
                 
                 print(f"✅ Saved edited file to: {file_path}")
+
                 
                 # Regenerate PDF from the updated DOCX
                 try:
@@ -1388,11 +1554,15 @@ async def onlyoffice_callback(request: Request, filename: str, application_id: O
                             
                             # Also update diff_data to reflect manual changes
                             diff_data = app.get("diff_data", {})
-                            if not diff_data:
-                                diff_data = {
-                                    "original": resume_data.get("original_text", ""),
-                                    "ai_tailored": resume_data.get("tailored_text", ""),
-                                }
+                            if not diff_data or not diff_data.get("original"):
+                                # If missing or baseline is empty, try to rebuild it
+                                original_text = "\n\n".join(resume_data.get("full_text", []))
+                                ai_tailored = "\n\n".join(resume_data.get("full_text", []))
+                                
+                                # Use existing dict but fill in gaps
+                                if not diff_data: diff_data = {}
+                                if not diff_data.get("original"): diff_data["original"] = original_text
+                                if not diff_data.get("ai_tailored"): diff_data["ai_tailored"] = ai_tailored
                             
                             diff_data["manual_tailored"] = manual_text
                             diff_data["tailored"] = manual_text # Update primary tailored text for view
@@ -1517,6 +1687,24 @@ async def sync_linkedin_connections(request: LinkedInSyncRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class ContactCreate(BaseModel):
+    name: str
+    role: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    headline: Optional[str] = None
+
+@app.post("/api/applications/{app_id}/contacts")
+async def add_application_contact(app_id: int, contact: ContactCreate):
+    print(f"👤 Adding contact {contact.name} to application {app_id}")
+    try:
+        new_contact = database_service.add_application_contact(app_id, contact.dict())
+        return new_contact
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/linkedin/matches/{company_id}")
 async def get_linkedin_matches(company_id: str):
     try:
@@ -1532,6 +1720,10 @@ async def get_linkedin_matches_by_name(company_name: str):
         return {"matches": matches}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/linkedin/search")
+def search_linkedin(q: str):
+    return {"results": database_service.search_linkedin_connections(q)}
 
 @app.post("/api/linkedin/matches/batch")
 async def get_linkedin_batch_matches(company_names: List[str]):

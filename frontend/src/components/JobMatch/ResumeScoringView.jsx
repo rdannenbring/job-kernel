@@ -35,36 +35,45 @@ const ResumeScoringView = ({ diffData, scoreData, onPreview, onEdit, onFinalize 
     const getPercent = (score, max) => Math.round((score / max) * 100);
 
     const diffResult = React.useMemo(() => {
-        if (!diffData?.original || !diffData?.tailored) {
+        // Fallback for missing data
+        if (!diffData?.tailored && !diffData?.original) {
             return {
-                originalNodes: diffData?.original || "No original text available.",
-                tailoredNodes: diffData?.tailored || "No tailored text available."
+                originalNodes: "No original text available.",
+                tailoredNodes: "No tailored text available."
             };
         }
+
         
         const currentText = diffData.manual_tailored || diffData.tailored || diffData.ai_tailored;
         const differences = diffWords(diffData.original, currentText);
         
-        const isAIAddition = (chunkValue) => {
-            const aiText = (diffData.ai_tailored || diffData.tailored || "").trim();
-            if (!aiText) return true; // Default to AI if no baseline
+        const baselineText = (diffData.ai_tailored || diffData.tailored || "");
+        const normalizedBaseline = baselineText.replace(/\s+/g, ' ');
+
+        const checkInBaseline = (chunkValue) => {
+            if (!baselineText) return true; 
             
             const trimmedChunk = chunkValue.trim();
             if (!trimmedChunk) return true; // Whitespace only
 
-            if (aiText.includes(trimmedChunk)) return true;
+            if (baselineText.includes(trimmedChunk)) return true;
             
-            // If the chunk is very short, just rely on the above.
-            // If it's longer and not found exactly, it's likely manual.
+            const normalizedChunk = trimmedChunk.replace(/\s+/g, ' ');
+            if (normalizedBaseline.includes(normalizedChunk)) return true;
+
             return false;
         };
         
+        const hasManualEdits = !!diffData.manual_tailored;
+
         const originalNodes = differences.map((part, index) => {
             if (part.removed) {
-                // If it was removed from original, but was PRESENT in AI tailored, then USER removed it.
-                // If it was NOT in AI tailored, then AI removed it.
-                const aiText = diffData.ai_tailored || diffData.tailored || "";
-                const isUserRemoval = aiText.includes(part.value.trim());
+                if (!hasManualEdits) {
+                    return <span key={index} className="bg-rose-500/20 text-rose-300 line-through px-0.5 rounded" title="AI Removed">{part.value}</span>;
+                }
+
+                // If it was removed from original, but was PRESENT in AI baseline, then USER removed it.
+                const isUserRemoval = checkInBaseline(part.value);
                 
                 if (isUserRemoval && part.value.trim().length > 0) {
                     return <span key={index} className="bg-purple-500/20 text-purple-300 line-through px-0.5 rounded" title="Manually Removed">{part.value}</span>;
@@ -78,7 +87,11 @@ const ResumeScoringView = ({ diffData, scoreData, onPreview, onEdit, onFinalize 
 
         const tailoredNodes = differences.map((part, index) => {
             if (part.added) {
-                const isAI = isAIAddition(part.value);
+                if (!hasManualEdits) {
+                    return <span key={index} className="bg-emerald-500/20 text-emerald-300 font-bold px-0.5 rounded border-b border-emerald-500/30" title="AI Added">{part.value}</span>;
+                }
+
+                const isAI = checkInBaseline(part.value);
                 if (isAI) {
                     return <span key={index} className="bg-emerald-500/20 text-emerald-300 font-bold px-0.5 rounded border-b border-emerald-500/30" title="AI Added">{part.value}</span>;
                 } else {
