@@ -44,7 +44,11 @@ const ResumeScoringView = ({ diffData, scoreData, onPreview, onEdit, onFinalize 
         }
 
         
-        const currentText = diffData.manual_tailored || diffData.tailored || diffData.ai_tailored;
+        // Only consider it a manual edit if manual_tailored exists AND is different from the AI baseline
+        // This prevents "phantom" purple highlights on initial load or identical content syncs
+        const hasManualEdits = !!(diffData.manual_tailored && diffData.manual_tailored !== (diffData.ai_tailored || diffData.tailored));
+        
+        const currentText = hasManualEdits ? diffData.manual_tailored : (diffData.tailored || diffData.ai_tailored);
         const differences = diffWords(diffData.original, currentText);
         
         const baselineText = (diffData.ai_tailored || diffData.tailored || "");
@@ -63,8 +67,6 @@ const ResumeScoringView = ({ diffData, scoreData, onPreview, onEdit, onFinalize 
 
             return false;
         };
-        
-        const hasManualEdits = !!diffData.manual_tailored;
 
         const originalNodes = differences.map((part, index) => {
             if (part.removed) {

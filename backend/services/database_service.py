@@ -393,8 +393,10 @@ class DatabaseService:
                 job_description=data.get('job_description', ''),
                 date_saved=datetime.now().isoformat(),
                 original_resume_path=data.get('original_resume_path', ''),
-                tailored_resume_path=data.get('tailored_resume_path', ''),
-                cover_letter_path=data.get('cover_letter_path', ''),
+                # If 'files' object is provided (common from frontend result), use it
+                # We store just the basename in the database for consistency
+                tailored_resume_path=(data.get('tailored_resume_path') or (data.get('files', {}).get('docx') if data.get('files') else '')).split('/')[-1],
+                cover_letter_path=(data.get('cover_letter_path') or (data.get('files', {}).get('cl_docx') if data.get('files') else '')).split('/')[-1],
                 resume_data=json.dumps(data.get('resume_data', {})),
                 cover_letter_text=data.get('cover_letter_text', ''),
                 salary_range=data.get('salary_range', ''),
@@ -553,6 +555,12 @@ class DatabaseService:
             "original_resume_path": app.original_resume_path,
             "tailored_resume_path": app.tailored_resume_path,
             "cover_letter_path": app.cover_letter_path,
+            "files": {
+                "docx": f"/api/download/{app.tailored_resume_path}" if app.tailored_resume_path else "",
+                "pdf": f"/api/download/{app.tailored_resume_path.replace('.docx', '.pdf')}" if app.tailored_resume_path and app.tailored_resume_path.endswith('.docx') else "",
+                "cl_docx": f"/api/download/{app.cover_letter_path}" if app.cover_letter_path else "",
+                "cl_pdf": f"/api/download/{app.cover_letter_path.replace('.docx', '.pdf')}" if app.cover_letter_path and app.cover_letter_path.endswith('.docx') else ""
+            },
             "cover_letter_text": app.cover_letter_text,
             "resume_data": json.loads(app.resume_data) if app.resume_data else {},
             "diff_data": json.loads(app.diff_data) if app.diff_data else {},
@@ -672,8 +680,12 @@ class DatabaseService:
             if 'is_archived' in data: 
                 app.is_archived = 'true' if (data['is_archived'] is True or data['is_archived'] == 'true') else 'false'
             if 'original_resume_path' in data: app.original_resume_path = data['original_resume_path']
-            if 'tailored_resume_path' in data: app.tailored_resume_path = data['tailored_resume_path']
-            if 'cover_letter_path' in data: app.cover_letter_path = data['cover_letter_path']
+            if 'tailored_resume_path' in data: app.tailored_resume_path = data['tailored_resume_path'].split('/')[-1]
+            if 'files' in data and isinstance(data['files'], dict):
+                if data['files'].get('docx'): app.tailored_resume_path = data['files']['docx'].split('/')[-1]
+                if data['files'].get('cl_docx'): app.cover_letter_path = data['files']['cl_docx'].split('/')[-1]
+            
+            if 'cover_letter_path' in data: app.cover_letter_path = data['cover_letter_path'].split('/')[-1]
             if 'cover_letter_text' in data: app.cover_letter_text = data['cover_letter_text']
             if 'resume_data' in data: 
                 val = data['resume_data']

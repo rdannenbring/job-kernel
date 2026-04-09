@@ -254,6 +254,8 @@ class ApplicationSaveRequest(BaseModel):
     match_score: Optional[int] = None
     match_details: Optional[Any] = None
     commute_details: Optional[Any] = {}
+    diff_data: Optional[Any] = {}
+    files: Optional[dict] = {}
 
 
 
