@@ -35,6 +35,13 @@ const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle }) => {
 
     const isDark = activeTheme === 'dark';
 
+    const getThemeDisplay = () => {
+        if (theme === 'dark') return { icon: 'dark_mode', label: 'Dark Theme' };
+        if (theme === 'light') return { icon: 'light_mode', label: 'Light Theme' };
+        return { icon: 'settings_brightness', label: 'System Theme' };
+    };
+    const { icon: themeIcon, label: themeLabel } = getThemeDisplay();
+
     const topMenuItems = [
         { id: 'dashboard',  label: 'Dashboard',  icon: 'dashboard' },
         { id: 'analytics',  label: 'Analytics',  icon: 'leaderboard' },
@@ -172,7 +179,7 @@ const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle }) => {
                 <div style={{ padding: '0.2rem 0', marginTop: 'auto' }}>
                     <button
                         onClick={onThemeToggle}
-                        title={collapsed ? (isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode') : undefined}
+                        title={collapsed ? themeLabel : undefined}
                         style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -193,9 +200,9 @@ const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle }) => {
                         onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
                     >
                         <span className="material-symbols-outlined" style={{ fontSize: '20px', flexShrink: 0 }}>
-                            {isDark ? 'light_mode' : 'dark_mode'}
+                            {themeIcon}
                         </span>
-                        {!collapsed && <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{isDark ? 'Light Mode' : 'Dark Mode'}</span>}
+                        {!collapsed && <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{themeLabel}</span>}
                     </button>
                 </div>
 

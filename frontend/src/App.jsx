@@ -266,9 +266,15 @@ function App() {
   }
 
   const handleThemeToggle = async () => {
-    // Current active theme
-    const activeTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = activeTheme === 'dark' ? 'light' : 'dark';
+    // Cycle theme: system -> dark -> light -> system
+    const themeCycle = {
+      'system': 'dark',
+      'dark': 'light',
+      'light': 'system'
+    };
+    
+    const currentTheme = uiConfigTheme || 'system';
+    const newTheme = themeCycle[currentTheme] || 'dark';
     
     // Update local state
     setUiConfigTheme(newTheme);
