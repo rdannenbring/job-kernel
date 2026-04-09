@@ -63,8 +63,11 @@ function relativeDate(iso) {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-const StatCard = ({ icon, label, value, sub, color, loading }) => (
-  <div className="stat-card card">
+const StatCard = ({ icon, label, value, sub, color, loading, onClick }) => (
+  <div 
+    className={`stat-card card ${onClick && value !== 0 && value !== '—' && !loading ? 'clickable' : ''}`}
+    onClick={() => { if (onClick && value !== 0 && value !== '—' && !loading) onClick(); }}
+  >
     <div className="stat-icon" style={{ background: `${color}22`, color }}>
       <span className="material-symbols-outlined">{icon}</span>
     </div>
@@ -79,11 +82,23 @@ const StatCard = ({ icon, label, value, sub, color, loading }) => (
   </div>
 );
 
-const BarRow = ({ icon, label, value, max, color, pct: forcedPct }) => {
+const BarRow = ({ icon, label, value, max, color, pct: forcedPct, onClick }) => {
   const pct = forcedPct !== undefined ? forcedPct : (max > 0 ? Math.round((value / max) * 100) : 0);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-      <div style={{ width: '130px', fontSize: '0.8rem', color: 'var(--text-secondary)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'flex-end' }}>
+    <div 
+      style={{ 
+        display: 'flex', alignItems: 'center', gap: '1rem',
+        cursor: onClick && value > 0 ? 'pointer' : 'default',
+        padding: onClick ? '0.25rem 0.5rem' : '0',
+        margin: onClick ? '-0.25rem -0.5rem' : '0',
+        borderRadius: onClick ? '6px' : '0',
+        transition: 'background 0.15s'
+      }}
+      onClick={() => { if (onClick && value > 0) onClick(); }}
+      onMouseEnter={e => { if (onClick && value > 0) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+      onMouseLeave={e => { if (onClick && value > 0) e.currentTarget.style.background = 'transparent'; }}
+    >
+      <div style={{ width: '130px', fontSize: '0.8rem', color: 'var(--text-secondary)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'flex-end', pointerEvents: 'none' }}>
         <span className="material-symbols-outlined" style={{ fontSize: '0.95rem', color, opacity: 0.9 }}>{icon}</span>
         {label}
       </div>
@@ -193,11 +208,52 @@ const ActivityHeatmap = ({ data }) => {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-const Analytics = () => {
+const Analytics = ({ setScreen }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
+
+  const navigateToDashboard = (filters) => {
+    if (!setScreen) return;
+    try {
+      const raw = sessionStorage.getItem('dashboard_state');
+      const currentState = raw ? JSON.parse(raw) : {};
+      sessionStorage.setItem('dashboard_state', JSON.stringify({
+        ...currentState,
+        ...filters
+      }));
+      setScreen('dashboard');
+    } catch(e) {
+      console.error('Failed to set dashboard state', e);
+    }
+  };
+
+  const handleStageClick = (stage) => {
+    let filterVal = STAGE_META[stage]?.label;
+    if (stage === 'decision') filterVal = 'Offered';
+    navigateToDashboard({ filterStatuses: filterVal ? [filterVal] : [] });
+  };
+
+  const handleInterestClick = (label) => {
+    navigateToDashboard({ filterInterestLevels: label === 'Not Set' ? [''] : [label] });
+  };
+
+  const handleJobTypeClick = (label) => {
+    navigateToDashboard({ filterJobTypes: label === 'Not Set' ? [''] : [label] });
+  };
+
+  const handleLocTypeClick = (label) => {
+    navigateToDashboard({ filterLocationTypes: label === 'Not Set' ? [''] : [label] });
+  };
+
+  const handleCompanyClick = (company) => {
+    navigateToDashboard({ searchTerm: company });
+  };
+
+  const handleNetworkingClick = () => {
+    navigateToDashboard({ filterHasConnections: true });
+  };
 
   const fetchAnalytics = useCallback(async () => {
     setLoading(true);
@@ -322,6 +378,7 @@ const Analytics = () => {
           sub="Active (non-archived)"
           color="#3b82f6"
           loading={loading}
+          onClick={() => navigateToDashboard({ filterStatuses: [], filterJobTypes: [], filterLocationTypes: [], filterInterestLevels: [], searchTerm: '' })}
         />
         <StatCard
           icon="send"
@@ -330,6 +387,7 @@ const Analytics = () => {
           sub={total > 0 ? `${Math.round((applied / total) * 100)}% of tracked` : 'All stages after applied'}
           color="#06b6d4"
           loading={loading}
+          onClick={() => navigateToDashboard({ filterStatuses: ['Applied', 'Interviewing', 'Offered', 'Accepted', 'Rejected'] })}
         />
         <StatCard
           icon="groups"
@@ -338,6 +396,7 @@ const Analytics = () => {
           sub={applied > 0 ? `${Math.round((interviewing / applied) * 100)}% interview rate` : 'Active interviews'}
           color="#8b5cf6"
           loading={loading}
+          onClick={() => handleStageClick('interviewing')}
         />
         <StatCard
           icon="auto_awesome"
@@ -354,6 +413,7 @@ const Analytics = () => {
           sub={`${data?.linkedin_stats?.apps_with_connections ?? 0} jobs have connections (${data?.linkedin_stats?.percentage_with_connections ?? 0}%)`}
           color="#10b981"
           loading={loading}
+          onClick={() => handleNetworkingClick()}
         />
       </div>
 
@@ -378,6 +438,7 @@ const Analytics = () => {
                   value={s.count}
                   max={maxStage}
                   color={s.color}
+                  onClick={() => handleStageClick(s.stage)}
                 />
               ))}
             </div>
@@ -423,7 +484,7 @@ const Analytics = () => {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {interestData.map(d => (
-                <BarRow key={d.label} icon={d.icon} label={d.label} value={d.count} max={maxInterest} color={d.color} />
+                <BarRow key={d.label} icon={d.icon} label={d.label} value={d.count} max={maxInterest} color={d.color} onClick={() => handleInterestClick(d.label)} />
               ))}
             </div>
           )}
@@ -440,7 +501,7 @@ const Analytics = () => {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {jobTypeData.map(d => (
-                <BarRow key={d.label} icon={d.icon} label={d.label} value={d.count} max={maxJobType} color={d.color} />
+                <BarRow key={d.label} icon={d.icon} label={d.label} value={d.count} max={maxJobType} color={d.color} onClick={() => handleJobTypeClick(d.label)} />
               ))}
             </div>
           )}
@@ -457,7 +518,7 @@ const Analytics = () => {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {locTypeData.map(d => (
-                <BarRow key={d.label} icon={d.icon} label={d.label} value={d.count} max={maxLocType} color={d.color} />
+                <BarRow key={d.label} icon={d.icon} label={d.label} value={d.count} max={maxLocType} color={d.color} onClick={() => handleLocTypeClick(d.label)} />
               ))}
             </div>
           )}
@@ -480,6 +541,7 @@ const Analytics = () => {
                 value={c.count}
                 max={data.top_companies[0].count}
                 color={i === 0 ? '#f59e0b' : '#3b82f6'}
+                onClick={() => handleCompanyClick(c.company)}
               />
             ))}
           </div>
@@ -515,7 +577,20 @@ const Analytics = () => {
                }
                
                return (
-                 <div key={range.key} style={{ textAlign: 'center' }}>
+                 <div 
+                   key={range.key} 
+                   style={{ 
+                     textAlign: 'center',
+                     cursor: count > 0 && range.key !== '0' ? 'pointer' : 'default',
+                     transition: 'transform 0.15s, opacity 0.15s',
+                     opacity: count > 0 ? 1 : 0.5
+                   }}
+                   onClick={() => {
+                     if (count > 0 && range.key !== '0') handleNetworkingClick();
+                   }}
+                   onMouseEnter={e => { if (count > 0 && range.key !== '0') e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                   onMouseLeave={e => { if (count > 0 && range.key !== '0') e.currentTarget.style.transform = 'none'; }}
+                 >
                    <div style={{ fontSize: '1.5rem', fontWeight: 800, color: range.color }}>{count}</div>
                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '0.2rem' }}>{range.label}</div>
                    <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', marginTop: '0.6rem', overflow: 'hidden' }}>
@@ -641,6 +716,15 @@ const Analytics = () => {
           overflow: hidden;
           padding: 1.25rem;
           height: 100%;
+          transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+        }
+        .stat-card.clickable {
+          cursor: pointer;
+        }
+        .stat-card.clickable:hover {
+          transform: translateY(-2px);
+          border-color: rgba(255,255,255,0.2);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .stat-icon {

@@ -360,7 +360,7 @@ function App() {
       case 'capture':
         return <MobileCapture onSaved={loadApplications} onGoToDashboard={() => setScreen('dashboard')} />
       case 'analytics':
-        return <Analytics />
+        return <Analytics setScreen={setScreen} />
       case 'settings':
         return <Settings theme={uiConfigTheme} onThemeChange={setUiConfigTheme} />
       case 'profile':
