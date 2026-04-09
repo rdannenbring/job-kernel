@@ -35,75 +35,117 @@ const ResumeScoringView = ({ diffData, scoreData, onPreview, onEdit, onFinalize 
     const getPercent = (score, max) => Math.round((score / max) * 100);
 
     const diffResult = React.useMemo(() => {
-        // Fallback for missing data
-        if (!diffData?.tailored && !diffData?.original) {
+        if (!diffData?.original) {
             return {
                 originalNodes: "No original text available.",
                 tailoredNodes: "No tailored text available."
             };
         }
 
-        
-        // Only consider it a manual edit if manual_tailored exists AND is different from the AI baseline
-        // This prevents "phantom" purple highlights on initial load or identical content syncs
-        const hasManualEdits = !!(diffData.manual_tailored && diffData.manual_tailored !== (diffData.ai_tailored || diffData.tailored));
-        
-        const currentText = hasManualEdits ? diffData.manual_tailored : (diffData.tailored || diffData.ai_tailored);
-        const differences = diffWords(diffData.original, currentText);
-        
-        const baselineText = (diffData.ai_tailored || diffData.tailored || "");
-        const normalizedBaseline = baselineText.replace(/\s+/g, ' ');
+        // Normalize horizontal whitespace to prevent OnlyOffice formatting variations from triggering false diffs
+        // while preserving newlines for readability.
+        const normalize = (s) => (s || "")
+            .replace(/[ \t]+/g, ' ')
+            .replace(/\r\n/g, '\n')
+            .replace(/[ \t]+\n/g, '\n')
+            .replace(/\n[ \t]+/g, '\n')
+            .trim();
+        const originalText = normalize(diffData.original);
+        const aiBaseline = normalize(diffData.ai_tailored || diffData.tailored || "");
+        const currentText = normalize(diffData.manual_tailored || aiBaseline);
 
-        const checkInBaseline = (chunkValue) => {
-            if (!baselineText) return true; 
-            
-            const trimmedChunk = chunkValue.trim();
-            if (!trimmedChunk) return true; // Whitespace only
+        // 1. Map AI's intent (Original -> AI Baseline)
+        const aiDiffs = diffWords(originalText, aiBaseline);
+        const originalChars = originalText.split('').map(c => ({ char: c, state: 'none' }));
+        const aiChars = []; // Track characters in the AI baseline
+        
+        let oIdx = 0;
+        aiDiffs.forEach(part => {
+            if (part.added) {
+                // Characters added by AI
+                for (let c of part.value) aiChars.push({ char: c, origin: 'ai_added', origIdx: -1 });
+            } else {
+                for (let c of part.value) {
+                    if (part.removed) {
+                        originalChars[oIdx++].state = 'ai_removed';
+                    } else {
+                        // Kept from original
+                        aiChars.push({ char: c, origin: 'original', origIdx: oIdx++ });
+                    }
+                }
+            }
+        });
 
-            if (baselineText.includes(trimmedChunk)) return true;
-            
-            const normalizedChunk = trimmedChunk.replace(/\s+/g, ' ');
-            if (normalizedBaseline.includes(normalizedChunk)) return true;
+        // 2. Map User's intent (AI Baseline -> Current)
+        const manualDiffs = diffWords(aiBaseline, currentText);
+        const finalChars = []; // Characters in the final version
+        
+        let aIdx = 0;
+        manualDiffs.forEach(part => {
+            if (part.added) {
+                // Characters added manually by user
+                for (let c of part.value) finalChars.push({ char: c, origin: 'manual_added' });
+            } else {
+                for (let c of part.value) {
+                    const aiInfo = aiChars[aIdx++];
+                    if (part.removed) {
+                        // If it came from original, mark it as manually removed in original map
+                        if (aiInfo.origin === 'original') {
+                            originalChars[aiInfo.origIdx].state = 'manual_removed';
+                        }
+                    } else {
+                        // Kept by user
+                        finalChars.push({ char: c, origin: aiInfo.origin });
+                    }
+                }
+            }
+        });
 
-            return false;
+        // 3. Helper to group characters into spans for rendering
+        const renderNode = (value, state, key) => {
+            switch (state) {
+                case 'ai_removed': 
+                    return <span key={key} className="bg-rose-500/20 text-rose-300 line-through px-0.5 rounded" title="AI Removed">{value}</span>;
+                case 'manual_removed':
+                    return <span key={key} className="bg-purple-500/20 text-purple-300 line-through px-0.5 rounded" title="Manually Removed">{value}</span>;
+                case 'ai_added':
+                    return <span key={key} className="bg-emerald-500/20 text-emerald-300 font-bold px-0.5 rounded border-b border-emerald-500/30" title="AI Added">{value}</span>;
+                case 'manual_added':
+                    return <span key={key} className="bg-purple-500/20 text-purple-300 font-bold px-0.5 rounded border-b border-purple-500/30" title="Manually Added">{value}</span>;
+                default:
+                    return <span key={key}>{value}</span>;
+            }
         };
 
-        const originalNodes = differences.map((part, index) => {
-            if (part.removed) {
-                if (!hasManualEdits) {
-                    return <span key={index} className="bg-rose-500/20 text-rose-300 line-through px-0.5 rounded" title="AI Removed">{part.value}</span>;
-                }
-
-                // If it was removed from original, but was PRESENT in AI baseline, then USER removed it.
-                const isUserRemoval = checkInBaseline(part.value);
-                
-                if (isUserRemoval && part.value.trim().length > 0) {
-                    return <span key={index} className="bg-purple-500/20 text-purple-300 line-through px-0.5 rounded" title="Manually Removed">{part.value}</span>;
-                }
-                return <span key={index} className="bg-rose-500/20 text-rose-300 line-through px-0.5 rounded" title="AI Removed">{part.value}</span>;
-            } else if (!part.added) {
-                return <span key={index}>{part.value}</span>;
-            }
-            return null;
-        });
-
-        const tailoredNodes = differences.map((part, index) => {
-            if (part.added) {
-                if (!hasManualEdits) {
-                    return <span key={index} className="bg-emerald-500/20 text-emerald-300 font-bold px-0.5 rounded border-b border-emerald-500/30" title="AI Added">{part.value}</span>;
-                }
-
-                const isAI = checkInBaseline(part.value);
-                if (isAI) {
-                    return <span key={index} className="bg-emerald-500/20 text-emerald-300 font-bold px-0.5 rounded border-b border-emerald-500/30" title="AI Added">{part.value}</span>;
+        // 4. Resolve Nodes (Left: Original + Removals)
+        const originalNodes = [];
+        if (originalChars.length > 0) {
+            let current = { value: originalChars[0].char, state: originalChars[0].state };
+            for (let i = 1; i < originalChars.length; i++) {
+                if (originalChars[i].state === current.state) {
+                    current.value += originalChars[i].char;
                 } else {
-                    return <span key={index} className="bg-purple-500/20 text-purple-300 font-bold px-0.5 rounded border-b border-purple-500/30" title="Manually Added">{part.value}</span>;
+                    originalNodes.push(renderNode(current.value, current.state, `orig-${originalNodes.length}`));
+                    current = { value: originalChars[i].char, state: originalChars[i].state };
                 }
-            } else if (!part.removed) {
-                return <span key={index}>{part.value}</span>;
             }
-            return null;
-        });
+            originalNodes.push(renderNode(current.value, current.state, `orig-${originalNodes.length}`));
+        }
+
+        // 5. Resolve Nodes (Right: Final Version + Additions)
+        const tailoredNodes = [];
+        if (finalChars.length > 0) {
+            let current = { value: finalChars[0].char, state: finalChars[0].origin };
+            for (let i = 1; i < finalChars.length; i++) {
+                if (finalChars[i].origin === current.state) {
+                    current.value += finalChars[i].char;
+                } else {
+                    tailoredNodes.push(renderNode(current.value, current.state, `tailor-${tailoredNodes.length}`));
+                    current = { value: finalChars[i].char, state: finalChars[i].origin };
+                }
+            }
+            tailoredNodes.push(renderNode(current.value, current.state, `tailor-${tailoredNodes.length}`));
+        }
 
         return { originalNodes, tailoredNodes };
     }, [diffData]);

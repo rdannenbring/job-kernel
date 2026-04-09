@@ -34,7 +34,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
     const [dropPlaceholder, setDropPlaceholder] = useState({ column: null, index: null });
     const [draggedAppId, setDraggedAppId] = useState(null);
     const [connectionCounts, setConnectionCounts] = useState({});
-    const [filterHasConnections, setFilterHasConnections] = useState(false);
+    const [filterHasConnections, setFilterHasConnections] = useState(saved.filterHasConnections || false);
 
     // Persist state to sessionStorage whenever it changes
     useEffect(() => {
@@ -149,7 +149,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         }
         return { ...app, matchJobType, matchLocType };
     }).filter(app => {
-        const archived = app.is_archived === 'true';
+        const archived = app.is_archived === true;
         if (!showArchived && archived) return false;
         if (showArchived && !archived) return false;
         const matchesSearch = (app.job_title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -627,7 +627,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                 </div>
 
                 {/* Active Filters Display */}
-                {(filterStatuses.length > 0 || searchTerm || sortBy !== 'newest') && (
+                {(filterStatuses.length > 0 || filterJobTypes.length > 0 || filterLocationTypes.length > 0 || filterInterestLevels.length > 0 || filterRelocation.length > 0 || filterHasConnections || searchTerm || sortBy !== 'newest') && (
                     <div className="flex flex-wrap gap-2 items-center text-sm pt-2">
                         <span className="text-slate-500 mr-2 text-xs font-bold uppercase tracking-wider">Active:</span>
                         {searchTerm && (
@@ -654,6 +654,18 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                 <button onClick={() => setFilterJobTypes(prev => prev.filter(t => t !== type))} className="hover:text-white material-symbols-outlined text-[14px] ml-1">close</button>
                             </span>
                         ))}
+                        {filterLocationTypes.map(type => (
+                            <span key={type} className="bg-cyan-500/10 text-cyan-300 px-3 py-1 rounded-full flex items-center gap-2 border border-cyan-500/20 text-xs font-medium">
+                                {type}
+                                <button onClick={() => setFilterLocationTypes(prev => prev.filter(t => t !== type))} className="hover:text-white material-symbols-outlined text-[14px] ml-1">close</button>
+                            </span>
+                        ))}
+                        {filterRelocation.map(val => (
+                            <span key={val} className="bg-purple-500/10 text-purple-300 px-3 py-1 rounded-full flex items-center gap-2 border border-purple-500/20 text-xs font-medium">
+                                Relo: {val}
+                                <button onClick={() => setFilterRelocation(prev => prev.filter(v => v !== val))} className="hover:text-white material-symbols-outlined text-[14px] ml-1">close</button>
+                            </span>
+                        ))}
                          {filterHasConnections && (
                             <span className="bg-emerald-500/10 text-emerald-300 px-3 py-1 rounded-full flex items-center gap-2 border border-emerald-500/20 text-xs font-medium">
                                 <span className="material-symbols-outlined text-[14px]">group</span>
@@ -668,6 +680,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                  sortBy === 'company_asc' ? 'Company (A-Z)' : 
                                  sortBy === 'company_desc' ? 'Company (Z-A)' : 
                                  sortBy === 'deadline_asc' ? 'Upcoming Deadline' :
+                                 sortBy === 'custom' ? 'Custom Order' :
                                  'Interest Level'}
                                 <button onClick={() => setSortBy('newest')} className="hover:text-rose-400 material-symbols-outlined text-[14px] ml-1">close</button>
                             </span>

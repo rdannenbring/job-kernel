@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { diffWordsWithSpace } from 'diff';
 import './JobMatchStyles.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -21,6 +22,7 @@ const ResumeEditor = ({
     applicationId = null
 }) => {
     const [activeTab, setActiveTab] = useState(initialTab || (pendingRefinement ? 'ai' : 'manual'));
+    const [previewMode, setPreviewMode] = useState('pdf'); // 'pdf', 'redline', 'diff'
     const [editorReady, setEditorReady] = useState(false);
     const [editorError, setEditorError] = useState(null);
     const [editorLoading, setEditorLoading] = useState(false);
@@ -48,6 +50,52 @@ const ResumeEditor = ({
     }, [pdfUrl, pendingRefinement]);
 
     // Regeneration animation stages
+
+    // Visual Diff Logic
+    const diffResult = useMemo(() => {
+        if (!pendingRefinement || !pendingRefinement.diff_data) return null;
+        
+        const { original, ai_tailored } = pendingRefinement.diff_data;
+        if (!original || !ai_tailored) return null;
+
+        const diff = diffWordsWithSpace(original, ai_tailored);
+
+        const renderedDiff = diff.map((part, index) => {
+            let color = 'inherit';
+            let bg = 'transparent';
+            let textDecoration = 'none';
+            let opacity = 1;
+
+            if (part.added) {
+                color = '#10b981'; // emerald-500
+                bg = 'rgba(16, 185, 129, 0.1)';
+            } else if (part.removed) {
+                color = '#f43f5e'; // rose-500
+                bg = 'rgba(244, 63, 94, 0.1)';
+                textDecoration = 'line-through';
+                opacity = 0.6;
+            }
+
+            return (
+                <span 
+                    key={index} 
+                    style={{ 
+                        color, 
+                        backgroundColor: bg,
+                        textDecoration,
+                        opacity,
+                        padding: part.added || part.removed ? '0 2px' : '0',
+                        borderRadius: '2px',
+                        transition: 'all 0.2s ease'
+                    }}
+                >
+                    {part.value}
+                </span>
+            );
+        });
+
+        return renderedDiff;
+    }, [pendingRefinement]);
     useEffect(() => {
         if (!isRegenerating) {
             setRegenerateStage(0);
@@ -160,6 +208,13 @@ const ResumeEditor = ({
         }
     }, [activeTab, initEditor, docxFilename, destroyEditor, applicationId]);
 
+    // Sync activeTab if initialTab changes in parents
+    useEffect(() => {
+        if (initialTab && initialTab !== activeTab) {
+            setActiveTab(initialTab);
+        }
+    }, [initialTab]);
+
 
     useEffect(() => {
         return () => destroyEditor();
@@ -169,7 +224,8 @@ const ResumeEditor = ({
         if (tab === activeTab) return;
         if (activeTab === 'manual') {
             destroyEditor();
-            if (onSync) onSync();
+            // Sync in background when switching tabs (don't show full page loader)
+            if (onSync) onSync(false);
         }
         setActiveTab(tab);
         if (tab === 'manual') initAttemptedRef.current = false;
@@ -593,34 +649,113 @@ const ResumeEditor = ({
                                 }}>
                                     {/* Preview Toolbar */}
                                     <div style={{
-                                        height: '3rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                        padding: '0 1.5rem',
-                                        borderBottom: '1px solid #e2e8f0', background: 'rgba(241, 245, 249, 0.8)',
-                                        backdropFilter: 'blur(8px)',
+                                        height: '3.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                        padding: '0 1.25rem',
+                                        borderBottom: '1px solid #e2e8f0', background: 'rgba(241, 245, 249, 0.95)',
+                                        backdropFilter: 'blur(12px)',
+                                        zIndex: 10
                                     }}>
-                                        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: pendingRefinement ? 'var(--primary)' : '#64748b' }}>
-                                            {pendingRefinement ? 'PROPOSED REVISION' : 'LIVE PREVIEW'}
-                                        </span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <span style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', color: pendingRefinement ? 'var(--primary)' : '#64748b' }}>
+                                                {pendingRefinement ? 'PROPOSED REVISION' : 'LIVE PREVIEW'}
+                                            </span>
+                                            {pendingRefinement && (
+                                                <div style={{ 
+                                                    display: 'flex', 
+                                                    background: '#e2e8f0', 
+                                                    padding: '2px', 
+                                                    borderRadius: '8px',
+                                                    marginLeft: '0.5rem'
+                                                }}>
+                                                    <button 
+                                                        onClick={() => setPreviewMode('pdf')}
+                                                        style={{
+                                                            fontSize: '10px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', border: 'none',
+                                                            background: previewMode === 'pdf' ? 'white' : 'transparent',
+                                                            color: previewMode === 'pdf' ? 'var(--primary)' : '#64748b',
+                                                            cursor: 'pointer', transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        PDF
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => setPreviewMode('redline')}
+                                                        style={{
+                                                            fontSize: '10px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', border: 'none',
+                                                            background: previewMode === 'redline' ? 'white' : 'transparent',
+                                                            color: previewMode === 'redline' ? 'var(--primary)' : '#64748b',
+                                                            cursor: 'pointer', transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        HIGHLIGHTS
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => setPreviewMode('diff')}
+                                                        style={{
+                                                            fontSize: '10px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', border: 'none',
+                                                            background: previewMode === 'diff' ? 'white' : 'transparent',
+                                                            color: previewMode === 'diff' ? 'var(--primary)' : '#64748b',
+                                                            cursor: 'pointer', transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        DIFF
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                             {pdfUrl && (
                                                 <a href={pdfUrl} target="_blank" rel="noreferrer" 
                                                    className="material-symbols-outlined" 
-                                                   style={{ fontSize: '18px', color: '#64748b', textDecoration: 'none', cursor: 'pointer' }}>
+                                                   style={{ fontSize: '18px', color: '#64748b', textDecoration: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
+                                                   onMouseEnter={(e) => e.target.style.color = 'var(--primary)'}
+                                                   onMouseLeave={(e) => e.target.style.color = '#64748b'}
+                                                >
                                                     open_in_new
                                                 </a>
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* PDF Preview */}
-                                    <div style={{ flex: 1 }}>
+                                    {/* PDF Preview / Diff View Container */}
+                                    <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
                                         { (pendingRefinement ? `${API_URL}${pendingRefinement.files.pdf}` : pdfUrl) ? (
-                                            <iframe 
-                                                src={`${pendingRefinement ? `${API_URL}${pendingRefinement.files.pdf}` : pdfUrl}?t=${previewTimestamp}#toolbar=0&navpanes=0`}
-                                                style={{ width: '100%', height: '100%', border: 'none', background: 'white' }}
-                                                key={pendingRefinement ? pendingRefinement.files.pdf : pdfUrl}
-                                                title="Resume PDF Preview"
-                                            />
+                                            previewMode === 'diff' ? (
+                                                <div className="midnight-scroll" style={{ 
+                                                    height: '100%', 
+                                                    overflowY: 'auto', 
+                                                    background: 'white', 
+                                                    padding: '2rem',
+                                                    fontFamily: 'monospace',
+                                                    fontSize: '0.85rem',
+                                                    lineHeight: 1.6,
+                                                    color: '#334155',
+                                                    whiteSpace: 'pre-wrap'
+                                                }}>
+                                                    <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem' }}>
+                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '10px', fontWeight: 700, color: '#10b981' }}>
+                                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }}></span> AI ADDED
+                                                        </span>
+                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '10px', fontWeight: 700, color: '#f43f5e' }}>
+                                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f43f5e' }}></span> AI REMOVED
+                                                        </span>
+                                                    </div>
+                                                    <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '1rem', border: '1px solid #e2e8f0' }}>
+                                                        {diffResult}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <iframe 
+                                                    src={`${
+                                                        previewMode === 'redline' && pendingRefinement?.files?.redline_pdf 
+                                                            ? `${API_URL}${pendingRefinement.files.redline_pdf}` 
+                                                            : (pendingRefinement ? `${API_URL}${pendingRefinement.files.pdf}` : pdfUrl)
+                                                    }?t=${previewTimestamp}#toolbar=0&navpanes=0`}
+                                                    style={{ width: '100%', height: '100%', border: 'none', background: 'white' }}
+                                                    key={previewMode + (pendingRefinement ? pendingRefinement.files.pdf : pdfUrl)}
+                                                    title="Resume PDF Preview"
+                                                />
+                                            )
                                         ) : (
                                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '0.5rem', color: '#94a3b8' }}>
                                                 <span className="material-symbols-outlined" style={{ fontSize: '2.5rem' }}>description</span>

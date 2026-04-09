@@ -232,6 +232,7 @@ class ApplicationSaveRequest(BaseModel):
     remarks: Optional[str] = ""
     status: Optional[str] = None
     is_archived: Optional[Any] = None
+    source: Optional[str] = None
     resume_changes_summary: Optional[Any] = []
     cover_letter_changes_summary: Optional[Any] = []
     kanban_order: Optional[int] = 0
@@ -1055,7 +1056,25 @@ async def get_analytics():
         from collections import defaultdict
 
         apps = database_service.get_applications()
-        active_apps = [a for a in apps if not a.get('is_archived', False)]
+        
+        # Helper to match frontend status mapping
+        KANBAN_COLUMNS = ['Saved', 'Generated', 'Applied', 'Interviewing', 'Rejected', 'Offered', 'Accepted']
+        def get_status_stage(status):
+            if not status: return 'Applied'
+            s = str(status).lower()
+            for col in KANBAN_COLUMNS:
+                if col.lower() in s or (col == 'Interviewing' and 'interview' in s):
+                    return col
+            return status
+
+        # Sync analytics filter with dashboard: exclude archived AND items not mapping to board columns (e.g., Drafts)
+        active_apps = []
+        for a in apps:
+            if a.get('is_archived', False): continue
+            stage = get_status_stage(a.get('status'))
+            if stage in KANBAN_COLUMNS:
+                active_apps.append(a)
+                
         total = len(active_apps)
 
         # --- Pipeline stage counts ---
@@ -1122,7 +1141,9 @@ async def get_analytics():
         company_counts = defaultdict(int)
         for a in active_apps:
             c = (a.get('company') or '').strip()
-            if c:
+            # Heuristic: If company is "LinkedIn", skip it from the breakdown unless it's clearly the hiring company.
+            # Most users don't apply to LinkedIn itself 8 times, so this is usually a scraping remnant.
+            if c and c.lower() != 'linkedin':
                 company_counts[c] += 1
         top_companies = sorted(company_counts.items(), key=lambda x: -x[1])[:10]
 

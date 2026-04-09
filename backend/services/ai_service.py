@@ -26,7 +26,7 @@ Return a JSON object with this EXACT structure:
     "culture": "String description",
     "metadata": {{
         "job_title": "Extract exact job title or 'Unknown Role'",
-        "company": "Extract company name or 'Unknown Company'",
+        "company": "Extract company name. IMPORTANT: Do NOT use the platform name (e.g., 'LinkedIn', 'Indeed', 'Otta') as the company unless the job is ACTUALLY at and for that organization. If the employer name is not found, use 'Unknown Company'.",
         "salary_range": "Extract salary range if present (e.g. '$160k-$190k' or '$50/hr'), else 'Not Listed'",
         "date_posted": "Extract date. If a relative date is found (e.g., '4 days ago', 'Posted yesterday'), calculate the ACTUAL date based on CURRENT DATE and return it as YYYY-MM-DD. Else 'Unknown'.",
         "deadline": "Extract application deadline if present (YYYY-MM-DD), else ''",

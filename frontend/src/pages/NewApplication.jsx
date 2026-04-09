@@ -342,8 +342,10 @@ function NewApplication({ onComplete }) {
 
     const handleRefineResume = async () => {
         if (!refineInstructions.trim()) return
+        
         setIsRefining(true)
-        setError(null)
+        setPendingRefinement(null) // Clear previous proposal if any
+        
         try {
             const response = await fetch(`${API_URL}/api/refine-resume`, {
                 method: 'POST',
@@ -356,13 +358,20 @@ function NewApplication({ onComplete }) {
                     additional_context: extractedContext
                 })
             })
-            if (!response.ok) throw new Error('Refinement failed')
-            const data = await response.json()
-            // Set as pending rather than final
-            setPendingRefinement(data)
-            setViewMode('pdf') // Default to PDF for previewing the new version
-        } catch (err) {
-            setError(err.message)
+            
+            if (response.ok) {
+                const data = await response.json()
+                // Set as pending rather than final
+                setPendingRefinement(data)
+                setRefineInstructions('')
+            } else {
+                const err = await response.json();
+                console.error("Refinement failed:", err);
+                setError(`AI Revision failed: ${err.detail || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error refining resume:', error)
+            setError('Failed to connect to the server for AI revision.');
         } finally {
             setIsRefining(false)
         }
@@ -399,16 +408,17 @@ function NewApplication({ onComplete }) {
         setTimeout(() => setViewMode('pdf'), 0)
     }
 
-    const handleSyncEdits = async () => {
+    const handleSyncEdits = async (showLoadingOverlay = true) => {
         // Leaving manual edit — sync manually edited text back to state
-        setIsProcessing(true);
+        if (showLoadingOverlay) setIsProcessing(true);
+        
         // Small delay to ensure OnlyOffice callback has time to finish on backend
         // We do multiple refetches to handle eventual consistency
         setTimeout(async () => {
             await refetchApplication();
             setTimeout(async () => {
                 await refetchApplication();
-                setIsProcessing(false);
+                if (showLoadingOverlay) setIsProcessing(false);
             }, 2000);
         }, 3000);
     }
@@ -420,7 +430,9 @@ function NewApplication({ onComplete }) {
         setError(null)
         try {
             // Prepare payload
-            const resumeText = result.resume_data.full_text ? result.resume_data.full_text.join('\n') : "Unknown Resume Text"
+            const resumeText = Array.isArray(result?.resume_data?.full_text) 
+                ? result.resume_data.full_text.join('\n') 
+                : (typeof result?.resume_data?.full_text === 'string' ? result.resume_data.full_text : "Unknown Resume Text")
             const jobText = inputMode === 'text' ? jobDescription : `Job URL: ${jobUrl}`
 
             const res = await fetch(`${API_URL}/api/generate-cover-letter`, {
@@ -648,24 +660,46 @@ function NewApplication({ onComplete }) {
     if (appStage === 'match_scoring') {
         const diffData = result?.diff_data || { original: '', tailored: '' };
         return (
-            <ResumeScoringView 
-                diffData={diffData} 
-                scoreData={matchScoreResult || {}} 
-                onPreview={() => setAppStage('resume_preview')}
-                onEdit={() => setAppStage('resume_edit')}
-                onFinalize={handleAcceptResume}
-            />
+            <div style={{ position: 'relative', height: '100%' }}>
+                {error && (
+                    <div className="alert alert-error" style={{ position: 'absolute', top: '1rem', left: '50%', transform: 'translateX(-50%)', zIndex: 100, width: '90%', maxWidth: '600px' }}>
+                        <span className="material-symbols-outlined">warning</span>
+                        <span>{error}</span>
+                        <button onClick={() => setError(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>close</span>
+                        </button>
+                    </div>
+                )}
+                <ResumeScoringView 
+                    diffData={diffData} 
+                    scoreData={matchScoreResult || {}} 
+                    onPreview={() => setAppStage('resume_preview')}
+                    onEdit={() => setAppStage('resume_edit')}
+                    onFinalize={handleAcceptResume}
+                />
+            </div>
         )
     }
 
     // 2.6 High Fidelity Resume Preview
     if (appStage === 'resume_preview') {
         return (
-            <ResumePreview 
-                pdfUrl={result?.files?.pdf ? `${API_URL}${result.files.pdf}` : null}
-                onBack={() => setAppStage('match_scoring')}
-                onFinalize={handleAcceptResume}
-            />
+            <div style={{ position: 'relative', height: '100%' }}>
+                {error && (
+                    <div className="alert alert-error" style={{ position: 'absolute', top: '1rem', left: '50%', transform: 'translateX(-50%)', zIndex: 100, width: '90%', maxWidth: '600px' }}>
+                        <span className="material-symbols-outlined">warning</span>
+                        <span>{error}</span>
+                        <button onClick={() => setError(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>close</span>
+                        </button>
+                    </div>
+                )}
+                <ResumePreview 
+                    pdfUrl={result?.files?.pdf ? `${API_URL}${result.files.pdf}` : null}
+                    onBack={() => setAppStage('match_scoring')}
+                    onFinalize={handleAcceptResume}
+                />
+            </div>
         )
     }
 
@@ -676,23 +710,32 @@ function NewApplication({ onComplete }) {
         const docxFilename = docxPath.split('/').pop();
         
         return (
-            <div key={pendingRefinement ? 'refining' : 'normal'} style={{ height: 'calc(100vh - 120px)' }}>
-                    <ResumeEditor 
-                        resumeData={result?.resume_data || {}} 
-                        pdfUrl={pendingRefinement ? (pendingRefinement.files?.pdf ? `${API_URL}${pendingRefinement.files.pdf}` : null) : (result?.files?.pdf ? `${API_URL}${result.files.pdf}` : null)}
-                        docxFilename={docxFilename}
-                        refineInstructions={refineInstructions}
-                        setRefineInstructions={setRefineInstructions}
-                        isRegenerating={isRefining}
-                        onRegenerate={handleRefineResume}
-                        onBack={() => setAppStage('match_scoring')}
-                        pendingRefinement={pendingRefinement}
-                        onApproveRefinement={handleApproveRefinement}
-                        onDeclineRefinement={handleDeclineRefinement}
-                        applicationId={result?.id}
-                        onSync={handleSyncEdits}
-                        initialTab={isRefining || pendingRefinement ? 'ai' : 'manual'}
-                    />
+            <div style={{ position: 'relative', height: 'calc(100vh - 120px)' }}>
+                {error && (
+                    <div className="alert alert-error" style={{ position: 'absolute', top: '1rem', left: '50%', transform: 'translateX(-50%)', zIndex: 100, width: '90%', maxWidth: '600px' }}>
+                        <span className="material-symbols-outlined">warning</span>
+                        <span>{error}</span>
+                        <button onClick={() => setError(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>close</span>
+                        </button>
+                    </div>
+                )}
+                <ResumeEditor 
+                    resumeData={result?.resume_data || {}} 
+                    pdfUrl={pendingRefinement ? (pendingRefinement.files?.pdf ? `${API_URL}${pendingRefinement.files.pdf}` : null) : (result?.files?.pdf ? `${API_URL}${result.files.pdf}` : null)}
+                    docxFilename={docxFilename}
+                    refineInstructions={refineInstructions}
+                    setRefineInstructions={setRefineInstructions}
+                    isRegenerating={isRefining}
+                    onRegenerate={handleRefineResume}
+                    onBack={() => setAppStage('match_scoring')}
+                    pendingRefinement={pendingRefinement}
+                    onApproveRefinement={handleApproveRefinement}
+                    onDeclineRefinement={handleDeclineRefinement}
+                    applicationId={result?.id}
+                    onSync={handleSyncEdits}
+                    initialTab={isRefining || pendingRefinement ? 'ai' : null}
+                />
             </div>
         )
     }

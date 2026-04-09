@@ -37,6 +37,7 @@ class Application(Base):
     is_archived = Column(String, default='false')  # 'true'/'false'
     kanban_order = Column(Integer, default=0)
     diff_data = Column(Text) # JSON string
+    source = Column(String) # Origin platform (e.g. LinkedIn, Indeed)
     
     # Override fields for final versions
     override_resume_path = Column(String)
@@ -213,6 +214,9 @@ class DatabaseService:
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS indeed_url TEXT",
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS linkedin_rating TEXT",
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS linkedin_url TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS diff_data TEXT",
+            "ALTER TABLE applications ADD COLUMN source TEXT",
+            "ALTER TABLE applications ADD COLUMN resume_changes_summary TEXT",
             "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS base_resume_path TEXT",
             "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS long_form_resume_path TEXT",
             "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS additional_docs TEXT",
@@ -354,6 +358,7 @@ class DatabaseService:
                         app.relocation = None
                     if data.get('interest_level'): app.interest_level = data.get('interest_level')
                     if data.get('remarks'): app.remarks = data.get('remarks')
+                    if data.get('source'): app.source = data.get('source')
                     if data.get('resume_changes_summary'): app.resume_changes_summary = json.dumps(data.get('resume_changes_summary'))
                     if data.get('cover_letter_changes_summary'): app.cover_letter_changes_summary = json.dumps(data.get('cover_letter_changes_summary'))
                     if 'kanban_order' in data: app.kanban_order = data['kanban_order']
@@ -431,7 +436,8 @@ class DatabaseService:
                 diff_data=json.dumps(data.get('diff_data')) if data.get('diff_data') else None,
                 commute_time_mins=data.get('commute_time_mins'),
                 commute_distance_miles=data.get('commute_distance_miles'),
-                commute_details=json.dumps(data.get('commute_details')) if data.get('commute_details') else None
+                commute_details=json.dumps(data.get('commute_details')) if data.get('commute_details') else None,
+                source=data.get('source')
             )
 
             session.add(new_app)
@@ -568,6 +574,7 @@ class DatabaseService:
             "cover_letter_changes_summary": app.cover_letter_changes_summary,
             "match_score": app.match_score,
             "match_details": app.match_details,
+            "original_filename": app.original_resume_path,
             "is_archived": app.is_archived == 'true',
             "kanban_order": app.kanban_order or 0,
             "profile_snapshot": json.loads(app.profile_snapshot) if app.profile_snapshot else None,
@@ -579,6 +586,7 @@ class DatabaseService:
             "commute_time_mins": app.commute_time_mins,
             "commute_distance_miles": app.commute_distance_miles,
             "commute_details": json.loads(app.commute_details) if app.commute_details else {},
+            "source": app.source,
             "sub_steps": [{"id": s.id, "title": s.title, "description": s.description, "status": s.status, "date": s.date} for s in app.sub_steps],
             "contacts": [{"id": c.id, "name": c.name, "role": c.role, "email": c.email, "phone": c.phone, "linkedin_url": c.linkedin_url, "headline": c.headline} for c in app.contacts],
             "events": [{"id": e.id, "event_type": e.event_type, "description": e.description, "timestamp": e.timestamp} for e in app.events]
@@ -675,6 +683,7 @@ class DatabaseService:
                     app.relocation = None
             if 'interest_level' in data: app.interest_level = data['interest_level']
             if 'remarks' in data: app.remarks = data['remarks']
+            if 'source' in data: app.source = data['source']
             if 'status' in data: app.status = data['status']
             if 'kanban_order' in data: app.kanban_order = data['kanban_order']
             if 'is_archived' in data: 
