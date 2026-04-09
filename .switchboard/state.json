@@ -1,0 +1,39 @@
+{
+  "session": {
+    "id": null,
+    "activeWorkflow": null,
+    "suspendedWorkflows": [],
+    "status": "IDLE",
+    "startTime": null,
+    "activePersona": null,
+    "currentStep": 0,
+    "activeWorkflowPhase": 0
+  },
+  "context": {},
+  "tasks": [],
+  "terminals": {},
+  "chatAgents": {},
+  "teams": {},
+  "startupCommands": {
+    "lead": "",
+    "coder": "",
+    "intern": "",
+    "reviewer": "",
+    "planner": "",
+    "analyst": ""
+  },
+  "visibleAgents": {
+    "planner": true,
+    "lead": true,
+    "coder": true,
+    "intern": true,
+    "reviewer": true,
+    "analyst": true,
+    "jules": true
+  },
+  "customAgents": [],
+  "julesSessions": [],
+  "julesPollingDegraded": true,
+  "julesPollingLastCheckedAt": "2026-04-09T15:34:28.330Z",
+  "julesPollingDegradedAt": "2026-04-09T15:34:28.330Z"
+}

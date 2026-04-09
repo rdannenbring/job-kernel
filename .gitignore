@@ -68,3 +68,8 @@ new_context.xml
 first_para_comparison.txt
 xml_base_formatted.xml
 xml_new_formatted.xml
+
+# Switchboard kanban database — machine-local, do not commit.
+.switchboard/kanban.db
+.switchboard/*.db-shm
+.switchboard/*.db-wal
