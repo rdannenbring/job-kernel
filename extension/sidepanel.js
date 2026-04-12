@@ -609,6 +609,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Populate form from a data object ─────────────────────────────────────
   function populateForm(data) {
+    const detailsScoreContainer = document.getElementById('details-match-score-container');
+    if (detailsScoreContainer) {
+      detailsScoreContainer.innerHTML = '';
+      const badge = buildMatchScoreBadge(data.match_score, avgMatchScore, false);
+      if (badge) {
+        detailsScoreContainer.appendChild(badge);
+        detailsScoreContainer.style.display = 'block';
+      } else {
+        detailsScoreContainer.style.display = 'none';
+      }
+    }
+
     document.getElementById('title').value      = data.title       || data.job_title    || '';
     document.getElementById('company').value    = data.company     || '';
     document.getElementById('link').value       = data.link        || data.job_url      || '';
@@ -1725,6 +1737,90 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Apply Mode Logic ──────────────────────────────────────────────────────
   let applySelectedJob = null;
+  let avgMatchScore = null; // average match_score across all applications
+
+  // Fetch average match score on load so it is available for both details and apply modes
+  async function fetchGlobalAvgScore() {
+    try {
+      const res = await fetch(`${API_URL}/api/applications`);
+      if (res.ok) {
+        const apps = await res.json();
+        const scored = apps.filter(a => a.match_score != null);
+        avgMatchScore = scored.length > 0
+          ? scored.reduce((s, a) => s + a.match_score, 0) / scored.length
+          : null;
+      }
+    } catch (e) {
+      console.warn("Could not fetch global average score:", e);
+    }
+  }
+  fetchGlobalAvgScore();
+
+  function buildMatchScoreBadge(score, avgScore, isSummaryTag = true) {
+    let badgeContent = '';
+    let tooltipText = '';
+    let containerStyle = '';
+
+    if (score == null) {
+      // Placeholder for unsaved/unscored jobs
+      const scoreColor = `hsl(0, 0%, 55%)`;
+      const scoreBg = `hsla(0, 0%, 40%, 0.15)`;
+      const scoreBorder = `hsla(0, 0%, 50%, 0.6)`;
+      tooltipText = 'Match Score: Pending (Save & Process to calculate with AI)';
+      
+      badgeContent = `
+        <span style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:${scoreBg};border:2px solid ${scoreBorder};color:${scoreColor};font-size:0.62rem;font-weight:800;flex-shrink:0;">
+          ?
+        </span>
+        <span style="color:${scoreColor};font-weight:700;">Score Pending</span>
+      `;
+      containerStyle = `display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 2rem; background: ${scoreBg}; border: 1px dashed ${scoreBorder}; width: fit-content; cursor: help; font-size: 0.8rem;`;
+    } else {
+      const hue = Math.round((score / 100) * 120);
+      const scoreColor = `hsl(${hue}, 75%, 55%)`;
+      const scoreBg = `hsla(${hue}, 75%, 40%, 0.15)`;
+      const scoreBorder = `hsla(${hue}, 75%, 50%, 0.6)`;
+
+      let arrowHtml = '';
+      tooltipText = `Match Score: ${score}`;
+      if (avgScore !== null) {
+        const diff = score - avgScore;
+        const absDiff = Math.abs(Math.round(diff));
+        const isAbove = diff >= 1;
+        const isBelow = diff <= -1;
+        if (isAbove || isBelow) {
+          const arrowColor = isAbove ? '#10b981' : '#ef4444';
+          const arrowChar = isAbove ? '\u25b2' : '\u25bc';
+          tooltipText = `Match Score: ${score} \u2014 ${isAbove ? '\u2191' : '\u2193'} ${absDiff} pts ${isAbove ? 'above' : 'below'} your avg (${Math.round(avgScore)})`;
+          arrowHtml = `<span style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;border-radius:50%;background:${arrowColor};display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:900;color:white;border:1px solid rgba(0,0,0,0.25);line-height:1;">${arrowChar}</span>`;
+        } else {
+          tooltipText = `Match Score: ${score} \u2014 equal to your avg (${Math.round(avgScore)})`;
+        }
+      }
+
+      badgeContent = `
+        <span style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:${scoreBg};border:2px solid ${scoreBorder};color:${scoreColor};font-size:0.62rem;font-weight:800;flex-shrink:0;">
+          ${score}
+          ${arrowHtml}
+        </span>
+        <span style="color:${scoreColor};font-weight:700;">Match</span>
+      `;
+      containerStyle = `display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 2rem; background: ${scoreBg}; border: 1px solid ${scoreBorder}; width: fit-content; cursor: help; font-size: 0.8rem;`;
+    }
+
+    const containerEl = document.createElement('div');
+    if (isSummaryTag) {
+      containerEl.className = 'summary-tag';
+      containerEl.title = tooltipText;
+      containerEl.style.cssText = 'cursor:default;';
+      containerEl.innerHTML = badgeContent;
+    } else {
+      containerEl.title = tooltipText;
+      containerEl.style.cssText = containerStyle;
+      containerEl.innerHTML = badgeContent;
+    }
+    return containerEl;
+  }
 
   async function initApplyMode() {
     // 1. Intelligent Default: If details panel found a matching record for THIS page, use it.
@@ -1925,7 +2021,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`${API_URL}/api/applications`);
       if (!res.ok) throw new Error('Failed to fetch applications');
       let apps = await res.json();
-      
+
+      // Ensure average is up to date since it may have changed
+      const scored = apps.filter(a => a.match_score != null);
+      avgMatchScore = scored.length > 0
+        ? scored.reduce((s, a) => s + a.match_score, 0) / scored.length
+        : null;
+
       // Fetch ALL applications now
       renderPickerResults(apps);
     } catch (e) {
@@ -2045,6 +2147,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       summaryMeta.appendChild(tagEl);
     });
+
+    // Match score badge with above/below-average indicator
+    const scoreBadge = buildMatchScoreBadge(app.match_score, avgMatchScore, true);
+    if (scoreBadge) {
+      summaryMeta.appendChild(scoreBadge);
+    }
 
     // Asset logic
     applyAssetsV2.innerHTML = '';
