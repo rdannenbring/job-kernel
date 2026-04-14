@@ -32,14 +32,18 @@ function findLeafText(predicate, limit = 20, root = document.body) {
   return results;
 }
 
-const getLIRoot = () => document.querySelector('.jobs-search__job-details--container') 
-  || document.querySelector('.job-view-layout') 
-  || document.querySelector('.jobs-details')
-  || document.querySelector('.scaffold-layout__main')
-  || document.querySelector('.top-card-layout')
-  || document.querySelector('#workspace')
-  || document.querySelector('.main-workspace')
-  || document;
+const getLIRoot = () => 
+  document.querySelector('.jobs-details') ||
+  document.querySelector('.scaffold-layout__main') ||
+  document.querySelector('[class*="description-container--two-pane"]') ||
+  document.querySelector('.job-details-jobs-unified-top-card') ||
+  document.querySelector('[class*="job-details-jobs-unified-top-card"]') ||
+  document.querySelector('[class*="jobs-unified-top-card"]') ||
+  document.querySelector('.jobs-search__job-details--container') ||
+  document.querySelector('.job-view-layout') ||
+  document.querySelector('.top-card-layout') ||
+  document.querySelector('#workspace') ||
+  document;
 
 // ─── LinkedIn scraper ────────────────────────────────────────────────────────
 //
@@ -190,48 +194,85 @@ const LINKEDIN_SCRAPER = {
     return null;
   },
 
-  /**
-   * Extract the workplace type (Remote / Hybrid / On-site) separately from location.
-   */
   workplaceType: () => {
-    // Strategy 1: dedicated element
-    const badge = firstMatch([
-      '.job-details-jobs-unified-top-card__workplace-type',
-      '.jobs-unified-top-card__workplace-type',
-      '[class*="workplace-type"]',
-    ], getLIRoot());
-    if (badge) return badge;
-
-    // Strategy 2: look for parenthetical in location text e.g. "(Hybrid)"
     const root = getLIRoot();
-    const bullet = root.querySelector(
-      '.job-details-jobs-unified-top-card__bullet, .jobs-unified-top-card__bullet'
-    );
-    if (bullet) {
-      const m = bullet.innerText?.match(/\((remote|hybrid|on-site)\)/i);
-      if (m) return m[1];
-    }
-
-    // Strategy 3: scan the top-card area for standalone work-type tokens
-    const topCard =
-      root.querySelector('[class*="unified-top-card"]') ||
-      root.querySelector('[class*="jobs-details"]');
-
-    if (topCard) {
-      const spans = topCard.querySelectorAll('span');
-      for (const span of spans) {
-        const t = span.innerText?.trim();
-        if (t && /^(remote|hybrid|on-site)$/i.test(t)) return t;
+    const findInTexts = (elements) => {
+      for (const el of elements) {
+        const text = (el.innerText || el.textContent || el.getAttribute('aria-label') || '').trim();
+        if (!text) continue;
+        
+        // Strategy A: Explicit accessibility label
+        if (text.toLowerCase().includes('workplace type is')) {
+          console.log('[JobAutomator] Found Workplace Pref label:', text);
+          if (text.match(/on[\s-]site|in[\s-]person/i)) return 'On-site';
+          if (text.match(/remote/i)) return 'Remote';
+          if (text.match(/hybrid/i)) return 'Hybrid';
+        }
+        
+        // Strategy B: Keyword scan (for pills/bullets/insights)
+        if (text.length < 50) {
+          const t = text.toLowerCase();
+          if (t.includes('remote')) return 'Remote';
+          if (t.includes('hybrid')) return 'Hybrid';
+          if (t.includes('on-site') || t.includes('onsite') || t.includes('in-person')) return 'On-site';
+        }
       }
-    }
+      return null;
+    };
+
+    // Strategy C: Direct scanning of all small descriptive tags in the root
+    const findKeywordDirect = (rootEl) => {
+      const candidates = rootEl.querySelectorAll('span, a, li, b');
+      for (const el of candidates) {
+        if (el.children.length > 0 && el.tagName !== 'A') continue; // Prefer leaf nodes or links
+        const t = (el.innerText || '').trim().toLowerCase();
+        if (t.length > 0 && t.length < 25) {
+          if (t.includes('remote')) return 'Remote';
+          if (t.includes('hybrid')) return 'Hybrid';
+          if (t.includes('on-site') || t.includes('onsite') || t.includes('in-person')) return 'On-site';
+        }
+      }
+      return null;
+    };
+
+    let candidates = root.querySelectorAll('.visually-hidden, .ui-label, .tvm__text, [class*="job-insight"], .artdeco-pill, [class*="top-card__bullet"], [class*="job-details-jobs-unified-top-card__job-insight"], a, span');
+    console.log(`[JobAutomator] Workplace candidates count: ${candidates.length}`);
     
-    // Strategy 4: scan specifically for .topcard__flavor elements
-    const flavors = document.querySelectorAll('.topcard__flavor');
-    for (const f of flavors) {
-        const t = f.innerText?.trim();
-        if (t && /remote|hybrid|on-site/i.test(t)) return t;
+    // DEBUG DUMP: Show exactly what text we are finding
+    Array.from(candidates).slice(0, 15).forEach((c, i) => {
+        const txt = (c.innerText || c.textContent || '').trim();
+        if (txt) console.log(`[JobAutomator] Workplace Candidate ${i}: "${txt}"`);
+    });
+
+    let res = findInTexts(candidates);
+    if (res) {
+      console.log(`[JobAutomator] Workplace Strategy A/B Match: ${res}`);
+      return res;
     }
 
+    // 2. Direct keyword scan in root
+    res = findKeywordDirect(root);
+    if (res) {
+      console.log(`[JobAutomator] Workplace Strategy C Match: ${res}`);
+      return res;
+    }
+
+    // 3. Last resort: header text regex
+    const headerText = root.innerText || '';
+    if (/\bRemote\b/i.test(headerText)) {
+      console.log('[JobAutomator] Workplace Match (Regex fallback): Remote');
+      return 'Remote';
+    }
+    if (/\bHybrid\b/i.test(headerText)) {
+      console.log('[JobAutomator] Workplace Match (Regex fallback): Hybrid');
+      return 'Hybrid';
+    }
+    if (/\bOn-site\b/i.test(headerText) || /\bOnsite\b/i.test(headerText)) {
+      console.log('[JobAutomator] Workplace Match (Regex fallback): On-site');
+      return 'On-site';
+    }
+
+    console.warn('[JobAutomator] Workplace extraction FAILED. Root text sample:', headerText.substring(0, 200));
     return null;
   },
 
@@ -244,92 +285,77 @@ const LINKEDIN_SCRAPER = {
     '.show-more-less-html__markup',
     '[class*="job-description"]',
     '.jobs-box__html-content',
-  ], getLIRoot()),
+    '.jobs-details__main-content',
+  ], document), // Search from document to avoid issues with isolated roots
 
-  /**
-   * Job type (Full-time / Part-time / Contract / Internship).
-   *
-   * LinkedIn puts this in one of:
-   *  a) The "Job Details" section below the description (criteria list)
-   *  b) The "How you match" section
-   *  c) An insight badge in the top card
-   */
   type: () => {
-    // Strategy 1: criteria list (older layout / public view)
     const root = getLIRoot();
-    const criteriaItems = root.querySelectorAll(
-      '.description__job-criteria-list li, ' +
-      '.job-details-jobs-unified-top-card__job-insight li'
-    );
-    for (const item of criteriaItems) {
-      const header = item.querySelector(
-        '.description__job-criteria-subheader, [class*="criteria-subheader"]'
-      );
-      if (header?.innerText?.toLowerCase().includes('employment type')) {
-        const val = item.querySelector(
-          '.description__job-criteria-text, [class*="criteria-text"]'
-        )?.innerText?.trim();
-        if (val) return val;
-      }
-    }
+    const findInTexts = (elements) => {
+      for (const el of elements) {
+        const text = (el.innerText || el.textContent || el.getAttribute('aria-label') || '').trim();
+        if (!text) continue;
 
-    // Strategy 2: insight items that explicitly contain an employment-type keyword
-    const insightEls = root.querySelectorAll(
-      '.job-details-jobs-unified-top-card__job-insight, ' +
-      '.jobs-unified-top-card__job-insight, ' +
-      '[class*="job-insight"]'
-    );
-    for (const el of insightEls) {
-      const text = el.innerText || '';
-      const m = text.match(/\b(full[\s-]time|part[\s-]time|contract|freelance|internship|temporary)\b/i);
-      if (m) return m[1].replace(/\s+/g, '-').toLowerCase()
-        .replace(/^f/, 'F').replace(/^p/, 'P').replace(/^c/, 'C').replace(/^i/, 'I').replace(/^t/, 'T');
-    }
-
-    // Strategy 3: scan all leaf elements for a standalone type token
-    const typeTokens = findLeafText(
-      t => /^(full[\s-]time|part[\s-]time|contract|internship|temporary)$/i.test(t),
-      15, root
-    );
-    if (typeTokens.length) return typeTokens[0].text;
-
-    const labels = root.querySelectorAll('.ui-label, .tvm__text--neutral');
-    for (const label of labels) {
-      const text = label.innerText?.trim();
-      if (text && /^(full-time|part-time|contract|internship)$/i.test(text)) {
-        return text;
-      }
-    }
-    
-    // Strategy 4: Fallback to any insight with "full-time" etc (regardless of standalone text nodes)
-    const allInsights = root.querySelectorAll('[class*="job-insight"], [class*="ui-label"], .tvm__text--neutral');
-    for (const el of allInsights) {
-        const text = (el.innerText || '').toLowerCase();
-        if (/full[\s-]time/.test(text)) return 'Full-time';
-        if (/part[\s-]time/.test(text)) return 'Part-time';
-        if (/contract/.test(text)) return 'Contract';
-        if (/internship/.test(text)) return 'Internship';
-    }
-
-    // Strategy 5: Nuclear option. Search the entire job details block's raw text.
-    const everything = root.innerText || '';
-    if (everything.includes('Full-time')) return 'Full-time';
-    if (everything.includes('Part-time')) return 'Part-time';
-    if (everything.includes('Contract')) return 'Contract';
-    if (everything.includes('Internship')) return 'Internship';
-
-    // Strategy 6: Scan all .topcard__flavor elements for job type tokens
-    const flavors2 = document.querySelectorAll('.topcard__flavor');
-    for (const f of flavors2) {
-        const t = f.innerText?.trim();
-        if (t && /full[\s-]?time|part[\s-]?time|contract|internship/i.test(t)) {
-            if (/full/i.test(t)) return 'Full-time';
-            if (/part/i.test(t)) return 'Part-time';
-            if (/contract/i.test(t)) return 'Contract';
-            if (/intern/i.test(t)) return 'Internship';
+        // Strategy A: Accessibility label
+        if (text.toLowerCase().includes('job type is')) {
+          console.log('[JobAutomator] Found Job Type Pref label:', text);
+          if (text.match(/full[\s-]time/i)) return 'Full-time';
+          if (text.match(/part[\s-]time/i)) return 'Part-time';
+          if (text.match(/contract|freelance|temp/i)) return 'Contract';
+          if (text.match(/internship/i)) return 'Internship';
         }
+
+        // Strategy B: Keyword scan
+        if (text.length < 50) {
+          const t = text.toLowerCase();
+          if (t.includes('full-time') || t.includes('fulltime')) return 'Full-time';
+          if (t.includes('part-time')) return 'Part-time';
+          if (t.includes('contract') || t.includes('freelance')) return 'Contract';
+          if (t.includes('internship')) return 'Internship';
+        }
+      }
+      return null;
+    };
+
+    // Strategy C: Direct scanning
+    const findKeywordDirect = (rootEl) => {
+      const candidates = rootEl.querySelectorAll('span, a, li, b');
+      for (const el of candidates) {
+        if (el.children.length > 0 && el.tagName !== 'A') continue; 
+        const t = (el.innerText || '').trim().toLowerCase();
+        if (t.length > 0 && t.length < 25) {
+          if (t.includes('full-time') || t.includes('fulltime')) return 'Full-time';
+          if (t.includes('part-time')) return 'Part-time';
+          if (t.includes('contract') || t.includes('freelance')) return 'Contract';
+          if (t.includes('internship')) return 'Internship';
+        }
+      }
+      return null;
+    };
+
+    // 1. Local search
+    let candidates = root.querySelectorAll('.visually-hidden, .ui-label, .tvm__text, [class*="job-insight"], .artdeco-pill, [class*="criteria"], [class*="job-details-jobs-unified-top-card__job-insight"], a, span');
+    console.log(`[JobAutomator] Job Type candidates count: ${candidates.length}`);
+
+    // DEBUG DUMP
+    Array.from(candidates).slice(0, 15).forEach((c, i) => {
+        const txt = (c.innerText || c.textContent || '').trim();
+        if (txt) console.log(`[JobAutomator] Job Type Candidate ${i}: "${txt}"`);
+    });
+
+    let res = findInTexts(candidates);
+    if (res) {
+      console.log(`[JobAutomator] Job Type Strategy A/B Match: ${res}`);
+      return res;
     }
 
+    // 2. Direct keyword scan
+    res = findKeywordDirect(root);
+    if (res) {
+      console.log(`[JobAutomator] Job Type Strategy C Match: ${res}`);
+      return res;
+    }
+
+    console.warn('[JobAutomator] Job Type extraction FAILED.');
     return null;
   },
 
@@ -343,47 +369,50 @@ const LINKEDIN_SCRAPER = {
    *  - Inside an insight/badge containing a "$" sign
    */
   salary: () => {
-    // Strategy 1: explicit selectors
     const root = getLIRoot();
+    // Strategy 1: explicit selectors
     const direct = firstMatch([
-      '.compensation__salary',
       '.job-details-jobs-unified-top-card__salary-link',
       '.jobs-unified-top-card__salary-link',
+      '.compensation__salary',
       '[class*="salary-info"]',
       '[class*="compensation"]',
     ], root);
     if (direct) return direct;
 
-    // Strategy 2: any insight element that contains a dollar sign
+    // Strategy 2: any insight element containing "$"
     const insightEls = root.querySelectorAll(
       '.job-details-jobs-unified-top-card__job-insight, ' +
       '.jobs-unified-top-card__job-insight, ' +
       '[class*="job-insight"], ' +
-      '[class*="insight-container"]'
+      '[class*="insight-container"], ' +
+      '.ui-label, .tvm__text'
     );
     for (const el of insightEls) {
       const text = (el.innerText || '').trim();
-      // Skip strings that look like "Retry Premium for $0"
       if (/premium|retry|\$0/i.test(text)) continue;
 
       if (text.includes('$') || /\d+[kK]\/yr|\d+\/hr/i.test(text)) {
-        // Clean up: remove possible "matches your salary preference" suffix
         let cleaned = text.split('\n')[0].trim();
         cleaned = cleaned.replace(/Matches your.*$/i, '').trim();
-        if (cleaned.length < 200) return cleaned;
+        if (cleaned.length < 150) return cleaned;
       }
     }
 
-    // Strategy 3: leaf-text scan for "$X - $Y" or "$Xk/yr" patterns
-    const salaryNodes = findLeafText(
-      t => /\$[\d,]+/.test(t) && t.length < 150 && !/premium|retry|\$0/i.test(t),
-      10, root
-    );
-    if (salaryNodes.length) {
-      // Prefer ones that look like ranges
-      const range = salaryNodes.find(n => /\$[\d,]+\s*[-–]\s*\$[\d,]+/i.test(n.text));
-      if (range) return range.text;
-      return salaryNodes[0].text;
+    // Strategy 3: Deep fallback - search the job description itself for salary patterns
+    const desc = LINKEDIN_SCRAPER.description() || document.querySelector('.jobs-description-content__text')?.innerText;
+    if (desc) {
+      // Look for patterns like "$183,000 - $285,000" or "$100k-$150k" or "£50k-£70k" or "60,000 - 80,000 EUR"
+      const salaryRegex = /(?:[\$\£\€\¥]|USD|EUR|GBP)[\s]*[\d,]+(?:\s*[kK])?\s*(?:[-–]|to)\s*(?:[\$\£\€\¥]|USD|EUR|GBP)?[\s]*[\d,]+(?:\s*[kK])?|[\d,]+(?:\s*[kK])?[\s]*(?:[\$\£\€\¥]|USD|EUR|GBP)?(?:\s*\/\s*(?:yr|hr|month|year|hour|annum))|[\$\£\€\¥][\d,]+(?:\s*[kK])?/gi;
+      const matches = desc.match(salaryRegex);
+      if (matches) {
+        // Filter out very small numbers that might be counts (like $0 for matching)
+        const relevant = matches.filter(m => !m.includes('$0') && m.length > 2);
+        if (relevant.length > 0) {
+          // Find the one that looks most like a range or is reasonably long
+          return relevant.sort((a,b) => b.length - a.length)[0];
+        }
+      }
     }
 
     return null;
@@ -478,22 +507,37 @@ const LINKEDIN_SCRAPER = {
     const connections = [];
     
     // 1. Check for LinkedIn Modals (most important for "Show all")
-    const modals = document.querySelectorAll('.artdeco-modal, [role="dialog"]');
+    const modals = document.querySelectorAll('.artdeco-modal, [role="dialog"], #artdeco-modal-outlet');
     modals.forEach(modal => {
-        // Look for connection items in the modal
-        const items = modal.querySelectorAll('.artdeco-entity-lockup, .entity-result, [class*="result-item"]');
+        // Look for connection items in the modal (LinkedIn often uses entity-lockup or entity-result)
+        const items = modal.querySelectorAll('.artdeco-entity-lockup, .entity-result, [class*="result-item"], [class*="member-tabpanel"] li');
         items.forEach(item => {
             const nameLink = item.querySelector('a[href*="/in/"]');
-            const nameEl = item.querySelector('strong, .artdeco-entity-lockup__title, [class*="name"]');
-            const headlineEl = item.querySelector('[class*="headline"], .artdeco-entity-lockup__subtitle, .entity-result__primary-subtitle');
+            // Try different name containers
+            const nameEl = item.querySelector('strong, .artdeco-entity-lockup__title, [class*="name"], .entity-result__title');
+            const headlineEl = item.querySelector('[class*="headline"], .artdeco-entity-lockup__subtitle, .entity-result__primary-subtitle, [class*="subtitle"]');
             
             if (nameEl && nameLink) {
-                // LinkedIn often has hidden name text for screen readers; try to get only the visible portion
-                const name = nameEl.querySelector('strong')?.innerText || nameEl.innerText.split('\n')[0].trim();
+                const name = nameEl.querySelector('strong')?.innerText || nameEl.innerText.split('\n')[0].split(' and ')[0].trim();
+                const profileUrl = nameLink.href.split('?')[0];
+
+                // Check for duplicate in this run
+                if (connections.some(c => c.profile_url === profileUrl)) return;
+
+                // Detection for Connection Degree and Alumni status
+                const degreeEl = item.querySelector('.dist-value, [class*="dist-value"], .entity-result__badge');
+                let degree = degreeEl ? degreeEl.innerText.trim().replace(/\s+/g, '') : null;
+                if (degree && degree.includes('·')) degree = degree.split('·').pop().trim();
+
+                const itemText = item.innerText.toLowerCase();
+                const isAlumni = itemText.includes('alumni') || itemText.includes('alumnus') || itemText.includes('class of');
+
                 connections.push({
                     name: name,
                     headline: headlineEl?.innerText.trim() || '',
-                    profile_url: nameLink.href.split('?')[0]
+                    profile_url: profileUrl,
+                    degree: degree,
+                    is_alumni: isAlumni
                 });
             }
         });
@@ -502,8 +546,7 @@ const LINKEDIN_SCRAPER = {
     // 2. Check the Job Details pane (root)
     const root = getLIRoot();
     // Look for various networking sections
-    // Section 1: "People you can reach out to" cards
-    const networkCards = root.querySelectorAll('[class*="networking-card"], [class*="facepile-item"], .job-details-people-who-can-help__connections-card-summary');
+    const networkCards = root.querySelectorAll('[class*="networking-card"], [class*="facepile-item"], .job-details-people-who-can-help__connections-card-summary, .jobs-poster, [class*="job-poster"], .hirer-card__container');
     
     networkCards.forEach(card => {
         const nameEl = card.querySelector('[class*="name"], [class*="title"], .job-details-people-who-can-help__connections-card-summary-text');
@@ -511,49 +554,66 @@ const LINKEDIN_SCRAPER = {
         const linkEl = card.querySelector('a[href*="/in/"]');
         
         if (nameEl && linkEl) {
+            const profileUrl = linkEl.href.split('?')[0];
+            if (connections.some(c => c.profile_url === profileUrl)) return;
+
+            const name = nameEl.innerText.split(' and ')[0].split(' in your network')[0].trim();
+            
+            // Detection for Connection Degree and Alumni status
+            const degreeEl = card.querySelector('.dist-value, [class*="dist-value"]');
+            let degree = degreeEl ? degreeEl.innerText.trim() : null;
+            
+            if (!degree) {
+                const cardText = card.innerText;
+                const degMatch = cardText.match(/\b([123][snr][td])\b/);
+                if (degMatch) degree = degMatch[1];
+            }
+
+            const cardText = card.innerText.toLowerCase();
+            const isAlumni = cardText.includes('alumni') || cardText.includes('alumnus') || cardText.includes('class of');
+
             connections.push({
-                name: nameEl.innerText.split(' and ')[0].split(' in your network')[0].trim(),
-                headline: headlineEl?.innerText.trim() || '',
-                profile_url: linkEl.href.split('?')[0]
-            });
-        }
-    });
-    
-    // Section 2: "Meet the hiring team" (Job Poster)
-    const posterSections = root.querySelectorAll('.jobs-poster, [class*="job-poster"], .hirer-card__container');
-    posterSections.forEach(posterEl => {
-        const nameEl = posterEl.querySelector('[class*="name"], .jobs-poster__name, .hirer-card__name');
-        const headlineEl = posterEl.querySelector('[class*="headline"], .jobs-poster__headline, .hirer-card__headline');
-        const linkEl = posterEl.querySelector('a[href*="/in/"]');
-        if (nameEl && linkEl) {
-            connections.push({
-                name: nameEl.innerText.trim(),
-                headline: headlineEl?.innerText.trim() || 'Job Poster',
-                profile_url: linkEl.href.split('?')[0],
-                is_poster: true
+                name,
+                headline: headlineEl?.innerText.trim() || (card.classList.contains('jobs-poster') ? 'Job Poster' : ''),
+                profile_url: profileUrl,
+                degree: degree,
+                is_alumni: isAlumni,
+                is_poster: /poster|hirer/i.test(card.className) || !!card.closest('.jobs-poster, .hirer-card__container')
             });
         }
     });
 
     // Strategy 3: Just find ANY /in/ link inside ANY networking area in the whole document
-    const networkingAreas = document.querySelectorAll('.jobs-details__networking, .job-details-people-who-can-help, .jobs-search-connections-list');
+    const networkingAreas = document.querySelectorAll('.jobs-details__networking, .job-details-people-who-can-help, .jobs-search-connections-list, .jobs-details__main-content');
     networkingAreas.forEach(area => {
         const links = area.querySelectorAll('a[href*="/in/"]');
         links.forEach(link => {
-            const container = link.closest('div, li, .artdeco-entity-lockup');
+            const container = link.closest('div, li, .artdeco-entity-lockup, [class*="card"]');
             const name = link.innerText.trim();
-            if (name && name.split(' ').length >= 2 && name.split(' ').length <= 4) { 
+            const profileUrl = link.href.split('?')[0];
+
+            if (connections.some(c => c.profile_url === profileUrl)) return;
+
+            if (name && name.split(' ').length >= 2 && name.split(' ').length <= 5) { 
                 const headlineEl = container?.querySelector('[class*="headline"], [class*="subtitle"], .artdeco-entity-lockup__subtitle');
+                
+                const degreeEl = container?.querySelector('.dist-value, [class*="dist-value"]');
+                let degree = degreeEl ? degreeEl.innerText.trim() : null;
+                const containerText = container?.innerText.toLowerCase() || '';
+                const isAlumni = containerText.includes('alumni') || containerText.includes('alumnus') || containerText.includes('class of');
+
                 connections.push({
                     name,
                     headline: headlineEl?.innerText.trim() || '',
-                    profile_url: link.href.split('?')[0]
+                    profile_url: profileUrl,
+                    degree: degree,
+                    is_alumni: isAlumni
                 });
             }
         });
     });
 
-    // Deduplicate
+    // Deduplicate one last time
     const unique = [];
     const seen = new Set();
     connections.forEach(c => {
@@ -1003,6 +1063,40 @@ function isExtValid() {
   return typeof chrome !== 'undefined' && chrome.runtime && !!chrome.runtime.id;
 }
 
+function safeSendMessage(message, callback) {
+  if (!isExtValid()) {
+    if (callback) callback();
+    return Promise.resolve();
+  }
+  // Expected errors when the side panel isn't open — suppress them to keep
+  // the page console clean. Unexpected errors are still logged.
+  const isBenignError = (err) => {
+    const msg = err?.message || String(err);
+    return msg.includes('Could not establish connection') ||
+           msg.includes('Receiving end does not exist') ||
+           msg.includes('The message port closed');
+  };
+  try {
+    if (callback) {
+      chrome.runtime.sendMessage(message, (response) => {
+        if (chrome.runtime.lastError) {
+          if (!isBenignError(chrome.runtime.lastError)) {
+            console.warn('[JobAutomator] Message error:', chrome.runtime.lastError);
+          }
+        }
+        if (callback) callback(response);
+      });
+    } else {
+      const p = chrome.runtime.sendMessage(message);
+      return p ? p.catch(e => { if (!isBenignError(e)) console.warn('[JobAutomator] Message async error:', e); }) : Promise.resolve();
+    }
+  } catch(e) {
+    if (!isBenignError(e)) console.warn('[JobAutomator] Message sync error:', e);
+    if (callback) callback();
+    return Promise.resolve();
+  }
+}
+
 function injectFloatingButton() {
   let btn = document.getElementById('job-automator-btn');
   if (btn) {
@@ -1038,17 +1132,17 @@ function injectFloatingButton() {
         const isOpen = !!result.isPanelOpen;
 
         if (isOpen) {
-          chrome.runtime.sendMessage({ action: 'close_side_panel' }, () => {
+          safeSendMessage({ action: 'close_side_panel' }, () => {
             if (chrome.runtime.lastError) console.warn(chrome.runtime.lastError);
             updateButtonState(btn, false);
           });
         } else {
           const jobData = scrapeJobData();
           console.log('[JobAutomator] Scraped Job Data:', jobData);
-          chrome.runtime.sendMessage({ action: 'open_and_store', data: jobData }, () => {
+          safeSendMessage({ action: 'open_and_store', data: jobData }, () => {
             if (chrome.runtime.lastError) console.warn(chrome.runtime.lastError);
             updateButtonState(btn, true);
-            chrome.runtime.sendMessage({ action: 'refresh_panel_data' });
+            safeSendMessage({ action: 'refresh_panel_data' });
           });
         }
       });
@@ -1098,8 +1192,14 @@ let lastJobIdValue = '';
 let scrapeTimer = null;
 
 function getJobIdFromUrl() {
+  const url = window.location.href;
   const params = new URLSearchParams(window.location.search);
-  // Check common job ID parameters
+  
+  // 1. Check common LinkedIn path pattern: /jobs/view/ID/
+  const viewMatch = url.match(/\/jobs\/view\/([0-9]+)/);
+  if (viewMatch && viewMatch[1]) return viewMatch[1];
+
+  // 2. Check search parameters
   return params.get('jk') || params.get('vjk') || params.get('currentJobId') || params.get('jobId') || params.get('jobListingId') || params.get('jl') || params.get('lvk') || '';
 }
 
@@ -1109,7 +1209,7 @@ lastJobUrl = null;
 function handleJobNavigation() {
   if (!isExtValid()) return;
   try {
-    chrome.runtime.sendMessage({ action: 'job_loading' }).catch(()=>{});
+    safeSendMessage({ action: 'job_loading' }).catch(()=>{});
   } catch(e) {}
 
   clearTimeout(scrapeTimer);
@@ -1123,9 +1223,9 @@ function handleJobNavigation() {
     }
     if (!isExtValid()) return;
     try {
-      chrome.runtime.sendMessage({ action: 'store_job_data', data: jobData }, () => {
+      safeSendMessage({ action: 'store_job_data', data: jobData }, () => {
         if (chrome.runtime.lastError) {}
-        chrome.runtime.sendMessage({ action: 'refresh_panel_data' }).catch(()=>{});
+        safeSendMessage({ action: 'refresh_panel_data' }).catch(()=>{});
       });
     } catch(e) {}
   }, 1500);
@@ -1159,18 +1259,23 @@ window.addEventListener('locationchange', () => {
 });
 
 // 2. Lightweight ID poll (for sites that might change URL via hash or other means)
-setInterval(() => {
+// Self-terminates if the extension context is invalidated (e.g. after a reload).
+const urlPollInterval = setInterval(() => {
+  if (!isExtValid()) {
+    clearInterval(urlPollInterval);
+    return;
+  }
+
   const currentId = getJobIdFromUrl();
   const currentUrl = window.location.href;
 
   if (currentId === lastJobIdValue && currentUrl === lastJobUrl) return;
-  
+
   lastJobIdValue = currentId;
   lastJobUrl = currentUrl;
 
   setTimeout(checkIfJobPage, 800);
-  
-  if (!isExtValid()) return;
+
   try {
     if (getScraper().isJobPage()) handleJobNavigation();
   } catch(e) {}
@@ -1179,15 +1284,28 @@ setInterval(() => {
 // 3. Tab Visibility Tracker
 // When the user swaps back to this tab, silently push the job data to the sidepanel
 // so that the panel isn't showing a stale job from a different tab.
+let lastSyncedJobId = null;
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     if (!isExtValid()) return;
     try {
       if (getScraper().isJobPage()) {
+        const currentId = getJobIdFromUrl();
+        const currentUrl = window.location.href;
+
+        // Only trigger if the job ID actually changed OR we don't have a record of it
+        // This prevents redundant "refresh_panel_data" when just flipping tabs for the same job.
+        if (currentId && currentId === lastSyncedJobId && currentUrl === lastJobUrl) {
+           return;
+        }
+
         const jobData = scrapeJobData();
-        chrome.runtime.sendMessage({ action: 'store_job_data', data: jobData }, () => {
+        lastSyncedJobId = currentId;
+        lastJobUrl = currentUrl;
+
+        safeSendMessage({ action: 'store_job_data', data: jobData }, () => {
           if (chrome.runtime.lastError) return;
-          chrome.runtime.sendMessage({ action: 'refresh_panel_data' }).catch(()=>{});
+          safeSendMessage({ action: 'refresh_panel_data' }).catch(()=>{});
         });
       }
     } catch(e) {}
@@ -1205,35 +1323,17 @@ window.addEventListener('load', () => {
   checkIfJobPage();
   initialScrape();
 });
-setInterval(checkIfJobPage, 2000);
-// Also periodically check for navigation in case events are missed
-setInterval(() => {
-  if (isExtValid()) {
-    chrome.storage.local.get(['isPanelOpen'], (result) => {
-      if (result.isPanelOpen) {
-        const currentId = getJobIdFromUrl();
-        const currentUrl = window.location.href;
-        if (currentId !== lastJobIdValue || currentUrl !== lastJobUrl) {
-          lastJobIdValue = currentId;
-          lastJobUrl = currentUrl;
-          if (getScraper().isJobPage()) handleJobNavigation();
-        }
-      }
-    });
-  }
-}, 3000);
+// Navigation detection is fully covered by:
+//   - The 1s urlPollInterval above
+//   - The locationchange event listener (history API patch)
+//   - The visibilitychange listener (tab switch detection)
+// No additional polling intervals are needed.
 
 
 // ─── Magic Fill ─────────────────────────────────────────────────────────────
-
-// Inject Google Fonts for icons
-if (!document.getElementById('kernel-google-fonts')) {
-  const link = document.createElement('link');
-  link.id = 'kernel-google-fonts';
-  link.rel = 'stylesheet';
-  link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200';
-  document.head.appendChild(link);
-}
+// Note: No external font/icon CDN links are injected here.
+// LinkedIn's CSP (style-src) blocks chrome-extension: and fonts.googleapis.com,
+// so all icons use inline SVGs instead.
 
 const FIELD_MAP = {
   first_name: ['first', 'fname', 'given-name'],
@@ -1339,10 +1439,14 @@ function injectMagicUI(allMatches, profile) {
   bar.className = 'kernel-magic-bar';
   bar.innerHTML = `
     <div class="kernel-magic-bar-content">
-      <span class="material-symbols-outlined">magic_button</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+        <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+      </svg>
       <div class="kernel-magic-info" title="Detected: ${detectedFieldsList}">
         <span>Found <strong>${matches.length}</strong> fields to auto-fill</span>
-        <span class="material-symbols-outlined kernel-info-icon">info</span>
+        <svg class="kernel-info-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
       </div>
       <div class="kernel-magic-bar-actions">
         <button type="button" id="kernel-magic-fill-all" class="kernel-btn-primary">Fill All</button>
@@ -1477,7 +1581,7 @@ async function getMatches(companyId, companyName) {
       const action = id ? 'CHECK_CONNECTIONS' : 'CHECK_CONNECTIONS_BY_NAME';
       const params = id ? { companyId: id } : { companyName: name };
       
-      chrome.runtime.sendMessage({ action, ...params }, (response) => {
+      safeSendMessage({ action, ...params }, (response) => {
         const matches = response?.matches || [];
         if (matches.length > 0 || !name || (id && !name)) {
           connectionCache.set(key, matches);
@@ -1498,36 +1602,40 @@ async function getMatches(companyId, companyName) {
 
 async function processLinkedInConnections() {
   if (!LINKEDIN_SCRAPER.isJobPage()) return;
-  
-  // 1. Current Job Banner
-  const jobId = new URLSearchParams(window.location.search).get('currentJobId');
-  if (jobId && (jobId !== lastActiveJobId || !document.getElementById('kernel-connection-banner'))) {
-    const companyName = LINKEDIN_SCRAPER.company();
-    const companyId = LINKEDIN_SCRAPER.companyId();
-    
-    if (companyName || companyId) {
-      lastActiveJobId = jobId;
-      const matches = await getMatches(companyId, companyName);
-      renderConnectionBanner(matches, companyName);
-    }
-  }
-  
-  // 2. Proactively update side panel on-page connections
-  const onPage = LINKEDIN_SCRAPER.networking?.() || [];
-  if (onPage.length > 0) {
-    // Also update the local latestJobData so side panel refresh works
-    chrome.storage.local.get(['latestJobData'], (result) => {
-      if (result.latestJobData) {
-        const updatedData = { ...result.latestJobData, onPageConnections: onPage };
-        chrome.storage.local.set({ latestJobData: updatedData }, () => {
-          chrome.runtime.sendMessage({ action: 'refresh_on_page_connections', onPageConnections: onPage });
-        });
-      }
-    });
-  }
+  if (isProcessingConnections) return;
+  isProcessingConnections = true;
+  try {
+    // 1. Current Job Banner
+    const jobId = new URLSearchParams(window.location.search).get('currentJobId');
+    if (jobId && (jobId !== lastActiveJobId || !document.getElementById('kernel-connection-banner'))) {
+      const companyName = LINKEDIN_SCRAPER.company();
+      const companyId = LINKEDIN_SCRAPER.companyId();
 
-  // 3. Job List Highlights
-  highlightConnectionsInList();
+      if (companyName || companyId) {
+        lastActiveJobId = jobId;
+        const matches = await getMatches(companyId, companyName);
+        renderConnectionBanner(matches, companyName);
+      }
+    }
+
+    // 2. Proactively update side panel on-page connections
+    const onPage = LINKEDIN_SCRAPER.networking?.() || [];
+    if (onPage.length > 0) {
+      chrome.storage.local.get(['latestJobData'], (result) => {
+        if (result.latestJobData) {
+          const updatedData = { ...result.latestJobData, onPageConnections: onPage };
+          chrome.storage.local.set({ latestJobData: updatedData }, () => {
+            safeSendMessage({ action: 'refresh_on_page_connections', onPageConnections: onPage });
+          });
+        }
+      });
+    }
+
+    // 3. Job List Highlights (rate-limited separately)
+    highlightConnectionsInList();
+  } finally {
+    isProcessingConnections = false;
+  }
 }
 
 function renderConnectionBanner(matches, companyName) {
@@ -1573,7 +1681,14 @@ function renderConnectionBanner(matches, companyName) {
   topCard.insertBefore(banner, topCard.firstChild);
 }
 
+let lastListHighlight = 0;
+const LIST_HIGHLIGHT_INTERVAL = 5000; // At most once per 5 seconds
+
 async function highlightConnectionsInList() {
+  const now = Date.now();
+  if (now - lastListHighlight < LIST_HIGHLIGHT_INTERVAL) return;
+  lastListHighlight = now;
+
   const listItems = document.querySelectorAll('.jobs-search-results-list__item, .scaffold-layout__list-item, .job-card-container');
   
   for (const item of listItems) {
@@ -1644,24 +1759,92 @@ function addConnectionIndicator(item, matches) {
 
 let connectionTimeout = null;
 let lastConnectionProcess = 0;
-const THROTTLE_MS = 250;
+const THROTTLE_MS = 2000; // LinkedIn fires DOM mutations constantly — 2s is sufficient to catch new cards
+let isProcessingConnections = false;
 
-const connectionObserver = new MutationObserver(() => {
+const connectionObserver = new MutationObserver((mutations) => {
+  // Self-disconnect if extension context is gone
+  if (!isExtValid()) {
+    connectionObserver.disconnect();
+    return;
+  }
+
+  // Check if a modal was added (triggers re-scrape of networking people)
+  const modalAdded = mutations.some(m => 
+    Array.from(m.addedNodes).some(n => 
+      n.nodeType === 1 && (n.matches?.('.artdeco-modal, [role="dialog"]') || n.querySelector?.('.artdeco-modal, [role="dialog"]'))
+    )
+  );
+
+  if (modalAdded) {
+    console.log('[JobAutomator] Modal detected — re-scraping data.');
+    const jobData = scrapeJobData();
+    chrome.storage.local.set({ latestJobData: jobData });
+  }
+
   const now = Date.now();
   if (now - lastConnectionProcess > THROTTLE_MS) {
     lastConnectionProcess = now;
-    processLinkedInConnections();
+    if (!isProcessingConnections) processLinkedInConnections();
   } else {
     clearTimeout(connectionTimeout);
     connectionTimeout = setTimeout(() => {
       lastConnectionProcess = Date.now();
-      processLinkedInConnections();
+      if (!isProcessingConnections) processLinkedInConnections();
     }, THROTTLE_MS);
+  }
+});
+// ── URL Observer to handle LinkedIn list clicks ───────────────────────
+
+let lastUrl = window.location.href;
+const urlObserver = new MutationObserver(() => {
+  if (window.location.href !== lastUrl) {
+    const oldId = new URLSearchParams(new URL(lastUrl).search).get('currentJobId');
+    const newId = new URLSearchParams(window.location.search).get('currentJobId');
+    lastUrl = window.location.href;
+    
+    if (newId && newId !== oldId && LINKEDIN_SCRAPER.isJobPage()) {
+      console.log('[JobAutomator] Job selection changed — re-scraping.');
+      // Give the DOM a moment to settle
+      setTimeout(() => {
+        const jobData = scrapeJobData();
+        if (jobData) {
+          console.log('[JobAutomator] Auto-scraped data:', jobData);
+          chrome.storage.local.set({ latestJobData: jobData }, () => {
+            console.log('[JobAutomator] Storage set result check:', chrome.runtime.lastError ? 'FAILED' : 'SUCCESS');
+          });
+          safeSendMessage({ action: 'store_job_data', data: jobData });
+        }
+      }, 1000);
+    }
   }
 });
 
 if (LINKEDIN_SCRAPER.isJobPage()) {
   connectionObserver.observe(document.body, { childList: true, subtree: true });
+  urlObserver.observe(document.querySelector('title') || document.head, { childList: true });
+  
+  // Also poll slightly for URL because popstate/mutation isn't always reliable on all SPAs
+  setInterval(() => {
+    if (window.location.href !== lastUrl) {
+      const u = new URL(window.location.href);
+      const oldId = new URLSearchParams(new URL(lastUrl).search).get('currentJobId');
+      const newId = u.searchParams.get('currentJobId');
+      
+      if (newId && newId !== oldId) {
+        lastUrl = window.location.href;
+        console.log('[JobAutomator] URL change detected (poll) — re-scraping.');
+        setTimeout(() => {
+          const jobData = scrapeJobData();
+          if (jobData) {
+            chrome.storage.local.set({ latestJobData: jobData });
+            safeSendMessage({ action: 'store_job_data', data: jobData });
+          }
+        }, 1200);
+      }
+    }
+  }, 1500);
+
   // Initial run
   setTimeout(processLinkedInConnections, 500);
 }
@@ -1671,7 +1854,7 @@ if (LINKEDIN_SCRAPER.isJobPage()) {
 window.addEventListener('JOB_KERNEL_APP_UPDATED', (e) => {
   if (!isExtValid()) return;
   try {
-    chrome.runtime.sendMessage({ 
+    safeSendMessage({ 
       action: 'app_updated', 
       application_id: e.detail?.application_id 
     });

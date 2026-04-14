@@ -159,7 +159,7 @@
     <main class="form-container" id="details-container">
 
       <!-- LinkedIn Connections Section -->
-      <div id="side-connection-banner" class="side-connection-card" style="display:none">
+      <div id="side-connection-banner" class="side-connection-card" style="display:none; margin-bottom: 0px;">
         <div class="side-conn-header" id="side-conn-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span class="material-symbols-outlined">group</span>
@@ -172,8 +172,31 @@
         </div>
       </div>
 
-      <form id="job-form">
+      <!-- Match Score Section (Details Mode) -->
+      <div id="details-match-section" class="match-score-section" style="display: none;">
+        <!-- Empty State -->
+        <!-- Empty State -->
+        <div id="details-match-empty" class="match-empty-state" style="display: none;"></div>
 
+        <!-- Compact Result State (Title, Summary, Ring) -->
+        <div id="details-match-result" class="match-result-compact-only" style="display: none;">
+          <div class="match-info-content">
+            <div class="match-title-row" id="details-match-title">Job Match Score:</div>
+            <div class="match-summary-text" id="details-match-summary">Evaluating how your profile aligns with the job requirements...</div>
+          </div>
+          <div class="match-score-visual drill-down-trigger" id="details-score-click" title="Click for details">
+            <svg class="score-ring" viewBox="0 0 36 36">
+              <circle class="match-ring-bg" cx="18" cy="18" r="16" />
+              <circle class="match-ring-circle" cx="18" cy="18" r="16" stroke-dasharray="100" stroke-dashoffset="100" />
+            </svg>
+            <div class="score-text">
+              <span id="details-match-score-value">--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form id="job-form">
         <!-- Read-only notice (shown when status prevents editing) -->
         <div class="readonly-notice" id="readonly-notice">
           This application is in a status that does not allow editing.
@@ -191,7 +214,7 @@
             <span class="material-symbols-outlined">edit_square</span>
           </button>
         </div>
-
+        
         <!-- Job Title row -->
         <div class="form-group field-diff-wrapper" data-field="title" style="margin-bottom:0.75rem">
           <div class="label-row">
@@ -418,6 +441,30 @@
         <div class="summary-meta-row" id="summary-meta">
           <!-- Populated by JS -->
         </div>
+
+        <!-- Match Score Section -->
+        <div class="match-score-section">
+          <!-- Empty State -->
+          <!-- Empty State -->
+        <div id="match-empty" class="match-empty-state" style="display: none;"></div>
+
+          <!-- Compact Result State (Title, Summary, Ring) -->
+          <div id="match-result" class="match-result-compact-only" style="display: none;">
+            <div class="match-info-content">
+              <div class="match-title-row" id="match-title">Job Match Score:</div>
+              <div class="match-summary-text" id="match-summary">Evaluating how your profile aligns with the job requirements...</div>
+            </div>
+            <div class="match-score-visual drill-down-trigger" id="match-score-click" title="Click for details">
+              <svg class="score-ring" viewBox="0 0 36 36">
+                <circle class="match-ring-bg" cx="18" cy="18" r="16" />
+                <circle class="match-ring-circle" cx="18" cy="18" r="16" stroke-dasharray="100" stroke-dashoffset="100" />
+              </svg>
+              <div class="score-text">
+                <span id="match-score-value">--</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <!-- Grouped Sections -->
       <div class="apply-sections" id="apply-sections">
@@ -525,13 +572,17 @@
     <footer class="footer-actions">
       <div class="footer-btn-row">
         <button type="button" id="btn-save" class="btn btn-secondary">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          <div id="btn-save-spinner" class="btn-spinner" style="display: none;"></div>
+          <svg id="btn-save-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
           <span id="btn-save-label">Save</span>
         </button>
         <button type="button" id="btn-process" class="btn btn-primary">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           <span id="btn-process-label">Process Now</span>
         </button>
+      </div>
+      <div id="save-hint" style="display:none; color: var(--text-secondary); font-size: 10px; margin-top: 8px; text-align: center; width: 100%; font-style: italic; opacity: 0.8;">
+        Saving will be available once match analysis is complete.
       </div>
       <div id="status-message" class="status-message"></div>
     </footer>
@@ -657,6 +708,51 @@
         </div>
       </div>
     </div>
+    <!-- Match Details Overlay (Drill-down screen) -->
+    <div id="match-details-overlay" class="apply-job-picker-overlay" style="display:none">
+      <div class="picker-content">
+        <div class="picker-header">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="material-symbols-outlined" style="color: var(--primary);">analytics</span>
+            <h4 style="color: white; margin: 0;">Match Analysis</h4>
+          </div>
+          <button type="button" id="btn-close-details" class="picker-close-btn">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        
+        <div class="overlay-scroll-content" style="flex: 1; overflow-y: auto; padding-right: 4px;">
+          <div class="match-card-header" style="margin-bottom: 0.75rem; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); padding: 0.75rem; display: flex; align-items: center; gap: 1rem; background: linear-gradient(135deg, rgba(37, 106, 244, 0.1), transparent);">
+            <div class="match-score-visual large" style="width: 80px; height: 80px;">
+              <svg class="score-ring" viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                <circle class="match-ring-bg" cx="18" cy="18" r="16" fill="none" stroke="var(--bg-tertiary)" stroke-width="3" />
+                <circle class="match-ring-circle" id="overlay-match-ring" cx="18" cy="18" r="16" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease-out;" stroke-dasharray="100" stroke-dashoffset="100" />
+              </svg>
+              <div class="score-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;">
+                <span id="overlay-match-score-value" style="font-size: 24px; font-weight: 800; color: white;">--</span><small style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Match</small>
+              </div>
+            </div>
+            <div class="match-meta">
+              <strong style="display: block; font-size: 1.15rem; color: white; margin-bottom: 0.25rem;">Job Harmony Score</strong>
+              <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">A deep-dive analysis of how your profile matches these requirements.</p>
+            </div>
+          </div>
+
+          <div class="match-coaching-container">
+            <div class="coaching-header" style="cursor: default; background: transparent; display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; color: var(--text-primary);">
+              <span class="material-symbols-outlined" style="color: var(--primary);">psychology</span>
+              <span style="font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em;">Coaching Plan</span>
+            </div>
+            <div class="match-details-content visible" style="display: block; opacity: 1; max-height: none; padding-top: 1rem;">
+              <div id="overlay-match-coaching">
+                <!-- Injected by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="sidepanel.js"></script>
 </body>
 </html>

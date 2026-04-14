@@ -4,6 +4,74 @@ import InterestStars from '../components/InterestStars';
 
 const DASH_STORAGE_KEY = 'dashboard_state';
 
+const getScoreColors = (score) => {
+    const hue = Math.round((score / 100) * 120); // 0 → red, 120 → green
+    return {
+        bg: `hsla(${hue}, 75%, 40%, 0.15)`,
+        border: `hsla(${hue}, 75%, 50%, 0.6)`,
+        text: `hsl(${hue}, 75%, 55%)`,
+    };
+};
+
+// Build a score circle badge with above/below-average indicator
+const renderScoreBadge = (score, avgScore, badgeStyle = {}) => {
+    const sc = getScoreColors(score);
+    let arrowEl = null;
+    let tooltipText = `Match Score: ${score}`;
+    if (avgScore !== null) {
+        const diff = score - avgScore;
+        tooltipText = `Match Score: ${score} (avg ${Math.round(avgScore)})`;
+        if (Math.abs(diff) >= 1) {
+            const isAbove = diff > 0;
+            tooltipText = `Match Score: ${score} — ${isAbove ? '↑' : '↓'} ${Math.abs(Math.round(diff))} pts ${isAbove ? 'above' : 'below'} your avg (${Math.round(avgScore)})`;
+            arrowEl = (
+                <span style={{
+                    position: 'absolute',
+                    bottom: -1,
+                    right: -1,
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    background: isAbove ? '#10b981' : '#ef4444',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '8px',
+                    fontWeight: 900,
+                    color: 'white',
+                    lineHeight: 1,
+                    border: '1px solid rgba(0,0,0,0.3)',
+                }}>
+                    {isAbove ? '▲' : '▼'}
+                </span>
+            );
+        }
+    }
+    return (
+        <div
+            title={tooltipText}
+            style={{
+                position: 'relative',
+                borderRadius: '50%',
+                background: sc.bg,
+                border: `2px solid ${sc.border}`,
+                color: sc.text,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 800,
+                boxShadow: `0 0 8px ${sc.border}`,
+                backdropFilter: 'blur(4px)',
+                flexShrink: 0,
+                ...badgeStyle,
+            }}
+        >
+            {score}
+            {arrowEl}
+        </div>
+    );
+};
+
 function loadDashState() {
     try {
         const raw = sessionStorage.getItem(DASH_STORAGE_KEY);
@@ -35,15 +103,16 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
     const [draggedAppId, setDraggedAppId] = useState(null);
     const [connectionCounts, setConnectionCounts] = useState({});
     const [filterHasConnections, setFilterHasConnections] = useState(saved.filterHasConnections || false);
+    const [filterMinScore, setFilterMinScore] = useState(saved.filterMinScore ?? null);
 
     // Persist state to sessionStorage whenever it changes
     useEffect(() => {
         sessionStorage.setItem(DASH_STORAGE_KEY, JSON.stringify({ 
             viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, 
             filterLocationTypes, filterInterestLevels, filterRelocation, showArchived,
-            filterHasConnections 
+            filterHasConnections, filterMinScore
         }));
-    }, [viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, filterLocationTypes, filterInterestLevels, filterRelocation, showArchived, filterHasConnections]);
+    }, [viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, filterLocationTypes, filterInterestLevels, filterRelocation, showArchived, filterHasConnections, filterMinScore]);
 
     useEffect(() => {
         fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile`)
@@ -128,6 +197,12 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         return status;
     };
 
+    // Average match score across all apps that have one
+    const appsWithScore = apps.filter(a => a.match_score != null);
+    const avgScore = appsWithScore.length > 0
+        ? appsWithScore.reduce((sum, a) => sum + a.match_score, 0) / appsWithScore.length
+        : null;
+
     const processedApps = [...apps].map(app => {
         let matchJobType = null;
         let matchLocType = null;
@@ -152,9 +227,20 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         const archived = app.is_archived === true;
         if (!showArchived && archived) return false;
         if (showArchived && !archived) return false;
-        const matchesSearch = (app.job_title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              (app.company || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              (app.location || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const lowerSearch = searchTerm.toLowerCase();
+        const matchesSearch = !searchTerm || [
+            app.job_title,
+            app.company,
+            app.location,
+            app.location_type,
+            app.job_type,
+            app.salary_range,
+            app.job_description,
+            app.remarks,
+            app.resume_changes_summary,
+            app.cover_letter_changes_summary,
+            app.source,
+        ].some(field => field && String(field).toLowerCase().includes(lowerSearch));
         
         const matchesStatus = filterStatuses.length === 0 ? true : filterStatuses.includes(getStatusText(app.status));
         const matchesJobType = filterJobTypes.length === 0 ? true : filterJobTypes.includes(app.job_type);
@@ -168,8 +254,9 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         
         const hasConnections = connectionCounts[app.company] > 0;
         const matchesHasConnections = !filterHasConnections || hasConnections;
+        const matchesMinScore = filterMinScore === null || (app.match_score != null && app.match_score >= filterMinScore);
 
-        return matchesSearch && matchesStatus && matchesJobType && matchesLocType && matchesInterest && matchesRelocation && matchesHasConnections;
+        return matchesSearch && matchesStatus && matchesJobType && matchesLocType && matchesInterest && matchesRelocation && matchesHasConnections && matchesMinScore;
     }).sort((a, b) => {
         if (sortBy === 'custom') {
             return (a.kanban_order || 0) - (b.kanban_order || 0);
@@ -188,6 +275,18 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         if (sortBy === 'interest_desc') {
             const weights = { 'High': 3, 'Medium': 2, 'Low': 1, '': 0 };
             return (weights[b.interest_level || ''] || 0) - (weights[a.interest_level || ''] || 0);
+        }
+        if (sortBy === 'score_desc') {
+            if (a.match_score == null && b.match_score == null) return 0;
+            if (a.match_score == null) return 1;
+            if (b.match_score == null) return -1;
+            return b.match_score - a.match_score;
+        }
+        if (sortBy === 'score_asc') {
+            if (a.match_score == null && b.match_score == null) return 0;
+            if (a.match_score == null) return 1;
+            if (b.match_score == null) return -1;
+            return a.match_score - b.match_score;
         }
         return 0;
     });
@@ -214,6 +313,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         setFilterInterestLevels([]);
         setFilterRelocation([]);
         setFilterHasConnections(false);
+        setFilterMinScore(null);
         setSearchTerm('');
         setSortBy('newest');
     };
@@ -394,16 +494,6 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="relative hidden sm:block">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 text-lg">search</span>
-                        <input 
-                            type="text" 
-                            placeholder="Search applications..." 
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-800 dark:text-slate-200 w-64 placeholder:text-slate-500 shadow-sm" 
-                        />
-                    </div>
                     <button className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2" onClick={onStartNew}>
                         <span className="material-symbols-outlined text-lg">add</span>
                         <span>Add Job</span>
@@ -413,7 +503,28 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
             
             <div className="px-8 py-6 flex flex-col gap-4 shrink-0">
                 <div className="flex items-center justify-between">
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 flex-wrap items-center">
+                        {/* Search */}
+                        <div className="relative flex items-center h-9">
+                            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 text-lg pointer-events-none">search</span>
+                            <input
+                                type="text"
+                                placeholder="Search all job details..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className={`bg-white dark:bg-white/5 border ${
+                                    searchTerm ? 'border-primary/50 text-slate-800 dark:text-white' : 'border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-300'
+                                } hover:border-slate-400 dark:hover:border-white/20 rounded-lg pl-10 ${searchTerm ? 'pr-8' : 'pr-4'} py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-56 shadow-sm placeholder:text-slate-500`}
+                            />
+                            {searchTerm && (
+                                <button
+                                    onClick={() => setSearchTerm('')}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                                >
+                                    <span className="material-symbols-outlined text-[16px]">close</span>
+                                </button>
+                            )}
+                        </div>
                         <div className="relative flex items-center h-9" ref={filterRef}>
                             <button 
                                 onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -553,6 +664,35 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                             {filterHasConnections && <span className="material-symbols-outlined text-[14px]">check</span>}
                                         </button>
                                     </div>
+                                    <div className="flex flex-col gap-2 border-t border-slate-200 dark:border-white/10 pt-2">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Min Match Score</div>
+                                        <div className="flex flex-col gap-1 px-1">
+                                            {[null, 50, 60, 70, 80, 90].map(val => {
+                                                const isSelected = filterMinScore === val;
+                                                const label = val === null ? 'Any' : `≥ ${val}`;
+                                                const colors = val !== null ? getScoreColors(val) : null;
+                                                return (
+                                                    <button
+                                                        key={val ?? 'any'}
+                                                        onClick={() => setFilterMinScore(val)}
+                                                        className={`flex items-center justify-between px-3 py-1.5 cursor-pointer rounded-lg text-xs font-medium transition-all ${
+                                                            isSelected
+                                                                ? 'bg-primary/20 text-primary dark:text-blue-300 hover:bg-primary/30'
+                                                                : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            {colors && (
+                                                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: colors.text, display: 'inline-block', flexShrink: 0 }} />
+                                                            )}
+                                                            <span>{label}</span>
+                                                        </div>
+                                                        {isSelected && <span className="material-symbols-outlined text-[14px]">check</span>}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -570,6 +710,8 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                      sortBy === 'company_desc' ? 'Company (Z-A)' :
                                      sortBy === 'deadline_asc' ? 'Upcoming Deadline' :
                                      sortBy === 'custom' ? 'Custom' :
+                                     sortBy === 'score_desc' ? 'Score: High → Low' :
+                                     sortBy === 'score_asc' ? 'Score: Low → High' :
                                      'Interest Level'}
                                 </span>
                                 <span className="material-symbols-outlined text-lg text-slate-400">expand_more</span>
@@ -584,6 +726,8 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                         { id: 'company_desc', label: 'Company (Z-A)' },
                                         { id: 'deadline_asc', label: 'Upcoming Deadline' },
                                         { id: 'interest_desc', label: 'Interest Level' },
+                                        { id: 'score_desc', label: 'Score: High → Low' },
+                                        { id: 'score_asc', label: 'Score: Low → High' },
                                         { id: 'custom', label: 'Custom' }
                                     ].map(option => {
                                         const isSelected = sortBy === option.id;
@@ -627,7 +771,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                 </div>
 
                 {/* Active Filters Display */}
-                {(filterStatuses.length > 0 || filterJobTypes.length > 0 || filterLocationTypes.length > 0 || filterInterestLevels.length > 0 || filterRelocation.length > 0 || filterHasConnections || searchTerm || sortBy !== 'newest') && (
+                {(filterStatuses.length > 0 || filterJobTypes.length > 0 || filterLocationTypes.length > 0 || filterInterestLevels.length > 0 || filterRelocation.length > 0 || filterHasConnections || filterMinScore !== null || searchTerm || sortBy !== 'newest') && (
                     <div className="flex flex-wrap gap-2 items-center text-sm pt-2">
                         <span className="text-slate-500 mr-2 text-xs font-bold uppercase tracking-wider">Active:</span>
                         {searchTerm && (
@@ -673,6 +817,16 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                 <button onClick={() => setFilterHasConnections(false)} className="hover:text-white material-symbols-outlined text-[14px] ml-1">close</button>
                             </span>
                         )}
+                        {filterMinScore !== null && (() => {
+                            const colors = getScoreColors(filterMinScore);
+                            return (
+                                <span style={{ background: colors.bg, border: `1px solid ${colors.border}`, color: colors.text }} className="px-3 py-1 rounded-full flex items-center gap-2 text-xs font-medium">
+                                    <span className="material-symbols-outlined text-[14px]">analytics</span>
+                                    Score ≥ {filterMinScore}
+                                    <button onClick={() => setFilterMinScore(null)} className="hover:opacity-60 material-symbols-outlined text-[14px] ml-1">close</button>
+                                </span>
+                            );
+                        })()}
                         {sortBy !== 'newest' && (
                             <span className="bg-slate-200 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-700 dark:text-slate-200 px-3 py-1 rounded-full flex items-center gap-2 text-xs">
                                 <span className="opacity-50">Sort:</span> 
@@ -680,6 +834,8 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                  sortBy === 'company_asc' ? 'Company (A-Z)' : 
                                  sortBy === 'company_desc' ? 'Company (Z-A)' : 
                                  sortBy === 'deadline_asc' ? 'Upcoming Deadline' :
+                                 sortBy === 'score_desc' ? 'Score: High → Low' :
+                                 sortBy === 'score_asc' ? 'Score: Low → High' :
                                  sortBy === 'custom' ? 'Custom Order' :
                                  'Interest Level'}
                                 <button onClick={() => setSortBy('newest')} className="hover:text-rose-400 material-symbols-outlined text-[14px] ml-1">close</button>
@@ -753,10 +909,16 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                             onDrop(e, col);
                                         }}
                                         onClick={() => onViewApp(app)}
-                                        className={`glass-card p-3 rounded-xl flex flex-col gap-2 cursor-pointer shadow-sm hover:shadow-md transition-all hover:-translate-y-1 border border-slate-200/60 dark:border-white/10 active:cursor-grabbing ${isDragging ? 'invisible h-0 opacity-0 overflow-hidden py-0 my-0 border-0' : ''}`}>
+                                        className={`glass-card p-3 rounded-xl flex flex-col gap-2 cursor-pointer shadow-sm hover:shadow-md transition-all hover:-translate-y-1 border border-slate-200/60 dark:border-white/10 active:cursor-grabbing ${isDragging ? 'invisible h-0 opacity-0 overflow-hidden py-0 my-0 border-0' : ''}`}
+                                        style={{ position: 'relative' }}>
                                         {!isDragging && (
                                             <>
-                                            <div className="flex justify-between items-start pointer-events-none">
+                                            {app.match_score != null && (
+                                                <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 10, pointerEvents: 'none' }}>
+                                                    {renderScoreBadge(app.match_score, avgScore, { width: 32, height: 32, fontSize: '0.68rem' })}
+                                                </div>
+                                            )}
+                                            <div className="flex justify-between items-start pointer-events-none" style={{ paddingRight: app.match_score != null ? '44px' : 0 }}>
                                                 <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 flex items-center justify-center overflow-hidden shrink-0">
                                                     {app.company_logo
                                                         ? <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'transparent', padding: '0' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'block'; }} />
@@ -778,7 +940,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col gap-0.5 pointer-events-none">
+                                            <div className="flex flex-col gap-0.5 pointer-events-none" style={{ paddingRight: app.match_score != null ? '44px' : 0 }}>
                                                 <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight line-clamp-2">{app.job_title || 'Unknown Role'}</h4>
                                                 <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">{app.company || 'Unknown'}</p>
                                             </div>
@@ -820,7 +982,12 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                     <div className="flex-1 overflow-auto px-8 pb-8">
                         <div className="flex flex-col gap-4">
                             {processedApps.map(app => (
-                                <div key={app.id} onClick={() => onViewApp(app)} className="glass-card p-4 rounded-xl flex flex-col sm:flex-row gap-4 cursor-pointer group shadow-sm hover:shadow-md transition-all border border-slate-200/60 dark:border-white/10">
+                                <div key={app.id} onClick={() => onViewApp(app)} className="glass-card p-4 rounded-xl flex flex-col sm:flex-row gap-4 cursor-pointer group shadow-sm hover:shadow-md transition-all border border-slate-200/60 dark:border-white/10" style={{ position: 'relative' }}>
+                                    {app.match_score != null && (
+                                        <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, pointerEvents: 'none' }}>
+                                            {renderScoreBadge(app.match_score, avgScore, { width: 36, height: 36, fontSize: '0.72rem' })}
+                                        </div>
+                                    )}
                                     <div className="flex items-start gap-4 flex-1">
                                         <div className="size-11 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
                                             {app.company_logo
@@ -891,6 +1058,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Location</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Salary</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Deadline</th>
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center">Score</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center">Interest</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Status</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">Actions</th>
@@ -930,6 +1098,14 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                             <span className={`text-sm ${app.deadline ? 'text-rose-400 font-bold' : 'text-slate-500'}`}>
                                 {app.deadline || '-'}
                             </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                            {app.match_score != null
+                                ? <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {renderScoreBadge(app.match_score, avgScore, { width: 36, height: 36, fontSize: '0.75rem' })}
+                                  </div>
+                                : <span className="text-slate-400 text-xs">—</span>
+                            }
                         </td>
                         <td className="px-6 py-4 text-center">
                             <div className="flex items-center justify-center">

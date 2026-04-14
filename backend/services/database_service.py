@@ -234,6 +234,8 @@ class DatabaseService:
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS diff_data TEXT",
             "ALTER TABLE application_contacts ADD COLUMN IF NOT EXISTS linkedin_url TEXT",
             "ALTER TABLE application_contacts ADD COLUMN IF NOT EXISTS headline TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS match_score INTEGER",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS match_details TEXT",
             # Ensure tables are created if not already (Base.metadata.create_all handles this mostly, but explicit for clarity in migrations)
             """
             CREATE TABLE IF NOT EXISTS application_sub_steps (
@@ -573,7 +575,7 @@ class DatabaseService:
             "resume_changes_summary": app.resume_changes_summary,
             "cover_letter_changes_summary": app.cover_letter_changes_summary,
             "match_score": app.match_score,
-            "match_details": app.match_details,
+            "match_details": json.loads(app.match_details) if app.match_details else {},
             "original_filename": app.original_resume_path,
             "is_archived": app.is_archived == 'true',
             "kanban_order": app.kanban_order or 0,
@@ -716,6 +718,11 @@ class DatabaseService:
             if 'override_cover_letter_path' in data: app.override_cover_letter_path = data['override_cover_letter_path']
             if 'active_resume_type' in data: app.active_resume_type = data['active_resume_type'] or 'generated'
             if 'active_cover_letter_type' in data: app.active_cover_letter_type = data['active_cover_letter_type'] or 'generated'
+            
+            if 'match_score' in data: app.match_score = data['match_score']
+            if 'match_details' in data:
+                val = data['match_details']
+                app.match_details = json.dumps(val) if isinstance(val, (dict, list)) else val
             
             if 'pipeline_stage' in data: 
                 app.pipeline_stage = data['pipeline_stage']

@@ -19,6 +19,26 @@ const safeParseJSON = (data, fallback = {}) => {
     }
 };
 
+// Interpolates red (0) → yellow (50) → green (100) via HSL hue
+const getScoreColors = (score) => {
+    const hue = Math.round((score / 100) * 120); // 0 → red, 120 → green
+    return {
+        bg: `hsla(${hue}, 75%, 40%, 0.15)`,
+        border: `hsla(${hue}, 75%, 50%, 0.6)`,
+        text: `hsl(${hue}, 75%, 55%)`,
+    };
+};
+
+// Returns comparison info between a score and the user's average
+const getScoreComparison = (score, avgScore) => {
+    if (avgScore === null || avgScore === undefined) return null;
+    const diff = score - avgScore;
+    const absDiff = Math.abs(Math.round(diff));
+    const isAbove = diff >= 1;
+    const isBelow = diff <= -1;
+    return { diff, absDiff, isAbove, isBelow, avg: Math.round(avgScore) };
+};
+
 const JobDescriptionContent = ({ text }) => {
     const [isExpanded, setIsExpanded] = React.useState(false);
     const shouldTruncate = text && text.length > 500;
@@ -501,7 +521,7 @@ const LogoPickerModal = ({ companyName, onSelect, onClose }) => {
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate, onViewLifecycle, onStartFullGeneration }) => {
+const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate, onViewLifecycle, onStartFullGeneration, avgScore }) => {
     const needsGeneration = !app.tailored_resume_path && !app.cover_letter_path;
     const [previewFile, setPreviewFile] = React.useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
@@ -1214,7 +1234,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                 </div>
             )}
 
-            <header style={{ marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '2rem' }}>
+            <header style={{ marginBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
                         {/* Clickable logo zone — click to open logo picker */}
@@ -1299,6 +1319,70 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                 {connections.length} Network {connections.length === 1 ? 'Connection' : 'Connections'}
                             </button>
                         )}
+                        {app.match_score != null && (() => {
+                            const scoreColors = getScoreColors(app.match_score);
+                            const cmp = getScoreComparison(app.match_score, avgScore);
+                            const tooltipText = cmp
+                                ? cmp.isAbove
+                                    ? `Match Score: ${app.match_score} \u2014 \u2191 ${cmp.absDiff} pts above your avg (${cmp.avg})`
+                                    : cmp.isBelow
+                                        ? `Match Score: ${app.match_score} \u2014 \u2193 ${cmp.absDiff} pts below your avg (${cmp.avg})`
+                                        : `Match Score: ${app.match_score} \u2014 equal to your avg (${cmp.avg})`
+                                : `Match Score: ${app.match_score}`;
+                            return (
+                                <button
+                                    onClick={() => {
+                                        setActiveTab('details');
+                                        setTimeout(() => {
+                                            document.getElementById('compatibility-score-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        }, 50);
+                                    }}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                        padding: '0.35rem 0.75rem 0.35rem 0.35rem',
+                                        borderRadius: '2rem',
+                                        background: scoreColors.bg,
+                                        border: `1px solid ${scoreColors.border}`,
+                                        color: scoreColors.text,
+                                        cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
+                                        transition: 'all 0.2s', whiteSpace: 'nowrap'
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+                                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                                    title={tooltipText}
+                                >
+                                    {/* Score circle with arrow indicator */}
+                                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                                        <div style={{
+                                            width: '28px', height: '28px', borderRadius: '50%',
+                                            background: scoreColors.bg,
+                                            border: `2px solid ${scoreColors.border}`,
+                                            color: scoreColors.text,
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            fontSize: '0.75rem', fontWeight: 800,
+                                        }}>
+                                            {app.match_score}
+                                        </div>
+                                        {cmp && (cmp.isAbove || cmp.isBelow) && (
+                                            <span style={{
+                                                position: 'absolute', bottom: -2, right: -2,
+                                                width: 11, height: 11, borderRadius: '50%',
+                                                background: cmp.isAbove ? '#10b981' : '#ef4444',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                fontSize: '7px', fontWeight: 900, color: 'white',
+                                                border: '1px solid rgba(0,0,0,0.25)', lineHeight: 1,
+                                            }}>
+                                                {cmp.isAbove ? '\u25b2' : '\u25bc'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {cmp && (cmp.isAbove || cmp.isBelow)
+                                        ? `${cmp.isAbove ? '\u2191' : '\u2193'} ${cmp.absDiff} vs avg`
+                                        : 'Match Score'
+                                    }
+                                </button>
+                            );
+                        })()}
                         <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', alignSelf: 'flex-end', marginTop: connections && connections.length > 0 ? '0.5rem' : '0' }}>Status</label>
                         <CustomDropdown
                             value={app.status || 'Applied'}
@@ -1725,7 +1809,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
 
             {needsGeneration && (
                 <>
-                    <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(16, 185, 129, 0.1))', borderRadius: '1rem', border: '1px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ marginBottom: '1rem', padding: '1.25rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(16, 185, 129, 0.1))', borderRadius: '1rem', border: '1px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                             <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>auto_awesome</span>
@@ -1991,37 +2075,84 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     {/* Compatibility Score Card */}
-                    {app.match_score != null && (
-                        <div className="card" style={{ padding: '1.25rem', border: '1px solid var(--primary)', background: 'linear-gradient(to bottom right, rgba(99, 102, 241, 0.05), var(--bg-card))' }}>
-                            <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(99, 102, 241, 0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>analytics</span>
-                                <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--primary)' }}>Compatibility Score</h3>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1rem' }}>
-                                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 800, border: '4px solid var(--primary-glow)', flexShrink: 0 }}>
-                                    {app.match_score}
+                    {app.match_score != null && (() => {
+                        const cmp = getScoreComparison(app.match_score, avgScore);
+                        const sc = getScoreColors(app.match_score);
+                        return (
+                            <div id="compatibility-score-section" className="card" style={{ padding: '1.25rem', border: '1px solid var(--primary)', background: 'linear-gradient(to bottom right, rgba(99, 102, 241, 0.05), var(--bg-card))' }}>
+                                <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(99, 102, 241, 0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>analytics</span>
+                                    <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--primary)' }}>Compatibility Score</h3>
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-                                        {app.match_score >= 80 ? 'Excellent match for your profile!' :
-                                         app.match_score >= 60 ? 'Good match with some gaps.' :
-                                         'Challenging match. Significant tailoring recommended.'}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1rem' }}>
+                                    {/* Large score circle with arrow indicator */}
+                                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                                        <div style={{
+                                            width: '80px', height: '80px', borderRadius: '50%',
+                                            background: sc.bg,
+                                            color: sc.text,
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            fontSize: '2rem', fontWeight: 800,
+                                            border: `4px solid ${sc.border}`,
+                                        }}>
+                                            {app.match_score}
+                                        </div>
+                                        {cmp && (cmp.isAbove || cmp.isBelow) && (
+                                            <span style={{
+                                                position: 'absolute', bottom: 0, right: 0,
+                                                width: 22, height: 22, borderRadius: '50%',
+                                                background: cmp.isAbove ? '#10b981' : '#ef4444',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                fontSize: '11px', fontWeight: 900, color: 'white',
+                                                border: '2px solid var(--bg-card)', lineHeight: 1,
+                                            }}>
+                                                {cmp.isAbove ? '\u25b2' : '\u25bc'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.4, marginBottom: '0.5rem' }}>
+                                            {app.match_score >= 80 ? 'Excellent match for your profile!' :
+                                             app.match_score >= 60 ? 'Good match with some gaps.' :
+                                             'Challenging match. Significant tailoring recommended.'}
+                                        </div>
+                                        {cmp && (
+                                            <div style={{
+                                                display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                                                fontSize: '0.82rem', fontWeight: 700,
+                                                color: cmp.isAbove ? '#10b981' : cmp.isBelow ? '#ef4444' : 'var(--text-muted)',
+                                                background: cmp.isAbove ? 'rgba(16,185,129,0.1)' : cmp.isBelow ? 'rgba(239,68,68,0.1)' : 'var(--bg-tertiary)',
+                                                border: `1px solid ${cmp.isAbove ? 'rgba(16,185,129,0.3)' : cmp.isBelow ? 'rgba(239,68,68,0.3)' : 'var(--border-color)'}`,
+                                                borderRadius: '2rem',
+                                                padding: '0.2rem 0.65rem',
+                                            }}>
+                                                <span style={{ fontSize: '0.75rem' }}>
+                                                    {cmp.isAbove ? '\u25b2' : cmp.isBelow ? '\u25bc' : '\u25c6'}
+                                                </span>
+                                                {cmp.isAbove
+                                                    ? `${cmp.absDiff} pts above your avg (${cmp.avg})`
+                                                    : cmp.isBelow
+                                                        ? `${cmp.absDiff} pts below your avg (${cmp.avg})`
+                                                        : `Equal to your avg (${cmp.avg})`
+                                                }
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
+
+                                {app.match_details && safeParseJSON(app.match_details, {}).criteria_scores && (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        {Object.entries(safeParseJSON(app.match_details, {}).criteria_scores).map(([key, info]) => (
+                                            <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                                <span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{key.replace('_', ' ')}</span>
+                                                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{info.score}/20</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                            
-                            {app.match_details && safeParseJSON(app.match_details, {}).criteria_scores && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    {Object.entries(safeParseJSON(app.match_details, {}).criteria_scores).map(([key, info]) => (
-                                        <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                                            <span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{key.replace('_', ' ')}</span>
-                                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{info.score}/20</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
+                        );
+                    })()}
 
                     {/* Networking Card */}
                     {connections && connections.length > 0 && (

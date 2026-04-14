@@ -122,6 +122,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnDoManualParse    = document.getElementById('btn-do-manual-parse');
   const manualParseTextarea = document.getElementById('manual-parse-textarea');
 
+  // Match Score Elements
+  const detailsMatchSection    = document.getElementById('details-match-section');
+  if (detailsMatchSection) detailsMatchSection.style.display = 'block'; 
+  const detailsMatchEmpty      = document.getElementById('details-match-empty');
+  const btnCalculateScoreDetails = document.getElementById('btn-calculate-score-details');
+  const detailsMatchResult     = document.getElementById('details-match-result');
+  const detailsMatchScoreValue = document.getElementById('details-match-score-value');
+  const detailsScoreClick      = document.getElementById('details-score-click');
+  
+  const matchEmpty             = document.getElementById('match-empty');
+  const btnCalculateScore      = document.getElementById('btn-calculate-score');
+  const matchResult            = document.getElementById('match-result');
+  const matchScoreValue        = document.getElementById('match-score-value');
+  const matchScoreClick        = document.getElementById('match-score-click');
+  
+  const matchDetailsPanel      = document.getElementById('match-details-overlay');
+  const btnCloseMatchPanel     = document.getElementById('btn-close-details');
+  const panelMatchRing         = document.getElementById('overlay-match-ring');
+  const panelMatchScoreValue   = document.getElementById('overlay-match-score-value');
+  const panelMatchCoaching     = document.getElementById('overlay-match-coaching');
+  const saveHint               = document.getElementById('save-hint');
+
+  const scoringJobs = new Set();
+
+
   const API_URL = 'http://localhost:8000';
   const APP_URL = 'http://localhost:5173';
 
@@ -367,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
       logoPlaceholder.style.display = 'none';
     } else {
       logoImg.style.display = 'none';
-      logoImg.src = '';
+      logoImg.removeAttribute('src');
       logoPlaceholder.style.display = 'flex';
     }
   }
@@ -481,6 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
       logoUrlPreview.src = val;
       logoUrlPreviewContainer.style.display = 'flex';
     } else {
+      logoUrlPreview.removeAttribute('src');
       logoUrlPreviewContainer.style.display = 'none';
     }
   });
@@ -578,9 +604,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById(selectId);
     if (!el) return;
     
-    const val = value || '';
+    const cleanVal = (v) => (v || '').toLowerCase().replace(/[\s\-]/g, '');
     const options = Array.from(el.options);
-    const match = options.find(opt => opt.value.toLowerCase() === val.toLowerCase());
+    const match = options.find(opt => {
+      if (!value) return false;
+      const optVal = opt.value.toLowerCase().replace(/[\s\-]/g, '');
+      const searchVal = cleanVal(value);
+      return optVal === searchVal || (value.length > 2 && optVal.includes(searchVal)) || (optVal.length > 2 && searchVal.includes(optVal));
+    });
     const finalVal = match ? match.value : '';
     el.value = finalVal;
 
@@ -589,14 +620,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dropdown) {
       const triggerText = dropdown.querySelector('.trigger-text');
       const customOptions = dropdown.querySelectorAll('.dropdown-option');
+      console.log(`[JobAutomator] Syncing dropdown ${selectId} to value:`, finalVal);
       
-      const matchedOpt = Array.from(customOptions).find(o => o.getAttribute('data-value').toLowerCase() === finalVal.toLowerCase());
+      const matchedOpt = Array.from(customOptions).find(o => (o.getAttribute('data-value') || '').toLowerCase() === finalVal.toLowerCase());
       if (matchedOpt) {
+        console.log(`[JobAutomator] Found match in custom list for ${selectId}:`, matchedOpt.innerText);
         triggerText.innerText = matchedOpt.innerText;
         customOptions.forEach(o => o.classList.remove('selected'));
         matchedOpt.classList.add('selected');
       } else {
-        // Fallback to first option if no match
+        console.warn(`[JobAutomator] No match found in custom list for ${selectId} with value:`, finalVal);
         const firstOpt = customOptions[0];
         if (firstOpt) {
           triggerText.innerText = firstOpt.innerText;
@@ -679,7 +712,13 @@ document.addEventListener('DOMContentLoaded', () => {
         else siteName = siteName.charAt(0).toUpperCase() + siteName.slice(1);
         
         if (listingSourceName) listingSourceName.textContent = siteName;
-        if (listingSourceLogo) listingSourceLogo.src = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+        if (listingSourceLogo) {
+          if (hostname) {
+            listingSourceLogo.src = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+          } else {
+            listingSourceLogo.removeAttribute('src');
+          }
+        }
         
         updateSourceVisibility(true);
 
@@ -701,7 +740,92 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       updateSourceVisibility(false);
     }
+
+    // Match Score Visualization
+    updateMatchScoreUI(data, 'details');
   }
+
+  /**
+   * Updates the Match Score UI elements for either 'details' or 'apply' mode.
+   * Handles the visibility of empty vs result states and calculates the average comparison.
+   */
+  function updateMatchScoreUI(app, mode = 'apply', isLoading = false) {
+    const isDetails = mode === 'details';
+    const score = app.match_score;
+    
+    // Elements mapping based on mode
+    const empty  = isDetails ? detailsMatchEmpty : matchEmpty;
+    const result = isDetails ? detailsMatchResult : matchResult;
+    const val    = isDetails ? detailsMatchScoreValue : matchScoreValue;
+
+    if (!empty || !result) return;
+
+    if (isLoading) {
+      empty.style.display = 'none';
+      result.style.display = isDetails ? 'flex' : 'block';
+      result.classList.add('is-loading');
+      
+      const ring = result.querySelector('.match-ring-circle');
+      if (ring) {
+        ring.classList.add('analyzing');
+        ring.style.strokeDasharray = '30, 70';
+        ring.style.stroke = 'var(--primary-light)';
+      }
+      
+      const summaryText = result.querySelector('#match-summary, .match-summary-text');
+      if (summaryText) summaryText.textContent = 'Analyzing compatibility...';
+      if (val) val.textContent = '--';
+      return;
+    }
+
+    result.classList.remove('is-loading');
+    const ring = result.querySelector('.match-ring-circle');
+    if (ring) ring.classList.remove('analyzing');
+
+    if (score == null && isLoading === false) {
+      // If score is missing and we aren't explicitly loading, show empty
+      result.style.display = 'none';
+      empty.style.display = 'flex';
+      return;
+    }
+
+    empty.style.display = 'none';
+    result.style.display = isDetails ? 'flex' : 'block';
+    if (val) val.textContent = score;
+
+    // Ring animation
+    if (ring) {
+      const circumference = 2 * Math.PI * 14; 
+      const offset = circumference - (score / 100) * circumference;
+      ring.style.strokeDasharray = `${circumference} ${circumference}`;
+      ring.style.strokeDashoffset = offset;
+      
+      const hue = Math.round((score / 100) * 120);
+      ring.style.stroke = `hsl(${hue}, 75%, 45%)`;
+    }
+
+    // Update summary text with above/below average indicator
+    const summaryText = result.querySelector('#match-summary, .match-summary-text');
+    if (summaryText) {
+      if (avgMatchScore !== null) {
+        const diff = score - avgMatchScore;
+        const absDiff = Math.abs(Math.round(diff));
+        const isAbove = diff >= 1;
+        const isBelow = diff <= -1;
+        
+        if (isAbove || isBelow) {
+          const color = isAbove ? '#10b981' : '#ef4444';
+          const symbol = isAbove ? '\u25b2' : '\u25bc';
+          summaryText.innerHTML = `<span style="color:${color}; font-weight:700;">${symbol} ${absDiff} pts ${isAbove ? 'above' : 'below'} average</span>`;
+        } else {
+          summaryText.textContent = score > 80 ? 'Excellent match for your profile.' : 'Good baseline compatibility.';
+        }
+      } else {
+        summaryText.textContent = 'Assessment based on your profile.';
+      }
+    }
+  }
+
 
   // ── Apply field diff highlighting ─────────────────────────────────────────
   // Compare an app record value to the scraped value and mark the wrapper accordingly.
@@ -942,8 +1066,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // "Edit details" button dismisses the confirmation and reveals the form
-  kernelEditBtn.addEventListener('click', hideSavedBanner);
-
+  if (kernelEditBtn) {
+    kernelEditBtn.addEventListener('click', hideSavedBanner);
+  }
 
   // ── Check if job URL is already in the database ───────────────────────────
   async function checkExistingApplication(jobUrl) {
@@ -963,62 +1088,68 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  // ── Populate form from scraped/app data ──────────────────────────────────
-  // silent=true skips the loading overlay (used for background refreshes)
+  // ── Data Loading Logic ────────────────────────────────────────────────────
   const loadData = async ({ silent = false } = {}) => {
     try {
-      if (!silent) showLoading('Detecting New Job', 'Reading the job listing\u2026');
-      updateLoadingProgress(10);
-
+      if (!silent) showLoading('Loading Job', 'Fetching page data\u2026');
+      
       chrome.storage.local.get(['latestJobData'], async (result) => {
         try {
-          updateLoadingProgress(30, 'Parsing scraped data\u2026');
-          if (result.latestJobData) {
-            scrapedData = result.latestJobData;
+          // UPDATE GLOBAL scrapedData - IMPORTANT: do not shadow with const
+          scrapedData = result.latestJobData;
+          if (!scrapedData) {
+            hideLoading();
+            return;
+          }
 
-            // Check if a matching application already exists in the DB
-            const jobUrl = scrapedData.link || scrapedData.job_url || '';
-            updateLoadingProgress(50, 'Checking database for history\u2026');
-            const appRecord = jobUrl ? await checkExistingApplication(jobUrl) : null;
+          // 1. Kick off LinkedIn Connections fetch IMMEDIATELY using scraped data
+          // (Fastest possible networking start)
+          checkLinkedInConnections(scrapedData);
 
-            updateLoadingProgress(70, 'Updating form fields\u2026');
-            if (appRecord) {
-              currentAppRecord = appRecord;
-              // Populate form from the APP record (truth source for existing job)
-              populateForm(appRecord);
-              // Show the already-saved banner
-              showSavedBanner(appRecord);
-              // Mark fields that differ from what was scraped
-              applyDiffHighlights(appRecord, scrapedData);
-               // Apply status-based editability rules
-               applyStatusRules(appRecord.status);
-               
-               // Automatic sync of on-page connections
-               autoSyncLeads();
- 
-               // Intelligent syncing: If we just found a matching record for the current page,
-               // ensure the Apply mode is synced to this job too.
-               if (currentMode === 'apply' || !applySelectedJob) {
-                 applySelectedJob = appRecord;
-                 if (currentMode === 'apply') {
-                   loadApplyJob(appRecord);
-                 }
-               }
-             } else {
-               // New job — populate from scraped data as before
-               hideSavedBanner();
-               populateForm(scrapedData);
-               
-               // If we were in Apply mode but just landed on a new, untracked job,
-               // automatically switch back to Search mode so they can save it.
-               if (currentMode === 'apply') {
-                 setMode('details');
-               }
-             }
+          updateLoadingProgress(30, 'Checking database\u2026');
+          const appRecord = await checkExistingApplication(scrapedData.link || scrapedData.job_url);
+          const targetData = appRecord || scrapedData;
 
-             // Always Check for LinkedIn Connections for the current job
-             checkLinkedInConnections(appRecord || scrapedData);
-           }
+          // 2. Populate UI elements
+          if (appRecord) {
+            currentAppRecord = appRecord;
+            // Populate form from the APP record (truth source for existing job)
+            populateForm(appRecord);
+            // Show the already-saved banner
+            showSavedBanner(appRecord);
+            // Mark fields that differ from what was scraped
+            applyDiffHighlights(appRecord, scrapedData);
+            // Apply status-based editability rules
+            applyStatusRules(appRecord.status);
+            
+            // Automatic sync of on-page connections
+            autoSyncLeads();
+
+            // Intelligent syncing
+            if (currentMode === 'apply' || !applySelectedJob) {
+              applySelectedJob = appRecord;
+              if (currentMode === 'apply') {
+                loadApplyJob(appRecord);
+              }
+            }
+          } else {
+            // New job — populate from scraped data as before
+            hideSavedBanner();
+            populateForm(scrapedData);
+            
+            if (currentMode === 'apply') {
+              setMode('details');
+            }
+          }
+
+          // 3. Kick off the heavy scoring analysis LAST (Slow/AI)
+          // We use a small timeout to ensure the faster fetches above get a head start 
+          // on the backend, particularly if it's single-threaded.
+          if (targetData.match_score == null) {
+            setTimeout(() => {
+              handleCalculateScore(null, currentMode === 'apply' ? 'apply' : 'details');
+            }, 200);
+          }
         } catch (innerErr) {
           console.error('[JobAutomator] Error in loadData storage callback:', innerErr);
         } finally {
@@ -1152,7 +1283,15 @@ document.addEventListener('DOMContentLoaded', () => {
      if (opc.length > 0) {
        const opcContainer = document.createElement('div');
        opcContainer.className = 'side-networking-subtitle';
-       opcContainer.innerHTML = `<span class="material-symbols-outlined" style="font-size: 14px;">visibility</span> Found on page (${opc.length})`;
+       opcContainer.innerHTML = `
+         <div style="display: flex; align-items: center; gap: 4px;">
+           <span class="material-symbols-outlined" style="font-size: 14px;">visibility</span> 
+           Found on page (${opc.length})
+         </div>
+         <button id="btn-link-all-opc" class="side-conn-header-action" title="Link all found contacts">
+           Link All
+         </button>
+       `;
        opcContainer.style.marginTop = '1rem';
        opcContainer.style.marginBottom = '0.5rem';
        opcContainer.style.fontSize = '11px';
@@ -1161,9 +1300,25 @@ document.addEventListener('DOMContentLoaded', () => {
        opcContainer.style.color = 'var(--text-muted)';
        opcContainer.style.display = 'flex';
        opcContainer.style.alignItems = 'center';
-       opcContainer.style.gap = '4px';
+       opcContainer.style.justifyContent = 'space-between';
        
        sideConnectionList.appendChild(opcContainer);
+       
+       const btnLinkAll = opcContainer.querySelector('#btn-link-all-opc');
+       if (btnLinkAll) {
+         btnLinkAll.onclick = async (e) => {
+           e.preventDefault();
+           e.stopPropagation();
+           if (!currentAppRecord) {
+             showStatus('Save the job first to link contacts.', 'info');
+             return;
+           }
+           btnLinkAll.disabled = true;
+           btnLinkAll.textContent = 'Linking...';
+           scrapedData.onPageConnections.forEach(conn => linkContact(conn, null));
+           btnLinkAll.textContent = 'Linked!';
+         };
+       }
        
        opc.forEach(conn => {
          // Avoid duplicates if already in matches
@@ -1636,6 +1791,8 @@ document.addEventListener('DOMContentLoaded', () => {
             relocation:      data.relocation,
             interest_level:  data.interestLevel,
             remarks:         data.remarks,
+            match_score:     currentAppRecord?.match_score || scrapedData?.match_score || null,
+            match_details:   currentAppRecord?.match_details || scrapedData?.match_details || null,
             status:          currentAppRecord?.status || 'Saved',
           }),
         });
@@ -1684,6 +1841,8 @@ document.addEventListener('DOMContentLoaded', () => {
             relocation:      data.relocation,
             interest_level:  data.interestLevel,
             remarks:         data.remarks,
+            match_score:     scrapedData?.match_score || null,
+            match_details:   scrapedData?.match_details || null,
             status:          'Saved',
           }),
         });
@@ -1725,6 +1884,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Apply Mode Logic ──────────────────────────────────────────────────────
   let applySelectedJob = null;
+  async function fetchAverageMatchScore() {
+    try {
+      const resp = await fetch(`${API_URL}/api/analytics`);
+      if (resp.ok) {
+        const stats = await resp.json();
+        avgMatchScore = stats.avg_match_score;
+        // Refresh UI if we already have a job loaded
+        if (currentAppRecord) {
+          updateMatchScoreUI(currentAppRecord, 'details');
+          updateMatchScoreUI(currentAppRecord, 'apply');
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch match stats:', e);
+    }
+  }
+
+  let avgMatchScore = null; // average match_score across all applications
+
 
   async function initApplyMode() {
     // 1. Intelligent Default: If details panel found a matching record for THIS page, use it.
@@ -1925,7 +2103,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`${API_URL}/api/applications`);
       if (!res.ok) throw new Error('Failed to fetch applications');
       let apps = await res.json();
-      
+
+      // Compute average match score across all apps that have one
+      const scored = apps.filter(a => a.match_score != null);
+      avgMatchScore = scored.length > 0
+        ? scored.reduce((s, a) => s + a.match_score, 0) / scored.length
+        : null;
+
       // Fetch ALL applications now
       renderPickerResults(apps);
     } catch (e) {
@@ -2045,6 +2229,52 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       summaryMeta.appendChild(tagEl);
     });
+
+    // Match score badge in summary meta
+    if (app.match_score != null) {
+      const score = app.match_score;
+      const hue = Math.round((score / 100) * 120);
+      const scoreColor = `hsl(${hue}, 75%, 55%)`;
+      const scoreBg = `hsla(${hue}, 75%, 40%, 0.15)`;
+      const scoreBorder = `hsla(${hue}, 75%, 50%, 0.6)`;
+
+      let arrowHtml = '';
+      let tooltipText = `Match Score: ${score}`;
+      if (avgMatchScore !== null) {
+        const diff = score - avgMatchScore;
+        const absDiff = Math.abs(Math.round(diff));
+        const isAbove = diff >= 1;
+        const isBelow = diff <= -1;
+        if (isAbove || isBelow) {
+          const arrowColor = isAbove ? '#10b981' : '#ef4444';
+          const arrowChar = isAbove ? '\u2191' : '\u2193'; // Small arrows for the tag
+          tooltipText = `Match Score: ${score} \u2014 ${absDiff} pts ${isAbove ? 'above' : 'below'} average (${Math.round(avgMatchScore)})`;
+          arrowHtml = `<span style="margin-left:2px; font-size:10px; color:${arrowColor}; font-weight:900;">${arrowChar}</span>`;
+        } else {
+          tooltipText = `Match Score: ${score} \u2014 equal to average`;
+        }
+      }
+
+      const scoreTagEl = document.createElement('div');
+      scoreTagEl.className = 'summary-tag';
+      scoreTagEl.title = tooltipText;
+      scoreTagEl.style.cssText = 'cursor:default; font-weight:700; border-color:' + scoreBorder + '; background:' + scoreBg + '; color:' + scoreColor + ';';
+      scoreTagEl.innerHTML = `
+        <span class="material-symbols-outlined" style="font-size:1rem;">Target</span>
+        <span>${score}</span>
+        ${arrowHtml}
+      `;
+      summaryMeta.appendChild(scoreTagEl);
+    }
+
+    // Update big match result card as well
+    updateMatchScoreUI(app, 'apply');
+
+    // Auto-trigger scoring if missing
+    if (app.match_score == null) {
+      handleCalculateScore(null, 'apply');
+    }
+
 
     // Asset logic
     applyAssetsV2.innerHTML = '';
@@ -2192,7 +2422,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Global image error handler
   document.addEventListener('error', (e) => {
     if (e.target.tagName === 'IMG' && (e.target.id === 'summary-logo' || e.target.id === 'company-logo-img' || e.target.classList.contains('picker-item-logo'))) {
-      e.target.src = 'https://www.google.com/s2/favicons?domain=example.com&sz=64';
+      // Use a transparent 1x1 spacer to stop error loop
+      e.target.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     }
   }, true);
 
@@ -2254,6 +2485,161 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   }
+
+  // ── Match Score Analysis ────────────────────────────────────────────────
+  async function handleCalculateScore(btn, mode = 'apply') {
+    const target = currentAppRecord || scrapedData;
+    if (!target) return;
+    
+    // Fallback to title/company for throttling new jobs without IDs
+    const appId = target.id;
+    const scoreKey = appId ? String(appId) : `${target.job_title || target.title}-${target.company}`;
+    
+    if (scoringJobs.has(scoreKey)) return;
+    scoringJobs.add(scoreKey);
+
+    const originalHtml        = btn ? btn.innerHTML : null;
+    const originalSaveText    = btnSaveLabel ? btnSaveLabel.textContent : null;
+    const originalProcessText = btnProcessLabel ? btnProcessLabel.textContent : null;
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-symbols-outlined rotating">progress_activity</span> Analyzing...';
+    }
+
+    if (btnSave) {
+      btnSave.disabled = true;
+      btnSave.classList.add('btn-save-analyzing');
+      if (btnSaveLabel) btnSaveLabel.textContent = 'Analyzing Match...';
+      if (saveHint) saveHint.style.display = 'block';
+    }
+
+    if (btnProcess) {
+      btnProcess.disabled = true;
+      btnProcess.classList.add('btn-save-analyzing');
+      if (btnProcessLabel) btnProcessLabel.textContent = 'Analyzing...';
+    }
+
+    // Show loading state in UI
+    updateMatchScoreUI(target, mode, true);
+
+    try {
+      const formData = new FormData();
+      if (appId) formData.append('application_id', appId);
+      
+      const description = target.job_description || target.description;
+      if (description) formData.append('job_description', description);
+      
+      formData.append('use_default_resume', 'true');
+
+      const resp = await fetch(`${API_URL}/api/score-job-match`, {
+        method: 'POST',
+        body: formData // fetch sets multipart/form-data for FormData
+      });
+
+      if (resp.ok) {
+        const result = await resp.json();
+        const score = result.overall_score || result.match_score || 0;
+        
+        // Update current target
+        target.match_score = score;
+        target.match_details = result; 
+        
+        updateMatchScoreUI(target, 'apply');
+        updateMatchScoreUI(target, 'details');
+        
+        fetchAverageMatchScore();
+      } else {
+        updateMatchScoreUI(target, mode, false);
+      }
+    } catch (e) {
+      console.error('Scoring error:', e);
+      updateMatchScoreUI(target, mode, false);
+    } finally {
+      scoringJobs.delete(scoreKey);
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }
+      if (btnSave) {
+        btnSave.disabled = false;
+        btnSave.classList.remove('btn-save-analyzing');
+        if (btnSaveLabel && originalSaveText) {
+          btnSaveLabel.textContent = originalSaveText;
+        }
+        if (saveHint) saveHint.style.display = 'none';
+      }
+      if (btnProcess) {
+        btnProcess.disabled = false;
+        btnProcess.classList.remove('btn-save-analyzing');
+        if (btnProcessLabel && originalProcessText) {
+          btnProcessLabel.textContent = originalProcessText;
+        }
+      }
+    }
+  }
+
+  function showMatchDetailsPanel(app) {
+    if (!app || app.match_score == null) return;
+    
+    // Populate panel
+    if (panelMatchScoreValue) panelMatchScoreValue.textContent = app.match_score;
+    
+    // Update ring in panel
+    const ringCircle = panelMatchRing ? panelMatchRing.querySelector('.match-ring-circle') : null;
+    if (ringCircle) {
+      const circumference = 2 * Math.PI * 14; 
+      const offset = circumference - (app.match_score / 100) * circumference;
+      ringCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+      ringCircle.style.strokeDashoffset = offset;
+      const hue = Math.round((app.match_score / 100) * 120);
+      ringCircle.style.stroke = `hsl(${hue}, 70%, 45%)`;
+    }
+
+    // Populate coaching/details
+    if (panelMatchCoaching) {
+      const details = app.match_details;
+      if (details) {
+        let detailsHtml = '';
+        if (details.criteria_scores) {
+          detailsHtml += '<div style="display:flex; flex-direction:column; gap:1.25rem; padding:0.5rem;">';
+          for (const [key, crit] of Object.entries(details.criteria_scores)) {
+            const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            detailsHtml += `
+              <div class="analysis-item" style="border-left:3px solid var(--primary); padding-left:1rem;">
+                <h4 style="margin:0 0 0.5rem 0; color:var(--text-primary);">${label} <span style="font-size:0.8em; color:var(--text-muted);">(${crit.score}/20)</span></h4>
+                <div style="font-size:0.85rem; line-height:1.5; color:var(--text-secondary);">${crit.reason}</div>
+              </div>`;
+          }
+          detailsHtml += '</div>';
+        } else if (typeof details === 'string') {
+          detailsHtml = `<div class="markdown-content">${details}</div>`;
+        }
+        panelMatchCoaching.innerHTML = detailsHtml || '<p>Detailed analysis data missing.</p>';
+      } else {
+        panelMatchCoaching.innerHTML = '<p>Detailed analysis not available. Try re-calculating the score.</p>';
+      }
+    }
+
+    if (matchDetailsPanel) matchDetailsPanel.style.display = 'flex';
+  }
+
+  // Hook up detail triggers
+  if (matchScoreClick) {
+    matchScoreClick.onclick = () => showMatchDetailsPanel(currentAppRecord || scrapedData);
+  }
+  if (detailsScoreClick) {
+    detailsScoreClick.onclick = () => showMatchDetailsPanel(currentAppRecord || scrapedData);
+  }
+
+  if (btnCloseMatchPanel) {
+    btnCloseMatchPanel.onclick = () => {
+      if (matchDetailsPanel) matchDetailsPanel.style.display = 'none';
+    };
+  }
+
+  // Initial fetch of average
+  fetchAverageMatchScore();
 
   // Handle manual re-scan
   if (btnMagicFill) {

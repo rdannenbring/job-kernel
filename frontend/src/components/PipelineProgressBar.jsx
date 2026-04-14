@@ -157,7 +157,7 @@ const PipelineProgressBar = ({ currentStage: stageProp, onStageClick, isArchived
   };
 
   return (
-    <div className="card glass" style={{ padding: '2rem', marginBottom: '2rem', position: 'relative', overflow: 'visible' }}>
+    <div className="card glass" style={{ padding: '2rem', marginBottom: '0.75rem', position: 'relative', overflow: 'visible' }}>
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(6, 1fr)', 

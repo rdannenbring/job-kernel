@@ -319,6 +319,10 @@ function App() {
             </div>
           );
         }
+        const appsWithScore = apps.filter(a => a.match_score != null);
+        const avgScore = appsWithScore.length > 0
+            ? appsWithScore.reduce((sum, a) => sum + a.match_score, 0) / appsWithScore.length
+            : null;
         return <ApplicationDetail 
                  app={selectedApp} 
                  onBack={() => setScreen('dashboard')} 
@@ -350,6 +354,7 @@ function App() {
                    }));
                    setScreen('new_app');
                  }} 
+                 avgScore={avgScore}
                />
       case 'lifecycle':
         if (!selectedApp) {

@@ -249,6 +249,9 @@ class ApplicationSaveRequest(BaseModel):
     override_cover_letter_path: Optional[str] = None
     active_resume_type: Optional[str] = 'generated'
     active_cover_letter_type: Optional[str] = 'generated'
+    
+    match_score: Optional[int] = None
+    match_details: Optional[Any] = None
     pipeline_stage: Optional[str] = 'saved'
     commute_time_mins: Optional[int] = None
     commute_distance_miles: Optional[float] = None
@@ -531,7 +534,8 @@ async def score_job_match(
     job_url: Optional[str] = Form(None),
     use_default_resume: bool = Form(False),
     additional_context_paths: Optional[str] = Form(None),
-    tailored_resume_text: Optional[str] = Form(None)
+    tailored_resume_text: Optional[str] = Form(None),
+    application_id: Optional[int] = Form(None)
 ):
     """
     Score the match between a resume and a job description.
@@ -578,6 +582,12 @@ async def score_job_match(
             job_description=final_job_description,
             additional_context=additional_context_text
         )
+
+        if application_id:
+            database_service.update_application(application_id, {
+                "match_score": result.get("overall_score"),
+                "match_details": result
+            })
 
         return result
     except HTTPException:
