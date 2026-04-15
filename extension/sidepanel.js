@@ -615,14 +615,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const finalVal = match ? match.value : '';
     el.value = finalVal;
 
-    // Now sync the custom UI if it exists
-    const dropdown = el.closest('.custom-dropdown');
+    // Now sync the custom UI if it exists.
+    // Instead of relying on potentially fragile DOM tree relations, grab it directly by ID.
+    const dropdownId = `${selectId}-custom`;
+    const dropdown = document.getElementById(dropdownId);
+    
     if (dropdown) {
       const triggerText = dropdown.querySelector('.trigger-text');
       const customOptions = dropdown.querySelectorAll('.dropdown-option');
       console.log(`[JobAutomator] Syncing dropdown ${selectId} to value:`, finalVal);
       
-      const matchedOpt = Array.from(customOptions).find(o => (o.getAttribute('data-value') || '').toLowerCase() === finalVal.toLowerCase());
+      const searchValForCustom = cleanVal(finalVal);
+      let matchedOpt = Array.from(customOptions).find(o => {
+        const optionVal = cleanVal(o.getAttribute('data-value'));
+        return optionVal === searchValForCustom;
+      });
+      
       if (matchedOpt) {
         console.log(`[JobAutomator] Found match in custom list for ${selectId}:`, matchedOpt.innerText);
         triggerText.innerText = matchedOpt.innerText;
@@ -660,11 +668,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('relocation').checked =
       data.relocation === true || data.relocation === 'true';
 
-    // Job Type
-    setSelectValueSafely('jobType', data.jobType || data.job_type);
+    // Job Type — fall back to live scraped value if the record doesn't have one
+    setSelectValueSafely('jobType', data.jobType || data.job_type || scrapedData?.jobType || '');
 
-    // Location Type
-    setSelectValueSafely('locationType', data.locationType || data.location_type);
+    // Location Type — fall back to live scraped value if the record doesn't have one
+    setSelectValueSafely('locationType', data.locationType || data.location_type || scrapedData?.locationType || '');
 
     // Remarks
     document.getElementById('remarks').value = data.remarks || '';
@@ -744,6 +752,139 @@ document.addEventListener('DOMContentLoaded', () => {
     // Match Score Visualization
     updateMatchScoreUI(data, 'details');
   }
+
+  /**
+   * After populating the form from scraped data, mark any fields that are still
+   * empty so the user knows they need manual attention.
+   * Only called for NEW (unsaved) scraped jobs — not for existing app records.
+   */
+  const AMBER_BORDER  = 'rgba(245, 158, 11, 0.65)';
+  const AMBER_BG      = 'rgba(245, 158, 11, 0.07)';
+  const AMBER_SHADOW  = '0 0 0 1.5px rgba(245, 158, 11, 0.25)';
+
+  function markMissingFields() {
+    const TRACKED_FIELDS = [
+      { field: 'title',        label: 'Fill in'   },
+      { field: 'company',      label: 'Fill in'   },
+      { field: 'salaryRange',  label: 'Not found' },
+      { field: 'datePosted',   label: 'Not found' },
+      { field: 'jobType',      label: 'Not found' },
+      { field: 'locationType', label: 'Not found' },
+      { field: 'location',     label: 'Not found' },
+    ];
+
+    // Clear old highlights
+    document.querySelectorAll('.field-missing').forEach(el => {
+      el.classList.remove('field-missing');
+      el.querySelector('.field-missing-badge')?.remove();
+      // Remove any inline styles we applied
+      const trigger = el.querySelector('.dropdown-trigger');
+      if (trigger) {
+        trigger.style.removeProperty('border-color');
+        trigger.style.removeProperty('background');
+        trigger.style.removeProperty('box-shadow');
+      }
+      const inp = el.querySelector('input:not([type=hidden]):not([type=file]), textarea');
+      if (inp) {
+        inp.style.removeProperty('border-color');
+        inp.style.removeProperty('background');
+        inp.style.removeProperty('box-shadow');
+      }
+    });
+
+    TRACKED_FIELDS.forEach(({ field, label }) => {
+      const wrapper = document.querySelector(`.field-diff-wrapper[data-field="${field}"]`);
+      if (!wrapper) return;
+
+      // ── Determine emptiness ────────────────────────────────────────────────
+      const triggerText = wrapper.querySelector('.trigger-text');
+      const nativeSelect = wrapper.querySelector('select');
+      const input = wrapper.querySelector('input:not([type=hidden]):not([type=file]), textarea');
+
+      let isEmpty = false;
+      if (triggerText) {
+        // Custom dropdown: check the visible trigger label
+        const txt = triggerText.textContent.trim();
+        isEmpty = txt === '' || txt === '- Unknown -' || txt === 'Unknown';
+      } else if (nativeSelect) {
+        isEmpty = !nativeSelect.value;
+      } else if (input) {
+        isEmpty = !input.value.trim();
+      }
+
+      if (!isEmpty) return;
+
+      // ── Mark the wrapper ───────────────────────────────────────────────────
+      wrapper.classList.add('field-missing');
+
+      // Apply amber highlight DIRECTLY to the right element (no CSS cascade needed)
+      if (triggerText) {
+        const trigger = wrapper.querySelector('.dropdown-trigger');
+        if (trigger) {
+          trigger.style.borderColor = AMBER_BORDER;
+          trigger.style.background  = AMBER_BG;
+          trigger.style.boxShadow   = AMBER_SHADOW;
+        }
+      } else if (input) {
+        input.style.borderColor = AMBER_BORDER;
+        input.style.background  = AMBER_BG;
+        input.style.boxShadow   = AMBER_SHADOW;
+      }
+
+      // ── Badge below the field (absolutely positioned, out of flow) ────────
+      if (!wrapper.querySelector('.field-missing-badge')) {
+        const badge = document.createElement('span');
+        badge.className = 'field-missing-badge';
+        badge.title = 'Scraper could not detect this — please fill in manually';
+        badge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ${label}`;
+        wrapper.appendChild(badge);
+      }
+    });
+  }
+
+  /** Remove amber highlight when user fills a field. */
+  function clearMissingOnInput(event) {
+    const el = event.target;
+    const wrapper = el.closest('.field-missing');
+    if (!wrapper) return;
+
+    const triggerText = wrapper.querySelector('.trigger-text');
+    const nativeSelect = wrapper.querySelector('select');
+
+    let nowFilled = false;
+    if (triggerText) {
+      const txt = triggerText.textContent.trim();
+      nowFilled = txt !== '' && txt !== '- Unknown -' && txt !== 'Unknown';
+    } else if (nativeSelect) {
+      nowFilled = !!nativeSelect.value;
+    } else {
+      nowFilled = !!(el.value?.trim());
+    }
+
+    if (nowFilled) {
+      wrapper.classList.remove('field-missing');
+      wrapper.querySelector('.field-missing-badge')?.remove();
+      // Clear inline styles
+      const trigger = wrapper.querySelector('.dropdown-trigger');
+      if (trigger) {
+        trigger.style.removeProperty('border-color');
+        trigger.style.removeProperty('background');
+        trigger.style.removeProperty('box-shadow');
+      }
+      if (el.style) {
+        el.style.removeProperty('border-color');
+        el.style.removeProperty('background');
+        el.style.removeProperty('box-shadow');
+      }
+    }
+  }
+
+  // Attach clear-on-input to all tracked inputs/selects once on load
+  ['title', 'company', 'salaryRange', 'datePosted', 'jobType', 'locationType', 'location'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', clearMissingOnInput);
+    if (el) el.addEventListener('change', clearMissingOnInput);
+  });
 
   /**
    * Updates the Match Score UI elements for either 'details' or 'apply' mode.
@@ -1063,6 +1204,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const b = w.querySelector('.field-diff-badge');
       if (b) b.remove();
     });
+    // Re-apply missing field highlights — form is now visible
+    markMissingFields();
   }
 
   // "Edit details" button dismisses the confirmation and reveals the form
@@ -1117,8 +1260,25 @@ document.addEventListener('DOMContentLoaded', () => {
             populateForm(appRecord);
             // Show the already-saved banner
             showSavedBanner(appRecord);
+            // Silent backfill: if the stored record is missing job_type/location_type but
+            // the scraper found them, patch those fields silently so future loads are clean.
+            const backfill = {};
+            if (!appRecord.job_type && scrapedData?.jobType) backfill.job_type = scrapedData.jobType;
+            if (!appRecord.location_type && scrapedData?.locationType) backfill.location_type = scrapedData.locationType;
+            if (Object.keys(backfill).length > 0) {
+              fetch(`${API_URL}/api/applications/${appRecord.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(backfill),
+              }).then(() => {
+                console.log('[JobAutomator] Backfilled missing type fields:', backfill);
+                currentAppRecord = { ...currentAppRecord, ...backfill };
+              }).catch(() => {}); // Silent — non-critical
+            }
             // Mark fields that differ from what was scraped
             applyDiffHighlights(appRecord, scrapedData);
+            // Highlight fields that are still empty (even on saved records)
+            markMissingFields();
             // Apply status-based editability rules
             applyStatusRules(appRecord.status);
             
@@ -1136,6 +1296,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // New job — populate from scraped data as before
             hideSavedBanner();
             populateForm(scrapedData);
+            // Highlight any fields the scraper couldn't populate
+            markMissingFields();
             
             if (currentMode === 'apply') {
               setMode('details');
