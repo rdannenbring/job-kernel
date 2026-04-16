@@ -632,15 +632,15 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       
       if (matchedOpt) {
-        console.log(`[JobAutomator] Found match in custom list for ${selectId}:`, matchedOpt.innerText);
-        triggerText.innerText = matchedOpt.innerText;
+        console.log(`[JobAutomator] Found match in custom list for ${selectId}:`, matchedOpt.textContent);
+        triggerText.textContent = matchedOpt.textContent;
         customOptions.forEach(o => o.classList.remove('selected'));
         matchedOpt.classList.add('selected');
       } else {
         console.warn(`[JobAutomator] No match found in custom list for ${selectId} with value:`, finalVal);
         const firstOpt = customOptions[0];
         if (firstOpt) {
-          triggerText.innerText = firstOpt.innerText;
+          triggerText.textContent = firstOpt.textContent;
           customOptions.forEach(o => o.classList.remove('selected'));
           firstOpt.classList.add('selected');
         }
