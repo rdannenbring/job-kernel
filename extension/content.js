@@ -196,83 +196,65 @@ const LINKEDIN_SCRAPER = {
 
   workplaceType: () => {
     const root = getLIRoot();
-    const findInTexts = (elements) => {
-      for (const el of elements) {
-        const text = (el.innerText || el.textContent || el.getAttribute('aria-label') || '').trim();
-        if (!text) continue;
-        
-        // Strategy A: Explicit accessibility label
-        if (text.toLowerCase().includes('workplace type is')) {
-          console.log('[JobAutomator] Found Workplace Pref label:', text);
-          if (text.match(/on[\s-]site|in[\s-]person/i)) return 'On-site';
-          if (text.match(/remote/i)) return 'Remote';
-          if (text.match(/hybrid/i)) return 'Hybrid';
-        }
-        
-        // Strategy B: Keyword scan (for pills/bullets/insights)
-        if (text.length < 50) {
-          const t = text.toLowerCase();
-          if (t.includes('remote')) return 'Remote';
-          if (t.includes('hybrid')) return 'Hybrid';
-          if (t.includes('on-site') || t.includes('onsite') || t.includes('in-person')) return 'On-site';
-        }
-      }
+
+    const matchWorkplace = (t) => {
+      t = t.toLowerCase();
+      if (t.includes('remote')) return 'Remote';
+      if (t.includes('hybrid')) return 'Hybrid';
+      if (t.includes('on-site') || t.includes('onsite') || t.includes('in person') || t.includes('in-person')) return 'On-site';
       return null;
     };
 
-    // Strategy C: Direct scanning of all small descriptive tags in the root
-    const findKeywordDirect = (rootEl) => {
-      const candidates = rootEl.querySelectorAll('span, a, li, b');
-      for (const el of candidates) {
-        if (el.children.length > 0 && el.tagName !== 'A') continue; // Prefer leaf nodes or links
-        const t = (el.innerText || '').trim().toLowerCase();
-        if (t.length > 0 && t.length < 25) {
-          if (t.includes('remote')) return 'Remote';
-          if (t.includes('hybrid')) return 'Hybrid';
-          if (t.includes('on-site') || t.includes('onsite') || t.includes('in-person')) return 'On-site';
-        }
+    // Strategy A: Visually-hidden accessibility labels (document-wide — LinkedIn puts these
+    // in aria-label spans that are not inside the visible top-card root)
+    const hiddenLabels = document.querySelectorAll('.visually-hidden, [class*="visually-hidden"], [class*="screen-reader"]');
+    for (const el of hiddenLabels) {
+      const text = (el.innerText || el.textContent || '').trim().toLowerCase();
+      if (text.includes('workplace type is') || text.includes('work location type')) {
+        const m = matchWorkplace(text);
+        if (m) { console.log('[JobAutomator] Workplace: A (aria)', m); return m; }
       }
-      return null;
-    };
-
-    let candidates = root.querySelectorAll('.visually-hidden, .ui-label, .tvm__text, [class*="job-insight"], .artdeco-pill, [class*="top-card__bullet"], [class*="job-details-jobs-unified-top-card__job-insight"], a, span');
-    console.log(`[JobAutomator] Workplace candidates count: ${candidates.length}`);
-    
-    // DEBUG DUMP: Show exactly what text we are finding
-    Array.from(candidates).slice(0, 15).forEach((c, i) => {
-        const txt = (c.innerText || c.textContent || '').trim();
-        if (txt) console.log(`[JobAutomator] Workplace Candidate ${i}: "${txt}"`);
-    });
-
-    let res = findInTexts(candidates);
-    if (res) {
-      console.log(`[JobAutomator] Workplace Strategy A/B Match: ${res}`);
-      return res;
     }
 
-    // 2. Direct keyword scan in root
-    res = findKeywordDirect(root);
-    if (res) {
-      console.log(`[JobAutomator] Workplace Strategy C Match: ${res}`);
-      return res;
+    // Strategy B: The LinkedIn "Job Details" criteria section (below description)
+    // e.g. <span class="description__job-criteria-text">Remote</span>
+    const criteriaText = document.querySelectorAll(
+      '.description__job-criteria-text, [class*="job-criteria-text"], [class*="criteria-item"] span'
+    );
+    for (const el of criteriaText) {
+      const m = matchWorkplace((el.innerText || '').trim());
+      if (m) { console.log('[JobAutomator] Workplace: B (criteria)', m); return m; }
     }
 
-    // 3. Last resort: header text regex
-    const headerText = root.innerText || '';
-    if (/\bRemote\b/i.test(headerText)) {
-      console.log('[JobAutomator] Workplace Match (Regex fallback): Remote');
-      return 'Remote';
-    }
-    if (/\bHybrid\b/i.test(headerText)) {
-      console.log('[JobAutomator] Workplace Match (Regex fallback): Hybrid');
-      return 'Hybrid';
-    }
-    if (/\bOn-site\b/i.test(headerText) || /\bOnsite\b/i.test(headerText)) {
-      console.log('[JobAutomator] Workplace Match (Regex fallback): On-site');
-      return 'On-site';
+    // Strategy C: Insight pills / tvm spans in root
+    const insightEls = root.querySelectorAll(
+      '.tvm__text, .ui-label, [class*="job-insight"] span, [class*="job-insight"] li, .artdeco-pill__text'
+    );
+    for (const el of insightEls) {
+      const t = (el.innerText || el.textContent || '').trim();
+      if (t.length < 40) {
+        const m = matchWorkplace(t);
+        if (m) { console.log('[JobAutomator] Workplace: C (insight pill)', m); return m; }
+      }
     }
 
-    console.warn('[JobAutomator] Workplace extraction FAILED. Root text sample:', headerText.substring(0, 200));
+    // Strategy D: Leaf-node scan of all small spans/anchors in root
+    const leafEls = root.querySelectorAll('span, a, li');
+    for (const el of leafEls) {
+      if (el.children.length > 0 && el.tagName !== 'A') continue;
+      const t = (el.innerText || '').trim();
+      if (t.length > 0 && t.length < 30) {
+        const m = matchWorkplace(t);
+        if (m) { console.log('[JobAutomator] Workplace: D (leaf node)', m); return m; }
+      }
+    }
+
+    // Strategy E: Full-text regex on the root innerHTML
+    const pageText = root.innerText || '';
+    const m = matchWorkplace(pageText.substring(0, 5000));
+    if (m) { console.log('[JobAutomator] Workplace: E (page text)', m); return m; }
+
+    console.warn('[JobAutomator] Workplace extraction FAILED.');
     return null;
   },
 
@@ -290,69 +272,81 @@ const LINKEDIN_SCRAPER = {
 
   type: () => {
     const root = getLIRoot();
-    const findInTexts = (elements) => {
-      for (const el of elements) {
-        const text = (el.innerText || el.textContent || el.getAttribute('aria-label') || '').trim();
-        if (!text) continue;
 
-        // Strategy A: Accessibility label
-        if (text.toLowerCase().includes('job type is')) {
-          console.log('[JobAutomator] Found Job Type Pref label:', text);
-          if (text.match(/full[\s-]time/i)) return 'Full-time';
-          if (text.match(/part[\s-]time/i)) return 'Part-time';
-          if (text.match(/contract|freelance|temp/i)) return 'Contract';
-          if (text.match(/internship/i)) return 'Internship';
-        }
-
-        // Strategy B: Keyword scan
-        if (text.length < 50) {
-          const t = text.toLowerCase();
-          if (t.includes('full-time') || t.includes('fulltime')) return 'Full-time';
-          if (t.includes('part-time')) return 'Part-time';
-          if (t.includes('contract') || t.includes('freelance')) return 'Contract';
-          if (t.includes('internship')) return 'Internship';
-        }
-      }
+    const matchJobType = (t) => {
+      t = t.toLowerCase();
+      // Match with or without hyphen: "full-time", "full time", "fulltime"
+      if (/full[\s-]?time/.test(t)) return 'Full-time';
+      if (/part[\s-]?time/.test(t)) return 'Part-time';
+      if (/\bcontract\b|\bfreelance\b|\btemporary\b/.test(t)) return 'Contract';
+      if (/\binternship\b|\bintern\b/.test(t)) return 'Internship';
       return null;
     };
 
-    // Strategy C: Direct scanning
-    const findKeywordDirect = (rootEl) => {
-      const candidates = rootEl.querySelectorAll('span, a, li, b');
-      for (const el of candidates) {
-        if (el.children.length > 0 && el.tagName !== 'A') continue; 
-        const t = (el.innerText || '').trim().toLowerCase();
-        if (t.length > 0 && t.length < 25) {
-          if (t.includes('full-time') || t.includes('fulltime')) return 'Full-time';
-          if (t.includes('part-time')) return 'Part-time';
-          if (t.includes('contract') || t.includes('freelance')) return 'Contract';
-          if (t.includes('internship')) return 'Internship';
-        }
+    // Strategy A: Visually-hidden aria labels (document-wide)
+    // LinkedIn encodes "Job type is Full-time" in hidden spans that may be outside root
+    const hiddenLabels = document.querySelectorAll('.visually-hidden, [class*="visually-hidden"], [class*="screen-reader"]');
+    for (const el of hiddenLabels) {
+      const text = (el.innerText || el.textContent || '').trim();
+      if (/job type is|employment type/i.test(text)) {
+        const m = matchJobType(text);
+        if (m) { console.log('[JobAutomator] Job Type: A (aria label)', m); return m; }
       }
-      return null;
-    };
-
-    // 1. Local search
-    let candidates = root.querySelectorAll('.visually-hidden, .ui-label, .tvm__text, [class*="job-insight"], .artdeco-pill, [class*="criteria"], [class*="job-details-jobs-unified-top-card__job-insight"], a, span');
-    console.log(`[JobAutomator] Job Type candidates count: ${candidates.length}`);
-
-    // DEBUG DUMP
-    Array.from(candidates).slice(0, 15).forEach((c, i) => {
-        const txt = (c.innerText || c.textContent || '').trim();
-        if (txt) console.log(`[JobAutomator] Job Type Candidate ${i}: "${txt}"`);
-    });
-
-    let res = findInTexts(candidates);
-    if (res) {
-      console.log(`[JobAutomator] Job Type Strategy A/B Match: ${res}`);
-      return res;
     }
 
-    // 2. Direct keyword scan
-    res = findKeywordDirect(root);
-    if (res) {
-      console.log(`[JobAutomator] Job Type Strategy C Match: ${res}`);
-      return res;
+    // Strategy B: LinkedIn "Job Details" criteria section
+    // Scans <h3> labels for "Employment type" then reads its sibling value span
+    const criteriaItems = document.querySelectorAll(
+      '.description__job-criteria-item, [class*="job-criteria-item"]'
+    );
+    for (const item of criteriaItems) {
+      const header = (item.querySelector('h3, [class*="criteria-subheader"]')?.innerText || '').toLowerCase();
+      if (header.includes('employment type') || header.includes('job type')) {
+        const val = item.querySelector('[class*="criteria-text"], span:last-child')?.innerText || '';
+        const m = matchJobType(val);
+        if (m) { console.log('[JobAutomator] Job Type: B (criteria section)', m); return m; }
+      }
+    }
+
+    // Strategy C: Standalone criteria text spans (when we can't find h3 but can find the value)
+    const criteriaText = document.querySelectorAll(
+      '.description__job-criteria-text, [class*="job-criteria-text"]'
+    );
+    for (const el of criteriaText) {
+      const m = matchJobType((el.innerText || '').trim());
+      if (m) { console.log('[JobAutomator] Job Type: C (criteria text)', m); return m; }
+    }
+
+    // Strategy D: Job insight pills / tvm spans in root
+    const insightEls = root.querySelectorAll(
+      '.tvm__text, .ui-label, [class*="job-insight"] span, [class*="job-insight"] li, .artdeco-pill__text'
+    );
+    for (const el of insightEls) {
+      const t = (el.innerText || el.textContent || '').trim();
+      if (t.length < 40) {
+        const m = matchJobType(t);
+        if (m) { console.log('[JobAutomator] Job Type: D (insight pill)', m); return m; }
+      }
+    }
+
+    // Strategy E: Leaf-node scan of all small elements in root
+    const leafEls = root.querySelectorAll('span, li, b');
+    for (const el of leafEls) {
+      if (el.children.length > 0) continue;
+      const t = (el.innerText || '').trim();
+      if (t.length > 0 && t.length < 30) {
+        const m = matchJobType(t);
+        if (m) { console.log('[JobAutomator] Job Type: E (leaf node)', m); return m; }
+      }
+    }
+
+    // Strategy F: Description text fallback — job type is often stated in the description body
+    const descEl = document.querySelector('#job-details, .jobs-description-content__text, .jobs-box__html-content');
+    if (descEl) {
+      // Look in first 2000 chars of description for explicit employment type statement
+      const descText = (descEl.innerText || '').substring(0, 2000);
+      const m = matchJobType(descText);
+      if (m) { console.log('[JobAutomator] Job Type: F (description text)', m); return m; }
     }
 
     console.warn('[JobAutomator] Job Type extraction FAILED.');

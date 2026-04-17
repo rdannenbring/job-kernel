@@ -3248,3 +3248,80 @@ input:checked + .slider:before { transform: translateX(20px); }
   background: transparent;
   color: var(--text-muted);
 }
+
+/* ── Field "needs attention" highlight (scraper couldn't populate) ────────── */
+.field-missing {
+  position: relative;
+}
+
+.field-missing > input,
+.field-missing > textarea {
+  border-color: rgba(245, 158, 11, 0.55) !important;
+  background: rgba(245, 158, 11, 0.05) !important;
+  box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.2) !important;
+}
+
+/* For custom dropdowns */
+.field-missing .dropdown-trigger {
+  border-color: rgba(245, 158, 11, 0.55) !important;
+  background: rgba(245, 158, 11, 0.05) !important;
+  box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.2) !important;
+}
+
+/* Badge floats below the field — absolutely positioned so it never shifts layout */
+.field-missing-badge {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgb(245, 158, 11);
+  opacity: 0.85;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: badge-pulse 2.5s ease-in-out infinite;
+  z-index: 2;
+}
+
+.field-missing-badge svg {
+  flex-shrink: 0;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { opacity: 0.85; }
+  50%       { opacity: 0.35; }
+}
+
+/* ── Field diff highlight (scraped value differs from saved record) ────────── */
+.field-has-diff {
+  position: relative;
+}
+
+.field-has-diff > input,
+.field-has-diff > textarea {
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  box-shadow: 0 0 0 1.5px rgba(59, 130, 246, 0.15) !important;
+}
+
+.field-diff-badge {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.85);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  z-index: 5;
+}

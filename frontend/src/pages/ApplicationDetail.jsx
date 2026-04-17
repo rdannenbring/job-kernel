@@ -535,7 +535,21 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     const [formData, setFormData] = React.useState({ ...app });
     const [regeneratingResume, setRegeneratingResume] = React.useState(false);
     const [regeneratingCL, setRegeneratingCL] = React.useState(false);
-    const [activeTab, setActiveTab] = React.useState('details'); // 'details' | 'lifecycle'
+    const [activePhaseTab, setActivePhaseTab] = React.useState('Saved');
+    const [showDetails, setShowDetails] = React.useState(true);
+
+    React.useEffect(() => {
+        if (app?.pipeline_stage) {
+            const s = app.pipeline_stage.toLowerCase();
+            if (s === 'accepted') setActivePhaseTab('Accepted');
+            else if (s === 'declined' || s === 'rejected') setActivePhaseTab('Rejected');
+            else if (s.includes('withdraw') || s.includes('cancel')) setActivePhaseTab('Withdrawn/Cancelled');
+            else if (s === 'offered' || s === 'decision') setActivePhaseTab('Offered');
+            else if (['saved', 'generated', 'applied', 'interviewing'].includes(s)) {
+                setActivePhaseTab(s.charAt(0).toUpperCase() + s.slice(1));
+            } else setActivePhaseTab('Saved');
+        }
+    }, [app?.pipeline_stage]);
     const [expandedResume, setExpandedResume] = React.useState(false);
     const [expandedCL, setExpandedCL] = React.useState(false);
     const [resumeInstructions, setResumeInstructions] = React.useState('');
@@ -1332,7 +1346,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                             return (
                                 <button
                                     onClick={() => {
-                                        setActiveTab('details');
+                                        setShowDetails(true);
                                         setTimeout(() => {
                                             document.getElementById('compatibility-score-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                         }, 50);
@@ -1394,7 +1408,8 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                 { value: "Interviewing", label: "Interviewing" },
                                 { value: "Rejected", label: "Rejected" },
                                 { value: "Offered", label: "Offered" },
-                                { value: "Accepted", label: "Accepted" }
+                                { value: "Accepted", label: "Accepted" },
+                                { value: "Withdrawn/Cancelled", label: "Withdrawn/Cancelled" }
                             ]}
                             className="bg-tertiary"
                             style={{ width: '150px' }}
@@ -1786,21 +1801,60 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                         </div>
                     </div>
 
-                    <div style={{ gridColumn: 'span 2' }}>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Personal Remarks & Notes</div>
-                        {isEditing ? (
-                            <textarea
-                                value={formData.remarks || ''}
-                                onChange={e => setFormData({ ...formData, remarks: e.target.value })}
-                                rows={2}
-                                placeholder="Add your own notes here..."
-                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.5rem', color: 'var(--text-primary)', width: '100%', padding: '0.75rem', fontSize: '0.9rem', outline: 'none', resize: 'vertical' }}
-                            />
-                        ) : (
-                            <div style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontStyle: app.remarks ? 'italic' : 'normal', lineHeight: '1.6' }}>
-                                {app.remarks ? `"${app.remarks}"` : <span style={{ opacity: 0.5 }}>No notes added yet. Click edit to add remarks.</span>}
-                            </div>
-                        )}
+                    <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem', marginTop: '0.5rem' }}>
+                        <div style={{ flex: '1 1 360px', minWidth: 0 }}>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Personal Remarks & Notes</div>
+                            {isEditing ? (
+                                <textarea
+                                    value={formData.remarks || ''}
+                                    onChange={e => setFormData({ ...formData, remarks: e.target.value })}
+                                    rows={2}
+                                    placeholder="Add your own notes here..."
+                                    style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.5rem', color: 'var(--text-primary)', width: '100%', padding: '0.75rem', fontSize: '0.9rem', outline: 'none', resize: 'vertical' }}
+                                />
+                            ) : (
+                                <div style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontStyle: app.remarks ? 'italic' : 'normal', lineHeight: '1.6' }}>
+                                    {app.remarks ? `"${app.remarks}"` : <span style={{ opacity: 0.5 }}>No notes added yet. Click edit to add remarks.</span>}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* New button cell */}
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <button 
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setShowDetails(true);
+                                    setTimeout(() => {
+                                        document.getElementById('job-details-accordion')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }, 50);
+                                }}
+                                style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '0.75rem', 
+                                    padding: '0.75rem 1.75rem',
+                                    background: 'linear-gradient(135deg, var(--primary), #818cf8)', 
+                                    border: '1px solid rgba(255,255,255,0.1)', 
+                                    borderRadius: '2rem', 
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 15px rgba(99, 102, 241, 0.25)'
+                                }}
+                                onMouseOver={(e) => { 
+                                    e.currentTarget.style.transform = 'translateY(-2px)'; 
+                                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(99, 102, 241, 0.4)'; 
+                                }}
+                                onMouseOut={(e) => { 
+                                    e.currentTarget.style.transform = 'translateY(0)'; 
+                                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.25)'; 
+                                }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>feed</span>
+                                <span style={{ fontSize: '0.95rem', fontWeight: 600, letterSpacing: '0.02em', textTransform: 'uppercase' }}>View All Docs</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1937,69 +1991,93 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                 }}
             />
 
-            {/* Tab Navigation */}
+            {/* Phase Tabs */}
             <div style={{
                 display: 'flex',
-                gap: '2.5rem',
-                marginBottom: '2rem',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.1)', // Clear greyish line across the page
-                padding: '0 0.5rem'
+                gap: '0.25rem',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                marginTop: '1.5rem',
+                marginBottom: '2rem'
             }}>
-                <button 
-                    onClick={() => setActiveTab('lifecycle')}
-                    style={{
-                        padding: '0.75rem 0',
-                        background: 'none',
-                        color: activeTab === 'lifecycle' ? 'var(--primary)' : 'var(--text-muted)',
-                        border: 'none',
-                        borderBottom: `2px solid ${activeTab === 'lifecycle' ? 'var(--primary)' : 'transparent'}`,
-                        cursor: 'pointer',
-                        fontWeight: 600,
-                        fontSize: '1rem',
-                        transition: 'all 0.2s',
-                        marginBottom: '-1px'
-                    }}
-                >
-                    Current Phase
-                </button>
-                <button 
-                    onClick={() => setActiveTab('details')}
-                    style={{
-                        padding: '0.75rem 0',
-                        background: 'none',
-                        color: activeTab === 'details' ? 'var(--primary)' : 'var(--text-muted)',
-                        border: 'none',
-                        borderBottom: `2px solid ${activeTab === 'details' ? 'var(--primary)' : 'transparent'}`,
-                        cursor: 'pointer',
-                        fontWeight: 600,
-                        fontSize: '1rem',
-                        transition: 'all 0.2s',
-                        marginBottom: '-1px'
-                    }}
-                >
-                    Details & Documents
-                </button>
-                <button 
-                    onClick={() => setActiveTab('lifecycle')}
-                    style={{
-                        padding: '0.75rem 0',
-                        background: 'none',
-                        color: activeTab === 'lifecycle' ? 'var(--primary)' : 'var(--text-muted)',
-                        border: 'none',
-                        borderBottom: `2px solid ${activeTab === 'lifecycle' ? 'var(--primary)' : 'transparent'}`,
-                        cursor: 'pointer',
-                        fontWeight: 600,
-                        fontSize: '1rem',
-                        transition: 'all 0.2s',
-                        marginBottom: '-1px'
-                    }}
-                >
-                    Interviewer Profiles
-                </button>
+                {[
+                    { id: 'Saved', label: 'Saved' },
+                    { id: 'Generated', label: 'Generated' },
+                    { id: 'Applied', label: 'Applied' },
+                    { id: 'Interviewing', label: 'Interviewing' },
+                    { id: 'Rejected', label: 'Rejected' },
+                    { id: 'Offered', label: 'Offered' },
+                    { id: 'Accepted', label: 'Accepted' },
+                    { id: 'Withdrawn/Cancelled', label: 'Withdrawn/Cancelled' }
+                ].map(tab => {
+                    const isTabActive = activePhaseTab === tab.id;
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActivePhaseTab(tab.id)}
+                            style={{
+                                padding: '1rem 1.5rem',
+                                fontSize: '0.625rem',
+                                fontWeight: 900,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.1em',
+                                color: isTabActive ? 'white' : '#64748b',
+                                background: 'none',
+                                border: 'none',
+                                borderBottom: `2px solid ${isTabActive ? 'var(--primary)' : 'transparent'}`,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                marginBottom: '-1px'
+                            }}
+                            onMouseOver={(e) => { if (!isTabActive) e.target.style.color = '#cbd5e1'; }}
+                            onMouseOut={(e) => { if (!isTabActive) e.target.style.color = '#64748b'; }}
+                        >
+                            {tab.label}
+                        </button>
+                    );
+                })}
             </div>
 
-            {activeTab === 'details' ? (
-                <>
+            {/* Phase Content from Lifecycle Component */}
+            <div style={{ marginBottom: '2rem' }}>
+                <ApplicationLifecycle
+                    app={app}
+                    activePhaseTab={activePhaseTab}
+                    onUpdate={onUpdate}
+                    hideHeader={true}
+                />
+            </div>
+
+            {/* Job Details & Documents Accordion */}
+            <div id="job-details-accordion" style={{ marginTop: '2.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '1.5rem' }}>
+                <button 
+                    onClick={() => setShowDetails(!showDetails)}
+                    style={{ 
+                        width: '100%', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between', 
+                        background: 'none', 
+                        border: 'none', 
+                        cursor: 'pointer', 
+                        padding: '1rem',
+                        borderRadius: '0.75rem',
+                        transition: 'background 0.2s',
+                        color: 'var(--text-primary)'
+                    }}
+                    onMouseOver={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.03)'}
+                    onMouseOut={(e) => e.target.style.background = 'transparent'}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.5rem' }}>feed</span>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Job Details & Documents</h2>
+                    </div>
+                    <span className="material-symbols-outlined" style={{ fontSize: '1.5rem', transform: showDetails ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }}>
+                        expand_more
+                    </span>
+                </button>
+
+                {showDetails && (
+                    <div style={{ marginTop: '1.5rem', animation: 'fadeIn 0.3s' }}>
                 <div className="job-details-grid">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                     {/* Remarks moved up to header */}
@@ -2550,17 +2628,9 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     </div>
                 </div>
             </div> {/* End Grid Container */}
-                </>
-            ) : (
-                <div style={{ marginTop: '1rem' }}>
-                    <ApplicationLifecycle 
-                        app={app} 
-                        onUpdate={onUpdate} 
-                        hideHeader={true} 
-                        onBack={() => setActiveTab('details')} 
-                    />
-                </div>
-            )}
+                    </div>
+                )}
+            </div>
 
             <style>{`
                 .doc-row-btn {

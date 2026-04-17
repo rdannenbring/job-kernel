@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <div class="form-group half field-diff-wrapper" data-field="jobType">
+    <label for="jobType">Job Type</label>
+    <div class="custom-dropdown" id="jobType-custom">
+      <div class="dropdown-trigger">
+        <span class="trigger-text">- Unknown -</span>
+        <span class="material-symbols-outlined">expand_more</span>
+      </div>
+      <div class="dropdown-menu">
+        <div class="dropdown-option" data-value="">- Unknown -</div>
+        <div class="dropdown-option" data-value="Full-time">Full-time</div>
+      </div>
+      <select id="jobType" name="jobType" class="native-select-hidden">
+        <option value="">- Unknown -</option>
+        <option value="Full-time">Full-time</option>
+      </select>
+    </div>
+  </div>
+
+<script>
+  function setSelectValueSafely(selectId, value) {
+    const el = document.getElementById(selectId);
+    if (!el) return;
+    
+    const cleanVal = (v) => (v || '').toLowerCase().replace(/[\s\-]/g, '');
+    const options = Array.from(el.options);
+    const match = options.find(opt => {
+      if (!value) return false;
+      const optVal = opt.value.toLowerCase().replace(/[\s\-]/g, '');
+      const searchVal = cleanVal(value);
+      return optVal === searchVal || (value.length > 2 && optVal.includes(searchVal)) || (optVal.length > 2 && searchVal.includes(optVal));
+    });
+    const finalVal = match ? match.value : '';
+    el.value = finalVal;
+
+    // Fix applied:
+    const dropdown = el.closest('.custom-dropdown') || el.closest('.field-diff-wrapper')?.querySelector('.custom-dropdown');
+    
+    if (dropdown) {
+      const triggerText = dropdown.querySelector('.trigger-text');
+      const customOptions = dropdown.querySelectorAll('.dropdown-option');
+      
+      const searchValForCustom = cleanVal(finalVal);
+      let matchedOpt = Array.from(customOptions).find(o => {
+        const optionVal = cleanVal(o.getAttribute('data-value'));
+        return optionVal === searchValForCustom;
+      });
+      
+      if (matchedOpt) {
+        triggerText.innerText = matchedOpt.innerText;
+        customOptions.forEach(o => o.classList.remove('selected'));
+        matchedOpt.classList.add('selected');
+      }
+    }
+  }
+
+  setSelectValueSafely('jobType', "Full-time");
+  if (document.querySelector('.trigger-text').innerText === "Full-time") {
+    console.log("SUCCESS");
+  } else {
+    console.log("FAILURE", document.querySelector('.trigger-text').innerText);
+  }
+</script>
+</body>
+</html>

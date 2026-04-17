@@ -81,6 +81,7 @@ class ApplicationSubStep(Base):
     description = Column(Text)
     status = Column(String) # 'todo', 'in_progress', 'completed'
     date = Column(String)
+    phase = Column(String, default="saved")
     application = relationship("Application", back_populates="sub_steps")
 
 class ApplicationContact(Base):
@@ -236,6 +237,7 @@ class DatabaseService:
             "ALTER TABLE application_contacts ADD COLUMN IF NOT EXISTS headline TEXT",
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS match_score INTEGER",
             "ALTER TABLE applications ADD COLUMN IF NOT EXISTS match_details TEXT",
+            "ALTER TABLE application_sub_steps ADD COLUMN IF NOT EXISTS phase TEXT DEFAULT 'saved'",
             # Ensure tables are created if not already (Base.metadata.create_all handles this mostly, but explicit for clarity in migrations)
             """
             CREATE TABLE IF NOT EXISTS application_sub_steps (
@@ -245,6 +247,7 @@ class DatabaseService:
                 description TEXT,
                 status TEXT,
                 date TEXT,
+                phase TEXT DEFAULT 'saved',
                 FOREIGN KEY(application_id) REFERENCES applications(id)
             )
             """,
@@ -589,7 +592,7 @@ class DatabaseService:
             "commute_distance_miles": app.commute_distance_miles,
             "commute_details": json.loads(app.commute_details) if app.commute_details else {},
             "source": app.source,
-            "sub_steps": [{"id": s.id, "title": s.title, "description": s.description, "status": s.status, "date": s.date} for s in app.sub_steps],
+            "sub_steps": [{"id": s.id, "title": s.title, "description": s.description, "status": s.status, "date": s.date, "phase": s.phase} for s in app.sub_steps],
             "contacts": [{"id": c.id, "name": c.name, "role": c.role, "email": c.email, "phone": c.phone, "linkedin_url": c.linkedin_url, "headline": c.headline} for c in app.contacts],
             "events": [{"id": e.id, "event_type": e.event_type, "description": e.description, "timestamp": e.timestamp} for e in app.events]
         }

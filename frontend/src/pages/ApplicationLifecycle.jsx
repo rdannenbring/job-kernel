@@ -4,7 +4,7 @@ import PipelineProgressBar, { PIPELINE_STAGES, STAGE_TO_STATUS } from '../compon
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 
-function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = false }) {
+function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = false, activePhaseTab }) {
   const [app, setApp] = useState(initialApp);
   const [loading, setLoading] = useState(false);
   const [connections, setConnections] = useState([]);
@@ -68,7 +68,7 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
     );
   }
 
-  const currentStageIndex = PIPELINE_STAGES.findIndex(s => s.id === (app.pipeline_stage || 'saved'));
+  const currentStageIndex = PIPELINE_STAGES.findIndex(s => s.id.toLowerCase() === (activePhaseTab || app.pipeline_stage || 'saved').toLowerCase());
 
   return (
     <div className="lifecycle-container" style={{ padding: hideHeader ? '0' : '2rem', maxWidth: '1400px', margin: '0 auto' }}>
@@ -141,7 +141,23 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {(app.sub_steps && app.sub_steps.length > 0) ? app.sub_steps.map(step => (
+              {(() => {
+                const phaseSubSteps = (app.sub_steps || []).filter(step => {
+                  const stepPhase = step.phase || 'saved';
+                  const activeTabOrStage = (activePhaseTab || app.pipeline_stage || 'saved');
+                  if (activeTabOrStage.toLowerCase() === 'withdrawn/cancelled') {
+                      return stepPhase.toLowerCase().includes('withdraw') || stepPhase.toLowerCase().includes('cancel');
+                  }
+                  return stepPhase.toLowerCase() === activeTabOrStage.toLowerCase();
+                });
+                if (phaseSubSteps.length === 0) {
+                  return (
+                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--bg-card)', borderRadius: '0.75rem', border: '1px dashed var(--border-color)' }}>
+                      No sub-steps defined for this phase yet.
+                    </div>
+                  );
+                }
+                return phaseSubSteps.map(step => (
                 <div key={step.id} className="card glass-hover" style={{ padding: '1.25rem', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
                     <div style={{ 
@@ -166,13 +182,8 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
                     <span className="material-symbols-outlined">more_vert</span>
                   </button>
                 </div>
-              )) : (
-                <div style={{ padding: '3rem', textAlign: 'center', border: '2px dashed var(--border-color-card)', borderRadius: '1rem', color: 'var(--text-muted)' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.3 }}>checklist</span>
-                  <p>No sub-steps defined for this phase yet.</p>
-                  <button className="btn btn-secondary mt-2">Create First Step</button>
-                </div>
-              )}
+              ));
+             })()}
             </div>
           </div>
 
