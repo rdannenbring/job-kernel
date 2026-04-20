@@ -1885,9 +1885,13 @@ document.addEventListener('DOMContentLoaded', () => {
       <a href="${c.profile_url}" target="_blank" class="network-item">
         <div class="network-avatar">
           <span class="material-symbols-outlined">person</span>
+          ${c.degree ? `<span class="connection-degree">${c.degree}</span>` : ''}
         </div>
         <div class="network-item-info">
-          <span class="network-item-name">${c.name}</span>
+          <div class="network-item-header">
+            <span class="network-item-name">${c.name}</span>
+            ${c.is_alumni ? `<span class="alumni-badge">Alumni</span>` : ''}
+          </div>
           <span class="network-item-headline">${c.headline || ''}</span>
           ${c.company_name ? `<span class="network-item-company">${c.company_name}</span>` : ''}
         </div>

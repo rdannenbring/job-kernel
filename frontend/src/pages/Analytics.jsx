@@ -14,6 +14,7 @@ const STAGE_META = {
   accepted:     { label: 'Accepted',     icon: 'stars',         color: '#10b981' },
   rejected:     { label: 'Rejected',     icon: 'cancel',        color: '#ef4444' },
   declined:     { label: 'Declined',     icon: 'undo',          color: '#ec4899' },
+  withdrawn:    { label: 'Withdrawn',    icon: 'cancel',        color: '#94a3b8' },
 };
 
 const INTEREST_META = {
@@ -278,7 +279,7 @@ const Analytics = ({ setScreen }) => {
   const total = data?.total_applications ?? 0;
 
   // Pipeline stages — in display order
-  const stageOrder = ['saved', 'generated', 'applied', 'interviewing', 'decision', 'accepted', 'rejected', 'declined'];
+  const stageOrder = ['saved', 'generated', 'applied', 'interviewing', 'decision', 'accepted', 'rejected', 'declined', 'withdrawn'];
   const stageData = stageOrder.map(s => ({
     stage: s,
     ...STAGE_META[s],

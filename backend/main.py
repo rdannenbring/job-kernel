@@ -340,12 +340,24 @@ class RegisterRequest(BaseModel):
     username: str
     password: str
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+class ExtractProfileRequest(BaseModel):
+    text: str
+
 class LinkedInConnectionModel(BaseModel):
     name: str
     headline: Optional[str] = None
     profile_url: str
     company_id: Optional[str] = None
     company_name: Optional[str] = None
+    degree: Optional[str] = None
+    is_alumni: Optional[bool] = False
 
 class LinkedInSyncRequest(BaseModel):
     connections: List[LinkedInConnectionModel]
@@ -401,6 +413,45 @@ async def get_me(user_id: int = Depends(get_current_user_id)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+@app.post("/api/auth/forgot-password")
+async def forgot_password(req: ForgotPasswordRequest):
+    user = database_service.get_user_by_email(req.email)
+    # Always return success to prevent user enumeration
+    if not user:
+        return {"message": "If an account with that email exists, a reset link has been sent."}
+    
+    token = AuthService.create_reset_token(user["id"], user["hashed_password"])
+    
+    # In a real app, send email here. For now, log to console.
+    reset_link = f"http://localhost/reset-password?token={token}"
+    print(f"\n🔑 PASSWORD RESET REQUEST for {user['username']} ({user['email']})")
+    print(f"🔗 Reset Link: {reset_link}\n")
+    
+    return {"message": "If an account with that email exists, a reset link has been sent."}
+
+@app.post("/api/auth/reset-password")
+async def reset_password(req: ResetPasswordRequest):
+    # We need to find the user from the token first
+    payload = AuthService.decode_token(req.token)
+    if not payload or payload.get("type") != "reset":
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    
+    user_id = int(payload.get("sub"))
+    user = database_service.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Verify token against current password hash
+    verified_id = AuthService.verify_reset_token(req.token, user["hashed_password"])
+    if verified_id != user_id:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    
+    # Update password
+    new_hashed = AuthService.get_password_hash(req.new_password)
+    database_service.admin_update_user(user_id, {"hashed_password": new_hashed})
+    
+    return {"message": "Password updated successfully"}
 
 
 import json
@@ -589,6 +640,14 @@ async def scan_contact_info(resume: UploadFile = File(...), user_id: int = Depen
         
         os.unlink(tmp_path)
         return extracted
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/extract-profile")
+async def extract_profile_from_text(req: ExtractProfileRequest, user_id: int = Depends(get_current_user_id)):
+    try:
+        config = await get_merged_config(user_id)
+        return await ai_service.extract_profile_data(req.text, config=config)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

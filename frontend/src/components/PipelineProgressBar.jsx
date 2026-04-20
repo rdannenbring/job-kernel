@@ -20,6 +20,7 @@ const STAGES = {
   decision: { id: 'decision', label: 'Decision', icon: 'gavel', col: 5, row: 1 },
   accepted: { id: 'accepted', label: 'Accepted', icon: 'verified', col: 6, row: 1, color: '#22c55e' },
   declined: { id: 'declined', label: 'Declined', icon: 'block', col: 6, row: 2, color: '#f59e0b' },
+  withdrawn: { id: 'withdrawn', label: 'Withdrawn', icon: 'cancel', col: 4, row: 3, color: '#94a3b8' },
   archived: { id: 'archived', label: 'Archived', icon: 'archive', col: 6, row: 3, color: '#64748b' },
 };
 
@@ -60,6 +61,9 @@ const PipelineProgressBar = ({ currentStage: stageProp, onStageClick, isArchived
     
     // Specific logic for Declined branch
     if (id === 'declined') return currentStage === 'declined' ? 'current' : 'future';
+
+    // Specific logic for Withdrawn branch
+    if (id === 'withdrawn') return currentStage === 'withdrawn' ? 'current' : 'future';
 
     // Linear logic for main path
     if (currentIndex !== -1 && targetIndex !== -1) {
@@ -178,6 +182,7 @@ const PipelineProgressBar = ({ currentStage: stageProp, onStageClick, isArchived
              {/* Branches */}
              <path d={getCurvedPath(250, 50, 350, 150)} /> {/* To Rejected */}
              <path d={getCurvedPath(450, 50, 550, 150)} /> {/* To Declined */}
+             <path d={getCurvedPath(250, 50, 350, 250)} /> {/* To Withdrawn */}
              
              {/* Dynamic background archived path */}
              {isArchived && <path d={getArchivedPath()} strokeDasharray="4 4" opacity="0.3" />}
@@ -212,6 +217,11 @@ const PipelineProgressBar = ({ currentStage: stageProp, onStageClick, isArchived
              {/* Outcome: Declined */}
              {currentStage === 'declined' && (
                  <path d={getCurvedPath(450, 50, 550, 150)} stroke="#f59e0b" />
+             )}
+
+             {/* Outcome: Withdrawn */}
+             {currentStage === 'withdrawn' && (
+                 <path d={getCurvedPath(250, 50, 350, 250)} stroke="#94a3b8" />
              )}
 
              {/* Dynamic Archive Highlight */}

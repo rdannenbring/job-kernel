@@ -94,3 +94,4 @@ xml_new_formatted.xml
 .switchboard/kanban.db
 .switchboard/*.db-shm
 .switchboard/*.db-wal
+applications.db*

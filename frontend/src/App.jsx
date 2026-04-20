@@ -10,6 +10,7 @@ import Profile from './pages/Profile'
 import ApplicationLifecycle from './pages/ApplicationLifecycle'
 import MobileCapture from './pages/MobileCapture'
 import Auth from './pages/Auth'
+import ResetPassword from './pages/ResetPassword'
 import Admin from './pages/Admin'
 import Account from './pages/Account'
 import { useAuth } from './context/AuthContext'
@@ -404,6 +405,10 @@ function App() {
   }
 
   if (!user) {
+    const isResetting = window.location.pathname === '/reset-password' || window.location.search.includes('token=');
+    if (isResetting) {
+      return <ResetPassword />;
+    }
     return <Auth />;
   }
 

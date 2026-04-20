@@ -1,0 +1,2 @@
+"// Listen for settings changes\nchrome.storage.local.get(['jobkernelApiUrl'], (res) => {\n  if (res.jobkernelApiUrl) {\n    API_URL = res.jobkernelApiUrl;\n  }\n});\n\nchrome.storage.onChanged.addListener((changes, namespace) => {\n  if (namespace === 'lo
+<truncated 121 bytes>

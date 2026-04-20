@@ -3,30 +3,44 @@ import { useAuth } from '../context/AuthContext';
 
 const Auth = () => {
   const { login, hasAdmin, loading: authLoading, refreshHasAdmin } = useAuth();
-  const [isLogin, setIsLogin] = useState(true); // default to login; setup only when hasAdmin is explicitly false
+  const [authMode, setAuthMode] = useState('login'); // 'login', 'register', 'forgot'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
   useEffect(() => {
-    // Only show the setup/register form if hasAdmin is explicitly false (no admin exists yet)
     if (hasAdmin === false) {
-      setIsLogin(false);
+      setAuthMode('register');
     } else if (hasAdmin === true) {
-      setIsLogin(true);
+      setAuthMode('login');
     }
-    // hasAdmin === null means still loading — leave isLogin unchanged (stays true)
   }, [hasAdmin]);
+
+  const isLogin = authMode === 'login';
+  const isRegister = authMode === 'register';
+  const isForgot = authMode === 'forgot';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setMessage('');
     setLoading(true);
 
-    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+    let endpoint = '';
+    let body = {};
+
+    if (isForgot) {
+      endpoint = '/api/auth/forgot-password';
+      body = { email };
+    } else {
+      endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      body = { username, password };
+    }
 
     try {
       const res = await fetch(`${API_URL}${endpoint}`, {
@@ -34,13 +48,18 @@ const Auth = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        login({ id: data.user_id, username, is_admin: data.is_admin }, data.access_token);
+        if (isForgot) {
+          setMessage(data.message);
+          setEmail('');
+        } else {
+          login({ id: data.user_id, username, is_admin: data.is_admin }, data.access_token);
+        }
       } else {
         setError(data.detail || 'Authentication failed');
       }
@@ -72,50 +91,85 @@ const Auth = () => {
                 <path d="M2 12L12 17L22 12" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
              </svg>
           </div>
-          <h1>{isLogin ? 'Welcome Back' : (hasAdmin ? 'Create Account' : 'Setup Admin Account')}</h1>
-          <p>{isLogin ? 'Sign in to manage your applications' : (hasAdmin ? 'Join the automation revolution' : 'First user will be granted admin privileges')}</p>
+          <h1>{isForgot ? 'Reset Password' : (isLogin ? 'Welcome Back' : (hasAdmin ? 'Create Account' : 'Setup Admin Account'))}</h1>
+          <p>{isForgot ? 'Enter your email to receive a reset link' : (isLogin ? 'Sign in to manage your applications' : (hasAdmin ? 'Join the automation revolution' : 'First user will be granted admin privileges'))}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
-              required
-            />
-          </div>
+          {isForgot ? (
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+          ) : (
+            <>
+              <div className="form-group">
+                <label htmlFor="username">Username</label>
+                <input
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter your username"
+                  required
+                />
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+            </>
+          )}
 
           {error && <div className="auth-error">{error}</div>}
+          {message && <div className="auth-message">{message}</div>}
 
           <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
+            {loading ? 'Processing...' : (isForgot ? 'Send Link' : (isLogin ? 'Sign In' : 'Create Account'))}
           </button>
         </form>
 
         {hasAdmin && (
           <div className="auth-footer">
-            <p>
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button onClick={() => setIsLogin(!isLogin)} className="link-button">
-                {isLogin ? 'Sign Up' : 'Sign In'}
-              </button>
-            </p>
+            {isForgot ? (
+              <p>
+                Remembered your password?{" "}
+                <button onClick={() => setAuthMode('login')} className="link-button">
+                  Sign In
+                </button>
+              </p>
+            ) : (
+              <>
+                <p>
+                  {isLogin ? "Don't have an account? " : "Already have an account? "}
+                  <button onClick={() => setAuthMode(isLogin ? 'register' : 'login')} className="link-button">
+                    {isLogin ? 'Sign Up' : 'Sign In'}
+                  </button>
+                </p>
+                {isLogin && (
+                  <p style={{ marginTop: '1rem' }}>
+                    <button onClick={() => setAuthMode('forgot')} className="link-button" style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                      Forgot Password?
+                    </button>
+                  </p>
+                )}
+              </>
+            )}
           </div>
         )}
       </div>
@@ -198,6 +252,14 @@ const Auth = () => {
         .auth-error {
           background: rgba(239, 68, 68, 0.1);
           color: #ef4444;
+          padding: 0.75rem;
+          border-radius: 8px;
+          font-size: 0.9rem;
+          text-align: center;
+        }
+        .auth-message {
+          background: rgba(34, 197, 94, 0.1);
+          color: #22c55e;
           padding: 0.75rem;
           border-radius: 8px;
           font-size: 0.9rem;

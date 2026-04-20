@@ -193,6 +193,105 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ matches: [] });
       });
     return true;
+  } else if (message.action === 'SCRAPE_LINKEDIN_PROFILE') {
+    (async () => {
+      try {
+        const csrfToken = await getCsrfToken();
+        if (!csrfToken) throw new Error('Not logged into LinkedIn (JSESSIONID missing). Please sign in to LinkedIn first.');
+
+        // 1. Get My Profile ID
+        const meRes = await fetch('https://www.linkedin.com/voyager/api/me', {
+          headers: {
+            'csrf-token': csrfToken,
+            'x-restli-protocol-version': '2.0.0',
+            'accept': 'application/json',
+            'x-li-lang': 'en_US'
+          },
+          credentials: 'include'
+        });
+        if (!meRes.ok) throw new Error(`LinkedIn API (me) failed: ${meRes.status}`);
+        const meData = await meRes.json();
+        const publicId = meData.miniProfile.publicIdentifier;
+
+        // 2. Get Profile Detail (Location, Bio)
+        const profileRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}`, {
+          headers: {
+            'csrf-token': csrfToken,
+            'x-restli-protocol-version': '2.0.0',
+            'accept': 'application/json'
+          },
+          credentials: 'include'
+        });
+        const profile = profileRes.ok ? await profileRes.json() : {};
+
+        // 3. Get Positions
+        const posRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}/positions`, {
+          headers: {
+            'csrf-token': csrfToken,
+            'x-restli-protocol-version': '2.0.0',
+            'accept': 'application/json'
+          },
+          credentials: 'include'
+        });
+        const positions = posRes.ok ? await posRes.json() : { elements: [] };
+
+        // 4. Get Education
+        const eduRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}/educations`, {
+          headers: {
+            'csrf-token': csrfToken,
+            'x-restli-protocol-version': '2.0.0',
+            'accept': 'application/json'
+          },
+          credentials: 'include'
+        });
+        const educations = eduRes.ok ? await eduRes.json() : { elements: [] };
+
+        // 5. Get Skills
+        const skillRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}/skills`, {
+          headers: {
+            'csrf-token': csrfToken,
+            'x-restli-protocol-version': '2.0.0',
+            'accept': 'application/json'
+          },
+          credentials: 'include'
+        });
+        const skills = skillRes.ok ? await skillRes.json() : { elements: [] };
+
+        // Normalize data for the App
+        const normalized = {
+          first_name: meData.miniProfile.firstName || '',
+          last_name: meData.miniProfile.lastName || '',
+          full_name: `${meData.miniProfile.firstName || ''} ${meData.miniProfile.lastName || ''}`.trim(),
+          job_title: meData.miniProfile.occupation || '',
+          bio: profile.summary || '',
+          city: profile.locationName?.split(',')[0]?.trim() || '',
+          state: profile.locationName?.split(',')[1]?.trim() || '',
+          linkedin_url: `https://www.linkedin.com/in/${publicId}`,
+          experiences: (positions.elements || []).map(p => ({
+            company: p.companyName || '',
+            title: p.title || '',
+            location: p.locationName || '',
+            description: p.description || '',
+            start_date: p.timePeriod?.startDate ? `${p.timePeriod.startDate.month}/${p.timePeriod.startDate.year}` : '',
+            end_date: p.timePeriod?.endDate ? `${p.timePeriod.endDate.month}/${p.timePeriod.endDate.year}` : (p.timePeriod?.startDate ? 'Present' : '')
+          })),
+          educations: (educations.elements || []).map(e => ({
+            school: e.schoolName || '',
+            degree: e.degreeName || '',
+            field: e.fieldOfStudy || '',
+            start_date: e.timePeriod?.startDate ? String(e.timePeriod.startDate.year) : '',
+            end_date: e.timePeriod?.endDate ? String(e.timePeriod.endDate.year) : ''
+          })),
+          skills: (skills.elements || []).map(s => s.name || s.skill?.name).filter(Boolean)
+        };
+
+        sendResponse({ success: true, data: normalized });
+      } catch (err) {
+        console.error('[SCRAPE_LINKEDIN_PROFILE] Error:', err);
+        sendResponse({ success: false, error: err.message });
+      }
+    })();
+    return true;
   }
 });
 

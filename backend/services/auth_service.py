@@ -14,6 +14,7 @@ load_dotenv()
 SECRET_KEY = os.getenv("JWT_SECRET", "super-secret-key-change-me")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440")) # 24 hours
+RESET_TOKEN_EXPIRE_MINUTES = 60 # 1 hour for security
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer(auto_error=False)
@@ -44,6 +45,35 @@ class AuthService:
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             return payload
+        except Exception:
+            return None
+
+    @staticmethod
+    def create_reset_token(user_id: int, current_hashed_password: str) -> str:
+        # We include the first 8 chars of the current hash. 
+        # If the password changes, the hash changes, and the token becomes invalid.
+        hash_fragment = current_hashed_password[:8]
+        expire = datetime.utcnow() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
+        to_encode = {
+            "sub": str(user_id),
+            "exp": expire,
+            "type": "reset",
+            "v": hash_fragment
+        }
+        return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+    @staticmethod
+    def verify_reset_token(token: str, current_hashed_password: str) -> Optional[int]:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            if payload.get("type") != "reset":
+                return None
+            
+            # Check if hash fragment matches
+            if payload.get("v") != current_hashed_password[:8]:
+                return None
+            
+            return int(payload.get("sub"))
         except Exception:
             return None
 

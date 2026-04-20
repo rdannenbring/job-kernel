@@ -139,6 +139,11 @@ const Profile = () => {
     const [extractedData, setExtractedData] = useState(null);
     const [selectedFields, setSelectedFields] = useState({});
     const [expandedSections, setExpandedSections] = useState({});
+    const [showLinkedInModal, setShowLinkedInModal] = useState(false);
+    const [linkedInTab, setLinkedInTab] = useState('extension'); // 'extension' | 'paste'
+    const [linkedInPastedText, setLinkedInPastedText] = useState('');
+    const [importingLinkedIn, setImportingLinkedIn] = useState(false);
+    const [linkedInError, setLinkedInError] = useState('');
     const [notification, setNotification] = useState(null);
     const [isDirty, setIsDirty] = useState(false);
     const [isSticky, setIsSticky] = useState(false);
@@ -437,6 +442,90 @@ const Profile = () => {
         setTimeout(() => setNotification(null), 3000);
     };
 
+    const applyLinkedInData = (data) => {
+        const changes = {};
+        let hasChanges = false;
+        Object.entries(data).forEach(([key, val]) => {
+            if (Array.isArray(val)) {
+                if (val.length > 0) {
+                    changes[key] = val;
+                    hasChanges = true;
+                }
+            } else if (val && val !== formData[key]) {
+                changes[key] = val;
+                hasChanges = true;
+            }
+        });
+
+        if (hasChanges) {
+            setExtractedData(changes);
+            const initialSelection = {};
+            Object.keys(changes).forEach(k => initialSelection[k] = true);
+            setSelectedFields(initialSelection);
+            setShowLinkedInModal(false);
+        } else {
+            showNotification('No new information found on LinkedIn profile.', 'info');
+        }
+    };
+
+    const handleExtensionImport = () => {
+        setImportingLinkedIn(true);
+        setLinkedInError('');
+
+        if (typeof chrome === 'undefined' || !chrome.runtime) {
+            setLinkedInError('Extension not detected. Please ensure the extension is installed and enabled.');
+            setImportingLinkedIn(false);
+            return;
+        }
+
+        const extensionId = "mlljebhmpmefmkkkjmhmjkpcnnhpijpk"; // Update if different
+        chrome.runtime.sendMessage(extensionId, { action: 'SCRAPE_LINKEDIN_PROFILE' }, (response) => {
+            if (chrome.runtime.lastError) {
+                console.error('[Extension Error]', chrome.runtime.lastError);
+                setLinkedInError('Could not communicate with the extension. Is it installed?');
+                setImportingLinkedIn(false);
+                return;
+            }
+
+            if (response && response.success) {
+                applyLinkedInData(response.data);
+            } else {
+                setLinkedInError(response?.error || 'Failed to import from LinkedIn. Make sure you are logged in to LinkedIn.');
+            }
+            setImportingLinkedIn(false);
+        });
+    };
+
+    const handleLinkedInImport = async () => {
+        if (linkedInTab === 'extension') {
+            handleExtensionImport();
+            return;
+        }
+
+        if (!linkedInPastedText.trim()) return;
+
+        setImportingLinkedIn(true);
+        setLinkedInError('');
+        try {
+            const res = await fetchWithAuth(`${API_URL}/api/extract-profile`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: linkedInPastedText })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                applyLinkedInData(data);
+            } else {
+                setLinkedInError('Failed to parse LinkedIn text. Please try again.');
+            }
+        } catch (e) {
+            setLinkedInError('Connection error while processing LinkedIn data.');
+        } finally {
+            setImportingLinkedIn(false);
+        }
+    };
+
     const runProfileScan = async (file) => {
         setScanning(true);
         const uploadData = new FormData();
@@ -575,6 +664,17 @@ const Profile = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button
+                        onClick={() => setShowLinkedInModal(true)}
+                        style={{
+                            padding: '0.6rem 1.2rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)',
+                            color: 'var(--text-primary)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                        }}
+                    >
+                        <img src="https://static.licdn.com/aero-v1/sc/h/al2o9zrvru7aqj8e1x2rzsrca" alt="LinkedIn" style={{ width: '16px', height: '16px' }} />
+                        Import from LinkedIn
+                    </button>
+
                     <button
                         onClick={() => fileInputRef.current.click()}
                         disabled={scanning}
@@ -789,6 +889,108 @@ const Profile = () => {
                     </div>
                 )
             }
+
+            {/* LinkedIn Import Modal */}
+            {showLinkedInModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)',
+                    zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)'
+                }}>
+                    <div style={{
+                        background: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', maxWidth: '600px', width: '90%',
+                        boxShadow: '0 20px 50px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Import LinkedIn Profile</h2>
+                            <button onClick={() => setShowLinkedInModal(false)} className="btn-icon" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                            <button
+                                onClick={() => setLinkedInTab('extension')}
+                                style={{
+                                    padding: '0.5rem 1rem', background: 'transparent', border: 'none', borderBottom: linkedInTab === 'extension' ? '2px solid var(--primary)' : 'none',
+                                    color: linkedInTab === 'extension' ? 'var(--primary-light)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 500
+                                }}
+                            >
+                                Import via Extension
+                            </button>
+                            <button
+                                onClick={() => setLinkedInTab('paste')}
+                                style={{
+                                    padding: '0.5rem 1rem', background: 'transparent', border: 'none', borderBottom: linkedInTab === 'paste' ? '2px solid var(--primary)' : 'none',
+                                    color: linkedInTab === 'paste' ? 'var(--primary-light)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 500
+                                }}
+                            >
+                                Paste Profile Text
+                            </button>
+                        </div>
+
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            {linkedInTab === 'extension' ? (
+                                <div style={{ textAlign: 'center', padding: '1rem' }}>
+                                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                                        The extension will use your active LinkedIn session to directly extract your profile details. No typing or scraping needed!
+                                    </p>
+                                    <div style={{
+                                        padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: '8px', border: '1px solid var(--border-color)',
+                                        fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'left'
+                                    }}>
+                                        <strong>Note:</strong> Ensure you are signed in to LinkedIn in another tab for this to work.
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
+                                        Go to your LinkedIn profile, Select All (Ctrl+A), Copy (Ctrl+C), and Paste here:
+                                    </p>
+                                    <textarea
+                                        value={linkedInPastedText}
+                                        onChange={(e) => setLinkedInPastedText(e.target.value)}
+                                        placeholder="Paste your LinkedIn profile text here..."
+                                        className="input-premium"
+                                        style={{ width: '100%', minHeight: '150px', padding: '1rem', fontSize: '0.9rem' }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {linkedInError && (
+                            <div style={{ padding: '0.75rem', background: 'rgba(248, 113, 113, 0.1)', color: '#f87171', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1.5rem', border: '1px solid rgba(248, 113, 113, 0.3)' }}>
+                                {linkedInError}
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                            <button
+                                onClick={() => setShowLinkedInModal(false)}
+                                style={{ padding: '0.6rem 1.2rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', cursor: 'pointer' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleLinkedInImport}
+                                disabled={importingLinkedIn || (linkedInTab === 'paste' && !linkedInPastedText.trim())}
+                                style={{
+                                    padding: '0.6rem 1.5rem', background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '6px',
+                                    cursor: 'pointer', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                    opacity: (importingLinkedIn || (linkedInTab === 'paste' && !linkedInPastedText.trim())) ? 0.6 : 1
+                                }}
+                            >
+                                {importingLinkedIn ? (
+                                    <>
+                                        <span className="spinner-small"></span> Importing...
+                                    </>
+                                ) : (
+                                    'Import Profile'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )
 
             {
                 notification && (

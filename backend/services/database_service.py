@@ -195,6 +195,8 @@ class LinkedInConnection(Base):
     profile_url = Column(String)
     company_id = Column(String) # Numeric LinkedIn company ID
     company_name = Column(String)
+    degree = Column(String) # "1st", "2nd", etc.
+    is_alumni = Column(Boolean, default=False)
     last_synced = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User")
@@ -275,6 +277,21 @@ class DatabaseService:
                 "username": user.username,
                 "hashed_password": user.hashed_password,
                 "is_admin": user.is_admin
+            }
+        finally:
+            session.close()
+
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        session = self.Session()
+        try:
+            user = session.query(User).filter(User.email == email).first()
+            if not user: return None
+            return {
+                "id": user.id,
+                "username": user.username,
+                "hashed_password": user.hashed_password,
+                "is_admin": user.is_admin,
+                "email": user.email
             }
         finally:
             session.close()
@@ -1358,6 +1375,8 @@ class DatabaseService:
                         profile_url=conn_data.get('profile_url'),
                         company_id=str(conn_data.get('company_id', '')),
                         company_name=conn_data.get('company_name', ''),
+                        degree=conn_data.get('degree'),
+                        is_alumni=conn_data.get('is_alumni', False),
                         last_synced=datetime.utcnow(),
                         user_id=user_id
                     )
@@ -1369,6 +1388,8 @@ class DatabaseService:
                     existing.headline = conn_data.get('headline', existing.headline)
                     existing.company_id = str(conn_data.get('company_id', existing.company_id))
                     existing.company_name = conn_data.get('company_name', existing.company_name)
+                    existing.degree = conn_data.get('degree', existing.degree)
+                    existing.is_alumni = conn_data.get('is_alumni', existing.is_alumni)
                     existing.last_synced = datetime.utcnow()
                     if user_id:
                         existing.user_id = user_id
