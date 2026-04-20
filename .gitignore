@@ -12,6 +12,7 @@ ENV/
 # Node
 node_modules/
 dist/
+dist_old_root_owned/
 .cache/
 *.log
 
@@ -56,6 +57,7 @@ backend/*.db.backup-*
 !package.json
 *.docx
 backend/tmp_docx/
+backend/scratch/
 resources/test-output/
 
 # Explicitly ignore common scratch scripts
