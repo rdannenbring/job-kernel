@@ -131,7 +131,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
     }, [viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, filterLocationTypes, filterInterestLevels, filterRelocation, showArchived, filterHasConnections, filterMinScore, showAcceptedColumn, showCancelledColumn]);
 
     useEffect(() => {
-        fetchWithAuth(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile`)
+        fetchWithAuth(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/profile`)
             .then(res => res.json())
             .then(data => {
                 if (data.preferences) {
@@ -155,7 +155,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         const companies = [...new Set(apps.map(a => a.company).filter(Boolean))];
         if (companies.length === 0) return;
 
-        fetchWithAuth(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/linkedin/matches/batch`, {
+        fetchWithAuth(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/linkedin/matches/batch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(companies)
@@ -376,7 +376,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
             onUpdate(app.id, { status: newStatus, kanban_order: index });
             
             // Send to backend
-            fetchWithAuth(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/applications/${app.id}`, {
+            fetchWithAuth(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/applications/${app.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus, kanban_order: index })

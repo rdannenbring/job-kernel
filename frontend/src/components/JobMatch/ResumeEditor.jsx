@@ -3,7 +3,7 @@ import { diffWordsWithSpace } from 'diff';
 import { useAuth } from '../../context/AuthContext';
 import './JobMatchStyles.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 const ONLYOFFICE_URL = import.meta.env.VITE_ONLYOFFICE_URL || 'http://localhost:8443';
 
 const ResumeEditor = ({ 

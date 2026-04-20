@@ -14,7 +14,7 @@ import Admin from './pages/Admin'
 import Account from './pages/Account'
 import { useAuth } from './context/AuthContext'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
 // Map screen IDs <-> URL hashes
 const SCREEN_TO_HASH = {

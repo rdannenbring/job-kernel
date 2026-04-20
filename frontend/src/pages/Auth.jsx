@@ -9,7 +9,7 @@ const Auth = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
   useEffect(() => {
     // Only show the setup/register form if hasAdmin is explicitly false (no admin exists yet)

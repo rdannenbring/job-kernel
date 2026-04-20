@@ -7,7 +7,7 @@ import ApplicationLifecycle from './ApplicationLifecycle';
 import { useAuth } from '../context/AuthContext';
 
 // Use same env logic or passed prop
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
 const safeParseJSON = (data, fallback = {}) => {
     if (!data) return fallback;
@@ -636,7 +636,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
         if (app.id) {
             const getPrefs = async () => {
                 try {
-                    const profileRes = await fetchWithAuth(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile`);
+                    const profileRes = await fetchWithAuth(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/profile`);
                     const profileData = await profileRes.json();
                     setProfilePrefs(profileData?.preferences || {});
                     

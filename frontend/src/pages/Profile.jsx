@@ -4,7 +4,7 @@ import CustomMultiSelect from '../components/CustomMultiSelect';
 import ProcessVisualization from '../ProcessVisualization';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
 const InputGroup = ({ label, children, style }) => (
     <div style={{ marginBottom: '1rem', ...style }}>
@@ -102,7 +102,7 @@ const Profile = () => {
     const handleRecalculateCommutes = async () => {
         setIsRecalculating(true);
         try {
-            const res = await fetchWithAuth(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile/recalculate-commutes`, {
+            const res = await fetchWithAuth(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/profile/recalculate-commutes`, {
                 method: 'POST'
             });
             if (res.ok) {

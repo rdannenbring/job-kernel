@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import PipelineProgressBar, { PIPELINE_STAGES, STAGE_TO_STATUS } from '../components/PipelineProgressBar';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
 
 function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = false, activePhaseTab }) {
