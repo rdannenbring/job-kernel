@@ -532,6 +532,94 @@ class AIService:
             print(f"Error extracting profile data: {e}")
             return {}
 
+    async def list_available_models(self, provider: str = None, api_key: str = None, base_url: str = None) -> List[str]:
+        """
+        Fetch the list of available model IDs from the configured provider.
+        Returns a sorted list of model ID strings.
+        """
+        import asyncio, httpx
+
+        provider = provider or self.provider
+        api_key  = api_key  or os.getenv(f"{provider.upper()}_API_KEY", "")
+
+        # ── Anthropic: no public /models listing — return curated static list ──
+        if provider == "anthropic":
+            return [
+                "claude-opus-4-5",
+                "claude-sonnet-4-5",
+                "claude-opus-4-0",
+                "claude-sonnet-4-0",
+                "claude-haiku-4-0",
+                "claude-3-7-sonnet-latest",
+                "claude-3-5-sonnet-latest",
+                "claude-3-5-haiku-latest",
+                "claude-3-opus-latest",
+            ]
+
+        # ── Gemini: use the REST models endpoint ──────────────────────────────
+        if provider == "gemini":
+            if not api_key:
+                api_key = os.getenv("GOOGLE_API_KEY", "")
+            url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}&pageSize=100"
+            try:
+                async with httpx.AsyncClient(timeout=15) as client:
+                    resp = await client.get(url)
+                resp.raise_for_status()
+                data = resp.json()
+                models = []
+                for m in data.get("models", []):
+                    name = m.get("name", "")          # e.g. "models/gemini-1.5-flash"
+                    methods = m.get("supportedGenerationMethods", [])
+                    if "generateContent" in methods:
+                        model_id = name.replace("models/", "")
+                        models.append(model_id)
+                return sorted(models)
+            except Exception as e:
+                print(f"Error fetching Gemini models: {e}")
+                # Curated fallback
+                return [
+                    "gemini-2.5-pro-preview-03-25",
+                    "gemini-2.0-flash",
+                    "gemini-2.0-flash-lite",
+                    "gemini-1.5-pro-latest",
+                    "gemini-1.5-flash-latest",
+                ]
+
+        # ── OpenAI-compatible: call /models ───────────────────────────────────
+        provider_base_urls = {
+            "openai":     "https://api.openai.com/v1",
+            "openrouter": "https://openrouter.ai/api/v1",
+            "deepseek":   "https://api.deepseek.com",
+            "mistral":    "https://api.mistral.ai/v1",
+            "groq":       "https://api.groq.com/openai/v1",
+            "alibaba":    "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+            "ollama":     "http://127.0.0.1:11434/v1",
+            "local":      "http://127.0.0.1:8080/v1",
+        }
+        resolved_base = base_url or os.getenv(f"{provider.upper()}_API_BASE") or provider_base_urls.get(provider, "")
+        if not resolved_base:
+            return []
+        resolved_base = resolved_base.rstrip("/")
+
+        try:
+            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.get(f"{resolved_base}/models", headers=headers)
+            resp.raise_for_status()
+            data = resp.json()
+            # OpenAI format: {"data": [{"id": "gpt-4o", ...}, ...]}
+            raw = data.get("data", data) if isinstance(data, dict) else data
+            ids = []
+            for m in raw:
+                if isinstance(m, dict):
+                    ids.append(m.get("id") or m.get("name") or "")
+                elif isinstance(m, str):
+                    ids.append(m)
+            return sorted(id_ for id_ in ids if id_)
+        except Exception as e:
+            print(f"Error fetching models from {resolved_base}: {e}")
+            return []
+
     async def score_job_match(self, resume_text: str, job_description: str, additional_context: str = "", config: dict = None) -> Dict[str, Any]:
         """Score job match using optional per-user config."""
         current_date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

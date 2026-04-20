@@ -10,7 +10,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [hasAdmin, setHasAdmin] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const VITE_API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = (VITE_API_URL !== undefined && VITE_API_URL !== null) ? VITE_API_URL : 'http://localhost:8000';
 
   const checkAdmin = async () => {
     try {

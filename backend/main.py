@@ -1886,31 +1886,24 @@ async def analyze_job(request: JobDescriptionRequest, user_id: int = Depends(get
 
 @app.post("/api/fetch-models")
 async def fetch_available_models(config: dict, user_id: int = Depends(get_current_user_id)):
-    """Fetch available models from the specified provider"""
+    """Fetch available models from the specified provider using the posted config."""
     try:
-        # Extract parameters from config
-        api_key = config.get("api_key")
-        provider = config.get("provider")
-        base_url = config.get("base_url")
-
-        # Prepare kwargs for the service call
-        kwargs = {
-            "provider": provider,
-            "base_url": base_url
-        }
-
-        # Handle API key based on provider, providing default from environment if not explicitly given
-        if provider == "openai" and not api_key:
-            kwargs["api_key"] = os.getenv("OPENAI_API_KEY", "")
-        elif provider == "google" and not api_key:
-            kwargs["api_key"] = os.getenv("GOOGLE_API_KEY", "")
-        else:
-            kwargs["api_key"] = api_key # Use provided api_key if available or for other providers
-
-        models = await ai_service.list_available_models(**kwargs)
+        provider = config.get("provider") or "openai"
+        base_url = config.get("base_url") or config.get(f"{provider}_base_url")
+        # Resolve API key: provider-specific key wins, then generic, then env
+        api_key = (
+            config.get(f"{provider}_api_key")
+            or config.get("api_key")
+            or os.getenv(f"{provider.upper()}_API_KEY", "")
+            or os.getenv("GOOGLE_API_KEY", "") if provider == "gemini" else ""
+        )
+        models = await ai_service.list_available_models(
+            provider=provider, api_key=api_key, base_url=base_url
+        )
         return {"models": models}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/linkedin/sync")
 async def sync_linkedin_connections(request: LinkedInSyncRequest, user_id: int = Depends(get_current_user_id)):

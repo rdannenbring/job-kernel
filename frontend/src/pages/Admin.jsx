@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import CustomDropdown from '../components/CustomDropdown';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const VITE_API_URL = import.meta.env.VITE_API_URL;
+const API_URL = (VITE_API_URL !== undefined && VITE_API_URL !== null) ? VITE_API_URL : 'http://localhost:8000';
 
 // ── Edit User Modal ───────────────────────────────────────────────────────────
 const EditUserModal = ({ targetUser, currentAdminId, onSave, onCancel }) => {
@@ -103,6 +104,9 @@ const Admin = () => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [editingUser, setEditingUser] = useState(null);
+    const [availableModels, setAvailableModels] = useState([]);
+    const [fetchingModels, setFetchingModels] = useState(false);
+    const [modelFetchError, setModelFetchError] = useState('');
 
     // The initial admin is the user with the lowest ID among all users.
     // We protect them from deletion.
@@ -140,6 +144,28 @@ const Admin = () => {
             if (res.ok) { setMessage('Global configuration saved!'); setTimeout(() => setMessage(''), 3000); }
         } catch (e) { setMessage('Error saving global config'); }
         finally { setLoading(false); }
+    };
+
+    const fetchModels = async () => {
+        setFetchingModels(true);
+        setModelFetchError('');
+        setAvailableModels([]);
+        try {
+            const res = await fetchWithAuth(`${API_URL}/api/fetch-models`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(globalConfig.ai_config || {})
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || 'Failed to fetch models');
+            const models = data.models || [];
+            if (models.length === 0) throw new Error('No models returned — check your API key');
+            setAvailableModels(models);
+        } catch (e) {
+            setModelFetchError(e.message);
+        } finally {
+            setFetchingModels(false);
+        }
     };
 
     const createUser = async (e) => {
@@ -455,10 +481,66 @@ const Admin = () => {
                             onChange={(e) => setGlobalConfig({ ...globalConfig, ai_config: { ...globalConfig.ai_config, [`${currentProvider}_base_url`]: e.target.value } })} />
                     </div>
                     <div className="form-group">
-                        <label className="form-label">Model Name</label>
-                        <input className="form-input" value={globalConfig.ai_config?.[`${currentProvider}_model`] ?? ''}
-                            onChange={(e) => setGlobalConfig({ ...globalConfig, ai_config: { ...globalConfig.ai_config, [`${currentProvider}_model`]: e.target.value } })} />
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                            <label className="form-label" style={{ margin: 0 }}>Model Name</label>
+                            <button
+                                type="button"
+                                onClick={fetchModels}
+                                disabled={fetchingModels}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: '0.35rem',
+                                    background: 'transparent', border: '1px solid var(--border-color)',
+                                    borderRadius: '6px', padding: '3px 10px', cursor: fetchingModels ? 'not-allowed' : 'pointer',
+                                    color: 'var(--text-secondary)', fontSize: '0.78rem', opacity: fetchingModels ? 0.6 : 1,
+                                    transition: 'color 0.15s, border-color 0.15s',
+                                }}
+                                onMouseEnter={e => { if (!fetchingModels) { e.currentTarget.style.color='var(--primary)'; e.currentTarget.style.borderColor='var(--primary)'; }}}
+                                onMouseLeave={e => { e.currentTarget.style.color='var(--text-secondary)'; e.currentTarget.style.borderColor='var(--border-color)'; }}
+                            >
+                                {fetchingModels ? (
+                                    <span style={{ display: 'inline-block', width: '12px', height: '12px', border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                                ) : (
+                                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>cloud_download</span>
+                                )}
+                                {fetchingModels ? 'Loading…' : 'Load from Provider'}
+                            </button>
+                        </div>
+
+                        {modelFetchError && (
+                            <div style={{ marginBottom: '0.5rem', padding: '0.5rem 0.75rem', borderRadius: '6px',
+                                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+                                color: '#f87171', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>error</span>
+                                {modelFetchError}
+                            </div>
+                        )}
+
+                        {availableModels.length > 0 ? (
+                            <>
+                                <CustomDropdown
+                                    value={globalConfig.ai_config?.[`${currentProvider}_model`] ?? ''}
+                                    onChange={(val) => setGlobalConfig({ ...globalConfig, ai_config: { ...globalConfig.ai_config, [`${currentProvider}_model`]: val } })}
+                                    options={availableModels.map(m => ({ value: m, label: m }))}
+                                    placeholder="Select a model…"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setAvailableModels([])}
+                                    style={{ marginTop: '0.4rem', background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.75rem', cursor: 'pointer', padding: 0 }}
+                                >
+                                    ✕ Enter model name manually
+                                </button>
+                            </>
+                        ) : (
+                            <input
+                                className="form-input"
+                                value={globalConfig.ai_config?.[`${currentProvider}_model`] ?? ''}
+                                placeholder="e.g. gemini-2.0-flash or gpt-4o"
+                                onChange={(e) => setGlobalConfig({ ...globalConfig, ai_config: { ...globalConfig.ai_config, [`${currentProvider}_model`]: e.target.value } })}
+                            />
+                        )}
                     </div>
+
                     <div className="form-group">
                         <label className="form-label">API Key</label>
                         <input className="form-input" type="password" value={globalConfig.ai_config?.[`${currentProvider}_api_key`] ?? ''}
