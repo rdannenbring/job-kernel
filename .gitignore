@@ -15,10 +15,13 @@ dist/
 .cache/
 *.log
 
-# Environment variables
+# Environment variables — NEVER commit these
 .env
-.env.local
+.env.*
+!.env.example
 backend/.env
+backend/.env.*
+!backend/.env.example
 
 # Uploads and temporary files
 backend/uploads/*
@@ -40,9 +43,11 @@ Thumbs.db
 build/
 *.egg-info/
 
-# Secrets / local config — never commit these
+# Secrets / local config — NEVER commit these
 backend/config.json
 backend/*.db
+backend/*.db.backup-*
+*.db.backup-*
 
 # Temporary and debug files
 *.xml
