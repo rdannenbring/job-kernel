@@ -1,54 +1,78 @@
-version: '3.8'
+version: '3.9'
+
+# ── JobApplicationAutomator — Production Docker Compose ───────────────────────
+#
+# Quick start:
+#   1. cp backend/.env.example backend/.env  && edit it
+#   2. cp .env.example .env                  && edit it (ports, etc.)
+#   3. docker compose up -d --build
+#   4. Open http://localhost
+#
+# PostgreSQL (optional):
+#   docker compose --profile postgres up -d --build
+#
+# Development (hot-reload):
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 services:
-  db:
-    image: postgres:15-alpine
-    restart: always
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: jobapp_db
-    ports:
-      - "${DB_PORT:-5432}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
 
+  # ── Backend (FastAPI) ───────────────────────────────────────────────────────
   backend:
-    build: 
+    build:
       context: ./backend
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    restart: always
-    ports:
-      - "${BACKEND_PORT:-8000}:8000"
+    restart: unless-stopped
+    # Port is NOT exposed publicly — Nginx proxies /api/* to this service.
+    # To expose for local debugging, use docker-compose.dev.yml override.
+    expose:
+      - "8000"
+    env_file:
+      - ./backend/.env
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/jobapp_db
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # SQLite stored in the named volume (default).
+      # Switch to Postgres by setting DATABASE_URL in the root .env.
+      - DATABASE_URL=${DATABASE_URL:-sqlite:////data/applications.db}
+      - DOCUMENTS_STORAGE_PATH=/data
+      # Required for OnlyOffice callbacks — must be reachable from the
+      # OnlyOffice container via the internal Docker network.
+      - BACKEND_INTERNAL_URL=${BACKEND_INTERNAL_URL:-http://backend:8000}
     volumes:
-      - ./backend:/app  # Hot reload logic support if uvicorn --reload used (optional)
-      - ./backend/outputs:/app/outputs
-      - ./backend/uploads:/app/uploads
-      # Mount local resume folder so container can see it
-      - /home/rdannenbring/Documents/Rob/Job Search:/mnt/resume
+      - app_data:/data
+      # Optional: mount a local documents folder (configure in root .env)
+      # - ${DOCUMENTS_HOST_PATH}:/mnt/documents:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+        required: false  # Only required when using --profile postgres
 
+  # ── Frontend (Nginx + React) ────────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
-    restart: always
+      dockerfile: Dockerfile.prod
+      args:
+        # Leave VITE_API_URL empty — Nginx proxies /api/* to the backend,
+        # so the frontend uses relative URLs and needs no explicit host.
+        VITE_API_URL: ${VITE_API_URL:-}
+        # OnlyOffice must be reachable from the USER'S BROWSER.
+        # Set this to your server's IP/domain if not running locally.
+        VITE_ONLYOFFICE_URL: ${VITE_ONLYOFFICE_URL:-http://localhost:8443}
+    restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT:-5173}:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+      - "${FRONTEND_PORT:-80}:80"
     depends_on:
       - backend
 
+  # ── OnlyOffice Document Server ──────────────────────────────────────────────
+  # Used for in-browser resume editing. Must be accessible from the browser.
   onlyoffice:
     image: onlyoffice/documentserver:latest
-    restart: always
+    restart: unless-stopped
     ports:
       - "${ONLYOFFICE_PORT:-8443}:80"
     environment:
@@ -58,6 +82,27 @@ services:
     volumes:
       - onlyoffice_data:/var/lib/onlyoffice
 
+  # ── PostgreSQL (optional) ───────────────────────────────────────────────────
+  # Activate with: docker compose --profile postgres up
+  # Also set DATABASE_URL in the root .env to point to this service.
+  db:
+    image: postgres:16-alpine
+    profiles: ["postgres"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-jobapp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-jobapp_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jobapp}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# ── Named Volumes ─────────────────────────────────────────────────────────────
 volumes:
-  postgres_data:
-  onlyoffice_data:
+  app_data:         # SQLite database, uploads, and generated outputs
+  onlyoffice_data:  # OnlyOffice document server state
+  postgres_data:    # PostgreSQL data (only used with --profile postgres)

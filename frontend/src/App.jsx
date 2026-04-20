@@ -9,6 +9,10 @@ import Settings from './pages/Settings'
 import Profile from './pages/Profile'
 import ApplicationLifecycle from './pages/ApplicationLifecycle'
 import MobileCapture from './pages/MobileCapture'
+import Auth from './pages/Auth'
+import Admin from './pages/Admin'
+import Account from './pages/Account'
+import { useAuth } from './context/AuthContext'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -22,6 +26,8 @@ const SCREEN_TO_HASH = {
   profile: '#profile',
   lifecycle: '#lifecycle',
   capture: '#capture',
+  admin: '#admin',
+  account: '#account',
 };
 const HASH_TO_SCREEN = Object.fromEntries(
   Object.entries(SCREEN_TO_HASH).map(([k, v]) => [v, k])
@@ -32,6 +38,7 @@ function hashToScreen(hash) {
 }
 
 function App() {
+  const { user, token, loading: authLoading, logout, fetchWithAuth } = useAuth();
   const [currentScreen, setCurrentScreenState] = useState(() => {
     // Initialize from URL hash so a direct link/refresh lands on the right screen
     return hashToScreen(window.location.hash) || 'dashboard';
@@ -39,6 +46,7 @@ function App() {
   const [selectedApp, setSelectedApp] = useState(null);
   const [apps, setApps] = useState([]);
   const [uiConfigTheme, setUiConfigTheme] = useState('system');
+
 
   // Profile dirty-state ref — Profile.jsx sets window.__profileIsDirty = true/false
   const isDirtyRef = useRef(false);
@@ -90,8 +98,9 @@ function App() {
 
   // Load applications on mount or when returning to dashboard
   const loadApplications = async () => {
+    if (!token) return;
     try {
-      const res = await fetch(`${API_URL}/api/applications`)
+      const res = await fetchWithAuth(`${API_URL}/api/applications`)
       const data = await res.json()
       setApps(data)
     } catch (e) {
@@ -100,10 +109,11 @@ function App() {
   }
 
   useEffect(() => {
+    if (!token) return;
     loadApplications()
 
     // Fetch config to apply UI settings
-    fetch(`${API_URL}/api/config`)
+    fetchWithAuth(`${API_URL}/api/config`)
       .then(res => res.json())
       .then(data => {
         if (data.ui_config) {
@@ -140,7 +150,7 @@ function App() {
       const id = parseInt(viewAppId);
       
       // We need to fetch the app specifically if it's not already in state
-      fetch(`${API_URL}/api/applications/${id}`)
+      fetchWithAuth(`${API_URL}/api/applications/${id}`)
         .then(res => {
           if (!res.ok) throw new Error("App not found");
           return res.json();
@@ -241,7 +251,7 @@ function App() {
     handleAppUpdate(appId, updates);
 
     try {
-      const res = await fetch(`${API_URL}/api/applications/${appId}`, {
+      const res = await fetchWithAuth(`${API_URL}/api/applications/${appId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -282,7 +292,7 @@ function App() {
     // Persist to backend
     try {
       // First get current config
-      const res = await fetch(`${API_URL}/api/config`);
+      const res = await fetchWithAuth(`${API_URL}/api/config`);
       const config = await res.json();
       
       // Update only ui_config.theme
@@ -291,7 +301,7 @@ function App() {
         theme: newTheme
       };
       
-      await fetch(`${API_URL}/api/config`, {
+      await fetchWithAuth(`${API_URL}/api/config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
@@ -367,9 +377,13 @@ function App() {
       case 'analytics':
         return <Analytics setScreen={setScreen} />
       case 'settings':
-        return <Settings theme={uiConfigTheme} onThemeChange={setUiConfigTheme} />
+        return <Settings theme={uiConfigTheme} onThemeChange={setUiConfigTheme} setScreen={setScreen} />
       case 'profile':
         return <Profile />
+      case 'admin':
+        return <Admin />
+      case 'account':
+        return <Account setScreen={setScreen} />
       default:
         return <Dashboard apps={apps} onStartNew={handleStartNew} onViewApp={handleViewApp} onStatusUpdate={handleStatusUpdate} onUpdate={handleAppUpdate} />
     }
@@ -377,6 +391,21 @@ function App() {
 
   // Hide sidebar on capture screen (mobile-first)
   const showSidebar = currentScreen !== 'capture';
+
+  if (authLoading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: '40px', height: '40px', border: '3px solid var(--bg-tertiary)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }} />
+          <p>Initializing Secure Session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Auth />;
+  }
 
   return (
     <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
@@ -387,6 +416,8 @@ function App() {
           setScreen={setScreen} 
           theme={uiConfigTheme} 
           onThemeToggle={handleThemeToggle} 
+          user={user}
+          onLogout={logout}
         />
       )}
 

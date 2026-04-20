@@ -1,0 +1,32 @@
+# ── Development Override ───────────────────────────────────────────────────────
+# Use this to run in hot-reload development mode:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# This override:
+#   - Exposes the backend port (8000) for direct API access / debugging
+#   - Mounts source code for hot-reload (backend)
+#   - Replaces the production frontend with the Vite dev server
+
+services:
+
+  backend:
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"   # Expose for direct access in dev
+    volumes:
+      - ./backend:/app                  # Hot reload
+      - app_data:/data
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile            # Use the dev Dockerfile (Vite dev server)
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+      - VITE_ONLYOFFICE_URL=${VITE_ONLYOFFICE_URL:-http://localhost:8443}
+    command: ["npm", "run", "dev", "--", "--host"]

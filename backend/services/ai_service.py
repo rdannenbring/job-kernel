@@ -2,7 +2,7 @@ import os
 from openai import OpenAI
 import anthropic
 import google.generativeai as genai
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import json
 import logging
 import re
@@ -68,7 +68,7 @@ CRITICAL INSTRUCTIONS - MUST FOLLOW EXACTLY:
 9. Add relevant keywords from the job description naturally into existing bullet points
 10. Do NOT add new bullet points or sections
 11. Do NOT remove bullet points or sections
-12. **NO EMBELLISHMENT OR FABRICATION**: You MUST NOT hallucinate, invent, or fabricate any skills, experiences, metrics, or technologies that are not explicitly present in the ORIGINAL RESUME CONTENT or the ADDITIONAL CONTEXT DOCUMENTS. Your rewording must be strictly grounded in the actual data provided.
+12. **NO EMBELLISHMENT OR FABRICATION**: You MUST NOT hallucinate, invent, or fabricate any skills, experiences, metrics, or achievements that are not explicitly present in the ORIGINAL RESUME CONTENT or the ADDITIONAL CONTEXT DOCUMENTS. Your rewording must be strictly grounded in the actual data provided.
 13. **URL FORMATTING**: If any web addresses are included (e.g., in Projects or Summary), CLEAN them by removing "http://", "https://", and "www." prefixes.
 14. **PRESERVE ALL FORMATTING AND MARKUP**: You MUST keep all markdown syntax and formatting markers that were present in the original exactly as they were. Do not strip markdown formatting. Be precise in replacing ONLY the words/text content and NEVER the markup, structure, spacing, or special characters.
 
@@ -242,17 +242,21 @@ Return a JSON object with this EXACT structure:
 }
 
 class AIService:
-    """Service for AI-powered resume tailoring using OpenAI."""
+    """Service for AI-powered resume tailoring using OpenAI, Anthropic, and Gemini."""
     
     def __init__(self):
         self.client = None
         self.anthropic_client = None
         self.gemini_model = None
+        self.provider = "openai"
         self.model_name = "gpt-4o-mini"
+        self.prompts = DEFAULT_PROMPTS.copy()
         self.load_config()
 
-    def get_prompt(self, key: str) -> str:
-        """Get a prompt by key, falling back to default."""
+    def get_prompt(self, key: str, config: dict = None) -> str:
+        """Get a prompt by key, falling back to user config or global defaults."""
+        if config and "prompts" in config:
+            return config["prompts"].get(key, self.prompts.get(key, DEFAULT_PROMPTS.get(key, "")))
         return self.prompts.get(key, DEFAULT_PROMPTS.get(key, ""))
 
     def _has_active_client(self) -> bool:
@@ -263,9 +267,7 @@ class AIService:
         """Remove http://, https://, and www. from URLs."""
         if not isinstance(text, str):
             return text
-        # Remove protocol
         text = re.sub(r'https?://', '', text)
-        # Remove www.
         text = re.sub(r'\bwww\.', '', text)
         return text
 
@@ -275,55 +277,38 @@ class AIService:
             return {}
             
         content = content.strip()
-        
-        # Remove markdown code formatting
         if content.startswith("```"):
-            # Find the end of the first line (e.g., ```json)
             first_newline_idx = content.find("\n")
             if first_newline_idx != -1:
                 content = content[first_newline_idx+1:]
             else:
-                content = content[3:]  # just remove ```
-                
-            # Remove trailing ```
+                content = content[3:]
             if content.endswith("```"):
                 content = content[:-3]
                 
         content = content.strip()
-        
-        # Try finding the first { or [ and last } or ]
         try:
-            # strict=False allows control characters (like literal newlines) in strings
             return json.loads(content, strict=False)
         except json.JSONDecodeError as e:
-            # Attempt to fix common AI-isms
-            # 1. Replace True/False/None with true/false/null
             content_fixed = re.sub(r'\bTrue\b', 'true', content)
             content_fixed = re.sub(r'\bFalse\b', 'false', content_fixed)
             content_fixed = re.sub(r'\bNone\b', 'null', content_fixed)
-            
-            # 2. Fix missing commas between fields (e.g. "field": "val" \n "next": "val")
-            # This regex looks for double quotes followed by a colon, preceded by a closing quote/bracket on a previous line
             content_fixed = re.sub(r'("|\d|true|false|null|\]|\})\s*\n\s*"', r'\1,\n"', content_fixed)
-
-            # Fallback for weird formatting (e.g. text before/after JSON)
             match = re.search(r'(\{.*\}|\[.*\])', content_fixed, re.DOTALL)
             if match:
                 json_part = match.group(1)
                 try:
                     return json.loads(json_part, strict=False)
                 except:
-                    # Final attempt: try to fix common issues like trailing commas
                     cleaned_json = re.sub(r',\s*([}\]])', r'\1', json_part)
                     try:
                         return json.loads(cleaned_json, strict=False)
                     except:
                         pass
-            # Re-raise original exception if nothing worked
             raise e
 
     def load_config(self):
-        """Load configuration from config.json and initialize AI clients."""
+        """Load configuration from config.json and initialize default global clients."""
         config_path = "config.json"
         config = {}
         if os.path.exists(config_path):
@@ -333,46 +318,31 @@ class AIService:
                 except:
                     pass
         
-        # Load Prompts
         self.prompts = config.get("prompts", DEFAULT_PROMPTS.copy())
-        # Ensure all default keys exist and are NOT empty strings
         for k, v in DEFAULT_PROMPTS.items():
             if k not in self.prompts or not self.prompts[k].strip():
                 self.prompts[k] = v
         
-        # AI Config
         ai_config = config.get("ai_config", {})
         self.provider = ai_config.get("provider", "openai") 
-        # Providers: openai, anthropic, gemini, local, openrouter, azure, deepseek, mistral, etc (via openai-compat)
-        
-        self.model_name = ai_config.get("model", "gpt-4o-mini")
-        
-        api_key = ai_config.get("api_key") or os.getenv(f"{self.provider.upper()}_API_KEY")
-        base_url = ai_config.get("base_url")
+        self.model_name = ai_config.get(f"{self.provider}_model") or ai_config.get("model", "gpt-4o-mini")
+        api_key = ai_config.get(f"{self.provider}_api_key") or ai_config.get("api_key") or os.getenv(f"{self.provider.upper()}_API_KEY")
+        base_url = ai_config.get(f"{self.provider}_base_url") or ai_config.get("base_url") or os.getenv(f"{self.provider.upper()}_API_BASE")
 
-        # 1. OpenAI / Compatible (Local, OpenRouter, Azure, DeepSeek, Mistral, Groq)
-        if self.provider in ["openai", "local", "openrouter", "deepseek", "mistral", "azure", "groq", "meta", "alibaba"]:
-            kwargs = {}
-            if api_key: kwargs["api_key"] = api_key
-            else: kwargs["api_key"] = "dummy" # Local might not need it
-            
+        if self.provider in ["openai", "local", "openrouter", "deepseek", "mistral", "azure", "groq", "meta", "alibaba", "ollama"]:
+            kwargs = {"api_key": api_key or "dummy"}
             if base_url: kwargs["base_url"] = base_url
             elif self.provider == "openrouter": kwargs["base_url"] = "https://openrouter.ai/api/v1"
             elif self.provider == "deepseek": kwargs["base_url"] = "https://api.deepseek.com"
             elif self.provider == "mistral": kwargs["base_url"] = "https://api.mistral.ai/v1"
-            
-            # Default to env var if official OpenAI
             if self.provider == "openai" and not api_key:
                 kwargs["api_key"] = os.getenv("OPENAI_API_KEY")
-
             try:
                 self.client = OpenAI(**kwargs)
                 print(f"✅ AI Initialized: {self.provider} ({self.model_name})")
             except Exception as e:
-                print(f"❌ Error init OpenAI-compat client: {e}")
+                print(f"❌ Error init OpenAI client: {e}")
                 self.client = None
-
-        # 2. Anthropic
         elif self.provider == "anthropic":
             if not api_key: api_key = os.getenv("ANTHROPIC_API_KEY")
             try:
@@ -380,8 +350,6 @@ class AIService:
                 print(f"✅ AI Initialized: Anthropic ({self.model_name})")
             except Exception as e:
                 print(f"❌ Error init Anthropic: {e}")
-
-        # 3. Google Gemini
         elif self.provider == "gemini":
             if not api_key: api_key = os.getenv("GOOGLE_API_KEY")
             try:
@@ -391,126 +359,111 @@ class AIService:
             except Exception as e:
                 print(f"❌ Error init Gemini: {e}")
 
-    async def execute_ai_request(self, system_prompt: str, user_prompt: str, response_format="json_object", temperature=0.7) -> str:
-        """Unified executor for all AI providers."""
-        try:
-            # --- OpenAI Compatible ---
-            if self.client:
-                # Certain models (like o1, o3, gpt-5) don't support temperature settings other than 1
-                # We omit temperature for these to avoid errors
-                is_reasoning_model = any(x in self.model_name.lower() for x in ["o1", "o3", "gpt-5"])
-                
+    async def execute_ai_request(self, system_prompt: str, user_prompt: str, response_format: str = "text", temperature: float = 0.7, config: dict = None) -> str:
+        """Unified executor for all AI providers, supports per-call config."""
+        provider = self.provider
+        model_name = self.model_name
+        api_key = None
+        base_url = None
+        
+        if config and "ai_config" in config:
+            ai_config = config["ai_config"]
+            provider = ai_config.get("provider", provider)
+            model_name = ai_config.get(f"{provider}_model") or ai_config.get("model", model_name)
+            api_key = ai_config.get(f"{provider}_api_key") or ai_config.get("api_key") or os.getenv(f"{provider.upper()}_API_KEY")
+            base_url = ai_config.get(f"{provider}_base_url") or ai_config.get("base_url") or os.getenv(f"{provider.upper()}_API_BASE")
+            
+            if provider in ["openai", "local", "openrouter", "deepseek", "mistral", "azure", "groq", "meta", "alibaba", "ollama"]:
+                temp_client = OpenAI(api_key=api_key or "dummy", base_url=base_url)
+                if provider == "openrouter" and not base_url:
+                    temp_client.base_url = "https://openrouter.ai/api/v1"
+                is_reasoning_model = any(x in model_name.lower() for x in ["o1", "o3", "gpt-5"])
                 request_kwargs = {
-                    "model": self.model_name,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    "response_format": {"type": "json_object"} if response_format == "json_object" and self.provider in ["openai", "openrouter", "deepseek"] else None,
+                    "model": model_name,
+                    "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+                    "response_format": {"type": "json_object"} if response_format == "json_object" else None,
                 }
-                
-                if not is_reasoning_model:
-                    request_kwargs["temperature"] = temperature
-
-                raw_response = self.client.chat.completions.create(**request_kwargs)
-                content = raw_response.choices[0].message.content
-                return content
-
-            # --- Anthropic ---
-            elif self.anthropic_client:
-                # Claude handles system prompt separately
-                message = self.anthropic_client.messages.create(
-                    model=self.model_name,
-                    max_tokens=4096,
-                    temperature=temperature,
-                    system=system_prompt,
-                    messages=[
-                        {"role": "user", "content": user_prompt}
-                    ]
-                )
-                return message.content[0].text
-
-            # --- Google Gemini ---
-            elif self.gemini_model:
-                # Google GenAI setup
-                # Note: System instructions are configured at model init usually, but we can prepend to prompt
-                full_prompt = f"System Instruction: {system_prompt}\n\nUser Request: {user_prompt}"
-                
-                # Gemini JSON mode (for newer models)
-                generation_config = genai.types.GenerationConfig(
-                    temperature=temperature,
-                    response_mime_type="application/json" if response_format == "json_object" else "text/plain"
-                )
-                
-                response = self.gemini_model.generate_content(
-                    full_prompt,
-                    generation_config=generation_config
+                if not is_reasoning_model: request_kwargs["temperature"] = temperature
+                response = temp_client.chat.completions.create(**request_kwargs)
+                return response.choices[0].message.content
+            elif provider == "gemini":
+                if api_key: genai.configure(api_key=api_key)
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(
+                    f"{system_prompt}\n\n{user_prompt}",
+                    generation_config=genai.types.GenerationConfig(
+                        temperature=temperature,
+                        response_mime_type="application/json" if response_format == "json_object" else "text/plain"
+                    )
                 )
                 return response.text
-                
-            else:
-                raise Exception("No AI client initialized for current provider.")
+            elif provider == "anthropic":
+                temp_client = anthropic.Anthropic(api_key=api_key)
+                response = temp_client.messages.create(
+                    model=model_name, max_tokens=4096, system=system_prompt,
+                    messages=[{"role": "user", "content": user_prompt}], temperature=temperature
+                )
+                return response.content[0].text
 
-        except Exception as e:
-            raise Exception(f"AI Provider Error ({self.provider}): {str(e)}")
-
-    
-    async def analyze_job_description(self, job_description: str) -> Dict[str, Any]:
-        """
-        Analyze a job description to extract key requirements, skills, and metadata.
-        """
         if not self._has_active_client():
-            return {
-                "error": "AI client not initialized",
-                "skills": [],
-                "keywords": [],
-                "requirements": [],
-                "metadata": {}
-            }
-        
+            return "AI provider not configured"
+            
+        try:
+            if self.provider in ["openai", "local", "openrouter", "deepseek", "mistral", "azure", "groq", "meta", "alibaba", "ollama"]:
+                is_reasoning_model = any(x in self.model_name.lower() for x in ["o1", "o3", "gpt-5"])
+                request_kwargs = {
+                    "model": self.model_name,
+                    "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+                    "response_format": {"type": "json_object"} if response_format == "json_object" else None,
+                }
+                if not is_reasoning_model: request_kwargs["temperature"] = temperature
+                response = self.client.chat.completions.create(**request_kwargs)
+                return response.choices[0].message.content
+            elif self.provider == "anthropic":
+                response = self.anthropic_client.messages.create(
+                    model=self.model_name, max_tokens=4096, system=system_prompt,
+                    messages=[{"role": "user", "content": user_prompt}], temperature=temperature
+                )
+                return response.content[0].text
+            elif self.provider == "gemini":
+                response = self.gemini_model.generate_content(
+                    f"{system_prompt}\n\n{user_prompt}",
+                    generation_config=genai.types.GenerationConfig(
+                        temperature=temperature,
+                        response_mime_type="application/json" if response_format == "json_object" else "text/plain"
+                    )
+                )
+                return response.text
+        except Exception as e:
+            return f"Error: {str(e)}"
+        return "Unsupported AI provider"
+
+    async def analyze_job_description(self, job_description: str, config: dict = None) -> Dict[str, Any]:
+        """Analyze a job description using optional per-user config."""
         current_date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        prompt_template = self.get_prompt("analyze_job")
+        prompt_template = self.get_prompt("analyze_job", config)
         prompt = prompt_template.format(job_description=job_description, current_date=current_date_str)
-        
-        
         try:
             content = await self.execute_ai_request(
-                system_prompt="You are an expert job market analyst. Extract structured data from job descriptions.",
-                user_prompt=prompt,
-                response_format="json_object",
-                temperature=0.3
+                system_prompt="You are an expert job market analyst.",
+                user_prompt=prompt, response_format="json_object", temperature=0.3, config=config
             )
-            analysis = self._parse_json_response(content)
-            return analysis
-            
+            return self._parse_json_response(content)
         except Exception as e:
             print(f"Error analyzing job description: {e}")
-            raise e
-    
-    async def tailor_resume(self, resume_data: Dict[str, Any], job_description: str, additional_context: str = "", instructions: str = "") -> Dict[str, Any]:
-        """
-        Tailor a resume based on job description while maintaining formatting.
-        Includes additional context and custom instructions if provided.
-        """
-        if not self._has_active_client():
-            # Return original resume if no AI available
-            return resume_data
-        
-        # First, analyze the job
-        job_analysis = await self.analyze_job_description(job_description)
-        
-        # Save original contact info to protect it
+            return {"error": str(e), "skills": [], "keywords": [], "metadata": {}}
+
+    async def tailor_resume(self, resume_data: Dict[str, Any], job_description: str, additional_context: str = "", instructions: str = "", config: dict = None) -> Dict[str, Any]:
+        """Tailor a resume based on job description using optional per-user config."""
+        job_analysis = await self.analyze_job_description(job_description, config)
         full_text_original = resume_data.get("full_text", [])
         contact_header = full_text_original[:4] if len(full_text_original) > 4 else []
-            
-        prompt_template = self.get_prompt("tailor_resume")
+        prompt_template = self.get_prompt("tailor_resume", config)
         
-        # Build context string
         additional_context_instr = ""
         if additional_context:
-            additional_context_instr = f"\n\nADDITIONAL CONTEXT DOCUMENTS:\n{additional_context}\n\nINSTRUCTION: Use the above context documents to find more detailed project info, specific metrics, or achievements that might not be in the base resume but are relevant to the job. Use this to enhance the tailored bullet points."
+            additional_context_instr = f"\n\nADDITIONAL CONTEXT DOCUMENTS:\n{additional_context}\n\nINSTRUCTION: Use context to enhance bullet points."
 
-        # Ensure we pass the entire resume_data
         prompt = prompt_template.format(
             resume_data=json.dumps(resume_data, indent=2),
             job_description=job_description,
@@ -519,362 +472,113 @@ class AIService:
             additional_context_instr=additional_context_instr,
             instructions=f"\n\nCUSTOM USER INSTRUCTIONS:\n{instructions}\n" if instructions else ""
         )
-        
         try:
             content = await self.execute_ai_request(
-                system_prompt="You are an expert resume writer who tailors resumes while maintaining authenticity and structure.",
-                user_prompt=prompt,
-                response_format="json_object",
-                temperature=0.5
+                system_prompt="You are an expert resume writer.",
+                user_prompt=prompt, response_format="json_object", temperature=0.5, config=config
             )
-             
             tailored_resume = self._parse_json_response(content)
+            if "metadata" in job_analysis: tailored_resume["job_metadata"] = job_analysis["metadata"]
             
-            # ATTACH METADATA
-            if "metadata" in job_analysis:
-                tailored_resume["job_metadata"] = job_analysis["metadata"]
-            
-            # Basic validation: ensure full_text exists
-            if "full_text" not in tailored_resume:
-                print("⚠️ AI forgot full_text in tailor_resume, reconstructing...")
-                reconstructed_full_text = []
-                for section in tailored_resume.get("sections", []):
-                    if section.get("title") and section.get("type") != "table":
-                        reconstructed_full_text.append(section["title"])
-                    for item in section.get("content", []):
-                        if item:
-                            reconstructed_full_text.append(str(item))
-                tailored_resume["full_text"] = reconstructed_full_text
-
-            # RECOMBINE: Restore the protected contact info to the beginning of full_text
             tailored_body = tailored_resume.get("full_text", [])
-            
-            # First clean URLs in the AI generated parts
             cleaned_tailored_body = [self._clean_urls(t) for t in tailored_body]
-            
             if contact_header and len(cleaned_tailored_body) >= len(contact_header):
-                # Check for item count mismatch
-                if len(cleaned_tailored_body) != len(full_text_original):
-                    print(f"⚠️ Warning: AI returned {len(cleaned_tailored_body)} items, expected {len(full_text_original)}")
-                
-                # Overwrite the first 4 items to protect them EXACTLY as they were
-                for i in range(len(contact_header)):
-                    cleaned_tailored_body[i] = contact_header[i]
-            
+                for i in range(len(contact_header)): cleaned_tailored_body[i] = contact_header[i]
             tailored_resume["full_text"] = cleaned_tailored_body
-
-                
             return tailored_resume
-            
         except Exception as e:
             print(f"Error tailoring resume: {e}")
-            raise e
-
-    async def refine_resume(self, resume_data: Dict[str, Any], refinement_instructions: str, additional_context: str = "") -> Dict[str, Any]:
-        """
-        Refine an existing resume revision based on user instructions.
-        """
-        if not self._has_active_client():
             return resume_data
-            
-        prompt_template = self.get_prompt("refine_resume")
-        
-        additional_context_instr = ""
-        if additional_context:
-            additional_context_instr = f"\nADDITIONAL CONTEXT DOCUMENTS:\n{additional_context}\n"
 
+    async def refine_resume(self, resume_data: Dict[str, Any], refinement_instructions: str, additional_context: str = "", config: dict = None) -> Dict[str, Any]:
+        """Refine a resume using optional per-user config."""
+        prompt_template = self.get_prompt("refine_resume", config)
+        additional_context_instr = f"\nADDITIONAL CONTEXT DOCUMENTS:\n{additional_context}\n" if additional_context else ""
         prompt = prompt_template.format(
             resume_data=json.dumps(resume_data, indent=2),
             instructions=refinement_instructions,
             additional_context_instr=additional_context_instr
         )
-        
         try:
             content = await self.execute_ai_request(
                 system_prompt="You are a helpful resume editor.",
-                user_prompt=prompt,
-                response_format="json_object",
-                temperature=0.4
+                user_prompt=prompt, response_format="json_object", temperature=0.4, config=config
             )
-            
             refined_resume = self._parse_json_response(content)
-            
-            # Basic validation
-            if "full_text" not in refined_resume:
-                # Attempt to reconstruct full_text if AI forgot it
-                print("⚠️ AI forgot full_text, reconstructing...")
-                full_text = []
-                for section in refined_resume.get("sections", []):
-                    if section.get("title"): full_text.append(section["title"])
-                    full_text.extend(section.get("content", []))
-                refined_resume["full_text"] = full_text
-            
-            # Clean URLs in the refined content
             if "full_text" in refined_resume:
                 refined_resume["full_text"] = [self._clean_urls(t) for t in refined_resume["full_text"]]
-            
             return refined_resume
-            
         except Exception as e:
             print(f"Error refining resume: {e}")
-            resume_data["change_summary"] = [f"Error: {str(e)}"]
             return resume_data
 
-    async def extract_profile_data(self, resume_text: str) -> Dict[str, Any]:
-        """Extract structured profile data (contact, skills, experience, education) from resume text."""
-        if not self._has_active_client():
-            return {}
-            
-        prompt_template = self.get_prompt("extract_profile")
+    async def extract_profile_data(self, resume_text: str, config: dict = None) -> Dict[str, Any]:
+        """Extract profile data using optional per-user config."""
+        prompt_template = self.get_prompt("extract_profile", config)
         prompt = prompt_template.format(resume_text=resume_text[:10000])
-        
         try:
             content = await self.execute_ai_request(
-                system_prompt="You are a data extraction assistant. Extract structured profile data.",
-                user_prompt=prompt,
-                response_format="json_object",
-                temperature=0.1
+                system_prompt="You are a data extraction assistant.",
+                user_prompt=prompt, response_format="json_object", temperature=0.1, config=config
             )
             data = self._parse_json_response(content)
-            
-            # Flatten for easier frontend consumption?
-            # Actually, let's keep it structured but merged by caller or flatten here.
-            # The backend expects a flat profile object with "skills", "experiences", "educations" as keys
-            
             flat_profile = data.get("contact_info", {})
-            flat_profile["skills"] = data.get("skills", [])
-            flat_profile["experiences"] = data.get("experiences", [])
-            flat_profile["educations"] = data.get("educations", [])
-            flat_profile["certificates"] = data.get("certificates", [])
-            flat_profile["other"] = data.get("other", [])
-            
-            # Clean URLs
+            for key in ["skills", "experiences", "educations", "certificates", "other"]:
+                flat_profile[key] = data.get(key, [])
             for url_key in ["linkedin_url", "github_url", "website_url"]:
-                if flat_profile.get(url_key):
-                    flat_profile[url_key] = self._clean_urls(flat_profile[url_key])
-            
+                if flat_profile.get(url_key): flat_profile[url_key] = self._clean_urls(flat_profile[url_key])
             return flat_profile
-            
         except Exception as e:
             print(f"Error extracting profile data: {e}")
             return {}
 
-    async def score_job_match(self, resume_text: str, job_description: str, additional_context: str = "") -> Dict[str, Any]:
-        """Assess the match between resume and job description, returning a score and coaching plan."""
-        if not self._has_active_client():
-            return {
-                "overall_score": 0,
-                "criteria_scores": {},
-                "coaching_plan": ["AI Client not initialized."]
-            }
-
+    async def score_job_match(self, resume_text: str, job_description: str, additional_context: str = "", config: dict = None) -> Dict[str, Any]:
+        """Score job match using optional per-user config."""
         current_date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        prompt_template = self.get_prompt("score_job_match")
-        
-        additional_context_instr = ""
-        if additional_context:
-            additional_context_instr = f"\n\nADDITIONAL CONTEXT DOCUMENTS:\n{additional_context}\n\nINSTRUCTION: Use these extra context documents to find more detailed information that might make the candidate a better fit."
-
+        prompt_template = self.get_prompt("score_job_match", config)
+        additional_context_instr = f"\n\nADDITIONAL CONTEXT:\n{additional_context}" if additional_context else ""
         prompt = prompt_template.format(
-            current_date=current_date_str,
-            resume_text=resume_text[:10000],
-            job_description=job_description[:10000],
-            additional_context_instr=additional_context_instr
+            current_date=current_date_str, resume_text=resume_text[:10000],
+            job_description=job_description[:10000], additional_context_instr=additional_context_instr
         )
-        
         try:
             content = await self.execute_ai_request(
-                system_prompt="You are an expert technical recruiter and career coach.",
-                user_prompt=prompt,
-                response_format="json_object",
-                temperature=0.3
+                system_prompt="You are an expert technical recruiter.",
+                user_prompt=prompt, response_format="json_object", temperature=0.3, config=config
             )
-            analysis = self._parse_json_response(content)
-            return analysis
+            return self._parse_json_response(content)
         except Exception as e:
             print(f"Error scoring job match: {e}")
-            return {
-                "overall_score": 0,
-                "criteria_scores": {},
-                "coaching_plan": [f"Error occurred during scoring: {str(e)}"]
-            }
+            return {"overall_score": 0, "coaching_plan": [str(e)]}
 
-    async def generate_cover_letter(self, resume_text: str, job_description: str, user_profile: Dict[str, Any] = None, additional_context: str = "", instructions: str = "") -> Dict[str, Any]:
-        """
-        Generate a cover letter based on the resume and job description.
-        If user_profile is provided, ensure the header uses that info.
-        Includes additional context and custom instructions if provided.
-        """
-        if not self._has_active_client():
-            return {"content": "AI Client not initialized."}
-
+    async def generate_cover_letter(self, resume_text: str, job_description: str, user_profile: Dict[str, Any] = None, additional_context: str = "", instructions: str = "", config: dict = None) -> Dict[str, Any]:
+        """Generate cover letter using optional per-user config."""
         current_date = datetime.now().strftime("%B %d, %Y")
-
         profile_context = ""
         if user_profile:
-            # Build profile context dynamically to only include available fields
             profile_lines = [f"Name: {user_profile.get('full_name')}"]
-            
-            # Address
-            addr_parts = [
-                user_profile.get('address_line1'), 
-                user_profile.get('address_line2'), 
-                user_profile.get('city'), 
-                user_profile.get('state'), 
-                user_profile.get('zip_code')
-            ]
-            full_addr = ", ".join([p for p in addr_parts if p])
-            if full_addr:
-                profile_lines.append(f"Address: {full_addr}")
-                
-            if user_profile.get('email'): profile_lines.append(f"Email: {user_profile.get('email')}")
-            if user_profile.get('phone_primary'): profile_lines.append(f"Phone: {user_profile.get('phone_primary')}")
-            if user_profile.get('linkedin_url'): profile_lines.append(f"LinkedIn: {user_profile.get('linkedin_url')}")
-            if user_profile.get('website_url'): profile_lines.append(f"Portfolio/Website: {user_profile.get('website_url')}")
-            
+            addr = ", ".join([p for p in [user_profile.get('address_line1'), user_profile.get('city'), user_profile.get('state')] if p])
+            if addr: profile_lines.append(f"Address: {addr}")
+            for k, label in [('email', 'Email'), ('phone_primary', 'Phone'), ('linkedin_url', 'LinkedIn')]:
+                if user_profile.get(k): profile_lines.append(f"{label}: {user_profile.get(k)}")
             profile_context = "\n".join(profile_lines)
 
-        prompt_template = self.get_prompt("generate_cover_letter")
-        
-        # Build context string
-        additional_context_instr = ""
-        if additional_context:
-            additional_context_instr = f"\n\nADDITIONAL CONTEXT DOCUMENTS:\n{additional_context}\n\nINSTRUCTION: Incorporate relevant details, projects, or specific achievements found in these additional context documents to make the cover letter more personalized and demonstrate a stronger fit for the role."
-
+        prompt_template = self.get_prompt("generate_cover_letter", config)
+        additional_context_instr = f"\n\nCONTEXT:\n{additional_context}" if additional_context else ""
         prompt = prompt_template.format(
-            current_date=current_date,
-            profile_context=profile_context,
-            resume_text=resume_text[:4000],
-            job_description=job_description[:4000],
+            current_date=current_date, profile_context=profile_context,
+            resume_text=resume_text[:4000], job_description=job_description[:4000],
             additional_context_instr=additional_context_instr,
-            instructions=f"\n\nCUSTOM USER INSTRUCTIONS:\n{instructions}\n" if instructions else ""
+            instructions=f"\n\nCUSTOM INSTRUCTIONS:\n{instructions}\n" if instructions else ""
         )
-        
         try:
             content = await self.execute_ai_request(
-                system_prompt="You are a helpful expert career coach.",
-                user_prompt=prompt,
-                response_format="json_object",
-                temperature=0.7
+                system_prompt="You are a career coach.",
+                user_prompt=prompt, response_format="json_object", temperature=0.7, config=config
             )
             result = self._parse_json_response(content)
-            if "content" in result:
-                result["content"] = self._clean_urls(result["content"])
+            if "content" in result: result["content"] = self._clean_urls(result["content"])
             return result
-            
         except Exception as e:
             print(f"Error generating cover letter: {e}")
-            return {"content": f"Error generating cover letter: {str(e)}"}
-
-    async def refine_cover_letter(self, current_content: str, instructions: str, additional_context: str = "") -> Dict[str, Any]:
-        """Refine cover letter text based on instructions."""
-        if not self._has_active_client():
-            return {"content": current_content}
-            
-        prompt_template = self.get_prompt("refine_cover_letter")
-
-        additional_context_instr = ""
-        if additional_context:
-            additional_context_instr = f"\nADDITIONAL CONTEXT DOCUMENTS:\n{additional_context}\n"
-
-        prompt = prompt_template.format(
-            current_content=current_content,
-            instructions=instructions,
-            additional_context_instr=additional_context_instr
-        )
-        try:
-            content = await self.execute_ai_request(
-                system_prompt="You are a helpful writing assistant.",
-                user_prompt=prompt,
-                response_format="json_object"
-            )
-            result = self._parse_json_response(content)
-            if "content" in result:
-                result["content"] = self._clean_urls(result["content"])
-            return result
-        except Exception as e:
-            return {"content": current_content}
-
-    async def list_available_models(self, api_key: str, provider: str, base_url: str = None) -> List[str]:
-        """Fetch available models from the provider."""
-        try:
-            # 1. Anthropic (Static List + API verification if possible)
-            if provider == "anthropic":
-                # Anthropic API does not support model listing via endpoint. Return known models.
-                return [
-                    "claude-3-5-sonnet-20240620",
-                    "claude-3-opus-20240229",
-                    "claude-3-sonnet-20240229",
-                    "claude-3-haiku-20240307"
-                ]
-
-            # 2. Google Gemini
-            if provider == "gemini":
-                if not api_key: api_key = os.getenv("GOOGLE_API_KEY")
-                genai.configure(api_key=api_key)
-                
-                # Fetch models that support 'generateContent'
-                models = []
-                for m in genai.list_models():
-                    if 'generateContent' in m.supported_generation_methods:
-                        # strip 'models/' prefix if present
-                        name = m.name.replace("models/", "")
-                        models.append(name)
-                return sorted(models)
-
-            # 3. OpenAI / Compatible (OpenRouter, Olama, LMStudio, etc)
-            kwargs = {}
-            if api_key: 
-                kwargs["api_key"] = api_key
-            elif provider == "openai":
-                kwargs["api_key"] = os.getenv("OPENAI_API_KEY", "")
-                
-            if not kwargs.get("api_key"): kwargs["api_key"] = "dummy"
-            
-            if base_url: kwargs["base_url"] = base_url
-            elif provider == "openrouter": kwargs["base_url"] = "https://openrouter.ai/api/v1"
-            elif provider == "deepseek": kwargs["base_url"] = "https://api.deepseek.com"
-            elif provider == "mistral": kwargs["base_url"] = "https://api.mistral.ai/v1"
-            elif provider == "openai" and not api_key: kwargs["api_key"] = os.getenv("OPENAI_API_KEY", "")
-
-
-            temp_client = OpenAI(**kwargs)
-            response = temp_client.models.list()
-            
-            all_models = [m.id for m in response.data]
-            
-            # Filter for OpenAI/OpenRouter to valid chat models only
-            if provider in ["openai", "openrouter"]:
-                # Exclude obvious non-chat or incompatible models
-                excludes = (
-                    "audio", "realtime", "search", "transcribe", "tts", 
-                    "embedding", "moderation", "dall-e", "whisper", 
-                    "vision", "instruct", "math", "code", "med"
-                )
-                
-                # For OpenAI specifically, we allow more prefixes
-                if provider == "openai":
-                    prefixes = ("gpt", "o1", "o3", "chatgpt")
-                    chat_models = [
-                        m for m in all_models 
-                        if m.startswith(prefixes) 
-                        and not any(x in m for x in excludes)
-                    ]
-                else:
-                    # OpenRouter: harder to filter by prefix, so we filter by exclusion
-                    # and common chat patterns
-                    chat_models = [
-                        m for m in all_models
-                        if not any(x in m.lower() for x in excludes)
-                        and any(x in m.lower() for x in ["chat", "gpt", "claude", "llama", "mistral", "mixtral", "qwen", "phi", "gemini"])
-                    ]
-                
-                print(f"DEBUG: Filtered Chat Models ({len(chat_models)})", flush=True)
-                return sorted(chat_models)
-            
-            return sorted(all_models)
-
-        except Exception as e:
-            logger.error(f"Error fetching models for {provider}: {e}")
-            return []
-
+            return {"content": str(e)}

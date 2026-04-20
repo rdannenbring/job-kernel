@@ -1854,3 +1854,39 @@ window.addEventListener('JOB_KERNEL_APP_UPDATED', (e) => {
     });
   } catch (err) {}
 });
+
+// ─── Authentication Sync ───────────────────────────────────────────────────
+
+/**
+ * JobKernel Auth Sync:
+ * If we are on the JobKernel web app, listen for changes to the 'token' in localStorage
+ * and sync it to chrome.storage.local so the extension sidepanel can use it.
+ */
+if (window.location.hostname === 'localhost' && (window.location.port === '5173' || window.location.port === '3000')) {
+  console.log('[JobKernel] Auth sync active on web app');
+
+  const syncToken = () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      chrome.storage.local.set({ token }, () => {
+        console.log('[JobKernel] Token synced to extension');
+      });
+    } else {
+      chrome.storage.local.remove('token', () => {
+        console.log('[JobKernel] Token cleared from extension');
+      });
+    }
+  };
+
+  // Sync once on load
+  syncToken();
+
+  // Listen for storage events (if changed in another tab)
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'token') syncToken();
+  });
+
+  // Since React might update localStorage without triggering a 'storage' event in the same tab,
+  // we poll occasionally or we could patch localStorage.setItem. Polling is safer.
+  setInterval(syncToken, 2000);
+}

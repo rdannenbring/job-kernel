@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -209,6 +210,7 @@ const ActivityHeatmap = ({ data }) => {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 const Analytics = ({ setScreen }) => {
+  const { fetchWithAuth } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -259,7 +261,7 @@ const Analytics = ({ setScreen }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/analytics`);
+      const res = await fetchWithAuth(`${API_BASE}/api/analytics`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       setData(json);

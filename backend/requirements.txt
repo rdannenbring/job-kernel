@@ -15,5 +15,7 @@ anthropic
 google-generativeai
 requests
 psycopg2-binary
-PyJWT
+python-jose[cryptography]
 httpx
+passlib[bcrypt]
+bcrypt==4.0.1

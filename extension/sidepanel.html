@@ -123,6 +123,33 @@
         </button>
       </div>
 
+      <div id="jobkernel-connection-section" class="linkedin-sync-card" style="margin-bottom: 1.5rem;">
+        <div class="sync-header">
+          <span class="material-symbols-outlined sync-icon">api</span>
+          <div class="sync-info">
+            <span class="sync-title">JobKernel Connection</span>
+            <span class="sync-status" id="connection-status">Configure server URL and API Key</span>
+          </div>
+        </div>
+        <div class="settings-fields" style="padding: 1rem; border-top: 1px solid var(--border-color);">
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label for="setting-jobkernel-app-url">App URL</label>
+            <input type="url" id="setting-jobkernel-app-url" placeholder="http://localhost:5173" />
+          </div>
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label for="setting-jobkernel-api-url">API URL</label>
+            <input type="url" id="setting-jobkernel-api-url" placeholder="http://localhost:8000" />
+          </div>
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label for="setting-jobkernel-api-key">API Key</label>
+            <input type="password" id="setting-jobkernel-api-key" placeholder="Enter API Key" />
+          </div>
+          <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+            <button type="button" id="btn-save-connection" class="btn btn-primary" style="width: 100%;">Save Connection</button>
+          </div>
+        </div>
+      </div>
+
       <div id="linkedin-sync-section" class="linkedin-sync-card">
         <div class="sync-header">
           <span class="material-symbols-outlined sync-icon">group</span>

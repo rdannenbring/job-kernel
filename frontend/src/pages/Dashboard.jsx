@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Dashboard.css';
 import InterestStars from '../components/InterestStars';
+import { useAuth } from '../context/AuthContext';
 
 const DASH_STORAGE_KEY = 'dashboard_state';
 
@@ -11,6 +12,18 @@ const getScoreColors = (score) => {
         border: `hsla(${hue}, 75%, 50%, 0.6)`,
         text: `hsl(${hue}, 75%, 55%)`,
     };
+};
+
+const formatCompensation = (salary, maxLength = 60) => {
+    if (!salary || salary === "Not Listed") return '-';
+    let text = salary.length > maxLength ? salary.substring(0, maxLength - 3) + '...' : salary;
+    // Inject soft hyphens (\u00AD) into long continuous chunks (e.g. >12 chars) to ensure they can break with a hyphen
+    return text.split(' ').map(word => {
+        if (word.length > 12) {
+            return word.match(/.{1,12}/g).join('\u00AD');
+        }
+        return word;
+    }).join(' ');
 };
 
 // Build a score circle badge with above/below-average indicator
@@ -80,6 +93,7 @@ function loadDashState() {
 }
 
 const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) => {
+    const { fetchWithAuth } = useAuth();
     const saved = loadDashState();
     const [viewMode, setViewMode] = useState(saved.viewMode || 'kanban');
     const [draggedOverCol, setDraggedOverCol] = useState(null);
@@ -91,6 +105,8 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
     const [filterInterestLevels, setFilterInterestLevels] = useState(saved.filterInterestLevels || []);
     const [filterRelocation, setFilterRelocation] = useState(saved.filterRelocation || []);
     const [showArchived, setShowArchived] = useState(saved.showArchived || false);
+    const [showAcceptedColumn, setShowAcceptedColumn] = useState(saved.showAcceptedColumn || false);
+    const [showCancelledColumn, setShowCancelledColumn] = useState(saved.showCancelledColumn || false);
     const [profilePrefs, setProfilePrefs] = useState(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef(null);
@@ -110,12 +126,12 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         sessionStorage.setItem(DASH_STORAGE_KEY, JSON.stringify({ 
             viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, 
             filterLocationTypes, filterInterestLevels, filterRelocation, showArchived,
-            filterHasConnections, filterMinScore
+            filterHasConnections, filterMinScore, showAcceptedColumn, showCancelledColumn
         }));
-    }, [viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, filterLocationTypes, filterInterestLevels, filterRelocation, showArchived, filterHasConnections, filterMinScore]);
+    }, [viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, filterLocationTypes, filterInterestLevels, filterRelocation, showArchived, filterHasConnections, filterMinScore, showAcceptedColumn, showCancelledColumn]);
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile`)
+        fetchWithAuth(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile`)
             .then(res => res.json())
             .then(data => {
                 if (data.preferences) {
@@ -139,7 +155,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         const companies = [...new Set(apps.map(a => a.company).filter(Boolean))];
         if (companies.length === 0) return;
 
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/linkedin/matches/batch`, {
+        fetchWithAuth(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/linkedin/matches/batch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(companies)
@@ -170,7 +186,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const KANBAN_COLUMNS = ['Saved', 'Generated', 'Applied', 'Interviewing', 'Rejected', 'Offered', 'Accepted'];
+    const KANBAN_COLUMNS = ['Saved', 'Generated', 'Applied', 'Interviewing', 'Rejected', 'Offered', 'Accepted', 'Withdrawn/Cancelled'];
     const JOB_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship'];
     const LOCATION_TYPES = ['On-site', 'Remote', 'Hybrid'];
     const INTEREST_LEVELS = ['High', 'Medium', 'Low'];
@@ -291,7 +307,13 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         return 0;
     });
 
-    const columnsToShow = filterStatuses.length > 0 ? KANBAN_COLUMNS.filter(c => filterStatuses.includes(c)) : KANBAN_COLUMNS;
+    const columnsToShow = filterStatuses.length > 0 
+        ? KANBAN_COLUMNS.filter(c => filterStatuses.includes(c)) 
+        : KANBAN_COLUMNS.filter(c => {
+            if (c === 'Accepted' && !showAcceptedColumn) return false;
+            if (c === 'Withdrawn/Cancelled' && !showCancelledColumn) return false;
+            return true;
+        });
 
     const appsByColumn = columnsToShow.reduce((acc, col) => {
         acc[col] = processedApps.filter(app => getStatusText(app.status) === col);
@@ -354,7 +376,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
             onUpdate(app.id, { status: newStatus, kanban_order: index });
             
             // Send to backend
-            fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/applications/${app.id}`, {
+            fetchWithAuth(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/applications/${app.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus, kanban_order: index })
@@ -753,6 +775,34 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                         </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {/* Accepted column toggle */}
+                        <button
+                            onClick={() => setShowAcceptedColumn(v => !v)}
+                            title={showAcceptedColumn ? 'Hide Accepted column' : 'Show Accepted column'}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                                showAcceptedColumn
+                                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-300'
+                                    : 'bg-slate-200 dark:bg-white/5 border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:border-slate-400 dark:hover:border-white/20'
+                            }`}
+                        >
+                            <span className="material-symbols-outlined text-[16px]">{showAcceptedColumn ? 'visibility' : 'visibility_off'}</span>
+                            <span className="max-md:hidden">Accepted</span>
+                        </button>
+
+                        {/* Cancelled column toggle */}
+                        <button
+                            onClick={() => setShowCancelledColumn(v => !v)}
+                            title={showCancelledColumn ? 'Hide Declined/Cancelled column' : 'Show Declined/Cancelled column'}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                                showCancelledColumn
+                                    ? 'bg-slate-500/15 border-slate-500/40 text-slate-600 dark:text-slate-300'
+                                    : 'bg-slate-200 dark:bg-white/5 border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:border-slate-400 dark:hover:border-white/20'
+                            }`}
+                        >
+                            <span className="material-symbols-outlined text-[16px]">{showCancelledColumn ? 'visibility' : 'visibility_off'}</span>
+                            <span className="max-md:hidden">Declined/Cancelled</span>
+                        </button>
+
                         {/* Archived toggle */}
                         <button
                             onClick={() => setShowArchived(v => !v)}
@@ -763,8 +813,8 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                     : 'bg-slate-200 dark:bg-white/5 border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:border-slate-400 dark:hover:border-white/20'
                             }`}
                         >
-                            <span className="material-symbols-outlined text-[16px]">{showArchived ? 'inventory_2' : 'archive'}</span>
-                            {showArchived ? 'Archived' : 'Archive'}
+                            <span className="material-symbols-outlined text-[16px]">{showArchived ? 'visibility' : 'visibility_off'}</span>
+                            <span className="max-md:hidden">Archive</span>
                         </button>
                         <div className="text-sm text-slate-500 dark:text-slate-400">Showing {processedApps.length} of {apps.filter(a => showArchived ? a.is_archived === 'true' : a.is_archived !== 'true').length}</div>
                     </div>
@@ -871,9 +921,9 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         {columnsToShow.map((col, idx) => {
             const colColors = [
                 "bg-slate-500", "bg-amber-500", "bg-blue-500", 
-                "bg-purple-500", "bg-rose-500", "bg-emerald-500", "bg-emerald-500"
+                "bg-purple-500", "bg-rose-500", "bg-emerald-500", "bg-emerald-600", "bg-slate-700"
             ];
-            const colorClass = colColors[idx % colColors.length];
+            const colorClass = colColors[KANBAN_COLUMNS.indexOf(col) % colColors.length];
             return (
                 <div key={col} 
                     className={`flex-1 min-w-[200px] max-w-[350px] flex flex-col gap-4 p-2 -mx-2 rounded-2xl transition-all duration-200 border-2 ${draggedOverCol === col ? 'border-primary/50 bg-primary/10 shadow-[0_0_30px_rgba(37,106,244,0.15)] scale-[1.01]' : 'border-transparent'}`} 
@@ -925,15 +975,14 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                                         : null}
                                                     <span className="material-symbols-outlined text-slate-400 dark:text-white text-base" style={{ display: app.company_logo ? 'none' : 'block' }}>corporate_fare</span>
                                                 </div>
-                                                <div className="flex flex-col gap-1 items-end">
-                                                    <div className="flex items-center gap-1.5">
+                                                <div className="flex flex-col gap-1 items-end min-w-0">
+                                                    <div className="flex flex-wrap justify-end items-center gap-1.5">
                                                         {connectionCounts[app.company] > 0 && (
                                                             <div className="flex items-center gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded-full text-[9px] font-bold" title={`${connectionCounts[app.company]} LinkedIn Connection(s)`}>
                                                                 <span className="material-symbols-outlined text-[11px]">group</span>
                                                                 {connectionCounts[app.company]}
                                                             </div>
                                                         )}
-                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${getStatusStyle(app.status)}`}>{getStatusText(app.status)}</span>
                                                     </div>
                                                     <div className="mt-auto">
                                                         <InterestStars level={app.interest_level} size="0.9rem" />
@@ -952,7 +1001,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                                     {app.matchLocType === 'red' && <span className="material-symbols-outlined text-[12px] text-rose-500">cancel</span>}
                                                 </div>
                                                 <div className="flex items-center justify-between text-[10px]">
-                                                    <span className="font-bold text-primary">{app.salary_range && app.salary_range !== "Not Listed" ? app.salary_range : '-'}</span>
+                                                    <span className="font-bold text-primary text-wrap" style={{ wordBreak: 'break-word', hyphens: 'auto' }} title={app.salary_range}>{formatCompensation(app.salary_range)}</span>
                                                     <div className="flex items-center gap-1">
                                                         {app.matchJobType === 'green' && <span className="material-symbols-outlined text-[12px] text-emerald-500">check_circle</span>}
                                                         {app.matchJobType === 'red' && <span className="material-symbols-outlined text-[12px] text-rose-500">cancel</span>}
@@ -1033,7 +1082,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                                 )}
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="material-symbols-outlined text-[14px]">payments</span>
-                                                    <span className="font-semibold text-slate-600 dark:text-slate-200">{app.salary_range && app.salary_range !== "Not Listed" ? app.salary_range : '-'}</span>
+                                                    <span className="font-semibold text-slate-600 dark:text-slate-200 text-wrap" style={{ wordBreak: 'break-word', hyphens: 'auto' }} title={app.salary_range}>{formatCompensation(app.salary_range)}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1.5 text-slate-400">
                                                     <span className="material-symbols-outlined text-[14px]">calendar_today</span>
@@ -1093,7 +1142,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                             </div>
                             {app.location_type && <div className="text-[10px] text-slate-500 uppercase tracking-tight">{app.location_type}</div>}
                         </td>
-                        <td className="px-6 py-4"><span className="text-sm font-bold text-primary">{app.salary_range && app.salary_range !== "Not Listed" ? app.salary_range : '-'}</span></td>
+                        <td className="px-6 py-4"><span className="text-sm font-bold text-primary text-wrap" style={{ wordBreak: 'break-word', hyphens: 'auto' }} title={app.salary_range}>{formatCompensation(app.salary_range)}</span></td>
                         <td className="px-6 py-4">
                             <span className={`text-sm ${app.deadline ? 'text-rose-400 font-bold' : 'text-slate-500'}`}>
                                 {app.deadline || '-'}

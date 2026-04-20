@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import PipelineProgressBar, { PIPELINE_STAGES, STAGE_TO_STATUS } from '../components/PipelineProgressBar';
+import { useAuth } from '../context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 
 function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = false, activePhaseTab }) {
+  const { fetchWithAuth } = useAuth();
   const [app, setApp] = useState(initialApp);
   const [loading, setLoading] = useState(false);
   const [connections, setConnections] = useState([]);
@@ -17,7 +19,7 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
     // Refresh app data to get sub-steps, contacts, etc.
     const fetchFullApp = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/applications/${initialApp.id}`);
+        const res = await fetchWithAuth(`${API_URL}/api/applications/${initialApp.id}`);
         const data = await res.json();
         setApp(data);
       } catch (e) {
@@ -29,7 +31,7 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
     // Fetch LinkedIn connections
     const fetchConnections = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/linkedin/matches/name/${encodeURIComponent(initialApp.company)}`);
+        const res = await fetchWithAuth(`${API_URL}/api/linkedin/matches/name/${encodeURIComponent(initialApp.company)}`);
         const data = await res.json();
         setConnections(data.matches || []);
       } catch (e) {
@@ -42,7 +44,7 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
   const updateStage = async (newStage) => {
     try {
       const newStatus = STAGE_TO_STATUS[newStage] || app.status;
-      const res = await fetch(`${API_URL}/api/applications/${app.id}`, {
+      const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...app, pipeline_stage: newStage, status: newStatus })
@@ -255,7 +257,7 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
                         setContactSearch(e.target.value);
                         if (e.target.value.length > 2) {
                           setIsSearching(true);
-                          fetch(`${API_URL}/api/linkedin/search?q=${encodeURIComponent(e.target.value)}`)
+                          fetchWithAuth(`${API_URL}/api/linkedin/search?q=${encodeURIComponent(e.target.value)}`)
                             .then(res => res.json())
                             .then(data => {
                               setSearchResults(data.results || []);
@@ -280,7 +282,7 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
                           style={{ padding: '0.5rem', borderRadius: '0.4rem', border: '1px solid var(--border-color-card)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
                           onClick={() => {
                             // Save contact manually
-                            fetch(`${API_URL}/api/applications/${initialApp.id}/contacts`, {
+                            fetchWithAuth(`${API_URL}/api/applications/${initialApp.id}/contacts`, {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({

@@ -4,6 +4,7 @@ import LocationAutocomplete from '../components/LocationAutocomplete';
 import InterestStars from '../components/InterestStars';
 import PipelineProgressBar, { STAGE_TO_STATUS } from '../components/PipelineProgressBar';
 import ApplicationLifecycle from './ApplicationLifecycle';
+import { useAuth } from '../context/AuthContext';
 
 // Use same env logic or passed prop
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -37,6 +38,27 @@ const getScoreComparison = (score, avgScore) => {
     const isAbove = diff >= 1;
     const isBelow = diff <= -1;
     return { diff, absDiff, isAbove, isBelow, avg: Math.round(avgScore) };
+};
+
+const formatCompensation = (salary) => {
+    if (!salary) return '-';
+    let truncated = salary;
+    if (truncated.length > 60) {
+        truncated = truncated.substring(0, 57) + '...';
+    }
+    const words = truncated.split(' ');
+    const hyphenatedWords = words.map(word => {
+        if (word.length > 12) {
+            let newWord = '';
+            for (let i = 0; i < word.length; i += 12) {
+                newWord += word.substring(i, i + 12);
+                if (i + 12 < word.length) newWord += '\u00AD';
+            }
+            return newWord;
+        }
+        return word;
+    });
+    return hyphenatedWords.join(' ');
 };
 
 const JobDescriptionContent = ({ text }) => {
@@ -249,7 +271,7 @@ const LogoPickerModal = ({ companyName, onSelect, onClose }) => {
         setSearching(true);
         try {
             // Use Clearbit autocomplete search
-            const res = await fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(searchQuery)}`);
+            const res = await fetchWithAuth(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(searchQuery)}`);
             if (res.ok) {
                 const data = await res.json();
                 // data is an array of { name, domain, logo }
@@ -522,6 +544,7 @@ const LogoPickerModal = ({ companyName, onSelect, onClose }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate, onViewLifecycle, onStartFullGeneration, avgScore }) => {
+    const { fetchWithAuth } = useAuth();
     const needsGeneration = !app.tailored_resume_path && !app.cover_letter_path;
     const [previewFile, setPreviewFile] = React.useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
@@ -603,7 +626,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
 
         // Fetch connections
         if (app.company) {
-            fetch(`${API_URL}/api/linkedin/matches/name/${encodeURIComponent(app.company)}`)
+            fetchWithAuth(`${API_URL}/api/linkedin/matches/name/${encodeURIComponent(app.company)}`)
                 .then(res => res.json())
                 .then(data => setConnections(data.matches || []))
                 .catch(err => console.warn("Failed to fetch connections", err));
@@ -613,7 +636,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
         if (app.id) {
             const getPrefs = async () => {
                 try {
-                    const profileRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile`);
+                    const profileRes = await fetchWithAuth(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile`);
                     const profileData = await profileRes.json();
                     setProfilePrefs(profileData?.preferences || {});
                     
@@ -706,7 +729,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     const handleArchive = async (archive) => {
         setArchiving(true);
         try {
-            const res = await fetch(`${API_URL}/api/applications/${app.id}/archive`, {
+            const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}/archive`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ archived: archive }),
@@ -734,7 +757,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
             if (onUpdate) onUpdate(app.id, { company_logo: dataUrl });
             // Persist to backend
             try {
-                await fetch(`${API_URL}/api/applications/${app.id}/logo`, {
+                await fetchWithAuth(`${API_URL}/api/applications/${app.id}/logo`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ company_logo: dataUrl }),
@@ -752,7 +775,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
         setLogoUrl(logoValue);
         if (onUpdate) onUpdate(app.id, { company_logo: logoValue });
         try {
-            await fetch(`${API_URL}/api/applications/${app.id}/logo`, {
+            await fetchWithAuth(`${API_URL}/api/applications/${app.id}/logo`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ company_logo: logoValue }),
@@ -794,7 +817,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
             const upData = new FormData();
             upData.append('file', file);
             
-            const res = await fetch(`${API_URL}/api/applications/${app.id}/${endpoint}`, {
+            const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}/${endpoint}`, {
                 method: 'POST',
                 body: upData
             });
@@ -826,7 +849,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     };
     const toggleActiveVersion = async (type, active) => {
         try {
-            const res = await fetch(`${API_URL}/api/applications/${app.id}/toggle-active`, {
+            const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}/toggle-active`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type, active })
@@ -846,7 +869,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
         
         try {
             const docType = type === 'resume' ? 'resume' : 'cover_letter';
-            const res = await fetch(`${API_URL}/api/applications/${app.id}/override/${docType}`, {
+            const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}/override/${docType}`, {
                 method: 'DELETE'
             });
             
@@ -868,7 +891,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     const handleSave = async () => {
         setSaving(true);
         try {
-            const res = await fetch(`${API_URL}/api/applications/${app.id}`, {
+            const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
@@ -896,7 +919,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
             body.append('use_default_resume', 'true'); 
             body.append('instructions', resumeInstructions);
             
-            const res = await fetch(`${API_URL}/api/tailor-resume`, {
+            const res = await fetchWithAuth(`${API_URL}/api/tailor-resume`, {
                 method: 'POST',
                 body: body
             });
@@ -908,7 +931,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     resume_changes_summary: data.change_summary
                 };
                 // Save the update
-                await fetch(`${API_URL}/api/applications/${app.id}`, {
+                await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updateData)
@@ -936,7 +959,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
             const resumeData = safeParseJSON(app.resume_data, {});
             const resumeText = resumeData?.full_text?.join('\n') || "";
 
-            const res = await fetch(`${API_URL}/api/generate-cover-letter`, {
+            const res = await fetchWithAuth(`${API_URL}/api/generate-cover-letter`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -954,7 +977,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     cover_letter_changes_summary: data.generation_summary
                 };
                 // Save the update
-                await fetch(`${API_URL}/api/applications/${app.id}`, {
+                await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updateData)
@@ -975,7 +998,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     const handleDelete = async () => {
         setDeleting(true);
         try {
-            const res = await fetch(`${API_URL}/api/applications/${app.id}`, { method: 'DELETE' });
+            const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, { method: 'DELETE' });
             if (res.ok) {
                 onDelete(app.id);
             } else {
@@ -1501,7 +1524,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                             }
                             return (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    <div style={{ fontWeight: 500, color: app.salary_range ? '#fbbf24' : 'inherit' }}>{app.salary_range || 'Not Listed'}</div>
+                                    <div style={{ fontWeight: 500, color: app.salary_range ? '#fbbf24' : 'inherit', wordBreak: 'break-word', hyphens: 'auto' }} title={app.salary_range}>{app.salary_range ? formatCompensation(app.salary_range) : 'Not Listed'}</div>
                                     {matchNode}
                                 </div>
                             );
@@ -1786,7 +1809,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                         setFormData({ ...formData, interest_level: newLevel });
                                     } else {
                                         try {
-                                            const res = await fetch(`${API_URL}/api/applications/${app.id}`, {
+                                            const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
                                                 method: 'PUT',
                                                 headers: { 'Content-Type': 'application/json' },
                                                 body: JSON.stringify({ interest_level: newLevel })
@@ -1977,7 +2000,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     if (newStage === app.pipeline_stage) return;
                     try {
                         const newStatus = STAGE_TO_STATUS[newStage] || app.status;
-                        const res = await fetch(`${API_URL}/api/applications/${app.id}`, {
+                        const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ ...app, pipeline_stage: newStage, status: newStatus })

@@ -1,5 +1,41 @@
-const API_URL = 'http://localhost:8000';
+let API_URL = 'http://localhost:8000';
 
+// Listen for settings changes
+chrome.storage.local.get(['jobkernelApiUrl'], (res) => {
+  if (res.jobkernelApiUrl) {
+    API_URL = res.jobkernelApiUrl;
+  }
+});
+
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'local' && changes.jobkernelApiUrl) {
+    API_URL = changes.jobkernelApiUrl.newValue || 'http://localhost:8000';
+  }
+});
+
+async function fetchWithAuthBackground(url, options = {}) {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get(['token'], async (result) => {
+      const token = result.token;
+      const headers = { ...options.headers };
+      
+      if (token && url.startsWith(API_URL)) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      if ((options.method === 'POST' || options.method === 'PUT') && !headers['Content-Type'] && !(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+      }
+      
+      try {
+        const res = await fetch(url, { ...options, headers });
+        resolve(res);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  });
+}
 chrome.runtime.onInstalled.addListener(() => {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
 });
@@ -101,7 +137,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   } else if (message.action === 'get_linkedin_matches') {
     const { company_id } = message;
-    fetch(`${API_URL}/api/linkedin/matches/${company_id}`)
+    fetchWithAuthBackground(`${API_URL}/api/linkedin/matches/${company_id}`)
       .then(res => res.json())
       .then(data => sendResponse({ success: true, matches: data.matches }))
       .catch(err => sendResponse({ success: false, error: err.message }));
@@ -136,7 +172,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
 
   } else if (message.action === 'CHECK_CONNECTIONS') {
-    fetch(`${API_URL}/api/linkedin/matches/${message.companyId}`)
+    fetchWithAuthBackground(`${API_URL}/api/linkedin/matches/${message.companyId}`)
       .then(res => res.json())
       .then(data => {
         sendResponse({ matches: data.matches });
@@ -147,7 +183,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     return true;
   } else if (message.action === 'CHECK_CONNECTIONS_BY_NAME') {
-    fetch(`${API_URL}/api/linkedin/matches/name/${encodeURIComponent(message.companyName)}`)
+    fetchWithAuthBackground(`${API_URL}/api/linkedin/matches/name/${encodeURIComponent(message.companyName)}`)
       .then(res => res.json())
       .then(data => {
         sendResponse({ matches: data.matches });
@@ -354,7 +390,7 @@ async function fetchConnectionsBatch(start = 0, count = 40) {
  */
 async function sendBatchToApp(connections) {
   try {
-    const response = await fetch('http://localhost:8000/api/linkedin/sync', {
+    const response = await fetchWithAuthBackground(`${API_URL}/api/linkedin/sync`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ connections })
@@ -421,7 +457,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     
     // Fetch profile data
     try {
-      const res = await fetch('http://localhost:8000/api/profile');
+      const res = await fetchWithAuthBackground(`${API_URL}/api/profile`);
       const profile = await res.json();
       
       let value = '';

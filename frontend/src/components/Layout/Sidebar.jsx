@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import logoImgDark from '../../assets/jobkernel-logo-dark.png';
 import logoImgLight from '../../assets/jobkernel-logo-light.png';
 
-const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle }) => {
+const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle, user, onLogout }) => {
     const [collapsed, setCollapsed] = useState(false);
     
     // Auto-collapse based on window width
@@ -44,11 +44,12 @@ const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle }) => {
 
     const topMenuItems = [
         { id: 'dashboard',  label: 'Dashboard',  icon: 'dashboard' },
+        { id: 'profile',    label: 'Profile',    icon: 'person' },
         { id: 'analytics',  label: 'Analytics',  icon: 'leaderboard' },
     ];
 
     const bottomMenuItems = [
-        { id: 'profile',    label: 'Profile',    icon: 'person' },
+        ...(user?.is_admin ? [{ id: 'admin', label: 'Admin', icon: 'admin_panel_settings' }] : []),
         { id: 'settings',   label: 'Settings',   icon: 'settings' },
     ];
 
@@ -240,6 +241,72 @@ const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle }) => {
                         );
                     })}
                 </nav>
+
+                {/* User Section */}
+                <div style={{ 
+                    marginTop: '0.5rem',
+                    paddingTop: '0.75rem',
+                    borderTop: '1px solid var(--bg-tertiary)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem'
+                }}>
+                    <button
+                        onClick={() => setScreen('account')}
+                        title="My Account"
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '0.75rem',
+                            padding: '0.5rem 0.75rem', borderRadius: '0.5rem',
+                            justifyContent: collapsed ? 'center' : 'flex-start',
+                            background: currentScreen === 'account' ? 'rgba(37,106,244,0.12)' : 'transparent',
+                            border: currentScreen === 'account' ? '1px solid rgba(37,106,244,0.2)' : '1px solid transparent',
+                            cursor: 'pointer', width: '100%', transition: 'all 0.15s', textAlign: 'left'
+                        }}
+                        onMouseEnter={e => { if (currentScreen !== 'account') { e.currentTarget.style.background = 'var(--bg-tertiary)'; e.currentTarget.style.border = '1px solid transparent'; } }}
+                        onMouseLeave={e => { if (currentScreen !== 'account') { e.currentTarget.style.background = 'transparent'; } }}
+                    >
+                        <div style={{
+                            width: '28px', height: '28px', borderRadius: '50%',
+                            background: 'var(--primary)', color: 'white',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '0.75rem', fontWeight: 700, flexShrink: 0
+                        }}>
+                            {user?.username?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        {!collapsed && (
+                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>{user?.username}</div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{user?.is_admin ? 'Administrator' : 'User'}</div>
+                            </div>
+                        )}
+                    </button>
+                    
+                    <button
+                        onClick={onLogout}
+                        title={collapsed ? "Logout" : undefined}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.65rem',
+                            padding: collapsed ? '0.6rem' : '0.6rem 0.75rem',
+                            borderRadius: '0.5rem',
+                            background: 'transparent',
+                            color: '#ef4444',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s',
+                            textAlign: 'left',
+                            justifyContent: collapsed ? 'center' : 'flex-start',
+                            width: '100%',
+                            whiteSpace: 'nowrap',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                        <span className="material-symbols-outlined" style={{ fontSize: '20px', flexShrink: 0 }}>logout</span>
+                        {!collapsed && <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Logout</span>}
+                    </button>
+                </div>
             </div>
         </aside>
     );

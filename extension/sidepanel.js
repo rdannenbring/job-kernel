@@ -146,9 +146,91 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const scoringJobs = new Set();
 
+  // Connection Settings Elements
+  const inputJobKernelAppUrl = document.getElementById('setting-jobkernel-app-url');
+  const inputJobKernelApiUrl = document.getElementById('setting-jobkernel-api-url');
+  const inputJobKernelApiKey = document.getElementById('setting-jobkernel-api-key');
+  const btnSaveConnection = document.getElementById('btn-save-connection');
+  const connectionStatus = document.getElementById('connection-status');
 
-  const API_URL = 'http://localhost:8000';
-  const APP_URL = 'http://localhost:5173';
+  let API_URL = 'http://localhost:8000';
+  let APP_URL = 'http://localhost:5173';
+
+  // Load connection settings
+  chrome.storage.local.get(['jobkernelAppUrl', 'jobkernelApiUrl', 'token'], (res) => {
+    if (res.jobkernelAppUrl) {
+      APP_URL = res.jobkernelAppUrl;
+      if (inputJobKernelAppUrl) inputJobKernelAppUrl.value = APP_URL;
+    } else {
+      if (inputJobKernelAppUrl) inputJobKernelAppUrl.value = APP_URL;
+    }
+    if (res.jobkernelApiUrl) {
+      API_URL = res.jobkernelApiUrl;
+      if (inputJobKernelApiUrl) inputJobKernelApiUrl.value = API_URL;
+    } else {
+      if (inputJobKernelApiUrl) inputJobKernelApiUrl.value = API_URL;
+    }
+    if (res.token) {
+      if (inputJobKernelApiKey) inputJobKernelApiKey.value = res.token;
+    }
+  });
+
+  if (btnSaveConnection) {
+    btnSaveConnection.addEventListener('click', () => {
+      const appUrl = inputJobKernelAppUrl.value.trim().replace(/\/$/, '');
+      const apiUrl = inputJobKernelApiUrl.value.trim().replace(/\/$/, '');
+      const key = inputJobKernelApiKey.value.trim();
+      if (!appUrl || !apiUrl || !key) {
+        connectionStatus.textContent = 'Please enter App URL, API URL, and API Key';
+        connectionStatus.style.color = 'var(--error)';
+        return;
+      }
+      APP_URL = appUrl;
+      API_URL = apiUrl;
+      chrome.storage.local.set({ jobkernelAppUrl: appUrl, jobkernelApiUrl: apiUrl, token: key }, () => {
+        connectionStatus.textContent = 'Connection settings saved!';
+        connectionStatus.style.color = 'var(--success, #10b981)';
+        setTimeout(() => {
+          connectionStatus.textContent = 'Configure server URL and API Key';
+          connectionStatus.style.color = '';
+        }, 3000);
+      });
+    });
+  }
+
+  /**
+   * Helper to fetch with authentication token from chrome.storage.local
+   */
+  async function fetchWithAuth(url, options = {}) {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.get(['token'], async (result) => {
+        const token = result.token;
+        const headers = { 
+          ...options.headers 
+        };
+        
+        // Add Bearer token for our own API
+        if (token && url.startsWith(API_URL)) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        // Ensure content-type is set for POST/PUT if not already
+        if ((options.method === 'POST' || options.method === 'PUT') && !headers['Content-Type'] && !(options.body instanceof FormData)) {
+          headers['Content-Type'] = 'application/json';
+        }
+        
+        try {
+          const res = await fetch(url, { ...options, headers });
+          if (res.status === 401 && url.startsWith(API_URL)) {
+            console.warn('[JobKernel] Sidepanel received 401 Unauthorized. User might need to login.');
+          }
+          resolve(res);
+        } catch (err) {
+          reject(err);
+        }
+      });
+    });
+  }
 
   let loadingTimeout = null;
   // The current application record from the server (if it exists)
@@ -272,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showLoading('Parsing job description...', 'This may take a few seconds');
       closeManualParse(); // Close modal while processing
 
-      const response = await fetch(`${API_URL}/api/analyze-job`, {
+      const response = await fetchWithAuth(`${API_URL}/api/analyze-job`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ job_description: text })
@@ -1217,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function checkExistingApplication(jobUrl) {
     if (!jobUrl) return null;
     try {
-      const res = await fetch(`${API_URL}/api/check-job-url?url=${encodeURIComponent(jobUrl)}`, {
+      const res = await fetchWithAuth(`${API_URL}/api/check-job-url?url=${encodeURIComponent(jobUrl)}`, {
         cache: 'no-store'
       });
       if (!res.ok) return null;
@@ -1266,7 +1348,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!appRecord.job_type && scrapedData?.jobType) backfill.job_type = scrapedData.jobType;
             if (!appRecord.location_type && scrapedData?.locationType) backfill.location_type = scrapedData.locationType;
             if (Object.keys(backfill).length > 0) {
-              fetch(`${API_URL}/api/applications/${appRecord.id}`, {
+              fetchWithAuth(`${API_URL}/api/applications/${appRecord.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(backfill),
@@ -1334,7 +1416,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!idToRefresh) return;
     
     try {
-      const res = await fetch(`${API_URL}/api/applications/${idToRefresh}`, {
+      const res = await fetchWithAuth(`${API_URL}/api/applications/${idToRefresh}`, {
         cache: 'no-store'
       });
       if (!res.ok) return;
@@ -1386,14 +1468,14 @@ document.addEventListener('DOMContentLoaded', () => {
        // Try ID matching first if available
        let matches = [];
        if (companyId) {
-         const res = await fetch(`${API_URL}/api/linkedin/matches/${companyId}`);
+         const res = await fetchWithAuth(`${API_URL}/api/linkedin/matches/${companyId}`);
          const result = await res.json();
          matches = result.matches || [];
        }
  
        // If no ID matches or no ID, try Name matching
        if (matches.length === 0 && companyName) {
-         const res = await fetch(`${API_URL}/api/linkedin/matches/name/${encodeURIComponent(companyName)}`);
+         const res = await fetchWithAuth(`${API_URL}/api/linkedin/matches/name/${encodeURIComponent(companyName)}`);
          const result = await res.json();
          matches = result.matches || [];
        }
@@ -1551,7 +1633,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // STEP 1: Sync to Global Network (linkedin_connections table)
             // This ensures they show up as "Matched" for ALL future jobs at this company
-            await fetch(`${API_URL}/api/linkedin/sync`, {
+            await fetchWithAuth(`${API_URL}/api/linkedin/sync`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1566,7 +1648,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // STEP 2: Link to this specific Application (application_contacts table)
             if (!currentAppRecord.contacts?.some(c => c.linkedin_url === contact.profile_url)) {
-                const res = await fetch(`${API_URL}/api/applications/${currentAppRecord.id}/contacts`, {
+                const res = await fetchWithAuth(`${API_URL}/api/applications/${currentAppRecord.id}/contacts`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1767,7 +1849,7 @@ document.addEventListener('DOMContentLoaded', () => {
       networkList.innerHTML = '<div class="network-empty-state">Loading network...</div>';
       networkModalCount.textContent = 'Fetching connection list...';
       
-      const response = await fetch(`${API_URL}/api/linkedin/debug?limit=500`);
+      const response = await fetchWithAuth(`${API_URL}/api/linkedin/debug?limit=500`);
       if (!response.ok) throw new Error('Failed to fetch network data');
       
       const data = await response.json();
@@ -1813,7 +1895,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function checkNetworkStatus() {
     try {
       // 1. Check DB for existing connections
-      const dbRes = await fetch(`${API_URL}/api/linkedin/debug?limit=1`);
+      const dbRes = await fetchWithAuth(`${API_URL}/api/linkedin/debug?limit=1`);
       if (dbRes.ok) {
         const dbData = await dbRes.json();
         if (dbData.total_count > 0) {
@@ -1870,7 +1952,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to clear all mirrored LinkedIn connections? This cannot be undone.')) return;
     
     try {
-      const res = await fetch(`${API_URL}/api/linkedin/purge`, { method: 'DELETE' });
+      const res = await fetchWithAuth(`${API_URL}/api/linkedin/purge`, { method: 'DELETE' });
       if (res.ok) {
         syncStatus.textContent = 'Mirror your 1st-degree connections';
         btnViewNetwork.style.display = 'none';
@@ -1934,7 +2016,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateLoadingProgress(15);
       try {
         updateLoadingProgress(40, 'Connecting to backend\u2026');
-        const res = await fetch(`${API_URL}/api/applications/${currentAppRecord.id}`, {
+        const res = await fetchWithAuth(`${API_URL}/api/applications/${currentAppRecord.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1984,7 +2066,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateLoadingProgress(15);
       try {
         updateLoadingProgress(40, 'Sending to Kernel database\u2026');
-        const res = await fetch(`${API_URL}/api/save-application`, {
+        const res = await fetchWithAuth(`${API_URL}/api/save-application`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2048,7 +2130,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let applySelectedJob = null;
   async function fetchAverageMatchScore() {
     try {
-      const resp = await fetch(`${API_URL}/api/analytics`);
+      const resp = await fetchWithAuth(`${API_URL}/api/analytics`);
       if (resp.ok) {
         const stats = await resp.json();
         avgMatchScore = stats.avg_match_score;
@@ -2096,7 +2178,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadProfileInfo() {
     try {
-      const res = await fetch(`${API_URL}/api/profile`);
+      const res = await fetchWithAuth(`${API_URL}/api/profile`);
       if (!res.ok) throw new Error('Failed to fetch profile');
       const profile = await res.json();
       renderProfileItems(profile);
@@ -2262,7 +2344,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchApplicationsForPicker() {
     applySearchResults.innerHTML = '<div class="apply-status-view"><div class="mini-spinner"></div></div>';
     try {
-      const res = await fetch(`${API_URL}/api/applications`);
+      const res = await fetchWithAuth(`${API_URL}/api/applications`);
       if (!res.ok) throw new Error('Failed to fetch applications');
       let apps = await res.json();
 
@@ -2623,7 +2705,7 @@ document.addEventListener('DOMContentLoaded', () => {
       p = JSON.parse(JSON.stringify(applySelectedJob.profile_snapshot.profile));
     } else {
       try {
-        const res = await fetch(`${API_URL}/api/profile`);
+        const res = await fetchWithAuth(`${API_URL}/api/profile`);
         p = await res.json();
       } catch (e) {
         console.error('[JobAutomator] Error fetching profile for magic scan:', e);
@@ -2694,7 +2776,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       formData.append('use_default_resume', 'true');
 
-      const resp = await fetch(`${API_URL}/api/score-job-match`, {
+      const resp = await fetchWithAuth(`${API_URL}/api/score-job-match`, {
         method: 'POST',
         body: formData // fetch sets multipart/form-data for FormData
       });

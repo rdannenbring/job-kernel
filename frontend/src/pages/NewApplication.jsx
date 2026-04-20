@@ -4,10 +4,12 @@ import DiffViewer from '../DiffViewer'
 import ResumeScoringView from '../components/JobMatch/ResumeScoringView'
 import ResumePreview from '../components/JobMatch/ResumePreview'
 import ResumeEditor from '../components/JobMatch/ResumeEditor'
+import { useAuth } from '../context/AuthContext'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function NewApplication({ onComplete }) {
+    const { fetchWithAuth } = useAuth();
     // Navigation State
     const [appStage, setAppStage] = useState('upload') // 'upload', 'resume_review', 'cover_letter_review'
 
@@ -28,7 +30,7 @@ function NewApplication({ onComplete }) {
 
     const fetchConfigDefaults = useCallback(async () => {
         try {
-            const res = await fetch(`${API_URL}/api/config`)
+            const res = await fetchWithAuth(`${API_URL}/api/config`)
             if (!res.ok) return {}
             const data = await res.json()
             setConfigDefaults(data)
@@ -67,7 +69,7 @@ function NewApplication({ onComplete }) {
 
     const fetchProfile = useCallback(async () => {
         try {
-            const res = await fetch(`${API_URL}/api/profile`)
+            const res = await fetchWithAuth(`${API_URL}/api/profile`)
             if (res.ok) {
                 const data = await res.json()
                 setUserProfile(data)
@@ -200,7 +202,7 @@ function NewApplication({ onComplete }) {
         // CHECK DUPLICATE
         if (inputMode === 'url' && !extensionMetadata?.id) {
             try {
-                const checkRes = await fetch(`${API_URL}/api/check-job-url?url=${encodeURIComponent(effectiveJobUrl)}`)
+                const checkRes = await fetchWithAuth(`${API_URL}/api/check-job-url?url=${encodeURIComponent(effectiveJobUrl)}`)
                 if (checkRes.ok) {
                     const checkData = await checkRes.json()
                     if (checkData.exists) {
@@ -260,7 +262,7 @@ function NewApplication({ onComplete }) {
 
             formData.append('instructions', resumeInstructions)
 
-            const response = await fetch(`${API_URL}/api/tailor-resume`, {
+            const response = await fetchWithAuth(`${API_URL}/api/tailor-resume`, {
                 method: 'POST',
                 body: formData,
             })
@@ -288,7 +290,7 @@ function NewApplication({ onComplete }) {
                 if (inputMode === 'text') matchFormData.append('job_description', jobDescription)
                 else matchFormData.append('job_url', jobUrl?.trim() || '')
                 
-                const matchResponse = await fetch(`${API_URL}/api/score-job-match`, {
+                const matchResponse = await fetchWithAuth(`${API_URL}/api/score-job-match`, {
                     method: 'POST',
                     body: matchFormData,
                 })
@@ -314,7 +316,7 @@ function NewApplication({ onComplete }) {
                     status: 'Draft',
                     pipeline_stage: 'saved'
                 };
-                const saveRes = await fetch(`${API_URL}/api/save-application`, {
+                const saveRes = await fetchWithAuth(`${API_URL}/api/save-application`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(savePayload)
@@ -347,7 +349,7 @@ function NewApplication({ onComplete }) {
         setPendingRefinement(null) // Clear previous proposal if any
         
         try {
-            const response = await fetch(`${API_URL}/api/refine-resume`, {
+            const response = await fetchWithAuth(`${API_URL}/api/refine-resume`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -380,7 +382,7 @@ function NewApplication({ onComplete }) {
     const refetchApplication = async () => {
         if (!result?.id) return
         try {
-            const res = await fetch(`${API_URL}/api/applications/${result.id}`)
+            const res = await fetchWithAuth(`${API_URL}/api/applications/${result.id}`)
             if (res.ok) {
                 const updatedApp = await res.json()
                 setResult(updatedApp)
@@ -435,7 +437,7 @@ function NewApplication({ onComplete }) {
                 : (typeof result?.resume_data?.full_text === 'string' ? result.resume_data.full_text : "Unknown Resume Text")
             const jobText = inputMode === 'text' ? jobDescription : `Job URL: ${jobUrl}`
 
-            const res = await fetch(`${API_URL}/api/generate-cover-letter`, {
+            const res = await fetchWithAuth(`${API_URL}/api/generate-cover-letter`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -474,7 +476,7 @@ function NewApplication({ onComplete }) {
         if (!instructionsToUse?.trim()) return
         setIsProcessing(true)
         try {
-            const res = await fetch(`${API_URL}/api/refine-cover-letter`, {
+            const res = await fetchWithAuth(`${API_URL}/api/refine-cover-letter`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -557,7 +559,7 @@ function NewApplication({ onComplete }) {
 
             console.log("DEBUG PAYLOAD:", payload) // Debugging
 
-            await fetch(`${API_URL}/api/save-application`, {
+            await fetchWithAuth(`${API_URL}/api/save-application`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

@@ -8,10 +8,28 @@ from typing import Dict, List, Any
 
 Base = declarative_base()
 
+class User(Base):
+    __tablename__ = 'users'
+    
+    id = Column(Integer, primary_key=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    is_admin = Column(Integer, default=0) # 1 for admin, 0 for regular
+    api_key = Column(String, unique=True, index=True, nullable=True)
+    first_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    applications = relationship("Application", back_populates="user")
+    profile = relationship("UserProfile", back_populates="user", uselist=False)
+    config = relationship("Config", back_populates="user", uselist=False)
+
 class Application(Base):
     __tablename__ = 'applications'
     
     id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True) # Nullable for legacy
     job_title = Column(String)
     company = Column(String)
     company_logo = Column(Text)   # base64 or URL
@@ -71,6 +89,7 @@ class Application(Base):
     sub_steps = relationship("ApplicationSubStep", back_populates="application", cascade="all, delete-orphan")
     contacts = relationship("ApplicationContact", back_populates="application", cascade="all, delete-orphan")
     events = relationship("ApplicationEvent", back_populates="application", cascade="all, delete-orphan")
+    user = relationship("User", back_populates="applications")
 
 
 class ApplicationSubStep(Base):
@@ -110,6 +129,7 @@ class UserProfile(Base):
     __tablename__ = 'user_profile'
     
     id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True) # Nullable for legacy
     first_name = Column(String)
     last_name = Column(String)
     full_name = Column(String) # For display preference
@@ -137,6 +157,7 @@ class UserProfile(Base):
 
     experiences = relationship("UserExperience", back_populates="user", cascade="all, delete-orphan")
     educations = relationship("UserEducation", back_populates="user", cascade="all, delete-orphan")
+    user = relationship("User", back_populates="profile")
 
 class UserExperience(Base):
     __tablename__ = 'user_experience'
@@ -168,12 +189,35 @@ class LinkedInConnection(Base):
     __tablename__ = 'linkedin_connections'
     
     id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True)
     name = Column(String)
     headline = Column(Text)
     profile_url = Column(String)
     company_id = Column(String) # Numeric LinkedIn company ID
     company_name = Column(String)
     last_synced = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User")
+
+class Config(Base):
+    __tablename__ = 'configs'
+    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), unique=True, nullable=True)
+    settings = Column(Text) # JSON string of all settings (AI key, prompts, etc.)
+    
+    user = relationship("User", back_populates="config")
+
+class UserApiKey(Base):
+    __tablename__ = 'user_api_keys'
+    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    name = Column(String, nullable=False)
+    api_key = Column(String, nullable=False, unique=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User")
 
 # Import remaining sqlalchemy types
 from sqlalchemy import ForeignKey
@@ -181,6 +225,7 @@ from sqlalchemy.orm import relationship
 
 import time
 from sqlalchemy.exc import OperationalError
+from typing import Optional
 
 class DatabaseService:
     def __init__(self):
@@ -195,49 +240,306 @@ class DatabaseService:
         self._migrate_schema()
         self.Session = sessionmaker(bind=self.engine)
 
+    def create_user(self, username: str, hashed_password: str, is_admin: int = 0,
+                    first_name: str = None, last_name: str = None, email: str = None) -> int:
+        session = self.Session()
+        try:
+            user = User(
+                username=username, hashed_password=hashed_password,
+                is_admin=is_admin, first_name=first_name,
+                last_name=last_name, email=email
+            )
+            session.add(user)
+            session.commit()
+            
+            # If this is the first admin, assign all orphaned records to them
+            if is_admin:
+                session.execute(text("UPDATE applications SET user_id = :uid WHERE user_id IS NULL"), {"uid": user.id})
+                session.execute(text("UPDATE user_profile SET user_id = :uid WHERE user_id IS NULL"), {"uid": user.id})
+                session.commit()
+            
+            return user.id
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def get_user_by_username(self, username: str) -> Optional[Dict[str, Any]]:
+        session = self.Session()
+        try:
+            user = session.query(User).filter(User.username == username).first()
+            if not user: return None
+            return {
+                "id": user.id,
+                "username": user.username,
+                "hashed_password": user.hashed_password,
+                "is_admin": user.is_admin
+            }
+        finally:
+            session.close()
+
+    def get_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
+        session = self.Session()
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user: return None
+            return {
+                "id": user.id,
+                "username": user.username,
+                "is_admin": user.is_admin,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+            }
+        finally:
+            session.close()
+
+    def get_user_by_api_key(self, api_key: str) -> Optional[Dict[str, Any]]:
+        """Find a user by API key — checks named keys table first, then legacy column."""
+        session = self.Session()
+        try:
+            # Check new named keys table
+            record = session.query(UserApiKey).filter(UserApiKey.api_key == api_key).first()
+            if record:
+                user = session.query(User).filter(User.id == record.user_id).first()
+                if user:
+                    return {"id": user.id, "username": user.username, "is_admin": user.is_admin}
+            # Fallback: legacy users.api_key column
+            user = session.query(User).filter(User.api_key == api_key).first()
+            if user:
+                return {"id": user.id, "username": user.username, "is_admin": user.is_admin}
+            return None
+        finally:
+            session.close()
+
+    def create_named_api_key(self, user_id: int, name: str) -> Dict[str, Any]:
+        """Create a new named API key for a user. Returns the full key value once."""
+        import secrets
+        new_key = f"ja_{secrets.token_urlsafe(32)}"
+        session = self.Session()
+        try:
+            record = UserApiKey(user_id=user_id, name=name, api_key=new_key)
+            session.add(record)
+            session.commit()
+            return {
+                "id": record.id,
+                "name": name,
+                "api_key": new_key,  # Full value — only returned here
+                "created_at": record.created_at.isoformat() if record.created_at else None
+            }
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def list_named_api_keys(self, user_id: int) -> List[Dict[str, Any]]:
+        """List all named API keys for a user (key value obscured)."""
+        session = self.Session()
+        try:
+            records = session.query(UserApiKey).filter(UserApiKey.user_id == user_id).order_by(UserApiKey.created_at.desc()).all()
+            return [{
+                "id": r.id,
+                "name": r.name,
+                "api_key_preview": r.api_key[:8] + "••••••••••••••••",
+                "api_key": r.api_key,  # Full value for reveal/copy
+                "created_at": r.created_at.isoformat() if r.created_at else None
+            } for r in records]
+        finally:
+            session.close()
+
+    def delete_named_api_key(self, key_id: int, user_id: int) -> bool:
+        """Delete a named API key. Verifies ownership."""
+        session = self.Session()
+        try:
+            record = session.query(UserApiKey).filter(
+                UserApiKey.id == key_id,
+                UserApiKey.user_id == user_id
+            ).first()
+            if not record:
+                return False
+            session.delete(record)
+            session.commit()
+            return True
+        finally:
+            session.close()
+
+    def generate_api_key(self, user_id: int) -> str:
+        """Legacy: Generate/rotate the single API key on the users table."""
+        import secrets
+        new_key = f"ja_{secrets.token_urlsafe(32)}"
+        session = self.Session()
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if user:
+                user.api_key = new_key
+                session.commit()
+                return new_key
+            return ""
+        finally:
+            session.close()
+
+    def list_users(self) -> List[Dict[str, Any]]:
+        """Admin: List all users."""
+        session = self.Session()
+        try:
+            users = session.query(User).all()
+            return [{
+                "id": u.id,
+                "username": u.username,
+                "is_admin": u.is_admin,
+                "first_name": u.first_name,
+                "last_name": u.last_name,
+                "email": u.email,
+                "created_at": u.created_at.isoformat() if u.created_at else None,
+                "has_api_key": u.api_key is not None
+            } for u in users]
+        finally:
+            session.close()
+
+    def delete_user(self, user_id: int) -> bool:
+        """Admin: Delete a user and their data."""
+        session = self.Session()
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user: return False
+            
+            # Cascades should handle most, but let's be safe
+            session.delete(user)
+            session.commit()
+            return True
+        finally:
+            session.close()
+
+    def update_user_role(self, user_id: int, is_admin: bool) -> bool:
+        """Admin: Update user role."""
+        session = self.Session()
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user: return False
+            user.is_admin = 1 if is_admin else 0
+            session.commit()
+            return True
+        finally:
+            session.close()
+
+    def admin_update_user(self, user_id: int, data: Dict[str, Any]) -> bool:
+        """Admin: Update user details (name, email, password, role)."""
+        session = self.Session()
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user: return False
+            if 'first_name' in data: user.first_name = data['first_name']
+            if 'last_name'  in data: user.last_name  = data['last_name']
+            if 'email'      in data: user.email       = data['email']
+            if 'is_admin'   in data: user.is_admin    = 1 if data['is_admin'] else 0
+            if data.get('password'):
+                from services.auth_service import AuthService
+                user.hashed_password = AuthService.get_password_hash(data['password'])
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def update_account(self, user_id: int, data: Dict[str, Any]) -> bool:
+        """Self-service: user updates their own name, email, or password."""
+        session = self.Session()
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user: return False
+            if 'first_name' in data: user.first_name = data['first_name']
+            if 'last_name'  in data: user.last_name  = data['last_name']
+            if 'email'      in data: user.email       = data['email']
+            if data.get('password'):
+                from services.auth_service import AuthService
+                user.hashed_password = AuthService.get_password_hash(data['password'])
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def has_admin(self) -> bool:
+        session = self.Session()
+        try:
+            return session.query(User).filter(User.is_admin == 1).first() is not None
+        finally:
+            session.close()
+
     def _migrate_schema(self):
         """Add any new columns to existing tables that weren't there when the table was first created."""
         migrations = [
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS deadline TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS apply_url TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS company_logo TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS job_type TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS location_type TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS location TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS relocation TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS interest_level TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS remarks TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS is_archived TEXT DEFAULT 'false'",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS kanban_order INTEGER DEFAULT 0",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS glassdoor_rating TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS glassdoor_url TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS indeed_rating TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS indeed_url TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS linkedin_rating TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS linkedin_url TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS diff_data TEXT",
+            "ALTER TABLE applications ADD COLUMN user_id INTEGER",
+            "ALTER TABLE user_profile ADD COLUMN user_id INTEGER",
+            "ALTER TABLE linkedin_connections ADD COLUMN user_id INTEGER",
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY,
+                username TEXT UNIQUE,
+                hashed_password TEXT,
+                is_admin INTEGER DEFAULT 0,
+                api_key TEXT UNIQUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS configs (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER UNIQUE,
+                settings TEXT,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+            """,
+            "ALTER TABLE users ADD COLUMN api_key TEXT",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_api_key ON users(api_key)",
+            "ALTER TABLE applications ADD COLUMN deadline TEXT",
+            "ALTER TABLE applications ADD COLUMN apply_url TEXT",
+            "ALTER TABLE applications ADD COLUMN company_logo TEXT",
+            "ALTER TABLE applications ADD COLUMN job_type TEXT",
+            "ALTER TABLE applications ADD COLUMN location_type TEXT",
+            "ALTER TABLE applications ADD COLUMN location TEXT",
+            "ALTER TABLE applications ADD COLUMN relocation TEXT",
+            "ALTER TABLE applications ADD COLUMN interest_level TEXT",
+            "ALTER TABLE applications ADD COLUMN remarks TEXT",
+            "ALTER TABLE applications ADD COLUMN is_archived TEXT DEFAULT 'false'",
+            "ALTER TABLE applications ADD COLUMN kanban_order INTEGER DEFAULT 0",
+            "ALTER TABLE applications ADD COLUMN glassdoor_rating TEXT",
+            "ALTER TABLE applications ADD COLUMN glassdoor_url TEXT",
+            "ALTER TABLE applications ADD COLUMN indeed_rating TEXT",
+            "ALTER TABLE applications ADD COLUMN indeed_url TEXT",
+            "ALTER TABLE applications ADD COLUMN linkedin_rating TEXT",
+            "ALTER TABLE applications ADD COLUMN linkedin_url TEXT",
+            "ALTER TABLE applications ADD COLUMN diff_data TEXT",
             "ALTER TABLE applications ADD COLUMN source TEXT",
             "ALTER TABLE applications ADD COLUMN resume_changes_summary TEXT",
-            "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS base_resume_path TEXT",
-            "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS long_form_resume_path TEXT",
-            "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS additional_docs TEXT",
-            "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS social_links TEXT",
-            "ALTER TABLE user_profile ADD COLUMN IF NOT EXISTS preferences TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS profile_snapshot TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS override_resume_path TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS override_cover_letter_path TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS active_resume_type TEXT DEFAULT 'generated'",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS active_cover_letter_type TEXT DEFAULT 'generated'",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS pipeline_stage TEXT DEFAULT 'saved'",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS commute_time_mins INTEGER",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS commute_distance_miles REAL",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS commute_details TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS diff_data TEXT",
-            "ALTER TABLE application_contacts ADD COLUMN IF NOT EXISTS linkedin_url TEXT",
-            "ALTER TABLE application_contacts ADD COLUMN IF NOT EXISTS headline TEXT",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS match_score INTEGER",
-            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS match_details TEXT",
-            "ALTER TABLE application_sub_steps ADD COLUMN IF NOT EXISTS phase TEXT DEFAULT 'saved'",
+            "ALTER TABLE user_profile ADD COLUMN base_resume_path TEXT",
+            "ALTER TABLE user_profile ADD COLUMN long_form_resume_path TEXT",
+            "ALTER TABLE user_profile ADD COLUMN additional_docs TEXT",
+            "ALTER TABLE user_profile ADD COLUMN social_links TEXT",
+            "ALTER TABLE user_profile ADD COLUMN preferences TEXT",
+            "ALTER TABLE applications ADD COLUMN profile_snapshot TEXT",
+            "ALTER TABLE applications ADD COLUMN override_resume_path TEXT",
+            "ALTER TABLE applications ADD COLUMN override_cover_letter_path TEXT",
+            "ALTER TABLE applications ADD COLUMN active_resume_type TEXT DEFAULT 'generated'",
+            "ALTER TABLE applications ADD COLUMN active_cover_letter_type TEXT DEFAULT 'generated'",
+            "ALTER TABLE applications ADD COLUMN pipeline_stage TEXT DEFAULT 'saved'",
+            "ALTER TABLE applications ADD COLUMN commute_time_mins INTEGER",
+            "ALTER TABLE applications ADD COLUMN commute_distance_miles REAL",
+            "ALTER TABLE applications ADD COLUMN commute_details TEXT",
+            "ALTER TABLE application_contacts ADD COLUMN linkedin_url TEXT",
+            "ALTER TABLE application_contacts ADD COLUMN headline TEXT",
+            "ALTER TABLE applications ADD COLUMN match_score INTEGER",
+            "ALTER TABLE applications ADD COLUMN match_details TEXT",
+            "ALTER TABLE application_sub_steps ADD COLUMN phase TEXT DEFAULT 'saved'",
+            "ALTER TABLE users ADD COLUMN first_name TEXT",
+            "ALTER TABLE users ADD COLUMN last_name TEXT",
+            "ALTER TABLE users ADD COLUMN email TEXT",
             # Ensure tables are created if not already (Base.metadata.create_all handles this mostly, but explicit for clarity in migrations)
             """
             CREATE TABLE IF NOT EXISTS application_sub_steps (
@@ -282,6 +584,15 @@ class DatabaseService:
                 company_name TEXT,
                 last_synced TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS user_api_keys (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                name TEXT NOT NULL,
+                api_key TEXT NOT NULL UNIQUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
             """
         ]
         with self.engine.connect() as conn:
@@ -325,7 +636,7 @@ class DatabaseService:
                     print("Database connection failed after retries.")
                     raise
         
-    def save_application(self, data: Dict[str, Any]) -> int:
+    def save_application(self, data: Dict[str, Any], user_id: int = None) -> int:
         session = self.Session()
         try:
             app_id = data.get('application_id')
@@ -338,6 +649,7 @@ class DatabaseService:
                     elif data.get('pipeline_stage') and data.get('pipeline_stage') != app.pipeline_stage:
                         self._log_event(app.id, 'stage_change', f"Pipeline stage updated to {data['pipeline_stage']}", session=session)
 
+                    if user_id: app.user_id = user_id
                     app.status = data.get('status', 'Generated')
                     app.job_title = data.get('job_title', app.job_title)
                     app.company = data.get('company', app.company)
@@ -396,6 +708,7 @@ class DatabaseService:
                     return app.id
 
             new_app = Application(
+                user_id=user_id,
                 job_title=data.get('job_title', 'Unknown Role'),
                 company=data.get('company', 'Unknown Company'),
                 company_logo=data.get('company_logo', ''),
@@ -453,10 +766,13 @@ class DatabaseService:
         finally:
             session.close()
 
-    def update_application_status(self, app_id: int, new_status: str) -> bool:
+    def update_application_status(self, app_id: int, new_status: str, user_id: int = None) -> bool:
         session = self.Session()
         try:
-            app = session.query(Application).filter(Application.id == app_id).first()
+            query = session.query(Application).filter(Application.id == app_id)
+            if user_id:
+                query = query.filter(Application.user_id == user_id)
+            app = query.first()
             if app:
                 if app.status != new_status:
                     self._log_event(app.id, 'stage_change', f"Status updated to {new_status}", session=session)
@@ -469,10 +785,13 @@ class DatabaseService:
         finally:
             session.close()
 
-    def update_application_logo(self, app_id: int, company_logo: str) -> bool:
+    def update_application_logo(self, app_id: int, company_logo: str, user_id: int = None) -> bool:
         session = self.Session()
         try:
-            app = session.query(Application).filter(Application.id == app_id).first()
+            query = session.query(Application).filter(Application.id == app_id)
+            if user_id:
+                query = query.filter(Application.user_id == user_id)
+            app = query.first()
             if app:
                 app.company_logo = company_logo
                 session.commit()
@@ -512,13 +831,87 @@ class DatabaseService:
         finally:
             session.close()
 
-    def get_applications(self) -> List[Dict[str, Any]]:
+    def get_applications(self, user_id: int = None) -> List[Dict[str, Any]]:
         session = self.Session()
         try:
-            apps = session.query(Application).order_by(Application.date_saved.desc()).all()
+            query = session.query(Application)
+            if user_id:
+                # If this is the only user or an admin, try to adopt orphaned apps
+                is_admin = False
+                user = session.query(User).filter(User.id == user_id).first()
+                if user and user.is_admin:
+                    is_admin = True
+                
+                # Check for orphaned apps (user_id IS NULL)
+                orphans = session.query(Application).filter(Application.user_id == None).all()
+                if orphans and (is_admin or session.query(User).count() == 1):
+                    for orphan in orphans:
+                        orphan.user_id = user_id
+                    session.commit()
+                
+                query = query.filter(Application.user_id == user_id)
+            
+            apps = query.order_by(Application.date_saved.desc()).all()
             return [self._app_to_dict(app) for app in apps]
         finally:
             session.close()
+
+    def get_config(self, user_id: int = None) -> Dict[str, Any]:
+        """Fetch configuration for a specific user, falling back to global config if needed."""
+        session = self.Session()
+        try:
+            config_record = session.query(Config).filter(Config.user_id == user_id).first()
+            if config_record:
+                return json.loads(config_record.settings)
+            
+            # If user config doesn't exist, we return empty for specific users,
+            # or try to load global config if user_id is None
+            if user_id is None:
+                return self._load_global_config()
+            
+            return {}
+        finally:
+            session.close()
+
+    def save_config(self, settings: Dict[str, Any], user_id: int = None):
+        """Save configuration for a user or global config."""
+        session = self.Session()
+        try:
+            config_record = session.query(Config).filter(Config.user_id == user_id).first()
+            if config_record:
+                config_record.settings = json.dumps(settings)
+            else:
+                config_record = Config(user_id=user_id, settings=json.dumps(settings))
+                session.add(config_record)
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def _load_global_config(self) -> Dict[str, Any]:
+        """Helper to load global config from DB with fallback to legacy config.json."""
+        # Try database first (user_id is NULL)
+        session = self.Session()
+        try:
+            # Explicitly import Config to avoid any scoping issues if needed, 
+            # though it should be available in the class scope
+            record = session.query(Config).filter(Config.user_id == None).first()
+            if record:
+                return json.loads(record.settings)
+        finally:
+            session.close()
+
+        # Fallback to file
+        config_path = "config.json"
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r') as f:
+                    return json.load(f)
+            except:
+                pass
+        return {}
 
     def normalize_url(self, url: str) -> str:
         if not url: return ""
@@ -641,22 +1034,28 @@ class DatabaseService:
         finally:
             session.close()
 
-    def get_application_by_id(self, app_id: int) -> Dict[str, Any]:
+    def get_application_by_id(self, app_id: int, user_id: int = None) -> Dict[str, Any]:
         """Get a single application by its ID."""
         session = self.Session()
         try:
-            app = session.query(Application).filter(Application.id == app_id).first()
+            query = session.query(Application).filter(Application.id == app_id)
+            if user_id:
+                query = query.filter(Application.user_id == user_id)
+            app = query.first()
             if not app:
                 return None
             return self._app_to_dict(app)
         finally:
             session.close()
 
-    def update_application(self, app_id: int, data: Dict[str, Any]) -> bool:
-        """Update an existing application's fields."""
+    def update_application(self, app_id: int, data: Dict[str, Any], user_id: int = None) -> bool:
+        """Update an existing application."""
         session = self.Session()
         try:
-            app = session.query(Application).filter(Application.id == app_id).first()
+            query = session.query(Application).filter(Application.id == app_id)
+            if user_id:
+                query = query.filter(Application.user_id == user_id)
+            app = query.first()
             if not app:
                 return False
             
@@ -753,11 +1152,14 @@ class DatabaseService:
         finally:
             session.close()
 
-    def delete_application(self, app_id: int) -> bool:
-        """Delete an application record by ID."""
+    def delete_application(self, app_id: int, user_id: int = None) -> bool:
+        """Delete an application."""
         session = self.Session()
         try:
-            app = session.query(Application).filter(Application.id == app_id).first()
+            query = session.query(Application).filter(Application.id == app_id)
+            if user_id:
+                query = query.filter(Application.user_id == user_id)
+            app = query.first()
             if not app:
                 return False
             session.delete(app)
@@ -769,11 +1171,14 @@ class DatabaseService:
         finally:
             session.close()
 
-    def archive_application(self, app_id: int, archived: bool) -> bool:
+    def archive_application(self, app_id: int, archived: bool, user_id: int = None) -> bool:
         """Set the archived flag on an application."""
         session = self.Session()
         try:
-            app = session.query(Application).filter(Application.id == app_id).first()
+            query = session.query(Application).filter(Application.id == app_id)
+            if user_id:
+                query = query.filter(Application.user_id == user_id)
+            app = query.first()
             if not app:
                 return False
             app.is_archived = 'true' if archived else 'false'
@@ -785,16 +1190,33 @@ class DatabaseService:
         finally:
             session.close()
 
-    def get_profile(self) -> Dict[str, Any]:
-        """Get the single user profile (assumes single user system)."""
+    def get_profile(self, user_id: int = None) -> Dict[str, Any]:
+        """Get the user profile."""
         session = self.Session()
         try:
-            profile = session.query(UserProfile).first()
+            query = session.query(UserProfile)
+            if user_id:
+                # Check for orphaned profile first
+                is_admin = False
+                user = session.query(User).filter(User.id == user_id).first()
+                if user and user.is_admin:
+                    is_admin = True
+
+                if is_admin or session.query(User).count() == 1:
+                    orphaned_profile = session.query(UserProfile).filter(UserProfile.user_id == None).first()
+                    if orphaned_profile:
+                        # Adopt it
+                        orphaned_profile.user_id = user_id
+                        session.commit()
+
+                query = query.filter(UserProfile.user_id == user_id)
+            profile = query.first()
             if not profile:
                 return {}
             
             return {
                 "id": profile.id,
+                "user_id": profile.user_id,
                 "first_name": profile.first_name,
                 "last_name": profile.last_name,
                 "full_name": profile.full_name,
@@ -839,16 +1261,21 @@ class DatabaseService:
         finally:
             session.close()
 
-    def save_profile(self, data: Dict[str, Any]) -> int:
+    def save_profile(self, data: Dict[str, Any], user_id: int = None) -> int:
         """Save or update the user profile."""
         session = self.Session()
         try:
-            profile = session.query(UserProfile).first()
+            query = session.query(UserProfile)
+            if user_id:
+                query = query.filter(UserProfile.user_id == user_id)
+            profile = query.first()
+            
             if not profile:
-                profile = UserProfile()
+                profile = UserProfile(user_id=user_id)
                 session.add(profile)
             
             # Update fields
+            if user_id: profile.user_id = user_id
             profile.first_name = data.get('first_name', '')
             profile.last_name = data.get('last_name', '')
             profile.full_name = data.get('full_name', '')
@@ -910,16 +1337,19 @@ class DatabaseService:
         finally:
             session.close()
 
-    def save_linkedin_connections(self, connections: List[Dict[str, Any]]) -> int:
+    def save_linkedin_connections(self, connections: List[Dict[str, Any]], user_id: int = None) -> int:
         """Save a batch of LinkedIn connections."""
         session = self.Session()
         try:
             count = 0
             for conn_data in connections:
-                # Basic deduplication based on profile_url
-                existing = session.query(LinkedInConnection).filter(
+                # Basic deduplication based on profile_url and user_id
+                query = session.query(LinkedInConnection).filter(
                     LinkedInConnection.profile_url == conn_data.get('profile_url')
-                ).first()
+                )
+                if user_id:
+                    query = query.filter(LinkedInConnection.user_id == user_id)
+                existing = query.first()
                 
                 if not existing:
                     new_conn = LinkedInConnection(
@@ -928,7 +1358,8 @@ class DatabaseService:
                         profile_url=conn_data.get('profile_url'),
                         company_id=str(conn_data.get('company_id', '')),
                         company_name=conn_data.get('company_name', ''),
-                        last_synced=datetime.utcnow()
+                        last_synced=datetime.utcnow(),
+                        user_id=user_id
                     )
                     session.add(new_conn)
                     count += 1
@@ -939,19 +1370,25 @@ class DatabaseService:
                     existing.company_id = str(conn_data.get('company_id', existing.company_id))
                     existing.company_name = conn_data.get('company_name', existing.company_name)
                     existing.last_synced = datetime.utcnow()
+                    if user_id:
+                        existing.user_id = user_id
             
             session.commit()
             return count
         finally:
             session.close()
 
-    def get_linkedin_connections_by_company(self, company_id: str) -> List[Dict[str, Any]]:
+    def get_linkedin_connections_by_company(self, company_id: str, user_id: int = None) -> List[Dict[str, Any]]:
         """Get connections matching a specific company ID."""
         session = self.Session()
         try:
-            conns = session.query(LinkedInConnection).filter(
+            query = session.query(LinkedInConnection).filter(
                 LinkedInConnection.company_id == str(company_id)
-            ).all()
+            )
+            if user_id:
+                query = query.filter(LinkedInConnection.user_id == user_id)
+            
+            conns = query.all()
             return [
                 {
                     "name": c.name,
@@ -982,7 +1419,7 @@ class DatabaseService:
         # Clean up double spaces and return
         return ' '.join(n.split()).strip()
 
-    def get_linkedin_connections_by_company_name(self, company_name: str) -> List[Dict[str, Any]]:
+    def get_linkedin_connections_by_company_name(self, company_name: str, user_id: int = None) -> List[Dict[str, Any]]:
         """Get connections matching a specific company name (improved fuzzy with headline fallback)."""
         session = self.Session()
         try:
@@ -1028,11 +1465,18 @@ class DatabaseService:
                 conditions.append(LinkedInConnection.company_name.ilike(f"%{extra_search}%"))
                 
             from sqlalchemy import or_
-            conns = session.query(LinkedInConnection).filter(or_(*conditions)).all()
+            query = session.query(LinkedInConnection).filter(or_(*conditions))
+            if user_id:
+                query = query.filter(LinkedInConnection.user_id == user_id)
+            
+            conns = query.all()
             
             # 2. Inverse check if needed (small set only)
             if not conns:
-                all_conns = session.query(LinkedInConnection).all()
+                all_query = session.query(LinkedInConnection)
+                if user_id:
+                    all_query = all_query.filter(LinkedInConnection.user_id == user_id)
+                all_conns = all_query.all()
                 matches = []
                 for c in all_conns:
                     c_norm = self._normalize_company_name(c.company_name)
@@ -1076,7 +1520,11 @@ class DatabaseService:
                 if extra_search:
                     headline_conditions.append(LinkedInConnection.headline.ilike(f"%{extra_search}%"))
                 
-                headline_conns = session.query(LinkedInConnection).filter(or_(*headline_conditions)).all()
+                headline_query = session.query(LinkedInConnection).filter(or_(*headline_conditions))
+                if user_id:
+                    headline_query = headline_query.filter(LinkedInConnection.user_id == user_id)
+                
+                headline_conns = headline_query.all()
                 conns.extend(headline_conns)
 
             # --- DEFINITIVE WORD BOUNDARY FILTER ---
@@ -1121,11 +1569,29 @@ class DatabaseService:
         finally:
             session.close()
 
-    def get_all_linkedin_connections(self, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_all_linkedin_connections(self, limit: int = 100, user_id: int = None) -> List[Dict[str, Any]]:
         """Retrieve all synced LinkedIn connections."""
         session = self.Session()
         try:
-            conns = session.query(LinkedInConnection).order_by(LinkedInConnection.last_synced.desc()).limit(limit).all()
+            if user_id:
+                # Adoption logic for LinkedIn connections
+                orphans = session.query(LinkedInConnection).filter(LinkedInConnection.user_id == None).all()
+                if orphans:
+                    is_admin = False
+                    user = session.query(User).filter(User.id == user_id).first()
+                    if user and user.is_admin:
+                        is_admin = True
+                    
+                    if is_admin or session.query(User).count() == 1:
+                        for orphan in orphans:
+                            orphan.user_id = user_id
+                        session.commit()
+
+            query = session.query(LinkedInConnection)
+            if user_id:
+                query = query.filter(LinkedInConnection.user_id == user_id)
+                
+            conns = query.order_by(LinkedInConnection.last_synced.desc()).limit(limit).all()
             return [
                 {
                     "name": c.name,
@@ -1139,28 +1605,35 @@ class DatabaseService:
         finally:
             session.close()
 
-    def clear_linkedin_connections(self) -> bool:
+    def clear_linkedin_connections(self, user_id: int = None) -> bool:
         """Purge all LinkedIn connection records."""
         session = self.Session()
         try:
-            session.query(LinkedInConnection).delete()
+            query = session.query(LinkedInConnection)
+            if user_id:
+                query = query.filter(LinkedInConnection.user_id == user_id)
+            query.delete(synchronize_session=False)
             session.commit()
             return True
         finally:
             session.close()
 
-    def search_linkedin_connections(self, query: str) -> List[Dict[str, Any]]:
+    def search_linkedin_connections(self, query: str, user_id: int = None) -> List[Dict[str, Any]]:
         """Search for LinkedIn connections by name or headline."""
         session = self.Session()
         try:
             from sqlalchemy import or_
-            conns = session.query(LinkedInConnection).filter(
+            db_query = session.query(LinkedInConnection).filter(
                 or_(
                     LinkedInConnection.name.ilike(f"%{query}%"),
                     LinkedInConnection.headline.ilike(f"%{query}%"),
                     LinkedInConnection.company_name.ilike(f"%{query}%")
                 )
-            ).limit(20).all()
+            )
+            if user_id:
+                db_query = db_query.filter(LinkedInConnection.user_id == user_id)
+                
+            conns = db_query.limit(20).all()
             
             return [
                 {

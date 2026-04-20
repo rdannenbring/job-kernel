@@ -18,6 +18,7 @@ dist/
 # Environment variables
 .env
 .env.local
+backend/.env
 
 # Uploads and temporary files
 backend/uploads/*

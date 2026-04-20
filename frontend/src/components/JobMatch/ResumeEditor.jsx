@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { diffWordsWithSpace } from 'diff';
+import { useAuth } from '../../context/AuthContext';
 import './JobMatchStyles.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const ONLYOFFICE_URL = 'http://localhost:8443';
+const ONLYOFFICE_URL = import.meta.env.VITE_ONLYOFFICE_URL || 'http://localhost:8443';
 
 const ResumeEditor = ({ 
     pdfUrl, 
@@ -21,6 +22,7 @@ const ResumeEditor = ({
     initialTab = null,
     applicationId = null
 }) => {
+    const { fetchWithAuth } = useAuth();
     const [activeTab, setActiveTab] = useState(initialTab || (pendingRefinement ? 'ai' : 'manual'));
     const [previewMode, setPreviewMode] = useState('pdf'); // 'pdf', 'redline', 'diff'
     const [editorReady, setEditorReady] = useState(false);
@@ -150,7 +152,7 @@ const ResumeEditor = ({
                 configUrl.searchParams.append('application_id', applicationId);
             }
 
-            const res = await fetch(configUrl.toString());
+            const res = await fetchWithAuth(configUrl.toString());
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
                 throw new Error(errData.detail || `Failed to get editor config (${res.status})`);

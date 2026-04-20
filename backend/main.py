@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, BackgroundTasks, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
@@ -17,10 +17,16 @@ from services.document_service import DocumentService
 from services.ai_service import AIService
 from services.scraper_service import ScraperService
 from services.database_service import DatabaseService
+from services.auth_service import AuthService, get_current_user_id, get_admin_user_id
 
 load_dotenv()
 
 app = FastAPI(title="Resume Automator API")
+
+@app.get("/health", tags=["system"])
+async def health_check():
+    """Lightweight healthcheck endpoint — no authentication required."""
+    return {"status": "ok"}
 
 # CORS middleware for local development
 # We also need to allow requests from the Chrome extension's side panel,
@@ -57,7 +63,7 @@ def calculate_commute_for_app(app_id: int):
         })
         return
         
-    profile = database_service.get_profile()
+    profile = database_service.get_profile(app.get('user_id'))
     if not profile: return
     
     origin_parts = []
@@ -312,8 +318,10 @@ class ProfileModel(BaseModel):
 
 
 # Ensure directories exist
-os.makedirs("uploads", exist_ok=True)
-os.makedirs("outputs", exist_ok=True)
+UPLOADS_DIR = os.environ.get("DOCUMENTS_STORAGE_PATH", ".") + "/uploads"
+OUTPUTS_DIR = os.environ.get("DOCUMENTS_STORAGE_PATH", ".") + "/outputs"
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+os.makedirs(OUTPUTS_DIR, exist_ok=True)
 
 
 class CaptureJobRequest(BaseModel):
@@ -323,6 +331,14 @@ class CaptureJobRequest(BaseModel):
 class JobDescriptionRequest(BaseModel):
     job_description: Optional[str] = None
     job_url: Optional[str] = None
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
 
 class LinkedInConnectionModel(BaseModel):
     name: str
@@ -343,6 +359,49 @@ async def root():
         "status": "running"
     }
 
+# --- Authentication Endpoints ---
+
+@app.get("/api/auth/has-admin")
+async def check_has_admin():
+    return {"has_admin": database_service.has_admin()}
+
+@app.post("/api/auth/register")
+async def register(req: RegisterRequest):
+    # Self-registration is only allowed during initial setup (no admin exists yet)
+    if database_service.has_admin():
+        raise HTTPException(
+            status_code=403,
+            detail="Registration is closed. Contact your administrator to create an account."
+        )
+
+    # Check if user already exists
+    existing = database_service.get_user_by_username(req.username)
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
+    # First user always becomes admin
+    hashed_pw = AuthService.get_password_hash(req.password)
+    user_id = database_service.create_user(req.username, hashed_pw, is_admin=1)
+    
+    token = AuthService.create_access_token({"sub": str(user_id)})
+    return {"access_token": token, "token_type": "bearer", "user_id": user_id, "is_admin": 1}
+
+@app.post("/api/auth/login")
+async def login(req: LoginRequest):
+    user = database_service.get_user_by_username(req.username)
+    if not user or not AuthService.verify_password(req.password, user["hashed_password"]):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    token = AuthService.create_access_token({"sub": str(user["id"])})
+    return {"access_token": token, "token_type": "bearer", "user_id": user["id"], "is_admin": user["is_admin"]}
+
+@app.get("/api/auth/me")
+async def get_me(user_id: int = Depends(get_current_user_id)):
+    user = database_service.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
 
 import json
 import requests
@@ -355,53 +414,164 @@ def get_config():
             return json.load(f)
     return {}
 
+async def get_merged_config(user_id: int):
+    """Internal helper to get merged user and global config."""
+    # 1. Fetch user-specific config (UI settings etc)
+    user_config = database_service.get_config(user_id)
+    
+    # 2. Fetch global config (AI keys, prompts) managed by admin
+    global_config = database_service.get_config(None) 
+    
+    # 3. Merge: User UI settings + Global AI settings
+    config = {
+        "ui_config": user_config.get("ui_config", {"font_size": 15, "theme": "dark"}),
+        "ai_config": global_config.get("ai_config", {}),
+        "prompts": global_config.get("prompts", ai_service.prompts)
+    }
+    
+    # Fallback to local config.json if global config in DB is empty (migration support)
+    if not config["ai_config"]:
+        file_config = get_config()
+        if "ai_config" in file_config:
+            config["ai_config"] = file_config["ai_config"]
+            if "prompts" in file_config:
+                config["prompts"] = file_config.get("prompts", ai_service.prompts)
+            # Save to global config in DB for next time
+            database_service.save_config({"ai_config": config["ai_config"], "prompts": config["prompts"]}, None)
+            
+    return config
+
 @app.get("/api/config")
-async def get_app_config():
+async def get_app_config(user_id: int = Depends(get_current_user_id)):
     """Return application configuration including defaults"""
-    config = get_config()
-    
-    # Use the live prompts from ai_service, which are already merged with defaults
-    config_dict: Dict[str, Any] = config
-    config_dict.update({"prompts": ai_service.prompts})
-    
-    return config_dict
+    return await get_merged_config(user_id)
 
 @app.post("/api/config")
-async def update_app_config(config: dict):
-    """Update application configuration"""
+async def update_app_config(config: dict, user_id: int = Depends(get_current_user_id)):
+    """Update application configuration (User UI settings)"""
     try:
-        # Load existing to merge
-        existing = get_config()
-        existing.update(config)
+        existing = database_service.get_config(user_id)
+        # Regular users only allowed to update UI config
+        if "ui_config" in config:
+            existing["ui_config"] = config["ui_config"]
         
-        with open(CONFIG_PATH, 'w') as f:
-            json.dump(existing, f, indent=4)
-        
-        # Reload services
-        ai_service.load_config()
-        
-        return {"message": "Configuration updated", "config": existing}
+        database_service.save_config(existing, user_id)
+        return {"message": "User settings updated"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/user/api-keys")
+async def list_user_api_keys(user_id: int = Depends(get_current_user_id)):
+    """List all named API keys for the current user (values obscured)."""
+    return database_service.list_named_api_keys(user_id)
+
+@app.post("/api/user/api-keys")
+async def create_user_api_key(body: dict, user_id: int = Depends(get_current_user_id)):
+    """Create a new named API key. Returns the full key value once."""
+    name = body.get("name", "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Key name is required")
+    result = database_service.create_named_api_key(user_id, name)
+    return result
+
+@app.delete("/api/user/api-keys/{key_id}")
+async def delete_user_api_key(key_id: int, user_id: int = Depends(get_current_user_id)):
+    """Delete a named API key by ID."""
+    success = database_service.delete_named_api_key(key_id, user_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="API key not found")
+    return {"message": "API key deleted"}
+
+# --- ADMIN ENDPOINTS ---
+
+@app.get("/api/admin/users")
+async def list_users(admin_id: int = Depends(get_admin_user_id)):
+    return database_service.list_users()
+
+@app.post("/api/admin/users")
+async def create_user_by_admin(user_data: dict, admin_id: int = Depends(get_admin_user_id)):
+    from services.auth_service import AuthService
+    username   = user_data.get("username")
+    password   = user_data.get("password")
+    is_admin   = user_data.get("is_admin", False)
+    first_name = user_data.get("first_name", "").strip() or None
+    last_name  = user_data.get("last_name", "").strip()  or None
+    email      = user_data.get("email", "").strip()      or None
+
+    if not username or not password:
+        raise HTTPException(status_code=400, detail="Username and password required")
+
+    hashed_pwd = AuthService.get_password_hash(password)
+    try:
+        new_id = database_service.create_user(
+            username, hashed_pwd, is_admin,
+            first_name=first_name, last_name=last_name, email=email
+        )
+    except Exception:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    return {"message": "User created", "user_id": new_id}
+
+@app.patch("/api/admin/users/{uid}")
+async def admin_edit_user(uid: int, data: dict, admin_id: int = Depends(get_admin_user_id)):
+    """Admin: update any user's name, email, password, or role."""
+    success = database_service.admin_update_user(uid, data)
+    if not success:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User updated"}
+
+@app.patch("/api/admin/users/{uid}/role")
+async def update_user_role(uid: int, data: dict, admin_id: int = Depends(get_admin_user_id)):
+    success = database_service.update_user_role(uid, data.get("is_admin", False))
+    if not success:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User role updated"}
+
+@app.delete("/api/admin/users/{uid}")
+async def delete_user(uid: int, admin_id: int = Depends(get_admin_user_id)):
+    if uid == admin_id:
+        raise HTTPException(status_code=400, detail="Cannot delete self")
+    success = database_service.delete_user(uid)
+    if not success:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User deleted"}
+
+@app.patch("/api/user/account")
+async def update_own_account(data: dict, user_id: int = Depends(get_current_user_id)):
+    """Self-service: update name, email, or password."""
+    success = database_service.update_account(user_id, data)
+    if not success:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "Account updated"}
+
+@app.get("/api/admin/config")
+async def get_admin_config(admin_id: int = Depends(get_admin_user_id)):
+    """Full config for admin (including AI secrets)"""
+    return database_service.get_config(None)
+
+@app.post("/api/admin/config")
+async def update_admin_config(config: dict, admin_id: int = Depends(get_admin_user_id)):
+    """Update global AI configuration"""
+    database_service.save_config(config, None)
+    return {"message": "Global configuration updated"}
 
 
 
 @app.get("/api/profile")
-async def get_profile():
+async def get_profile(user_id: int = Depends(get_current_user_id)):
     try:
-        return database_service.get_profile()
+        return database_service.get_profile(user_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/profile")
-async def save_profile(profile: ProfileModel):
+async def save_profile(profile: ProfileModel, user_id: int = Depends(get_current_user_id)):
     try:
-        return {"id": database_service.save_profile(profile.dict())}
+        return {"id": database_service.save_profile(profile.dict(), user_id)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/scan-contact-info")
-async def scan_contact_info(resume: UploadFile = File(...)):
+async def scan_contact_info(resume: UploadFile = File(...), user_id: int = Depends(get_current_user_id)):
     try:
         content = await resume.read()
         # Save temp file for parsing
@@ -414,7 +584,8 @@ async def scan_contact_info(resume: UploadFile = File(...)):
         full_text = "\n".join(parsed.get("full_text", []))
         
         # Extract info
-        extracted = await ai_service.extract_profile_data(full_text)
+        config = await get_merged_config(user_id)
+        extracted = await ai_service.extract_profile_data(full_text, config=config)
         
         os.unlink(tmp_path)
         return extracted
@@ -424,7 +595,8 @@ async def scan_contact_info(resume: UploadFile = File(...)):
 @app.post("/api/profile/upload-resume")
 async def upload_profile_resume(
     resume: UploadFile = File(...),
-    resume_type: str = Form(...)  # "base" or "long_form"
+    resume_type: str = Form(...),
+    user_id: int = Depends(get_current_user_id)
 ):
     """Upload and save a base or long-form resume to the user profile."""
     try:
@@ -432,9 +604,9 @@ async def upload_profile_resume(
             raise HTTPException(status_code=400, detail="resume_type must be 'base' or 'long_form'")
         
         # Save the file to a dedicated profile resumes directory
-        os.makedirs("uploads/profile_resumes", exist_ok=True)
+        os.makedirs(f"{UPLOADS_DIR}/profile_resumes", exist_ok=True)
         filename = f"{resume_type}_resume_{resume.filename}"
-        save_path = f"uploads/profile_resumes/{filename}"
+        save_path = f"{UPLOADS_DIR}/profile_resumes/{filename}"
         
         content = await resume.read()
         with open(save_path, "wb") as f:
@@ -442,9 +614,9 @@ async def upload_profile_resume(
         
         # Update profile in DB with new path
         field_key = "base_resume_path" if resume_type == "base" else "long_form_resume_path"
-        profile = database_service.get_profile()
+        profile = database_service.get_profile(user_id)
         profile[field_key] = save_path
-        database_service.save_profile(profile)
+        database_service.save_profile(profile, user_id)
         
         return {"path": save_path, "filename": resume.filename, "type": resume_type}
     except HTTPException:
@@ -453,19 +625,19 @@ async def upload_profile_resume(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/profile/resume/{resume_type}")
-async def delete_profile_resume(resume_type: str):
+async def delete_profile_resume(resume_type: str, user_id: int = Depends(get_current_user_id)):
     """Remove a base or long-form resume from the user profile."""
     try:
         if resume_type not in ["base", "long_form"]:
             raise HTTPException(status_code=400, detail="resume_type must be 'base' or 'long_form'")
 
         field_key = "base_resume_path" if resume_type == "base" else "long_form_resume_path"
-        profile = database_service.get_profile()
+        profile = database_service.get_profile(user_id)
         old_path = profile.get(field_key)
         if old_path and os.path.exists(old_path):
             os.remove(old_path)
         profile[field_key] = None
-        database_service.save_profile(profile)
+        database_service.save_profile(profile, user_id)
         return {"success": True}
     except HTTPException:
         raise
@@ -475,22 +647,23 @@ async def delete_profile_resume(resume_type: str):
 @app.post("/api/profile/upload-additional-doc")
 async def upload_additional_doc(
     document: UploadFile = File(...),
-    label: str = Form("")  # Optional user-supplied label
+    label: str = Form(""),
+    user_id: int = Depends(get_current_user_id)
 ):
     """Upload an additional supplemental document (PDF, DOCX, TXT) to the user profile."""
     try:
-        os.makedirs("uploads/profile_docs", exist_ok=True)
+        os.makedirs(f"{UPLOADS_DIR}/profile_docs", exist_ok=True)
         safe_name = document.filename.replace(" ", "_")
-        save_path = f"uploads/profile_docs/{safe_name}"
+        save_path = f"{UPLOADS_DIR}/profile_docs/{safe_name}"
         content = await document.read()
         with open(save_path, "wb") as f:
             f.write(content)
 
-        profile = database_service.get_profile()
+        profile = database_service.get_profile(user_id)
         docs = profile.get("additional_docs", []) or []
         docs.append({"filename": document.filename, "path": save_path, "label": label})
         profile["additional_docs"] = docs
-        database_service.save_profile(profile)
+        database_service.save_profile(profile, user_id)
         return {"filename": document.filename, "path": save_path, "label": label}
     except HTTPException:
         raise
@@ -498,19 +671,34 @@ async def upload_additional_doc(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/profile/additional-doc")
-async def delete_additional_doc(path: str):
+async def delete_additional_doc(path: str, user_id: int = Depends(get_current_user_id)):
     """Remove an additional document from the user profile by its path."""
     try:
-        profile = database_service.get_profile()
+        profile = database_service.get_profile(user_id)
         docs = profile.get("additional_docs", []) or []
         doc_to_remove = next((d for d in docs if d["path"] == path), None)
         if doc_to_remove and os.path.exists(doc_to_remove["path"]):
             os.remove(doc_to_remove["path"])
         profile["additional_docs"] = [d for d in docs if d["path"] != path]
-        database_service.save_profile(profile)
+        database_service.save_profile(profile, user_id)
         return {"success": True}
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/profile/field")
+async def save_profile_field(request: Request, user_id: int = Depends(get_current_user_id)):
+    try:
+        data = await request.json()
+        field = data.get("field")
+        value = data.get("value")
+        
+        profile = database_service.get_profile(user_id)
+        profile[field] = value
+        database_service.save_profile(profile, user_id)
+        
+        return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -519,7 +707,7 @@ async def serve_profile_file(path: str):
     """Serve a profile document (resume or additional doc) by its relative path for preview/download."""
     # Sanitize: only allow files within the uploads directory
     abs_path = os.path.abspath(path)
-    uploads_dir = os.path.abspath("uploads")
+    uploads_dir = os.path.abspath(UPLOADS_DIR)
     if not abs_path.startswith(uploads_dir):
         raise HTTPException(status_code=403, detail="Access denied")
     if not os.path.exists(abs_path):
@@ -535,21 +723,22 @@ async def score_job_match(
     use_default_resume: bool = Form(False),
     additional_context_paths: Optional[str] = Form(None),
     tailored_resume_text: Optional[str] = Form(None),
-    application_id: Optional[int] = Form(None)
+    application_id: Optional[int] = Form(None),
+    user_id: int = Depends(get_current_user_id)
 ):
     """
     Score the match between a resume and a job description.
     """
     try:
-        config = get_config()
-        profile = database_service.get_profile()
+        config = await get_merged_config(user_id)
+        profile = database_service.get_profile(user_id)
         file_path = None
         
         if tailored_resume_text:
             resume_text = tailored_resume_text
         else:
             if resume:
-                file_path = f"uploads/{resume.filename}"
+                file_path = f"{UPLOADS_DIR}/{resume.filename}"
                 with open(file_path, "wb") as buffer:
                     shutil.copyfileobj(resume.file, buffer)
             elif profile.get("base_resume_path") and os.path.exists(profile["base_resume_path"]):
@@ -580,7 +769,8 @@ async def score_job_match(
         result = await ai_service.score_job_match(
             resume_text=resume_text,
             job_description=final_job_description,
-            additional_context=additional_context_text
+            additional_context=additional_context_text,
+            config=config
         )
 
         if application_id:
@@ -601,9 +791,10 @@ async def tailor_resume(
     job_description: Optional[str] = Form(None),
     job_url: Optional[str] = Form(None),
     use_default_resume: bool = Form(False),
-    additional_context_paths: Optional[str] = Form(None), # JSON list of paths
+    additional_context_paths: Optional[str] = Form(None),
     additional_files: List[UploadFile] = File([]),
-    instructions: Optional[str] = Form("")
+    instructions: Optional[str] = Form(""),
+    user_id: int = Depends(get_current_user_id)
 ):
     """
     Tailor a resume based on a job description.
@@ -611,15 +802,15 @@ async def tailor_resume(
     Supports using a default local resume file for testing.
     """
     try:
-        config = get_config()
-        profile = database_service.get_profile()
+        config = await get_merged_config(user_id)
+        profile = database_service.get_profile(user_id)
         file_path = None
         original_filename = "resume.docx"
         
         if resume:
             # Use uploaded file
             original_filename = resume.filename
-            file_path = f"uploads/{original_filename}"
+            file_path = f"{UPLOADS_DIR}/{original_filename}"
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(resume.file, buffer)
         elif profile.get("base_resume_path"):
@@ -634,7 +825,7 @@ async def tailor_resume(
                     raise HTTPException(status_code=404, detail=f"Base resume not found at {base_resume_path}")
             
             original_filename = os.path.basename(base_resume_path)
-            file_path = f"uploads/{original_filename}"
+            file_path = f"{UPLOADS_DIR}/{original_filename}"
             shutil.copy2(base_resume_path, file_path)
         elif use_default_resume and config.get("default_resume_path"):
             # Fallback to config default (kept for legacy/test support)
@@ -643,7 +834,7 @@ async def tailor_resume(
                 raise HTTPException(status_code=404, detail=f"Default resume not found at {default_path}")
             
             original_filename = os.path.basename(default_path)
-            file_path = f"uploads/{original_filename}"
+            file_path = f"{UPLOADS_DIR}/{original_filename}"
             shutil.copy2(default_path, file_path)
         else:
             raise HTTPException(status_code=400, detail="No resume provided. Please upload a resume or set a Base Resume in your profile.")
@@ -756,13 +947,14 @@ async def tailor_resume(
             resume_data, 
             final_job_description, 
             additional_context=all_additional_context,
-            instructions=instructions
+            instructions=instructions,
+            config=config
         )
         
         # 3. Generate Output
         base_name = os.path.splitext(original_filename)[0]
         output_filename = f"{base_name}_tailored.docx"
-        output_path = f"outputs/{output_filename}"
+        output_path = f"{OUTPUTS_DIR}/{output_filename}"
         
         # Use XML-preserving generation
         document_service.create_docx_with_xml_preservation(
@@ -773,9 +965,9 @@ async def tailor_resume(
         
         # Generate PDF and TXT versions
         pdf_filename = f"{base_name}_tailored.pdf"
-        pdf_path = f"outputs/{pdf_filename}"
+        pdf_path = f"{OUTPUTS_DIR}/{pdf_filename}"
         txt_filename = f"{base_name}_tailored.txt"
-        txt_path = f"outputs/{txt_filename}"
+        txt_path = f"{OUTPUTS_DIR}/{txt_filename}"
         
         # Create PDF directly from DOCX to preserve formatting
         pdf_result = document_service.create_pdf_from_docx(output_path, pdf_path)
@@ -787,9 +979,9 @@ async def tailor_resume(
         
         # Create Redline PDF (Changes Highlighted)
         redline_docx_filename = f"{base_name}_tailored_redline.docx"
-        redline_docx_path = f"outputs/{redline_docx_filename}"
+        redline_docx_path = f"{OUTPUTS_DIR}/{redline_docx_filename}"
         redline_pdf_filename = f"{base_name}_tailored_redline.pdf"
-        redline_pdf_path = f"outputs/{redline_pdf_filename}"
+        redline_pdf_path = f"{OUTPUTS_DIR}/{redline_pdf_filename}"
         
         try:
             document_service.create_redline_docx(file_path, tailored_resume_data, redline_docx_path)
@@ -859,20 +1051,22 @@ async def tailor_resume(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/refine-resume")
-async def refine_resume(request: RefineRequest):
+async def refine_resume(request: RefineRequest, user_id: int = Depends(get_current_user_id)):
     try:
         current_data = request.current_resume_data
         
         # 1. Refine Data with AI
+        config = await get_merged_config(user_id)
         refined_data = await ai_service.refine_resume(
             current_data, 
             request.instructions, 
-            additional_context=request.additional_context
+            additional_context=request.additional_context,
+            config=config
         )
         
         # 2. File Paths
         original_filename = request.original_filename
-        file_path = f"uploads/{original_filename}"
+        file_path = f"{UPLOADS_DIR}/{original_filename}"
         
         if not os.path.exists(file_path):
              print(f"Warning: Original file {file_path} not found.")
@@ -880,12 +1074,12 @@ async def refine_resume(request: RefineRequest):
         base_name = os.path.splitext(original_filename)[0]
         
         output_filename = f"{base_name}_tailored.docx"
-        output_path = f"outputs/{output_filename}"
+        output_path = f"{OUTPUTS_DIR}/{output_filename}"
         pdf_filename = f"{base_name}_tailored.pdf"
-        pdf_path = f"outputs/{pdf_filename}"
-        redline_docx_path = f"outputs/{base_name}_tailored_redline.docx"
-        redline_pdf_path = f"outputs/{base_name}_tailored_redline.pdf"
-        txt_path = f"outputs/{base_name}_tailored.txt"
+        pdf_path = f"{OUTPUTS_DIR}/{pdf_filename}"
+        redline_docx_path = f"{OUTPUTS_DIR}/{base_name}_tailored_redline.docx"
+        redline_pdf_path = f"{OUTPUTS_DIR}/{base_name}_tailored_redline.pdf"
+        txt_path = f"{OUTPUTS_DIR}/{base_name}_tailored.txt"
         
         # 3. Regenerate Documents
         document_service.create_docx_with_xml_preservation(file_path, refined_data, output_path)
@@ -939,24 +1133,26 @@ async def refine_resume(request: RefineRequest):
 
 
 @app.post("/api/generate-cover-letter")
-async def generate_cover_letter_endpoint(request: CoverLetterRequest):
+async def generate_cover_letter_endpoint(request: CoverLetterRequest, user_id: int = Depends(get_current_user_id)):
     try:
         # Fetch profile
-        user_profile = database_service.get_profile()
+        user_profile = database_service.get_profile(user_id)
+        config = await get_merged_config(user_id)
         
         result = await ai_service.generate_cover_letter(
-            request.resume_text, 
-            request.job_description, 
-            user_profile,
+            resume_text=request.resume_text, 
+            job_description=request.job_description, 
+            user_profile=user_profile,
             additional_context=request.additional_context,
-            instructions=request.instructions
+            instructions=request.instructions,
+            config=config
         )
         content = result.get("content", "")
         
         base_name = os.path.splitext(request.base_filename)[0]
-        output_docx = f"outputs/{base_name}_cover_letter.docx"
-        output_pdf = f"outputs/{base_name}_cover_letter.pdf"
-        output_txt = f"outputs/{base_name}_cover_letter.txt"
+        output_docx = f"{OUTPUTS_DIR}/{base_name}_cover_letter.docx"
+        output_pdf = f"{OUTPUTS_DIR}/{base_name}_cover_letter.pdf"
+        output_txt = f"{OUTPUTS_DIR}/{base_name}_cover_letter.txt"
         
         document_service.create_cover_letter_docx(content, output_docx)
         document_service.create_pdf_from_docx(output_docx, output_pdf)
@@ -980,19 +1176,21 @@ async def generate_cover_letter_endpoint(request: CoverLetterRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/refine-cover-letter")
-async def refine_cover_letter_endpoint(request: RefineCoverLetterRequest):
+async def refine_cover_letter_endpoint(request: RefineCoverLetterRequest, user_id: int = Depends(get_current_user_id)):
     try:
+        config = await get_merged_config(user_id)
         result = await ai_service.refine_cover_letter(
-            request.content, 
-            request.instructions, 
-            additional_context=request.additional_context
+            content=request.content, 
+            instructions=request.instructions, 
+            additional_context=request.additional_context,
+            config=config
         )
         content = result.get("content", "")
         
         base_name = os.path.splitext(request.base_filename)[0]
-        output_docx = f"outputs/{base_name}_cover_letter.docx"
-        output_pdf = f"outputs/{base_name}_cover_letter.pdf"
-        output_txt = f"outputs/{base_name}_cover_letter.txt"
+        output_docx = f"{OUTPUTS_DIR}/{base_name}_cover_letter.docx"
+        output_pdf = f"{OUTPUTS_DIR}/{base_name}_cover_letter.pdf"
+        output_txt = f"{OUTPUTS_DIR}/{base_name}_cover_letter.txt"
         
         document_service.create_cover_letter_docx(content, output_docx)
         document_service.create_pdf_from_docx(output_docx, output_pdf)
@@ -1013,32 +1211,32 @@ async def refine_cover_letter_endpoint(request: RefineCoverLetterRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/save-application")
-async def save_application(request: ApplicationSaveRequest, background_tasks: BackgroundTasks):
+async def save_application(request: ApplicationSaveRequest, background_tasks: BackgroundTasks, user_id: int = Depends(get_current_user_id)):
     try:
-        app_id = database_service.save_application(request.dict())
+        app_id = database_service.save_application(request.dict(), user_id)
         background_tasks.add_task(calculate_commute_for_app, app_id)
         return {"message": "Application saved", "id": app_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/applications/{app_id}")
-async def get_application(app_id: int):
+async def get_application(app_id: int, user_id: int = Depends(get_current_user_id)):
     """Get a single application by ID."""
     try:
-        app_data = database_service.get_application_by_id(app_id)
-        if app_data:
-            return app_data
-        raise HTTPException(status_code=404, detail="Application not found")
+        app_data = database_service.get_application_by_id(app_id, user_id)
+        if not app_data:
+            raise HTTPException(status_code=404, detail="Application not found")
+        return app_data
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.put("/api/applications/{app_id}")
-async def update_application(app_id: int, request: ApplicationSaveRequest, background_tasks: BackgroundTasks):
+async def update_application(app_id: int, request: ApplicationSaveRequest, background_tasks: BackgroundTasks, user_id: int = Depends(get_current_user_id)):
     """Update an existing application's fields."""
     try:
-        success = database_service.update_application(app_id, request.dict(exclude_unset=True))
+        success = database_service.update_application(app_id, request.dict(exclude_unset=True), user_id)
         if success:
             if 'location' in request.dict(exclude_unset=True) or 'location_type' in request.dict(exclude_unset=True):
                 background_tasks.add_task(calculate_commute_for_app, app_id)
@@ -1051,21 +1249,21 @@ async def update_application(app_id: int, request: ApplicationSaveRequest, backg
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/applications")
-async def get_applications():
+async def get_applications(user_id: int = Depends(get_current_user_id)):
     try:
-        apps = database_service.get_applications()
+        apps = database_service.get_applications(user_id)
         return apps
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/analytics")
-async def get_analytics():
+async def get_analytics(user_id: int = Depends(get_current_user_id)):
     """Return aggregated analytics data from the applications database."""
     try:
         from datetime import datetime, timedelta
         from collections import defaultdict
 
-        apps = database_service.get_applications()
+        apps = database_service.get_applications(user_id)
         
         # Helper to match frontend status mapping
         KANBAN_COLUMNS = ['Saved', 'Generated', 'Applied', 'Interviewing', 'Rejected', 'Offered', 'Accepted']
@@ -1158,7 +1356,7 @@ async def get_analytics():
         top_companies = sorted(company_counts.items(), key=lambda x: -x[1])[:10]
 
         # --- LinkedIn Connections stats ---
-        all_conns = database_service.get_all_linkedin_connections(limit=5000)
+        all_conns = database_service.get_all_linkedin_connections(limit=5000, user_id=user_id)
         total_unique_conns = len(all_conns)
         
         # Match apps with connections
@@ -1224,9 +1422,9 @@ async def get_analytics():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.put("/api/applications/{app_id}/status")
-async def update_application_status(app_id: int, request: StatusUpdateRequest):
+async def update_application_status(app_id: int, request: StatusUpdateRequest, user_id: int = Depends(get_current_user_id)):
     try:
-        success = database_service.update_application_status(app_id, request.status)
+        success = database_service.update_application_status(app_id, request.status, user_id)
         if success:
             return {"message": "Application status updated successfully"}
         else:
@@ -1237,9 +1435,9 @@ async def update_application_status(app_id: int, request: StatusUpdateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/applications/{app_id}")
-async def delete_application(app_id: int):
+async def delete_application(app_id: int, user_id: int = Depends(get_current_user_id)):
     try:
-        success = database_service.delete_application(app_id)
+        success = database_service.delete_application(app_id, user_id)
         if success:
             return {"message": "Application deleted successfully"}
         else:
@@ -1250,12 +1448,12 @@ async def delete_application(app_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/applications/{application_id}/override-resume")
-async def override_resume(application_id: int, file: UploadFile = File(...)):
+async def override_resume(application_id: int, file: UploadFile = File(...), user_id: int = Depends(get_current_user_id)):
     try:
         # Save file
         content = await file.read()
         filename = f"override_resume_{application_id}_{file.filename}"
-        file_path = f"outputs/{filename}"
+        file_path = f"{OUTPUTS_DIR}/{filename}"
         with open(file_path, "wb") as f:
             f.write(content)
             
@@ -1271,32 +1469,33 @@ async def override_resume(application_id: int, file: UploadFile = File(...)):
         
         profile_snapshot = None
         if text:
-            profile_snapshot = await ai_service.extract_profile_data(text)
+            config = await get_merged_config(user_id)
+            profile_snapshot = await ai_service.extract_profile_data(text, config=config)
         
         database_service.update_application(application_id, {
             "override_resume_path": filename,
             "active_resume_type": "override",
             "profile_snapshot": profile_snapshot
-        })
+        }, user_id)
         
         return {"message": "Override resume updated", "path": filename, "profile_snapshot": profile_snapshot}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/applications/{application_id}/override-cover-letter")
-async def override_cover_letter(application_id: int, file: UploadFile = File(...)):
+async def override_cover_letter(application_id: int, file: UploadFile = File(...), user_id: int = Depends(get_current_user_id)):
     try:
         # Save file
         content = await file.read()
         filename = f"override_cl_{application_id}_{file.filename}"
-        file_path = f"outputs/{filename}"
+        file_path = f"{OUTPUTS_DIR}/{filename}"
         with open(file_path, "wb") as f:
             f.write(content)
             
         database_service.update_application(application_id, {
             "override_cover_letter_path": filename,
             "active_cover_letter_type": "override"
-        })
+        }, user_id)
         
         return {"message": "Override cover letter updated", "path": filename}
     except Exception as e:
@@ -1307,7 +1506,7 @@ async def override_cover_letter(application_id: int, file: UploadFile = File(...
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/applications/{application_id}/toggle-active")
-async def toggle_active_endpoint(application_id: int, request: Request):
+async def toggle_active_endpoint(application_id: int, request: Request, user_id: int = Depends(get_current_user_id)):
     try:
         data = await request.json()
         doc_type = data.get("type") # 'resume' or 'cover_letter'
@@ -1319,7 +1518,7 @@ async def toggle_active_endpoint(application_id: int, request: Request):
         elif doc_type == 'cover_letter':
             update_data["active_cover_letter_type"] = active_version
             
-        success = database_service.update_application(application_id, update_data)
+        success = database_service.update_application(application_id, update_data, user_id)
         if not success:
             raise HTTPException(status_code=404, detail="Application not found")
             
@@ -1328,7 +1527,7 @@ async def toggle_active_endpoint(application_id: int, request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/applications/{application_id}/override/{doc_type}")
-async def delete_application_override(application_id: int, doc_type: str):
+async def delete_application_override(application_id: int, doc_type: str, user_id: int = Depends(get_current_user_id)):
     """
     Remove an override (custom) file for a resume or cover letter.
     Sets the active type back to 'generated'.
@@ -1341,13 +1540,13 @@ async def delete_application_override(application_id: int, doc_type: str):
         active_field = "active_resume_type" if doc_type == "resume" else "active_cover_letter_type"
         
         # Get application to find file path
-        app_data = database_service.get_application_by_id(application_id)
+        app_data = database_service.get_application_by_id(application_id, user_id)
         if not app_data:
             raise HTTPException(status_code=404, detail="Application not found")
         
         filename = app_data.get(field)
         if filename:
-            file_path = f"outputs/{filename}"
+            file_path = f"{OUTPUTS_DIR}/{filename}"
             if os.path.exists(file_path):
                 try:
                     os.remove(file_path)
@@ -1368,9 +1567,9 @@ class LogoUpdateRequest(BaseModel):
     company_logo: Optional[str] = ""
 
 @app.patch("/api/applications/{app_id}/logo")
-async def update_application_logo(app_id: int, request: LogoUpdateRequest):
+async def update_application_logo(app_id: int, request: LogoUpdateRequest, user_id: int = Depends(get_current_user_id)):
     try:
-        success = database_service.update_application_logo(app_id, request.company_logo)
+        success = database_service.update_application_logo(app_id, request.company_logo, user_id)
         if success:
             return {"message": "Logo updated"}
         else:
@@ -1384,9 +1583,9 @@ class ArchiveRequest(BaseModel):
     archived: bool
 
 @app.patch("/api/applications/{app_id}/archive")
-async def archive_application(app_id: int, request: ArchiveRequest):
+async def archive_application(app_id: int, request: ArchiveRequest, user_id: int = Depends(get_current_user_id)):
     try:
-        success = database_service.archive_application(app_id, request.archived)
+        success = database_service.archive_application(app_id, request.archived, user_id)
         if success:
             action = "archived" if request.archived else "unarchived"
             return {"message": f"Application {action} successfully"}
@@ -1403,11 +1602,11 @@ async def download_file(filename: str):
     """
     Download a tailored resume file.
     """
-    file_path = f"outputs/{filename}"
+    file_path = f"{OUTPUTS_DIR}/{filename}"
     
     if not os.path.exists(file_path):
         # Fallback: Check uploads directory (for original resumes)
-        file_path = f"uploads/{filename}"
+        file_path = f"{UPLOADS_DIR}/{filename}"
         
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found in outputs or uploads")
@@ -1448,9 +1647,9 @@ async def get_onlyoffice_config(filename: str, application_id: Optional[str] = N
     print(f"📄 Requesting OnlyOffice config for: {filename}, application_id: {application_id}")
     
     # Find the file
-    file_path = f"outputs/{filename}"
+    file_path = f"{OUTPUTS_DIR}/{filename}"
     if not os.path.exists(file_path):
-        file_path = f"uploads/{filename}"
+        file_path = f"{UPLOADS_DIR}/{filename}"
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail=f"File not found: {filename}")
     
@@ -1552,7 +1751,7 @@ async def onlyoffice_callback(request: Request, filename: str, application_id: O
                 response = await client.get(internal_download_url)
                 response.raise_for_status()
                 
-                file_path = f"outputs/{filename}"
+                file_path = f"{OUTPUTS_DIR}/{filename}"
                 with open(file_path, "wb") as f:
                     f.write(response.content)
                 
@@ -1562,7 +1761,7 @@ async def onlyoffice_callback(request: Request, filename: str, application_id: O
                 # Regenerate PDF from the updated DOCX
                 try:
                     base_name = os.path.splitext(filename)[0]
-                    pdf_path = f"outputs/{base_name}.pdf"
+                    pdf_path = f"{OUTPUTS_DIR}/{base_name}.pdf"
                     document_service.create_pdf_from_docx(file_path, pdf_path)
                     print(f"✅ Regenerated PDF: {pdf_path}")
                 except Exception as pdf_err:
@@ -1657,7 +1856,7 @@ async def recalculate_commutes(background_tasks: BackgroundTasks):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/analyze-job")
-async def analyze_job(request: JobDescriptionRequest):
+async def analyze_job(request: JobDescriptionRequest, user_id: int = Depends(get_current_user_id)):
     """
     Analyze a job description and extract key requirements.
     """
@@ -1673,7 +1872,8 @@ async def analyze_job(request: JobDescriptionRequest):
                 detail="Either job_description or job_url must be provided"
             )
         
-        analysis = await ai_service.analyze_job_description(job_description)
+        config = await get_merged_config(user_id)
+        analysis = await ai_service.analyze_job_description(job_description, config=config)
         
         return {
             "success": True,
@@ -1685,7 +1885,7 @@ async def analyze_job(request: JobDescriptionRequest):
 
 
 @app.post("/api/fetch-models")
-async def fetch_available_models(config: dict):
+async def fetch_available_models(config: dict, user_id: int = Depends(get_current_user_id)):
     """Fetch available models from the specified provider"""
     try:
         # Extract parameters from config
@@ -1713,9 +1913,9 @@ async def fetch_available_models(config: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/linkedin/sync")
-async def sync_linkedin_connections(request: LinkedInSyncRequest):
+async def sync_linkedin_connections(request: LinkedInSyncRequest, user_id: int = Depends(get_current_user_id)):
     try:
-        count = database_service.save_linkedin_connections([c.dict() for c in request.connections])
+        count = database_service.save_linkedin_connections([c.dict() for c in request.connections], user_id)
         return {"message": f"Successfully synced {count} new connections.", "count": count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -1729,41 +1929,41 @@ class ContactCreate(BaseModel):
     headline: Optional[str] = None
 
 @app.post("/api/applications/{app_id}/contacts")
-async def add_application_contact(app_id: int, contact: ContactCreate):
+async def add_application_contact(app_id: int, contact: ContactCreate, user_id: int = Depends(get_current_user_id)):
     print(f"👤 Adding contact {contact.name} to application {app_id}")
     try:
-        new_contact = database_service.add_application_contact(app_id, contact.dict())
+        new_contact = database_service.add_application_contact(app_id, contact.dict(), user_id)
         return new_contact
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/linkedin/matches/{company_id}")
-async def get_linkedin_matches(company_id: str):
+async def get_linkedin_matches(company_id: str, user_id: int = Depends(get_current_user_id)):
     try:
-        matches = database_service.get_linkedin_connections_by_company(company_id)
+        matches = database_service.get_linkedin_connections_by_company(company_id, user_id)
         return {"matches": matches}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/linkedin/matches/name/{company_name}")
-async def get_linkedin_matches_by_name(company_name: str):
+async def get_linkedin_matches_by_name(company_name: str, user_id: int = Depends(get_current_user_id)):
     try:
-        matches = database_service.get_linkedin_connections_by_company_name(company_name)
+        matches = database_service.get_linkedin_connections_by_company_name(company_name, user_id)
         return {"matches": matches}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/linkedin/search")
-def search_linkedin(q: str):
-    return {"results": database_service.search_linkedin_connections(q)}
+def search_linkedin(q: str, user_id: int = Depends(get_current_user_id)):
+    return {"results": database_service.search_linkedin_connections(q, user_id)}
 
 @app.post("/api/linkedin/matches/batch")
-async def get_linkedin_batch_matches(company_names: List[str]):
+async def get_linkedin_batch_matches(company_names: List[str], user_id: int = Depends(get_current_user_id)):
     try:
         results = {}
         for name in company_names:
-            matches = database_service.get_linkedin_connections_by_company_name(name)
+            matches = database_service.get_linkedin_connections_by_company_name(name, user_id)
             if matches:
                 results[name] = matches
         return {"results": results}
@@ -1771,24 +1971,24 @@ async def get_linkedin_batch_matches(company_names: List[str]):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/linkedin/debug")
-async def debug_linkedin_connections(limit: int = 100):
+async def debug_linkedin_connections(limit: int = 100, user_id: int = Depends(get_current_user_id)):
     try:
-        connections = database_service.get_all_linkedin_connections(limit)
+        connections = database_service.get_all_linkedin_connections(limit, user_id)
         return {"total_count": len(connections), "connections": connections}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/linkedin/purge")
-async def purge_linkedin_connections():
+async def purge_linkedin_connections(user_id: int = Depends(get_current_user_id)):
     try:
-        success = database_service.clear_linkedin_connections()
+        success = database_service.clear_linkedin_connections(user_id)
         return {"success": success}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/capture-job")
-async def capture_job(request: CaptureJobRequest):
+async def capture_job(request: CaptureJobRequest, user_id: int = Depends(get_current_user_id)):
     """
     Mobile job capture: accept a URL or raw pasted text,
     scrape/parse the content, and use AI to extract structured job fields.
@@ -1828,7 +2028,8 @@ async def capture_job(request: CaptureJobRequest):
             )
 
         # Use AI to extract structured fields
-        analysis = await ai_service.analyze_job_description(scraped_text)
+        config = await get_merged_config(user_id)
+        analysis = await ai_service.analyze_job_description(scraped_text, config=config)
         metadata = analysis.get("metadata", {})
 
         return {
@@ -1864,7 +2065,7 @@ async def sync_manual_edits(filename: str):
         if not filename.endswith('.docx') or '/' in filename or '\\' in filename:
             raise HTTPException(status_code=400, detail="Invalid filename")
             
-        file_path = os.path.join("outputs", filename)
+        file_path = os.path.join(OUTPUTS_DIR, filename)
         if not os.path.exists(file_path):
             raise HTTPException(status_code=404, detail="File not found")
             
@@ -1874,6 +2075,61 @@ async def sync_manual_edits(filename: str):
         print(f"Error syncing manual edits: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
+@app.on_event("startup")
+async def startup_event():
+    # 1. Initialize initial admin if no admin exists
+    if not database_service.has_admin():
+        admin_username = os.environ.get("INITIAL_ADMIN_USERNAME")
+        admin_password = os.environ.get("INITIAL_ADMIN_PASSWORD")
+        if admin_username and admin_password:
+            hashed_pw = AuthService.get_password_hash(admin_password)
+            is_admin = 1
+            first_name = os.environ.get("INITIAL_ADMIN_FIRST_NAME")
+            last_name = os.environ.get("INITIAL_ADMIN_LAST_NAME")
+            email = os.environ.get("INITIAL_ADMIN_EMAIL")
+            try:
+                database_service.create_user(
+                    username=admin_username,
+                    hashed_password=hashed_pw,
+                    is_admin=is_admin,
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email
+                )
+                print(f"Created initial admin user: {admin_username}")
+            except Exception as e:
+                print(f"Failed to create initial admin user: {e}")
+    
+    # 2. Initialize global config if it doesn't exist
+    global_config = database_service.get_config(None)
+    if not global_config.get("ai_config"):
+        default_ai_provider = os.environ.get("DEFAULT_AI_PROVIDER", "openai")
+        default_ai_model = os.environ.get("DEFAULT_AI_MODEL", "gpt-4o-mini")
+        default_openai_key = os.environ.get("DEFAULT_OPENAI_API_KEY", os.environ.get("OPENAI_API_KEY", ""))
+        default_anthropic_key = os.environ.get("DEFAULT_ANTHROPIC_API_KEY", os.environ.get("ANTHROPIC_API_KEY", ""))
+        
+        file_config = get_config()
+        if "ai_config" in file_config:
+            new_ai_config = file_config["ai_config"]
+            prompts = file_config.get("prompts", ai_service.prompts)
+        else:
+            new_ai_config = {
+                "provider": default_ai_provider,
+                "model": default_ai_model,
+                "openai_api_key": default_openai_key,
+                "anthropic_api_key": default_anthropic_key,
+            }
+            prompts = ai_service.prompts
+
+        documents_storage_path = os.environ.get("DOCUMENTS_STORAGE_PATH", "uploads")
+        new_ai_config["documents_storage_path"] = documents_storage_path
+
+        global_config["ai_config"] = new_ai_config
+        global_config["prompts"] = prompts
+        database_service.save_config(global_config, None)
+        print("Initialized global config from environment/defaults.")
 
 if __name__ == "__main__":
     import uvicorn

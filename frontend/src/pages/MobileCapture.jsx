@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -6,6 +7,7 @@ const JOB_TYPES = ['Full-time', 'Part-time', 'Contract', 'Freelance', 'Internshi
 const LOCATION_TYPES = ['On-site', 'Remote', 'Hybrid'];
 
 function MobileCapture({ onSaved, onGoToDashboard }) {
+    const { fetchWithAuth } = useAuth();
     const [stage, setStage] = useState('input'); // 'input', 'loading', 'review', 'saved', 'error'
     const [inputUrl, setInputUrl] = useState('');
     const [inputText, setInputText] = useState('');
@@ -76,7 +78,7 @@ function MobileCapture({ onSaved, onGoToDashboard }) {
         setDuplicate(null);
 
         try {
-            const res = await fetch(`${API_URL}/api/capture-job`, {
+            const res = await fetchWithAuth(`${API_URL}/api/capture-job`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -135,7 +137,7 @@ function MobileCapture({ onSaved, onGoToDashboard }) {
                 pipeline_stage: 'saved',
             };
 
-            const res = await fetch(`${API_URL}/api/save-application`, {
+            const res = await fetchWithAuth(`${API_URL}/api/save-application`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),

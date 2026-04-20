@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import CustomDropdown from '../components/CustomDropdown';
 import CustomMultiSelect from '../components/CustomMultiSelect';
 import ProcessVisualization from '../ProcessVisualization';
+import { useAuth } from '../context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -93,6 +94,7 @@ const CollapsibleCard = ({ title, defaultExpanded = false, onAdd, addTitle, chil
 };
 
 const Profile = () => {
+    const { fetchWithAuth } = useAuth();
     const [loading, setLoading] = useState(true);
 
     const [isRecalculating, setIsRecalculating] = useState(false);
@@ -100,7 +102,7 @@ const Profile = () => {
     const handleRecalculateCommutes = async () => {
         setIsRecalculating(true);
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile/recalculate-commutes`, {
+            const res = await fetchWithAuth(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/profile/recalculate-commutes`, {
                 method: 'POST'
             });
             if (res.ok) {
@@ -202,7 +204,7 @@ const Profile = () => {
 
     const fetchProfile = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/profile`);
+            const res = await fetchWithAuth(`${API_URL}/api/profile`);
             if (res.ok) {
                 const data = await res.json();
                 if (data && Object.keys(data).length > 0) {
@@ -240,7 +242,7 @@ const Profile = () => {
         fd.append('resume', file);
         fd.append('resume_type', type);
         try {
-            const res = await fetch(`${API_URL}/api/profile/upload-resume`, { method: 'POST', body: fd });
+            const res = await fetchWithAuth(`${API_URL}/api/profile/upload-resume`, { method: 'POST', body: fd });
             if (res.ok) {
                 const data = await res.json();
                 const key = type === 'base' ? 'base_resume_path' : 'long_form_resume_path';
@@ -258,7 +260,7 @@ const Profile = () => {
 
     const handleDeleteResume = async (type) => {
         try {
-            const res = await fetch(`${API_URL}/api/profile/resume/${type}`, { method: 'DELETE' });
+            const res = await fetchWithAuth(`${API_URL}/api/profile/resume/${type}`, { method: 'DELETE' });
             if (res.ok) {
                 const key = type === 'base' ? 'base_resume_path' : 'long_form_resume_path';
                 setFormData(prev => ({ ...prev, [key]: null }));
@@ -289,7 +291,7 @@ const Profile = () => {
             fd.append('document', file);
             fd.append('label', '');
             try {
-                const res = await fetch(`${API_URL}/api/profile/upload-additional-doc`, { method: 'POST', body: fd });
+                const res = await fetchWithAuth(`${API_URL}/api/profile/upload-additional-doc`, { method: 'POST', body: fd });
                 if (res.ok) results.push(await res.json());
                 else showNotification(`Failed to upload ${file.name}`, 'error');
             } catch { showNotification(`Error uploading ${file.name}`, 'error'); }
@@ -307,7 +309,7 @@ const Profile = () => {
 
     const handleDeleteAdditionalDoc = async (path) => {
         try {
-            const res = await fetch(`${API_URL}/api/profile/additional-doc?path=${encodeURIComponent(path)}`, { method: 'DELETE' });
+            const res = await fetchWithAuth(`${API_URL}/api/profile/additional-doc?path=${encodeURIComponent(path)}`, { method: 'DELETE' });
             if (res.ok) {
                 setFormData(prev => ({
                     ...prev,
@@ -410,7 +412,7 @@ const Profile = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const res = await fetch(`${API_URL}/api/profile`, {
+            const res = await fetchWithAuth(`${API_URL}/api/profile`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
@@ -440,7 +442,7 @@ const Profile = () => {
         const uploadData = new FormData();
         uploadData.append('resume', file);
         try {
-            const res = await fetch(`${API_URL}/api/scan-contact-info`, { method: 'POST', body: uploadData });
+            const res = await fetchWithAuth(`${API_URL}/api/scan-contact-info`, { method: 'POST', body: uploadData });
             if (res.ok) {
                 const extracted = await res.json();
                 const changes = {};
