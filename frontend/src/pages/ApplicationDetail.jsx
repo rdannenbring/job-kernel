@@ -254,6 +254,7 @@ const DocumentSelectionModal = React.memo(({
     onClose,
     docType, // 'resume' | 'cover_letter'
     app,
+    profileBaseResume,
     onRegenerate,
     onUploadOverride,
     onPreview,
@@ -268,7 +269,7 @@ const DocumentSelectionModal = React.memo(({
     const title = isResume ? "Select Active Resume" : "Select Active Cover Letter";
     const activeType = isResume ? app.active_resume_type : app.active_cover_letter_type;
     
-    const originalPath = isResume ? app.original_resume_path : null; 
+    const originalPath = isResume ? (app.original_resume_path || profileBaseResume) : null; 
     const tailoredPath = isResume ? app.tailored_resume_path : app.cover_letter_path;
     const overridePath = isResume ? app.override_resume_path : app.override_cover_letter_path;
     
@@ -298,13 +299,13 @@ const DocumentSelectionModal = React.memo(({
                     {isResume && (
                         <div>
                             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
-                                Reference Resume
+                                Base Resume
                                 {activeType === 'original' && <span style={{ color: 'var(--success)', fontWeight: 700 }}>● ACTIVE</span>}
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                <button className="doc-row-btn btn-mini-doc" style={{ flex: 1 }} onClick={() => onPreview('original', originalPath)}>
+                                <button className="doc-row-btn btn-mini-doc" style={{ flex: 1 }} onClick={() => onPreview('original', originalPath)} disabled={!originalPath}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>attach_file</span>
-                                    <span style={{ fontSize: '0.85rem' }}>Original Upload</span>
+                                    <span style={{ fontSize: '0.85rem' }}>Profile Base Resume</span>
                                     <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '0.9rem', opacity: 0.6 }}>visibility</span>
                                 </button>
                                 {activeType !== 'original' && (
@@ -732,6 +733,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     const [connections, setConnections] = React.useState([]);
     const [commuteInfo, setCommuteInfo] = React.useState({ text: 'Calculating...' });
     const [profilePrefs, setProfilePrefs] = React.useState(null);
+    const [profileBaseResume, setProfileBaseResume] = React.useState(null);
     const [currentCommuteType, setCurrentCommuteType] = React.useState('Driving');
     const [allCommutes, setAllCommutes] = React.useState({});
 
@@ -782,6 +784,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     const profileRes = await fetchWithAuth(`${API_URL}/api/profile`);
                     const profileData = await profileRes.json();
                     setProfilePrefs(profileData?.preferences || {});
+                    setProfileBaseResume(profileData?.base_resume_path || null);
                     
                     const maxCommutePref = profileData?.preferences?.max_commute || '';
                     let maxCommuteMins = null;
@@ -1189,6 +1192,12 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
             subtitle = `For ${app.company}`;
             // Assume PDF version exists for generated docs
             const pdfPath = path.replace('.docx', '.pdf');
+            pdfUrl = `${API_URL}/api/download/${pdfPath}`;
+            setPreviewFile({ type, path, title, subtitle, pdfUrl, isLoading: false });
+        } else if (type === 'override' || type === 'override_cl') {
+            title = type === 'override' ? 'Custom Final Resume' : 'Custom Final Cover Letter';
+            subtitle = 'User Uploaded Version';
+            const pdfPath = path.toLowerCase().endsWith('.pdf') ? path : path.replace('.docx', '.pdf');
             pdfUrl = `${API_URL}/api/download/${pdfPath}`;
             setPreviewFile({ type, path, title, subtitle, pdfUrl, isLoading: false });
         }
@@ -2004,8 +2013,8 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                             {(() => {
                                 const isActiveOverride = app.active_resume_type === 'override' && app.override_resume_path;
                                 const isActiveGenerated = app.active_resume_type === 'generated' || (!isActiveOverride && app.tailored_resume_path && app.active_resume_type !== 'original');
-                                let path = app.original_resume_path;
-                                let label = "Original Resume";
+                                let path = app.original_resume_path || profileBaseResume;
+                                let label = "Profile Base Resume";
                                 let icon = "attach_file";
                                 let type = "original";
                                 let isMissing = false;
@@ -2028,7 +2037,12 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
 
                                 return (
                                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: isMissing ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-card)', borderRadius: '0.5rem', border: isMissing ? '1px dashed var(--danger)' : '1px solid var(--border-color)' }}>
+                                        <div 
+                                            onClick={() => !isMissing && handlePreview(type, path)}
+                                            style={{ cursor: isMissing ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: isMissing ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-card)', borderRadius: '0.5rem', border: isMissing ? '1px dashed var(--danger)' : '1px solid var(--border-color)', transition: 'background-color 0.2s' }}
+                                            onMouseOver={(e) => !isMissing && (e.currentTarget.style.backgroundColor = 'var(--bg-secondary)')}
+                                            onMouseOut={(e) => !isMissing && (e.currentTarget.style.backgroundColor = 'var(--bg-card)')}
+                                        >
                                             <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: isMissing ? 'var(--danger)' : 'var(--text-secondary)' }}>{icon}</span>
                                             <div style={{ flex: 1, minWidth: 0 }}>
                                                 <div style={{ fontSize: '0.9rem', fontWeight: 600, color: isMissing ? 'var(--danger)' : 'inherit' }}>{label}</div>
@@ -2083,7 +2097,12 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
 
                                 return (
                                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: isMissing ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-card)', borderRadius: '0.5rem', border: isMissing ? '1px dashed var(--danger)' : '1px solid var(--border-color)' }}>
+                                        <div 
+                                            onClick={() => !isMissing && handlePreview(type, path)}
+                                            style={{ cursor: isMissing ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: isMissing ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-card)', borderRadius: '0.5rem', border: isMissing ? '1px dashed var(--danger)' : '1px solid var(--border-color)', transition: 'background-color 0.2s' }}
+                                            onMouseOver={(e) => !isMissing && (e.currentTarget.style.backgroundColor = 'var(--bg-secondary)')}
+                                            onMouseOut={(e) => !isMissing && (e.currentTarget.style.backgroundColor = 'var(--bg-card)')}
+                                        >
                                             <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: isMissing ? 'var(--danger)' : 'var(--text-secondary)' }}>{icon}</span>
                                             <div style={{ flex: 1, minWidth: 0 }}>
                                                 <div style={{ fontSize: '0.9rem', fontWeight: 600, color: isMissing ? 'var(--danger)' : 'inherit' }}>{label}</div>
@@ -2681,6 +2700,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                 onClose={() => setShowResumeModal(false)}
                 docType="resume"
                 app={app}
+                profileBaseResume={profileBaseResume}
                 onRegenerate={handleRegenerateResume}
                 onUploadOverride={handleOverrideUpload}
                 onPreview={handlePreview}
