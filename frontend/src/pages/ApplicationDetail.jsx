@@ -41,8 +41,8 @@ const getScoreComparison = (score, avgScore) => {
 };
 
 const formatCompensation = (salary) => {
-    if (!salary) return '-';
-    let truncated = salary;
+    if (!salary || salary === 'Not Listed') return '-';
+    let truncated = String(salary);
     if (truncated.length > 60) {
         truncated = truncated.substring(0, 57) + '...';
     }
@@ -247,7 +247,147 @@ const PreviewModal = React.memo(({ file, onClose }) => {
 });
 
 
+
+// --- Document Selection Modal ---
+const DocumentSelectionModal = React.memo(({
+    isOpen,
+    onClose,
+    docType, // 'resume' | 'cover_letter'
+    app,
+    onRegenerate,
+    onUploadOverride,
+    onPreview,
+    onSetFinal,
+    onDeleteOverride,
+    regenerating,
+    needsGeneration
+}) => {
+    if (!isOpen) return null;
+
+    const isResume = docType === 'resume';
+    const title = isResume ? "Select Active Resume" : "Select Active Cover Letter";
+    const activeType = isResume ? app.active_resume_type : app.active_cover_letter_type;
+    
+    const originalPath = isResume ? app.original_resume_path : null; 
+    const tailoredPath = isResume ? app.tailored_resume_path : app.cover_letter_path;
+    const overridePath = isResume ? app.override_resume_path : app.override_cover_letter_path;
+    
+    return (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000, padding: '2rem', backdropFilter: 'blur(4px)'
+        }} onClick={onClose}>
+            <div style={{
+                background: 'var(--bg-card)', width: '100%', maxWidth: '600px',
+                borderRadius: '0.75rem', display: 'flex', flexDirection: 'column',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)', overflow: 'hidden'
+            }} onClick={e => e.stopPropagation()}>
+                <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>{isResume ? 'description' : 'mail'}</span>
+                        {title}
+                    </h3>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                
+                <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto', maxHeight: '70vh' }}>
+                    {/* Original Resume (Only for Resume) */}
+                    {isResume && (
+                        <div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
+                                Reference Resume
+                                {activeType === 'original' && <span style={{ color: 'var(--success)', fontWeight: 700 }}>● ACTIVE</span>}
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                <button className="doc-row-btn btn-mini-doc" style={{ flex: 1 }} onClick={() => onPreview('original', originalPath)}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>attach_file</span>
+                                    <span style={{ fontSize: '0.85rem' }}>Original Upload</span>
+                                    <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '0.9rem', opacity: 0.6 }}>visibility</span>
+                                </button>
+                                {activeType !== 'original' && (
+                                    <button className="btn-util" onClick={() => onSetFinal(docType, 'original')} title="Set as Final">
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>check_circle</span>
+                                        Set Final
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Generated Version */}
+                    <div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
+                            Tailored (AI)
+                            {activeType === 'generated' && <span style={{ color: 'var(--success)', fontWeight: 700 }}>● ACTIVE</span>}
+                        </div>
+                        {tailoredPath ? (
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                <button className="doc-row-btn btn-mini-doc" style={{ flex: 1 }} onClick={() => onPreview(isResume ? 'tailored' : 'cover', tailoredPath)}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>{isResume ? 'auto_awesome' : 'edit_note'}</span>
+                                    <span style={{ fontSize: '0.85rem' }}>Generated Version</span>
+                                    <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '0.9rem', opacity: 0.6 }}>visibility</span>
+                                </button>
+                                {activeType !== 'generated' && (
+                                    <button className="btn-util" onClick={() => onSetFinal(docType, 'generated')}>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>check_circle</span>
+                                        Set Final
+                                    </button>
+                                )}
+                                <button className="btn-util" onClick={onRegenerate} disabled={regenerating} title="Regenerate">
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>refresh</span>
+                                </button>
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                <div style={{ flex: 1, fontSize: '0.85rem', color: 'var(--text-muted)', padding: '0.5rem', border: '1px dashed var(--border-color)', borderRadius: '4px' }}>Not generated yet</div>
+                                <button className="btn-util" onClick={onRegenerate} disabled={regenerating}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>auto_awesome</span>
+                                    Generate
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Custom Version */}
+                    <div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
+                            Custom Version
+                            {activeType === 'override' && <span style={{ color: 'var(--success)', fontWeight: 700 }}>● ACTIVE</span>}
+                        </div>
+                        {overridePath ? (
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                <button className="doc-row-btn btn-mini-doc" style={{ flex: 1 }} onClick={() => onPreview(isResume ? 'override' : 'override_cl', overridePath)}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>verified</span>
+                                    <span style={{ fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{overridePath.split('/').pop()}</span>
+                                    <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '0.9rem', opacity: 0.6 }}>visibility</span>
+                                </button>
+                                {activeType !== 'override' && (
+                                    <button className="btn-util" onClick={() => onSetFinal(docType, 'override')}>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>check_circle</span>
+                                        Set Final
+                                    </button>
+                                )}
+                                <button className="btn-util btn-danger" onClick={() => onDeleteOverride(docType)} title="Delete Custom Version">
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>delete</span>
+                                </button>
+                            </div>
+                        ) : (
+                            <button className="btn-util" style={{ width: '100%' }} onClick={() => onUploadOverride(docType)}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>upload</span> Upload Custom Final
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+});
+
 // ─── Logo Picker Modal ───────────────────────────────────────────────────────
+
 const LogoPickerModal = ({ companyName, onSelect, onClose }) => {
     const [tab, setTab] = React.useState('search'); // 'search' | 'url' | 'upload'
     const [query, setQuery] = React.useState(companyName || '');
@@ -575,6 +715,8 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     }, [app?.pipeline_stage]);
     const [expandedResume, setExpandedResume] = React.useState(false);
     const [expandedCL, setExpandedCL] = React.useState(false);
+    const [showResumeModal, setShowResumeModal] = React.useState(false);
+    const [showCLModal, setShowCLModal] = React.useState(false);
     const [resumeInstructions, setResumeInstructions] = React.useState('');
     const [clInstructions, setClInstructions] = React.useState('');
     const [showInstructionsModal, setShowInstructionsModal] = React.useState(false);
@@ -597,15 +739,16 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     
     const extractSalaryNumbers = (str) => {
         if (!str) return [];
-        const normalized = str.replace(/,/g, '');
+        const s = String(str);
+        const normalized = s.replace(/,/g, '');
         const regex = /(\d+(?:\.\d+)?)(k)?/gi;
         let match;
         const nums = [];
         while ((match = regex.exec(normalized)) !== null) {
             let val = parseFloat(match[1]);
             if (match[2] && match[2].toLowerCase() === 'k') val *= 1000;
-            else if (val < 1000 && val > 0 && str.toLowerCase().includes('k')) val *= 1000;
-            else if (val < 1000 && val > 0 && !str.toLowerCase().includes('k')) val *= 2080;
+            else if (val < 1000 && val > 0 && s.toLowerCase().includes('k')) val *= 1000;
+            else if (val < 1000 && val > 0 && !s.toLowerCase().includes('k')) val *= 2080;
             nums.push(val);
         }
         return nums;
@@ -636,7 +779,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
         if (app.id) {
             const getPrefs = async () => {
                 try {
-                    const profileRes = await fetchWithAuth(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/profile`);
+                    const profileRes = await fetchWithAuth(`${API_URL}/api/profile`);
                     const profileData = await profileRes.json();
                     setProfilePrefs(profileData?.preferences || {});
                     
@@ -894,7 +1037,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
             const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({ ...formData, force: true }),
             });
             if (res.ok) {
                 setIsEditing(false);
@@ -1054,7 +1197,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
 
 
     return (
-        <div style={{ padding: '3rem', maxWidth: '1600px', width: '100%', margin: '0 auto', height: '100%', overflowY: 'auto' }}>
+        <div style={{ padding: '3rem', maxWidth: '1600px', width: '100%', margin: '0 auto', height: '100%', overflowY: 'auto', background: 'var(--bg-primary)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <button
                     onClick={onBack}
@@ -1356,7 +1499,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                 {connections.length} Network {connections.length === 1 ? 'Connection' : 'Connections'}
                             </button>
                         )}
-                        {app.match_score != null && (() => {
+                        {app?.match_score != null && (() => {
                             const scoreColors = getScoreColors(app.match_score);
                             const cmp = getScoreComparison(app.match_score, avgScore);
                             const tooltipText = cmp
@@ -1448,10 +1591,10 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
                     gap: '2rem',
                     marginBottom: '2.5rem',
-                    background: 'var(--bg-secondary)',
+                    background: 'transparent',
                     padding: '2rem',
                     borderRadius: '1rem',
-                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
+                    border: '1px solid var(--border-color)'
                 }}>
 
                     <div>
@@ -1502,18 +1645,18 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                         ) : (() => {
                             let matchNode = null;
                             if (app.salary_range && profilePrefs) {
-                                if (!profilePrefs.min_salary && !profilePrefs.max_salary) {
-                                    matchNode = <a href="#profile" title="Salary preference missing. Click to set." style={{ color: 'var(--text-muted)' }}><span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>info</span></a>;
-                                } else {
-                                    const jobSalaries = extractSalaryNumbers(app.salary_range);
-                                    if (jobSalaries.length > 0) {
-                                        const jobMin = Math.min(...jobSalaries);
-                                        const jobMax = Math.max(...jobSalaries);
-                                        const userMin = profilePrefs.min_salary ? Number(profilePrefs.min_salary) : null;
-                                        const userMax = profilePrefs.max_salary ? Number(profilePrefs.max_salary) : null;
+                                const jobSalaries = extractSalaryNumbers(app.salary_range);
+                                if (jobSalaries.length > 0) {
+                                    const jobMin = Math.min(...jobSalaries);
+                                    const jobMax = Math.max(...jobSalaries);
+                                    
+                                    const userMin = profilePrefs.min_salary ? Number(profilePrefs.min_salary) : null;
+                                    const userMax = profilePrefs.max_salary ? Number(profilePrefs.max_salary) : null;
+                                    
+                                    if (userMin || userMax) {
                                         const matchesMin = userMin ? jobMax >= userMin : true;
                                         const matchesMax = userMax ? jobMin <= userMax : true;
-
+                                        
                                         if (matchesMin && matchesMax) {
                                             matchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#10b981' }} title="Matches your salary preferences">check_circle</span>;
                                         } else {
@@ -1524,7 +1667,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                             }
                             return (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    <div style={{ fontWeight: 500, color: app.salary_range ? '#fbbf24' : 'inherit', wordBreak: 'break-word', hyphens: 'auto' }} title={app.salary_range}>{app.salary_range ? formatCompensation(app.salary_range) : 'Not Listed'}</div>
+                                    <div style={{ fontWeight: 500, color: app.salary_range ? '#fbbf24' : 'inherit', wordBreak: 'break-word', hyphens: 'auto' }} title={String(app.salary_range)}>{app.salary_range ? formatCompensation(app.salary_range) : 'Not Listed'}</div>
                                     {matchNode}
                                 </div>
                             );
@@ -1842,41 +1985,145 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                             )}
                         </div>
 
-                        {/* New button cell */}
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <button 
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    setShowDetails(true);
-                                    setTimeout(() => {
-                                        document.getElementById('job-details-accordion')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                    }, 50);
-                                }}
-                                style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: '0.75rem', 
-                                    padding: '0.75rem 1.75rem',
-                                    background: 'linear-gradient(135deg, var(--primary), #818cf8)', 
-                                    border: '1px solid rgba(255,255,255,0.1)', 
-                                    borderRadius: '2rem', 
-                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    color: 'white',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 15px rgba(99, 102, 241, 0.25)'
-                                }}
-                                onMouseOver={(e) => { 
-                                    e.currentTarget.style.transform = 'translateY(-2px)'; 
-                                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(99, 102, 241, 0.4)'; 
-                                }}
-                                onMouseOut={(e) => { 
-                                    e.currentTarget.style.transform = 'translateY(0)'; 
-                                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.25)'; 
-                                }}
-                            >
-                                <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>feed</span>
-                                <span style={{ fontSize: '0.95rem', fontWeight: 600, letterSpacing: '0.02em', textTransform: 'uppercase' }}>View All Docs</span>
-                            </button>
+
+                    </div>
+                </div>
+
+                {/* --- Document Hub Section --- */}
+                <div style={{ gridColumn: '1 / -1', marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', paddingBottom: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Application Documents</div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                        {/* Active Resume Card */}
+                        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                                <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.3rem' }}>description</span>
+                                <span style={{ fontWeight: 600, fontSize: '1.05rem' }}>Active Resume</span>
+                            </div>
+                            {(() => {
+                                const isActiveOverride = app.active_resume_type === 'override' && app.override_resume_path;
+                                const isActiveGenerated = app.active_resume_type === 'generated' || (!isActiveOverride && app.tailored_resume_path && app.active_resume_type !== 'original');
+                                let path = app.original_resume_path;
+                                let label = "Original Resume";
+                                let icon = "attach_file";
+                                let type = "original";
+                                let isMissing = false;
+
+                                if (isActiveOverride) {
+                                    path = app.override_resume_path;
+                                    label = "Custom Final";
+                                    icon = "verified";
+                                    type = "override";
+                                } else if (isActiveGenerated && app.tailored_resume_path) {
+                                    path = app.tailored_resume_path;
+                                    label = "Tailored Resume";
+                                    icon = "auto_awesome";
+                                    type = "tailored";
+                                } else if (!path) {
+                                    isMissing = true;
+                                    label = "Missing Profile Resume";
+                                    icon = "warning";
+                                }
+
+                                return (
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: isMissing ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-card)', borderRadius: '0.5rem', border: isMissing ? '1px dashed var(--danger)' : '1px solid var(--border-color)' }}>
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: isMissing ? 'var(--danger)' : 'var(--text-secondary)' }}>{icon}</span>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: isMissing ? 'var(--danger)' : 'inherit' }}>{label}</div>
+                                                <div style={{ fontSize: '0.75rem', color: isMissing ? 'var(--danger)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '0.15rem', opacity: isMissing ? 0.8 : 1 }}>
+                                                    {isMissing ? 'Please upload a resume or generate one' : (path?.split('/').pop() || 'Not available')}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
+                                            <button className="btn-util" style={{ flex: 1, padding: '0.6rem' }} onClick={() => handlePreview(type, path)} disabled={!path}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>visibility</span> Preview
+                                            </button>
+                                            <button className="btn-util" style={{ flex: 1, padding: '0.6rem', background: isMissing ? 'rgba(239, 68, 68, 0.1)' : 'rgba(99, 102, 241, 0.1)', color: isMissing ? 'var(--danger)' : 'var(--primary)', borderColor: isMissing ? 'rgba(239, 68, 68, 0.3)' : 'rgba(99, 102, 241, 0.3)' }} onClick={() => setShowResumeModal(true)}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>{isMissing ? 'add_circle' : 'swap_horiz'}</span> {isMissing ? 'Add' : 'Change'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+
+                        {/* Active Cover Letter Card */}
+                        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                                <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.3rem' }}>mail</span>
+                                <span style={{ fontWeight: 600, fontSize: '1.05rem' }}>Active Cover Letter</span>
+                            </div>
+                            {(() => {
+                                const isActiveOverride = app.active_cover_letter_type === 'override' && app.override_cover_letter_path;
+                                const isActiveGenerated = app.active_cover_letter_type === 'generated' || (!isActiveOverride && app.cover_letter_path);
+                                let path = app.original_cover_letter_path || null;
+                                let label = "Cover Letter";
+                                let icon = "mail";
+                                let type = "cover";
+                                let isMissing = false;
+
+                                if (isActiveOverride) {
+                                    path = app.override_cover_letter_path;
+                                    label = "Custom Final";
+                                    icon = "verified";
+                                    type = "override_cl";
+                                } else if (isActiveGenerated && app.cover_letter_path) {
+                                    path = app.cover_letter_path;
+                                    label = "Generated Letter";
+                                    icon = "edit_note";
+                                    type = "cover";
+                                } else if (!path) {
+                                    isMissing = true;
+                                    label = "Missing Cover Letter";
+                                    icon = "warning";
+                                }
+
+                                return (
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: isMissing ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-card)', borderRadius: '0.5rem', border: isMissing ? '1px dashed var(--danger)' : '1px solid var(--border-color)' }}>
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: isMissing ? 'var(--danger)' : 'var(--text-secondary)' }}>{icon}</span>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: isMissing ? 'var(--danger)' : 'inherit' }}>{label}</div>
+                                                <div style={{ fontSize: '0.75rem', color: isMissing ? 'var(--danger)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '0.15rem', opacity: isMissing ? 0.8 : 1 }}>
+                                                    {isMissing ? 'Please upload or generate a letter' : (path?.split('/').pop() || 'Not available')}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
+                                            <button className="btn-util" style={{ flex: 1, padding: '0.6rem' }} onClick={() => handlePreview(type, path)} disabled={!path}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>visibility</span> Preview
+                                            </button>
+                                            <button className="btn-util" style={{ flex: 1, padding: '0.6rem', background: isMissing ? 'rgba(239, 68, 68, 0.1)' : 'rgba(99, 102, 241, 0.1)', color: isMissing ? 'var(--danger)' : 'var(--primary)', borderColor: isMissing ? 'rgba(239, 68, 68, 0.3)' : 'rgba(99, 102, 241, 0.3)' }} onClick={() => setShowCLModal(true)}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>{isMissing ? 'add_circle' : 'swap_horiz'}</span> {isMissing ? 'Add' : 'Change'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+
+                        {/* Additional Documents Card */}
+                        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                                <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.3rem' }}>folder_open</span>
+                                <span style={{ fontWeight: 600, fontSize: '1.05rem' }}>Additional Context</span>
+                            </div>
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'var(--bg-card)', borderRadius: '0.5rem', border: '1px dashed var(--border-color)', opacity: 0.8 }}>
+                                    <div style={{ flex: 1, minWidth: 0, textAlign: 'center' }}>
+                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>No additional documents</div>
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', opacity: 0.7, marginTop: '0.2rem' }}>Used for AI generation context</div>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
+                                    <button className="btn-util" style={{ width: '100%', padding: '0.6rem', borderStyle: 'dashed' }} onClick={() => alert('Additional docs upload to be implemented')}>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>add</span> Add Document
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2003,7 +2250,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                         const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ...app, pipeline_stage: newStage, status: newStatus })
+                            body: JSON.stringify({ ...app, pipeline_stage: newStage, status: newStatus, force: true })
                         });
                         if (res.ok && onUpdate) {
                             onUpdate(app.id, { pipeline_stage: newStage, status: newStatus });
@@ -2014,13 +2261,22 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                 }}
             />
 
-            {/* Phase Tabs */}
+            {/* Phase Tabs — sticky so they freeze at top when scrolling */}
             <div style={{
                 display: 'flex',
-                gap: '0.25rem',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                marginTop: '1.5rem',
-                marginBottom: '2rem'
+                gap: '0.2rem',
+                marginTop: '2.5rem',
+                position: 'sticky',
+                top: 0,
+                zIndex: 50,
+                background: 'var(--bg-primary)',
+                paddingTop: '0.5rem',
+                marginLeft: '-0.5rem',
+                marginRight: '-0.5rem',
+                paddingLeft: '0.5rem',
+                paddingRight: '0.5rem',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
             }}>
                 {[
                     { id: 'Saved', label: 'Saved' },
@@ -2038,22 +2294,40 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                             key={tab.id}
                             onClick={() => setActivePhaseTab(tab.id)}
                             style={{
-                                padding: '1rem 1.5rem',
-                                fontSize: '0.625rem',
-                                fontWeight: 900,
+                                padding: '0.75rem 1.25rem',
+                                fontSize: '0.65rem',
+                                fontWeight: isTabActive ? 800 : 600,
                                 textTransform: 'uppercase',
-                                letterSpacing: '0.1em',
-                                color: isTabActive ? 'white' : '#64748b',
-                                background: 'none',
-                                border: 'none',
-                                borderBottom: `2px solid ${isTabActive ? 'var(--primary)' : 'transparent'}`,
+                                letterSpacing: '0.08em',
+                                color: isTabActive ? 'var(--primary)' : 'var(--text-muted)',
+                                background: isTabActive ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
+                                backdropFilter: isTabActive ? 'blur(12px)' : 'none',
+                                border: '1px solid ' + (isTabActive ? 'var(--border-color)' : 'transparent'),
+                                borderBottom: isTabActive ? '1px solid rgba(255, 255, 255, 0.03)' : 'none',
+                                borderRadius: '0.5rem 0.5rem 0 0',
                                 cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                marginBottom: '-1px'
+                                transition: 'all 0.2s ease',
+                                marginBottom: '-1px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                position: 'relative',
+                                zIndex: isTabActive ? 2 : 1
                             }}
-                            onMouseOver={(e) => { if (!isTabActive) e.target.style.color = '#cbd5e1'; }}
-                            onMouseOut={(e) => { if (!isTabActive) e.target.style.color = '#64748b'; }}
+                            onMouseOver={(e) => { 
+                                if (!isTabActive) {
+                                    e.currentTarget.style.color = 'var(--text-primary)';
+                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                                }
+                            }}
+                            onMouseOut={(e) => { 
+                                if (!isTabActive) {
+                                    e.currentTarget.style.color = 'var(--text-muted)';
+                                    e.currentTarget.style.background = 'transparent';
+                                }
+                            }}
                         >
+                            {isTabActive && <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--primary)' }}></div>}
                             {tab.label}
                         </button>
                     );
@@ -2061,7 +2335,14 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
             </div>
 
             {/* Phase Content from Lifecycle Component */}
-            <div style={{ marginBottom: '2rem' }}>
+            <div style={{ 
+                marginBottom: '2.5rem', 
+                borderRadius: '0 1rem 1rem 1rem',
+                padding: '2rem',
+                background: 'transparent',
+                border: '1px solid var(--border-color)',
+                position: 'relative'
+            }}>
                 <ApplicationLifecycle
                     app={app}
                     activePhaseTab={activePhaseTab}
@@ -2241,16 +2522,22 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                     </div>
                                 </div>
 
-                                {app.match_details && safeParseJSON(app.match_details, {}).criteria_scores && (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        {Object.entries(safeParseJSON(app.match_details, {}).criteria_scores).map(([key, info]) => (
-                                            <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                                                <span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{key.replace('_', ' ')}</span>
-                                                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{info.score}/20</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                {(() => {
+                                    const matchData = safeParseJSON(app?.match_details, { criteria_scores: {} });
+                                    const scores = matchData.criteria_scores || {};
+                                    if (!app?.match_details || Object.keys(scores).length === 0) return null;
+                                    
+                                    return (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                            {Object.entries(scores).map(([key, info]) => (
+                                                <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                                    <span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{String(key).replace('_', ' ')}</span>
+                                                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{info?.score ?? '?'}/20</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         );
                     })()}
@@ -2329,326 +2616,6 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                         </div>
                     </div>
 
-
-                    {/* Resume Card */}
-                    <div className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>description</span>
-                            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Resumes</h3>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
-                            {/* Active Final Resume (Prominent) */}
-                            <div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600 }}>Active Final Resume</div>
-                                {(() => {
-                                    const isActiveOverride = app.active_resume_type === 'override' && app.override_resume_path;
-                                    const isActiveGenerated = app.active_resume_type === 'generated' || (!isActiveOverride && app.tailored_resume_path && app.active_resume_type !== 'original');
-                                    const isActiveOriginal = app.active_resume_type === 'original' || (!isActiveOverride && !isActiveGenerated);
-
-                                    let path = app.original_resume_path;
-                                    let label = "Original Resume";
-                                    let icon = "attach_file";
-                                    let type = "original";
-
-                                    if (isActiveOverride) {
-                                        path = app.override_resume_path;
-                                        label = "Custom Final";
-                                        icon = "verified";
-                                        type = "override";
-                                    } else if (isActiveGenerated && app.tailored_resume_path) {
-                                        path = app.tailored_resume_path;
-                                        label = "Tailored Resume";
-                                        icon = "auto_awesome";
-                                        type = "tailored";
-                                    } else if (isActiveGenerated && !app.tailored_resume_path) {
-                                        return (
-                                            <div className="doc-row-btn" style={{ cursor: 'default', opacity: 0.8, backgroundColor: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column', height: 'auto', gap: '0.75rem', padding: '1rem' }}>
-                                                <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: '0.75rem' }}>
-                                                    <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: 'var(--text-secondary)' }}>auto_awesome</span>
-                                                    <div style={{ textAlign: 'left' }}>
-                                                        <div style={{ fontWeight: 600 }}>Tailored Resume</div>
-                                                        <div style={{ fontSize: '0.7rem', opacity: 0.7 }}>Not generated yet</div>
-                                                    </div>
-                                                    {!needsGeneration && (
-                                                        <button className="btn-util" style={{ marginLeft: 'auto' }} onClick={handleRegenerateResume} disabled={regeneratingResume}>
-                                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>auto_awesome</span>
-                                                            {regeneratingResume ? 'Generating' : 'Generate Now'}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    }
-
-                                    return (
-                                        <button className="doc-row-btn doc-active" onClick={() => handlePreview(type, path)}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: 'var(--primary)' }}>{icon}</span>
-                                            <div style={{ textAlign: 'left' }}>
-                                                <div style={{ fontWeight: 600 }}>{label}</div>
-                                                <div style={{ fontSize: '0.7rem', opacity: 0.7 }}>{path?.split('/').pop()}</div>
-                                            </div>
-                                            <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '1.2rem' }}>visibility</span>
-                                        </button>
-                                    );
-                                })()}
-                            </div>
-
-                            {/* Collapsible Versions Section */}
-                            <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
-                                <button 
-                                    onClick={() => setExpandedResume(!expandedResume)}
-                                    style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem', fontWeight: 600, padding: 0 }}
-                                >
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>{expandedResume ? 'expand_less' : 'expand_more'}</span>
-                                    {expandedResume ? 'Hide Version History' : 'View All Versions'}
-                                </button>
-
-                                {expandedResume && (
-                                    <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                                        {/* Original Resume */}
-                                        <div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
-                                                Reference Resume
-                                                {app.active_resume_type === 'original' && <span style={{ color: 'var(--success)', fontWeight: 700 }}>● ACTIVE</span>}
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                <button className="doc-row-btn btn-mini-doc" style={{ flex: 1 }} onClick={() => handlePreview('original', app.original_resume_path)}>
-                                                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>attach_file</span>
-                                                    <span style={{ fontSize: '0.85rem' }}>Original Upload</span>
-                                                    <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '0.9rem', opacity: 0.6 }}>visibility</span>
-                                                </button>
-                                                {app.active_resume_type !== 'original' && (
-                                                    <button className="btn-util" onClick={() => toggleActiveVersion('resume', 'original')} title="Set as Final">
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>check_circle</span>
-                                                        Set Final
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Generated Resume */}
-                                        <div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
-                                                Tailored (AI)
-                                                {app.active_resume_type === 'generated' && <span style={{ color: 'var(--success)', fontWeight: 700 }}>● ACTIVE</span>}
-                                            </div>
-                                            <div style={{ position: 'relative' }}>
-                                                {app.tailored_resume_path ? (
-                                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                        <button className="doc-row-btn btn-mini-doc" style={{ flex: 1 }} onClick={() => handlePreview('tailored', app.tailored_resume_path)}>
-                                                            <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>auto_awesome</span>
-                                                            <span style={{ fontSize: '0.85rem' }}>Generated Version</span>
-                                                            <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '0.9rem', opacity: 0.6 }}>visibility</span>
-                                                        </button>
-                                                        {app.active_resume_type !== 'generated' && (
-                                                            <button className="btn-util" onClick={() => toggleActiveVersion('resume', 'generated')}>
-                                                                <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>check_circle</span>
-                                                                Set Final
-                                                            </button>
-                                                        )}
-                                                        <button className="btn-util" onClick={handleRegenerateResume} disabled={regeneratingResume} title="Regenerate">
-                                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>refresh</span>
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                            <div style={{ flex: 1, fontSize: '0.85rem', color: 'var(--text-muted)', padding: '0.5rem', border: '1px dashed var(--border-color)', borderRadius: '4px' }}>Not generated yet</div>
-                                                            {!needsGeneration && (
-                                                                <button className="btn-util" onClick={handleRegenerateResume} disabled={regeneratingResume}>
-                                                                    <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>auto_awesome</span>
-                                                                    Generate
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Custom Final */}
-                                        <div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
-                                                Custom Version
-                                                {app.active_resume_type === 'override' && <span style={{ color: 'var(--success)', fontWeight: 700 }}>● ACTIVE</span>}
-                                            </div>
-                                            {app.override_resume_path ? (
-                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                    <button className="doc-row-btn btn-mini-doc" style={{ flex: 1 }} onClick={() => handlePreview('override', app.override_resume_path)}>
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>verified</span>
-                                                        <span style={{ fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.override_resume_path.split('/').pop()}</span>
-                                                        <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '0.9rem', opacity: 0.6 }}>visibility</span>
-                                                    </button>
-                                                    {app.active_resume_type !== 'override' && (
-                                                        <button className="btn-util" onClick={() => toggleActiveVersion('resume', 'override')}>
-                                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>check_circle</span>
-                                                            Set Final
-                                                        </button>
-                                                    )}
-                                                    <button className="btn-util btn-danger" onClick={() => handleDeleteOverride('resume')} title="Delete Custom Version">
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>delete</span>
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <button className="btn-util" style={{ width: '100%' }} onClick={() => handleOverrideUpload('resume')}>
-                                                    <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>upload</span> Upload Custom Final
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Cover Letter Card */}
-                    <div className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>mail</span>
-                            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Cover Letter</h3>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
-                            {/* Active Final Cover Letter (Prominent) */}
-                            <div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600 }}>Active Final Letter</div>
-                                {(() => {
-                                    const isActiveOverride = app.active_cover_letter_type === 'override' && app.override_cover_letter_path;
-                                    const isActiveGenerated = app.active_cover_letter_type === 'generated' || (!isActiveOverride && app.cover_letter_path);
-
-                                    let path = null;
-                                    let label = "Cover Letter";
-                                    let icon = "mail";
-                                    let type = "cover";
-
-                                    if (isActiveOverride) {
-                                        path = app.override_cover_letter_path;
-                                        label = "Custom Final";
-                                        icon = "verified";
-                                        type = "override_cl";
-                                    } else if (isActiveGenerated && app.cover_letter_path) {
-                                        path = app.cover_letter_path;
-                                        label = "Generated Letter";
-                                        icon = "edit_note";
-                                        type = "cover";
-                                    } else {
-                                        return (
-                                            <div className="doc-row-btn" style={{ cursor: 'default', opacity: 0.8, backgroundColor: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column', height: 'auto', gap: '0.75rem', padding: '1rem' }}>
-                                                <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: '0.75rem' }}>
-                                                    <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: 'var(--text-secondary)' }}>auto_awesome</span>
-                                                    <div style={{ textAlign: 'left' }}>
-                                                        <div style={{ fontWeight: 600 }}>Tailored Letter</div>
-                                                        <div style={{ fontSize: '0.7rem', opacity: 0.7 }}>Not generated yet</div>
-                                                    </div>
-                                                    {!needsGeneration && (
-                                                        <button className="btn-util" style={{ marginLeft: 'auto' }} onClick={handleRegenerateCL} disabled={regeneratingCL}>
-                                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>auto_awesome</span>
-                                                            {regeneratingCL ? 'Generating' : 'Generate Now'}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    }
-
-                                    return (
-                                        <button className="doc-row-btn doc-active" onClick={() => handlePreview(type, path)}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: 'var(--primary)' }}>{icon}</span>
-                                            <div style={{ textAlign: 'left' }}>
-                                                <div style={{ fontWeight: 600 }}>{label}</div>
-                                                <div style={{ fontSize: '0.7rem', opacity: 0.7 }}>{path?.split('/').pop()}</div>
-                                            </div>
-                                            <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '1.2rem' }}>visibility</span>
-                                        </button>
-                                    );
-                                })()}
-                            </div>
-
-                            {/* Collapsible Versions Section */}
-                            <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
-                                <button 
-                                    onClick={() => setExpandedCL(!expandedCL)}
-                                    style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem', fontWeight: 600, padding: 0 }}
-                                >
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>{expandedCL ? 'expand_less' : 'expand_more'}</span>
-                                    {expandedCL ? 'Hide Version History' : 'View All Versions'}
-                                </button>
-
-                                {expandedCL && (
-                                    <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                                        {/* Generated Cover Letter */}
-                                        <div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
-                                                Generated (AI)
-                                                {app.active_cover_letter_type === 'generated' && <span style={{ color: 'var(--success)', fontWeight: 700 }}>● ACTIVE</span>}
-                                            </div>
-                                            {app.cover_letter_path ? (
-                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                    <button className="doc-row-btn btn-mini-doc" style={{ flex: 1 }} onClick={() => handlePreview('cover', app.cover_letter_path)}>
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>edit_note</span>
-                                                        <span style={{ fontSize: '0.85rem' }}>Generated Version</span>
-                                                        <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '0.9rem', opacity: 0.6 }}>visibility</span>
-                                                    </button>
-                                                    {app.active_cover_letter_type !== 'generated' && (
-                                                        <button className="btn-util" onClick={() => toggleActiveVersion('cover_letter', 'generated')}>
-                                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>check_circle</span>
-                                                            Set Final
-                                                        </button>
-                                                    )}
-                                                    <button className="btn-util" onClick={handleRegenerateCL} disabled={regeneratingCL} title="Regenerate">
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>refresh</span>
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                        <div style={{ flex: 1, fontSize: '0.85rem', color: 'var(--text-muted)', padding: '0.5rem', border: '1px dashed var(--border-color)', borderRadius: '4px' }}>Not generated yet</div>
-                                                        {!needsGeneration && (
-                                                            <button className="btn-util" onClick={handleRegenerateCL} disabled={regeneratingCL}>
-                                                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>auto_awesome</span>
-                                                                Generate
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Custom Final */}
-                                        <div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.4rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
-                                                Custom Version
-                                                {app.active_cover_letter_type === 'override' && <span style={{ color: 'var(--success)', fontWeight: 700 }}>● ACTIVE</span>}
-                                            </div>
-                                            {app.override_cover_letter_path ? (
-                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                    <button className="doc-row-btn btn-mini-doc" style={{ flex: 1 }} onClick={() => handlePreview('override_cl', app.override_cover_letter_path)}>
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>verified</span>
-                                                        <span style={{ fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.override_cover_letter_path.split('/').pop()}</span>
-                                                        <span className="material-symbols-outlined" style={{ marginLeft: 'auto', fontSize: '0.9rem', opacity: 0.6 }}>visibility</span>
-                                                    </button>
-                                                    {app.active_cover_letter_type !== 'override' && (
-                                                        <button className="btn-util" onClick={() => toggleActiveVersion('cover_letter', 'override')}>
-                                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>check_circle</span>
-                                                            Set Final
-                                                        </button>
-                                                    )}
-                                                    <button className="btn-util btn-danger" onClick={() => handleDeleteOverride('cover_letter')} title="Delete Custom Version">
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>delete</span>
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <button className="btn-util" style={{ width: '100%' }} onClick={() => handleOverrideUpload('cover_letter')}>
-                                                    <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>upload</span> Upload Custom Final
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div> {/* End Grid Container */}
                     </div>
@@ -2707,6 +2674,34 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
             {previewFile && (
                 <PreviewModal file={previewFile} onClose={handleClosePreview} />
             )}
+
+            {/* Document Selection Modals */}
+            <DocumentSelectionModal
+                isOpen={showResumeModal}
+                onClose={() => setShowResumeModal(false)}
+                docType="resume"
+                app={app}
+                onRegenerate={handleRegenerateResume}
+                onUploadOverride={handleOverrideUpload}
+                onPreview={handlePreview}
+                onSetFinal={toggleActiveVersion}
+                onDeleteOverride={handleDeleteOverride}
+                regenerating={regeneratingResume}
+                needsGeneration={needsGeneration}
+            />
+            <DocumentSelectionModal
+                isOpen={showCLModal}
+                onClose={() => setShowCLModal(false)}
+                docType="cover_letter"
+                app={app}
+                onRegenerate={handleRegenerateCL}
+                onUploadOverride={handleOverrideUpload}
+                onPreview={handlePreview}
+                onSetFinal={toggleActiveVersion}
+                onDeleteOverride={handleDeleteOverride}
+                regenerating={regeneratingCL}
+                needsGeneration={needsGeneration}
+            />
 
             {/* Logo Picker Modal */}
             {showLogoPicker && (

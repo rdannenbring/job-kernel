@@ -16,14 +16,21 @@ const getScoreColors = (score) => {
 
 const formatCompensation = (salary, maxLength = 60) => {
     if (!salary || salary === "Not Listed") return '-';
-    let text = salary.length > maxLength ? salary.substring(0, maxLength - 3) + '...' : salary;
-    // Inject soft hyphens (\u00AD) into long continuous chunks (e.g. >12 chars) to ensure they can break with a hyphen
-    return text.split(' ').map(word => {
+    const s = String(salary);
+    let text = s.length > maxLength ? s.substring(0, maxLength - 3) + '...' : s;
+    const words = text.split(' ');
+    const hyphenatedWords = words.map(word => {
         if (word.length > 12) {
-            return word.match(/.{1,12}/g).join('\u00AD');
+            let newWord = '';
+            for (let i = 0; i < word.length; i += 12) {
+                newWord += word.substring(i, i + 12);
+                if (i + 12 < word.length) newWord += '\u00AD';
+            }
+            return newWord;
         }
         return word;
-    }).join(' ');
+    });
+    return hyphenatedWords.join(' ');
 };
 
 // Build a score circle badge with above/below-average indicator
@@ -214,12 +221,12 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
     };
 
     // Average match score across all apps that have one
-    const appsWithScore = apps.filter(a => a.match_score != null);
+    const appsWithScore = (Array.isArray(apps) ? apps : []).filter(a => a.match_score != null);
     const avgScore = appsWithScore.length > 0
-        ? appsWithScore.reduce((sum, a) => sum + a.match_score, 0) / appsWithScore.length
+        ? appsWithScore.reduce((sum, a) => sum + Number(a.match_score || 0), 0) / appsWithScore.length
         : null;
 
-    const processedApps = [...apps].map(app => {
+    const processedApps = (Array.isArray(apps) ? [...apps] : []).map(app => {
         let matchJobType = null;
         let matchLocType = null;
         if (profilePrefs) {
@@ -379,7 +386,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
             fetchWithAuth(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/applications/${app.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus, kanban_order: index })
+                body: JSON.stringify({ status: newStatus, kanban_order: index, force: true })
             })
             .then(res => res.ok ? res.json() : null)
             .then(updatedApp => {
@@ -509,7 +516,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
             <header className="flex items-center justify-between px-8 py-4 border-b border-slate-200 dark:border-slate-200/10 glass-panel shrink-0">
                 <div className="flex items-center gap-6 flex-1">
                     <h2 className="text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100">Dashboard</h2>
-                    <div className="flex items-center bg-slate-200 dark:bg-white/5 rounded-lg p-1 border border-slate-300 dark:border-white/10">
+                    <div className="flex items-center bg-slate-200 dark:bg-[var(--bg-tertiary)] rounded-lg p-1 border border-slate-300 dark:border-[var(--border-color)]">
                         <button onClick={() => setViewMode('kanban')} className={`px-4 py-1.5 text-sm transition-colors rounded-md ${viewMode === 'kanban' ? 'font-semibold text-white bg-primary shadow-lg shadow-primary/20' : 'font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'}`}>Board</button>
                         <button onClick={() => setViewMode('list')} className={`px-4 py-1.5 text-sm transition-colors rounded-md ${viewMode === 'list' ? 'font-semibold text-white bg-primary shadow-lg shadow-primary/20' : 'font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'}`}>List</button>
                         <button onClick={() => setViewMode('table')} className={`px-4 py-1.5 text-sm transition-colors rounded-md ${viewMode === 'table' ? 'font-semibold text-white bg-primary shadow-lg shadow-primary/20' : 'font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'}`}>Table</button>
@@ -534,8 +541,8 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                 placeholder="Search all job details..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className={`bg-white dark:bg-white/5 border ${
-                                    searchTerm ? 'border-primary/50 text-slate-800 dark:text-white' : 'border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-300'
+                                className={`bg-[var(--bg-input)] border ${
+                                    searchTerm ? 'border-primary/50 text-slate-800 dark:text-white' : 'border-slate-300 dark:border-[var(--border-color)] text-slate-600 dark:text-slate-300'
                                 } hover:border-slate-400 dark:hover:border-white/20 rounded-lg pl-10 ${searchTerm ? 'pr-8' : 'pr-4'} py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-56 shadow-sm placeholder:text-slate-500`}
                             />
                             {searchTerm && (
@@ -550,7 +557,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                         <div className="relative flex items-center h-9" ref={filterRef}>
                             <button 
                                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                className={`appearance-none bg-white dark:bg-white/5 border ${
+                                className={`appearance-none bg-[var(--bg-input)] border ${
                                     (filterStatuses.length + filterJobTypes.length + filterLocationTypes.length + filterInterestLevels.length) > 0 
                                         ? 'border-primary/50 text-slate-800 dark:text-white' 
                                         : 'border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-300'
@@ -564,7 +571,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                             </button>
                             
                             {isFilterOpen && (
-                                <div className="absolute top-11 left-0 w-64 glass-panel bg-white dark:bg-[#0a0f18]/95 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl z-50 p-3 overflow-hidden flex flex-col gap-3 backdrop-blur-xl">
+                                <div className="absolute top-11 left-0 w-64 glass-panel bg-[var(--bg-card)] border border-slate-200 dark:border-[var(--border-color)] rounded-xl shadow-2xl z-50 p-3 overflow-hidden flex flex-col gap-3 backdrop-blur-xl">
                                     <div className="flex flex-col gap-1">
                                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 px-1">Status</div>
                                         {KANBAN_COLUMNS.map(col => {

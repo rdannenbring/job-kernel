@@ -7,8 +7,8 @@ import { useAuth } from '../context/AuthContext';
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
 const InputGroup = ({ label, children, style }) => (
-    <div style={{ marginBottom: '1rem', ...style }}>
-        <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.4rem', color: 'var(--text-secondary)' }}>{label}</label>
+    <div className="form-group" style={{ ...style }}>
+        <label className="form-label">{label}</label>
         {children}
     </div>
 );
@@ -16,11 +16,8 @@ const InputGroup = ({ label, children, style }) => (
 const Input = (props) => (
     <input
         {...props}
-        style={{
-            width: '100%', padding: '0.6rem', borderRadius: '4px',
-            border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)',
-            color: 'var(--text-primary)', fontSize: '0.95rem'
-        }}
+        className="form-input"
+        style={{ fontSize: '0.95rem', ...props.style }}
     />
 );
 
@@ -32,10 +29,18 @@ const CollapsibleSection = ({ icon, title, defaultExpanded, children, style }) =
             <h2 
                 className="section-title-premium" 
                 onClick={() => setExpanded(!expanded)}
-                style={{ marginBottom: expanded ? '1.5rem' : '0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}
+                style={{ 
+                    marginBottom: expanded ? '1.5rem' : '0', 
+                    cursor: 'pointer', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between', 
+                    userSelect: 'none',
+                    borderBottomColor: expanded ? 'var(--bg-tertiary)' : 'transparent'
+                }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {icon && <span>{icon}</span>}
+                    {icon && <span className="material-symbols-outlined" style={{ color: 'var(--primary-light)' }}>{icon}</span>}
                     {title}
                 </div>
                 <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '1.2rem', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s ease' }}>
@@ -56,9 +61,9 @@ const CollapsibleCard = ({ title, defaultExpanded = false, onAdd, addTitle, chil
     const [expanded, setExpanded] = useState(defaultExpanded);
 
     return (
-        <section className="card" style={style}>
+        <section className="card" style={{ padding: '1.25rem', ...style }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: expanded ? '1.5rem' : '0', cursor: 'pointer', userSelect: 'none' }} onClick={() => setExpanded(!expanded)}>
-                <h3 style={{ fontSize: '1.2rem', margin: 0, color: 'var(--primary-light)', fontWeight: 600 }}>{title}</h3>
+                <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--primary-light)', fontWeight: 600 }}>{title}</h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     {onAdd && (
                         <button
@@ -67,16 +72,16 @@ const CollapsibleCard = ({ title, defaultExpanded = false, onAdd, addTitle, chil
                             title={addTitle || "Add"}
                             style={{
                                 padding: '0',
-                                width: '30px',
-                                height: '30px',
+                                width: '28px',
+                                height: '28px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 borderRadius: '50%',
-                                lineHeight: '1'
+                                border: '1px solid var(--border-color-card)'
                             }}
                         >
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>add</span>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>add</span>
                         </button>
                     )}
                     <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '1.2rem', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s ease' }}>
@@ -85,7 +90,7 @@ const CollapsibleCard = ({ title, defaultExpanded = false, onAdd, addTitle, chil
                 </div>
             </div>
             {expanded && (
-                <div style={{ animation: 'fadeIn 0.3s ease-out', marginTop: '1rem' }}>
+                <div style={{ animation: 'fadeIn 0.3s ease-out', marginTop: '1.25rem' }}>
                     {children}
                 </div>
             )}
@@ -129,6 +134,7 @@ const Profile = () => {
         experiences: [],
         educations: [],
         certificates: [],
+        recommendations: [],
         other: [],
         social_links: [],
         preferences: { max_commute: '', work_setting: '', expected_salary: '' },
@@ -472,28 +478,34 @@ const Profile = () => {
         setImportingLinkedIn(true);
         setLinkedInError('');
 
-        if (typeof chrome === 'undefined' || !chrome.runtime) {
-            setLinkedInError('Extension not detected. Please ensure the extension is installed and enabled.');
-            setImportingLinkedIn(false);
-            return;
-        }
-
-        const extensionId = "mlljebhmpmefmkkkjmhmjkpcnnhpijpk"; // Update if different
-        chrome.runtime.sendMessage(extensionId, { action: 'SCRAPE_LINKEDIN_PROFILE' }, (response) => {
-            if (chrome.runtime.lastError) {
-                console.error('[Extension Error]', chrome.runtime.lastError);
-                setLinkedInError('Could not communicate with the extension. Is it installed?');
+        // Listen for the response from the content script
+        const messageHandler = (event) => {
+            if (event.source !== window) return;
+            if (event.data && event.data.type === 'JOB_AUTOMATOR_SCRAPE_LINKEDIN_RESPONSE') {
+                window.removeEventListener('message', messageHandler);
+                clearTimeout(timeout);
+                
+                const response = event.data.response;
+                if (response && response.success) {
+                    applyLinkedInData(response.data);
+                } else {
+                    setLinkedInError(response?.error || 'Failed to import from LinkedIn. Make sure you are logged in to LinkedIn.');
+                }
                 setImportingLinkedIn(false);
-                return;
             }
+        };
 
-            if (response && response.success) {
-                applyLinkedInData(response.data);
-            } else {
-                setLinkedInError(response?.error || 'Failed to import from LinkedIn. Make sure you are logged in to LinkedIn.');
-            }
+        window.addEventListener('message', messageHandler);
+
+        // Send message to content script
+        window.postMessage({ type: 'JOB_AUTOMATOR_SCRAPE_LINKEDIN' }, '*');
+
+        // Timeout in case extension is not installed
+        const timeout = setTimeout(() => {
+            window.removeEventListener('message', messageHandler);
+            setLinkedInError('Could not communicate with the extension. Is it installed and active on this page?');
             setImportingLinkedIn(false);
-        });
+        }, 3000);
     };
 
     const handleLinkedInImport = async () => {
@@ -626,14 +638,9 @@ const Profile = () => {
     if (loading) return <div style={{ padding: '3rem' }}>Loading profile...</div>;
 
     return (
-        <div ref={containerRef} style={{ padding: '3rem', maxWidth: '1200px', margin: '0 auto', position: scanning ? 'fixed' : 'relative', width: '100%' }}>
+        <div ref={containerRef} className="page-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 3rem 3rem 3rem', position: scanning ? 'fixed' : 'relative' }}>
             {scanning && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(15, 23, 42, 0.9)', zIndex: 10000,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    backdropFilter: 'blur(8px)'
-                }}>
+                <div className="modal-overlay" style={{ background: 'var(--bg-overlay)', backdropFilter: 'blur(8px)' }}>
                     <div style={{ width: '100%', maxWidth: '800px', padding: '2rem' }}>
                         <ProcessVisualization mode="profile_import" />
                     </div>
@@ -649,15 +656,15 @@ const Profile = () => {
                 zIndex: 100,
                 background: isSticky ? 'var(--bg-primary)' : 'transparent',
                 padding: '1rem 0',
-                margin: '0 -3rem 2rem -3rem', // Negative margin to stretch full width but keep content aligned if using padding
+                margin: '0 -3rem 2rem -3rem',
                 paddingLeft: '3rem',
                 paddingRight: '3rem',
                 borderBottom: isSticky ? '1px solid var(--border-color)' : 'none',
-                transition: 'all 0.3s ease'
+                transition: 'all var(--transition-base)'
             }}>
                 <div>
-                    <h1 style={{ fontSize: isSticky ? '1.5rem' : '2rem', marginBottom: isSticky ? 0 : '0.5rem', transition: 'all 0.3s ease', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: isSticky ? '1.8rem' : '2.4rem' }}>person</span>
+                    <h1 style={{ fontSize: isSticky ? '1.5rem' : '2rem', marginBottom: isSticky ? 0 : '0.5rem', transition: 'all var(--transition-base)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: isSticky ? '1.8rem' : '2.4rem', color: 'var(--primary)' }}>person</span>
                         User Profile
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', display: isSticky ? 'none' : 'block' }}>Manage your contact info for cover letters.</p>
@@ -666,10 +673,8 @@ const Profile = () => {
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <button
                         onClick={() => setShowLinkedInModal(true)}
-                        style={{
-                            padding: '0.6rem 1.2rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)',
-                            color: 'var(--text-primary)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'
-                        }}
+                        className="btn-secondary"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                     >
                         <img src="https://static.licdn.com/aero-v1/sc/h/al2o9zrvru7aqj8e1x2rzsrca" alt="LinkedIn" style={{ width: '16px', height: '16px' }} />
                         Import from LinkedIn
@@ -678,10 +683,8 @@ const Profile = () => {
                     <button
                         onClick={() => fileInputRef.current.click()}
                         disabled={scanning}
-                        style={{
-                            padding: '0.6rem 1.2rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)',
-                            color: 'var(--text-primary)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'
-                        }}
+                        className="btn-secondary"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                     >
                         <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>download</span>
                         {scanning ? 'Scanning...' : 'Import from Resume'}
@@ -697,10 +700,8 @@ const Profile = () => {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        style={{
-                            padding: '0.6rem 1.5rem', background: 'var(--primary)', border: 'none',
-                            color: 'white', borderRadius: '6px', cursor: 'pointer', fontWeight: 500
-                        }}
+                        className="btn-primary"
+                        style={{ padding: '0.6rem 1.5rem' }}
                     >
                         {saving ? 'Saving...' : 'Save Profile'}
                     </button>
@@ -710,14 +711,11 @@ const Profile = () => {
             {/* Diff Modal */}
             {
                 extractedData && (
-                    <div style={{
-                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)',
-                        zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)'
-                    }}>
+                    <div className="modal-overlay" style={{ background: 'var(--bg-overlay)', backdropFilter: 'blur(4px)' }}>
                         <div style={{
-                            background: 'var(--bg-card)', padding: '2.5rem', borderRadius: '12px', maxWidth: '1000px', width: '95%',
+                            background: 'var(--bg-card)', padding: '2.5rem', borderRadius: 'var(--radius-lg)', maxWidth: '1000px', width: '95%',
                             maxHeight: '85vh', display: 'flex', flexDirection: 'column',
-                            boxShadow: '0 20px 50px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)'
+                            boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-color)'
                         }}>
                             <div style={{ overflowY: 'auto', flex: 1, paddingRight: '0.5rem' }}>
                                 <h2 style={{ marginTop: 0, fontSize: '1.8rem', color: 'var(--text-primary)' }}>Review Scanned Data</h2>
@@ -748,17 +746,16 @@ const Profile = () => {
                                             gridTemplateColumns: '40px 140px 1fr 1fr',
                                             alignItems: 'start',
                                             padding: '1rem',
-                                            background: selectedFields[key] ? 'rgba(111, 76, 255, 0.05)' : 'transparent',
-                                            borderRadius: '8px',
-                                            borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                            transition: 'background 0.2s ease'
+                                            background: selectedFields[key] ? 'var(--primary-glow)' : 'transparent',
+                                            borderRadius: 'var(--radius-md)',
+                                            borderBottom: '1px solid var(--border-color)',
+                                            transition: 'background var(--transition-base)'
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
                                                 <input
                                                     type="checkbox"
                                                     checked={!!selectedFields[key]}
                                                     onChange={(e) => setSelectedFields(prev => ({ ...prev, [key]: e.target.checked }))}
-                                                    style={{ cursor: 'pointer', width: '18px', height: '18px' }}
                                                 />
                                             </div>
                                             <div style={{ paddingRight: '1rem', fontWeight: 600, color: 'var(--text-primary)', paddingTop: '0.5rem', textTransform: 'capitalize' }}>
@@ -770,7 +767,7 @@ const Profile = () => {
                                                 fontSize: '0.9rem',
                                                 wordBreak: 'break-all',
                                                 fontStyle: 'italic',
-                                                borderRight: '1px solid rgba(255,255,255,0.05)'
+                                                borderRight: '1px solid var(--border-color)'
                                             }}>
                                                 {Array.isArray(formData[key]) ? `${formData[key].length} entries` : (formData[key] || '(Empty)')}
                                             </div>
@@ -783,15 +780,8 @@ const Profile = () => {
                                                             </span>
                                                             <button
                                                                 onClick={() => toggleSection(key)}
-                                                                style={{
-                                                                    padding: '0.3rem 0.6rem',
-                                                                    fontSize: '0.75rem',
-                                                                    background: 'var(--bg-tertiary)',
-                                                                    border: '1px solid var(--border-color)',
-                                                                    color: 'var(--text-primary)',
-                                                                    borderRadius: '4px',
-                                                                    cursor: 'pointer'
-                                                                }}
+                                                                className="btn-secondary"
+                                                                style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
                                                             >
                                                                 {expandedSections[key] ? 'Collapse' : 'View / Edit Entries'}
                                                             </button>
@@ -800,7 +790,7 @@ const Profile = () => {
                                                         {expandedSections[key] && (
                                                             <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                                                 {val.map((item, idx) => (
-                                                                    <div key={idx} className="timeline-card" style={{ padding: '1rem', marginBottom: 0, border: '1px solid rgba(255,255,255,0.1)' }}>
+                                                                    <div key={idx} className="timeline-card" style={{ padding: '1rem', marginBottom: 0, border: '1px solid var(--border-color)' }}>
                                                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                                                                             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-light)' }}>ENTRY #{idx + 1}</span>
                                                                             <button
@@ -814,7 +804,7 @@ const Profile = () => {
 
                                                                         {typeof item === 'string' ? (
                                                                             <input
-                                                                                className="input-premium"
+                                                                                className="form-input"
                                                                                 value={item}
                                                                                 onChange={(e) => handleExtractedArrayItemChange(key, idx, null, e.target.value)}
                                                                                 style={{ width: '100%', padding: '0.5rem' }}
@@ -828,14 +818,14 @@ const Profile = () => {
                                                                                         </label>
                                                                                         {subKey === 'description' ? (
                                                                                             <textarea
-                                                                                                className="input-premium"
+                                                                                                className="form-input"
                                                                                                 value={subVal}
                                                                                                 onChange={(e) => handleExtractedArrayItemChange(key, idx, subKey, e.target.value)}
                                                                                                 style={{ width: '100%', padding: '0.5rem', minHeight: '60px', fontSize: '0.85rem' }}
                                                                                             />
                                                                                         ) : (
                                                                                             <input
-                                                                                                className="input-premium"
+                                                                                                className="form-input"
                                                                                                 value={subVal}
                                                                                                 onChange={(e) => handleExtractedArrayItemChange(key, idx, subKey, e.target.value)}
                                                                                                 style={{ width: '100%', padding: '0.5rem', fontSize: '0.85rem' }}
@@ -854,14 +844,14 @@ const Profile = () => {
                                                     <textarea
                                                         value={val}
                                                         onChange={(e) => handleExtractedValueChange(key, e.target.value)}
-                                                        className="input-premium"
+                                                        className="form-input"
                                                         style={{
                                                             width: '100%',
                                                             minHeight: '40px',
                                                             fontSize: '0.9rem',
                                                             padding: '0.5rem',
-                                                            background: 'rgba(255,255,255,0.03)',
-                                                            border: selectedFields[key] ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)'
+                                                            background: 'var(--bg-input)',
+                                                            border: selectedFields[key] ? '1px solid var(--primary)' : '1px solid var(--border-color-input)'
                                                         }}
                                                     />
                                                 )}
@@ -871,16 +861,18 @@ const Profile = () => {
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
                                 <button
                                     onClick={() => setExtractedData(null)}
-                                    style={{ padding: '0.6rem 1.2rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '4px', cursor: 'pointer' }}
+                                    className="btn-secondary"
+                                    style={{ padding: '0.6rem 1.2rem' }}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleConfirmUpdate}
-                                    style={{ padding: '0.6rem 1.2rem', background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '4px', cursor: 'pointer' }}
+                                    className="btn-primary"
+                                    style={{ padding: '0.6rem 1.2rem' }}
                                 >
                                     Update Selected
                                 </button>
@@ -892,16 +884,13 @@ const Profile = () => {
 
             {/* LinkedIn Import Modal */}
             {showLinkedInModal && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)',
-                    zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)'
-                }}>
+                <div className="modal-overlay" style={{ background: 'var(--bg-overlay)', backdropFilter: 'blur(8px)' }}>
                     <div style={{
-                        background: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', maxWidth: '600px', width: '90%',
-                        boxShadow: '0 20px 50px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)'
+                        background: 'var(--bg-card)', padding: '2rem', borderRadius: 'var(--radius-lg)', maxWidth: '600px', width: '90%',
+                        boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-color)'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Import LinkedIn Profile</h2>
+                            <h2 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--text-primary)' }}>Import LinkedIn Profile</h2>
                             <button onClick={() => setShowLinkedInModal(false)} className="btn-icon" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                                 <span className="material-symbols-outlined">close</span>
                             </button>
@@ -935,7 +924,7 @@ const Profile = () => {
                                         The extension will use your active LinkedIn session to directly extract your profile details. No typing or scraping needed!
                                     </p>
                                     <div style={{
-                                        padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: '8px', border: '1px solid var(--border-color)',
+                                        padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)',
                                         fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'left'
                                     }}>
                                         <strong>Note:</strong> Ensure you are signed in to LinkedIn in another tab for this to work.
@@ -950,7 +939,7 @@ const Profile = () => {
                                         value={linkedInPastedText}
                                         onChange={(e) => setLinkedInPastedText(e.target.value)}
                                         placeholder="Paste your LinkedIn profile text here..."
-                                        className="input-premium"
+                                        className="form-input"
                                         style={{ width: '100%', minHeight: '150px', padding: '1rem', fontSize: '0.9rem' }}
                                     />
                                 </div>
@@ -958,7 +947,7 @@ const Profile = () => {
                         </div>
 
                         {linkedInError && (
-                            <div style={{ padding: '0.75rem', background: 'rgba(248, 113, 113, 0.1)', color: '#f87171', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1.5rem', border: '1px solid rgba(248, 113, 113, 0.3)' }}>
+                            <div style={{ padding: '0.75rem', background: 'var(--primary-glow)', color: 'var(--error)', borderRadius: 'var(--radius-md)', fontSize: '0.85rem', marginBottom: '1.5rem', border: '1px solid var(--error)', opacity: 0.9 }}>
                                 {linkedInError}
                             </div>
                         )}
@@ -966,16 +955,17 @@ const Profile = () => {
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
                             <button
                                 onClick={() => setShowLinkedInModal(false)}
-                                style={{ padding: '0.6rem 1.2rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '6px', cursor: 'pointer' }}
+                                className="btn-secondary"
+                                style={{ padding: '0.6rem 1.2rem' }}
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleLinkedInImport}
                                 disabled={importingLinkedIn || (linkedInTab === 'paste' && !linkedInPastedText.trim())}
+                                className="btn-primary"
                                 style={{
-                                    padding: '0.6rem 1.5rem', background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '6px',
-                                    cursor: 'pointer', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                    padding: '0.6rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem',
                                     opacity: (importingLinkedIn || (linkedInTab === 'paste' && !linkedInPastedText.trim())) ? 0.6 : 1
                                 }}
                             >
@@ -990,15 +980,16 @@ const Profile = () => {
                         </div>
                     </div>
                 </div>
-            )
+            )}
 
             {
                 notification && (
                     <div style={{
-                        padding: '1rem', marginBottom: '1.5rem', borderRadius: '6px',
-                        background: notification.type === 'success' ? 'rgba(74, 222, 128, 0.15)' : (notification.type === 'info' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(248, 113, 113, 0.15)'),
-                        color: notification.type === 'success' ? '#4ade80' : (notification.type === 'info' ? '#60a5fa' : '#f87171'),
-                        border: `1px solid ${notification.type === 'success' ? '#4ade80' : (notification.type === 'info' ? '#60a5fa' : '#f87171')}`
+                        padding: '1rem', marginBottom: '1.5rem', borderRadius: 'var(--radius-md)',
+                        background: notification.type === 'success' ? 'rgba(var(--primary-rgb), 0.1)' : 'var(--primary-glow)',
+                        color: notification.type === 'success' ? 'var(--success)' : (notification.type === 'info' ? 'var(--info)' : 'var(--error)'),
+                        border: `1px solid ${notification.type === 'success' ? 'var(--success)' : (notification.type === 'info' ? 'var(--info)' : 'var(--error)')}`,
+                        opacity: 0.9
                     }}>
                         {notification.msg}
                     </div>
@@ -1013,7 +1004,7 @@ const Profile = () => {
                 {/* ── Base Resume ── */}
                 <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: 'rgba(37,99,235,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <div style={{ width: '30px', height: '30px', borderRadius: 'var(--radius-sm)', background: 'var(--primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary-light)' }}>description</span>
                         </div>
                         <div>
@@ -1025,17 +1016,17 @@ const Profile = () => {
                         const fname = formData.base_resume_path.split('/').pop();
                         const short = fname.length > 18 ? fname.slice(0, 15) + '…' : fname;
                         return (
-                            <div title={fname} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem', background: 'rgba(37,99,235,0.07)', border: '1px solid rgba(37,99,235,0.18)', borderRadius: '6px' }}>
+                            <div title={fname} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem', background: 'var(--primary-glow)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--primary-light)', flexShrink: 0 }}>description</span>
                                 <span onClick={() => openDocViewer(formData.base_resume_path, fname)} style={{ fontSize: '0.78rem', color: 'var(--primary-light)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline' }}>{short}</span>
-                                <button onClick={() => handleDeleteResume('base')} title="Remove" style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0, padding: '0 2px' }}>
+                                <button onClick={() => handleDeleteResume('base')} title="Remove" style={{ background: 'transparent', border: 'none', color: 'var(--error)', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0, padding: '0 2px' }}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>close</span>
                                 </button>
                             </div>
                         );
                     })() : (
-                        <div onClick={() => baseResumeInputRef.current?.click()} style={{ border: '2px dashed rgba(37,99,235,0.2)', borderRadius: '8px', padding: '1.1rem', textAlign: 'center', cursor: 'pointer', flex: 1, transition: 'border-color 0.2s, background 0.2s' }} onMouseOver={e => { e.currentTarget.style.borderColor='rgba(37,99,235,0.5)'; e.currentTarget.style.background='rgba(37,99,235,0.05)'; }} onMouseOut={e => { e.currentTarget.style.borderColor='rgba(37,99,235,0.2)'; e.currentTarget.style.background='transparent'; }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: 'rgba(37,99,235,0.5)', marginBottom: '0.25rem', display: 'block' }}>upload</span>
+                        <div onClick={() => baseResumeInputRef.current?.click()} style={{ border: '2px dashed var(--border-color)', borderRadius: 'var(--radius-md)', padding: '1.1rem', textAlign: 'center', cursor: 'pointer', flex: 1, transition: 'all var(--transition-base)' }} className="upload-dropzone">
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}>upload</span>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0 }}>Click to upload (.docx)</p>
                         </div>
                     )}
@@ -1045,11 +1036,11 @@ const Profile = () => {
                 {/* ── Long-Form Resume ── */}
                 <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#a78bfa' }}>assignment</span>
+                        <div style={{ width: '30px', height: '30px', borderRadius: 'var(--radius-sm)', background: 'var(--primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--secondary)' }}>assignment</span>
                         </div>
                         <div>
-                            <h3 style={{ fontSize: '0.95rem', margin: 0, color: '#a78bfa', fontWeight: 600 }}>Long-Form Resume</h3>
+                            <h3 style={{ fontSize: '0.95rem', margin: 0, color: 'var(--secondary)', fontWeight: 600 }}>Long-Form Resume</h3>
                             <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>Extended detail &amp; history</p>
                         </div>
                     </div>
@@ -1057,17 +1048,17 @@ const Profile = () => {
                         const fname = formData.long_form_resume_path.split('/').pop();
                         const short = fname.length > 18 ? fname.slice(0, 15) + '…' : fname;
                         return (
-                            <div title={fname} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem', background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.18)', borderRadius: '6px' }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: '#a78bfa', flexShrink: 0 }}>assignment</span>
-                                <span onClick={() => openDocViewer(formData.long_form_resume_path, fname)} style={{ fontSize: '0.78rem', color: '#a78bfa', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline' }}>{short}</span>
-                                <button onClick={() => handleDeleteResume('long_form')} title="Remove" style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0, padding: '0 2px' }}>
+                            <div title={fname} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem', background: 'var(--primary-glow)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--secondary)', flexShrink: 0 }}>assignment</span>
+                                <span onClick={() => openDocViewer(formData.long_form_resume_path, fname)} style={{ fontSize: '0.78rem', color: 'var(--secondary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline' }}>{short}</span>
+                                <button onClick={() => handleDeleteResume('long_form')} title="Remove" style={{ background: 'transparent', border: 'none', color: 'var(--error)', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0, padding: '0 2px' }}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>close</span>
                                 </button>
                             </div>
                         );
                     })() : (
-                        <div onClick={() => longFormResumeInputRef.current?.click()} style={{ border: '2px dashed rgba(139,92,246,0.2)', borderRadius: '8px', padding: '1.1rem', textAlign: 'center', cursor: 'pointer', flex: 1, transition: 'border-color 0.2s, background 0.2s' }} onMouseOver={e => { e.currentTarget.style.borderColor='rgba(139,92,246,0.5)'; e.currentTarget.style.background='rgba(139,92,246,0.05)'; }} onMouseOut={e => { e.currentTarget.style.borderColor='rgba(139,92,246,0.2)'; e.currentTarget.style.background='transparent'; }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: 'rgba(139,92,246,0.5)', marginBottom: '0.25rem', display: 'block' }}>upload</span>
+                        <div onClick={() => longFormResumeInputRef.current?.click()} style={{ border: '2px dashed var(--border-color)', borderRadius: 'var(--radius-md)', padding: '1.1rem', textAlign: 'center', cursor: 'pointer', flex: 1, transition: 'all var(--transition-base)' }} className="upload-dropzone">
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}>upload</span>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0 }}>Click to upload (.docx)</p>
                         </div>
                     )}
@@ -1078,23 +1069,23 @@ const Profile = () => {
                 <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                            <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: 'rgba(20,184,166,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#2dd4bf' }}>folder</span>
+                            <div style={{ width: '30px', height: '30px', borderRadius: 'var(--radius-sm)', background: 'var(--primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--accent)' }}>folder</span>
                             </div>
                             <div>
-                                <h3 style={{ fontSize: '0.95rem', margin: 0, color: '#2dd4bf', fontWeight: 600 }}>AI Context Docs</h3>
+                                <h3 style={{ fontSize: '0.95rem', margin: 0, color: 'var(--accent)', fontWeight: 600 }}>AI Context Docs</h3>
                                 <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>Bios, assessments, press releases…</p>
                             </div>
                         </div>
-                        <button onClick={() => additionalDocsInputRef.current?.click()} disabled={uploadingAdditionalDoc} title="Add documents" style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)', color: '#2dd4bf', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, lineHeight: 1 }}>
+                        <button onClick={() => additionalDocsInputRef.current?.click()} disabled={uploadingAdditionalDoc} title="Add documents" style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'var(--primary-glow)', border: '1px solid var(--border-color)', color: 'var(--accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, lineHeight: 1 }}>
                             <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>add</span>
                         </button>
                         <input type="file" multiple accept=".docx,.pdf,.txt,.doc" ref={additionalDocsInputRef} style={{ display: 'none' }} onChange={(e) => handleAdditionalDocUpload(e.target.files)} />
                     </div>
 
                     {formData.additional_docs.length === 0 ? (
-                        <div onClick={() => additionalDocsInputRef.current?.click()} style={{ border: '2px dashed rgba(20,184,166,0.2)', borderRadius: '8px', padding: '1.1rem', textAlign: 'center', cursor: 'pointer', flex: 1, transition: 'border-color 0.2s, background 0.2s' }} onMouseOver={e => { e.currentTarget.style.borderColor='rgba(20,184,166,0.5)'; e.currentTarget.style.background='rgba(20,184,166,0.04)'; }} onMouseOut={e => { e.currentTarget.style.borderColor='rgba(20,184,166,0.2)'; e.currentTarget.style.background='transparent'; }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: 'rgba(20,184,166,0.4)', marginBottom: '0.4rem', display: 'block' }}>upload_file</span>
+                        <div onClick={() => additionalDocsInputRef.current?.click()} style={{ border: '2px dashed var(--border-color)', borderRadius: 'var(--radius-md)', padding: '1.1rem', textAlign: 'center', cursor: 'pointer', flex: 1, transition: 'all var(--transition-base)' }} className="upload-dropzone">
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: 'var(--text-muted)', marginBottom: '0.4rem', display: 'block' }}>upload_file</span>
                             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>No documents yet. Click to upload certifications, awards, or projects.</p>
                         </div>
                     ) : (
@@ -1103,12 +1094,12 @@ const Profile = () => {
                                 const ext = doc.filename.split('.').pop().toLowerCase();
                                 const short = doc.filename.length > 18 ? doc.filename.slice(0, 15) + '…' : doc.filename;
                                 return (
-                                    <div key={i} title={doc.filename} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem', background: 'rgba(20,184,166,0.07)', border: '1px solid rgba(20,184,166,0.18)', borderRadius: '6px' }}>
-                                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: '#2dd4bf', flexShrink: 0 }}>
+                                    <div key={i} title={doc.filename} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem', background: 'var(--primary-glow)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--accent)', flexShrink: 0 }}>
                                             {ext === 'pdf' ? 'picture_as_pdf' : 'description'}
                                         </span>
-                                        <span onClick={() => openDocViewer(doc.path, doc.filename)} style={{ fontSize: '0.78rem', color: '#2dd4bf', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline' }}>{short}</span>
-                                        <button onClick={() => handleDeleteAdditionalDoc(doc.path)} title="Remove" style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0, padding: '0 2px' }}>
+                                        <span onClick={() => openDocViewer(doc.path, doc.filename)} style={{ fontSize: '0.78rem', color: 'var(--accent)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline' }}>{short}</span>
+                                        <button onClick={() => handleDeleteAdditionalDoc(doc.path)} title="Remove" style={{ background: 'transparent', border: 'none', color: 'var(--error)', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0, padding: '0 2px' }}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>close</span>
                                         </button>
                                     </div>
@@ -1254,27 +1245,27 @@ const Profile = () => {
 
             {/* ===== DOCUMENT VIEWER MODAL ===== */}
             {viewingDoc && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', zIndex: 9999, display: 'flex', flexDirection: 'column', backdropFilter: 'blur(8px)' }}>
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--bg-overlay)', zIndex: 9999, display: 'flex', flexDirection: 'column', backdropFilter: 'blur(10px)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-card)', flexShrink: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.4rem' }}>description</span>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: 'var(--primary-light)' }}>description</span>
                             <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>{viewingDoc.filename}</span>
                         </div>
                         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                            <a href={viewingDoc.url} download={viewingDoc.filename} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.9rem', background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', color: 'var(--primary-light)', borderRadius: '6px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 500 }}>
+                            <a href={viewingDoc.url} download={viewingDoc.filename} className="btn-primary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem', textDecoration: 'none' }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>download</span>
                                 Download
                             </a>
-                            <button onClick={() => setViewingDoc(null)} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.9rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                            <button onClick={() => setViewingDoc(null)} className="btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>close</span>
                                 Close
                             </button>
                         </div>
                     </div>
-                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                    <div style={{ flex: 1, overflow: 'hidden', background: 'var(--bg-tertiary)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <iframe
                             src={viewingDoc.url}
-                            style={{ width: '100%', height: '100%', border: 'none', background: '#fff' }}
+                            style={{ width: '100%', height: '100%', border: 'none', background: 'var(--bg-card)', maxWidth: '1000px', boxShadow: 'var(--shadow-xl)' }}
                             title={viewingDoc.filename}
                         />
                     </div>
@@ -1382,6 +1373,7 @@ const Profile = () => {
                                 name="bio" value={formData.bio} onChange={handleChange}
                                 placeholder="Brief professional summary..."
                                 className="form-textarea input-premium"
+                                style={{ minHeight: '120px', resize: 'vertical' }}
                             />
                         </InputGroup>
                     </section>
@@ -1462,35 +1454,35 @@ const Profile = () => {
                         <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: 'var(--primary-light)', fontWeight: 600 }}>Social & Links</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                             <InputGroup label="LinkedIn URL" style={{ marginBottom: 0 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-                                    <span style={{ padding: '0.8rem 1rem', color: 'var(--text-muted)', borderRight: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minWidth: '45px', textAlign: 'center' }}>in</span>
+                                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+                                    <span style={{ padding: '0.8rem 1rem', color: 'var(--text-muted)', borderRight: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minWidth: '45px', textAlign: 'center', fontSize: '0.9rem', fontWeight: 600 }}>in</span>
                                     <input
                                         name="linkedin_url" value={formData.linkedin_url} onChange={handleChange}
-                                        className="input-premium"
+                                        className="form-input"
                                         style={{ flex: 1, padding: '0.8rem', border: 'none', background: 'transparent' }}
                                         placeholder="linkedin.com/in/..."
                                     />
                                 </div>
                             </InputGroup>
                             <InputGroup label="GitHub URL" style={{ marginBottom: 0 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-                                    <span style={{ padding: '0.8rem 1rem', color: 'var(--text-muted)', borderRight: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minWidth: '45px', textAlign: 'center' }}>git</span>
+                                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+                                    <span style={{ padding: '0.8rem 1rem', color: 'var(--text-muted)', borderRight: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minWidth: '45px', textAlign: 'center', fontSize: '0.9rem', fontWeight: 600 }}>git</span>
                                     <input
                                         name="github_url" value={formData.github_url} onChange={handleChange}
-                                        className="input-premium"
+                                        className="form-input"
                                         style={{ flex: 1, padding: '0.8rem', border: 'none', background: 'transparent' }}
                                         placeholder="github.com/..."
                                     />
                                 </div>
                             </InputGroup>
                             <InputGroup label="Portfolio / Website" style={{ marginBottom: 0 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
                                     <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.8rem 1rem', color: 'var(--text-muted)', borderRight: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minWidth: '45px', textAlign: 'center' }}>
                                         <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>language</span>
                                     </span>
                                     <input
                                         name="website_url" value={formData.website_url} onChange={handleChange}
-                                        className="input-premium"
+                                        className="form-input"
                                         style={{ flex: 1, padding: '0.8rem', border: 'none', background: 'transparent' }}
                                         placeholder="https://..."
                                     />
@@ -1499,22 +1491,22 @@ const Profile = () => {
 
                             {formData.social_links.map((link, i) => (
                                 <InputGroup key={i} label={`Custom Link #${i + 1}`} style={{ marginBottom: 0 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
                                         <input
-                                            className="input-premium"
+                                            className="form-input"
                                             placeholder="Label (e.g. Twitter)"
                                             value={link.name}
                                             onChange={(e) => handleArrayItemUpdate('social_links', i, 'name', e.target.value)}
                                             style={{ width: '120px', padding: '0.8rem', border: 'none', borderRight: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}
                                         />
                                         <input
-                                            className="input-premium"
+                                            className="form-input"
                                             placeholder="https://..."
                                             value={link.url}
                                             onChange={(e) => handleArrayItemUpdate('social_links', i, 'url', e.target.value)}
                                             style={{ flex: 1, padding: '0.8rem', border: 'none', background: 'transparent' }}
                                         />
-                                        <button onClick={() => removeArrayItem('social_links', i)} style={{ padding: '0 0.8rem', background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Remove Link">
+                                        <button onClick={() => removeArrayItem('social_links', i)} style={{ padding: '0 0.8rem', background: 'transparent', border: 'none', color: 'var(--error)', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Remove Link">
                                             <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>close</span>
                                         </button>
                                     </div>
@@ -1523,9 +1515,9 @@ const Profile = () => {
                             <button
                                 onClick={() => addArrayItem('social_links', { name: '', url: '' })}
                                 className="btn-secondary"
-                                style={{ marginTop: '0.5rem', alignSelf: 'flex-start', padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                                style={{ marginTop: '0.5rem', alignSelf: 'flex-start', padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                             >
-                                <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>add</span>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>add</span>
                                 Add Custom Link
                             </button>
                         </div>
@@ -1562,10 +1554,10 @@ const Profile = () => {
                         </div>
                     )}
 
-                    <div className="skill-badge-container" style={{ minHeight: '40px', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                    <div className="skill-badge-container" style={{ minHeight: '40px', padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
                         {formData.skills.length === 0 && !isAddingSkill && <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No skills added. Click + to add.</span>}
                         {formData.skills.map((skill, i) => (
-                            <span key={i} className="skill-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span key={i} className="skill-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'var(--primary-glow)', color: 'var(--primary-light)', border: '1px solid var(--border-color)' }}>
                                 {editingSkillIndex === i ? (
                                     <input
                                         autoFocus
@@ -1575,10 +1567,11 @@ const Profile = () => {
                                         style={{
                                             background: 'transparent',
                                             border: 'none',
-                                            borderBottom: '1px solid white',
-                                            color: 'white',
+                                            borderBottom: '1px solid var(--primary-light)',
+                                            color: 'var(--primary-light)',
                                             outline: 'none',
-                                            width: `${Math.max(skill.length, 5)}ch`
+                                            width: `${Math.max(skill.length, 5)}ch`,
+                                            fontSize: 'inherit'
                                         }}
                                     />
                                 ) : (
@@ -1587,7 +1580,7 @@ const Profile = () => {
                                 <span
                                     onClick={(e) => { e.stopPropagation(); removeArrayItem('skills', i); }}
                                     className="material-symbols-outlined"
-                                    style={{ cursor: 'pointer', opacity: 0.6, fontSize: '1.1rem', fontWeight: 'bold' }}
+                                    style={{ cursor: 'pointer', opacity: 0.7, fontSize: '1rem', fontWeight: 'bold' }}
                                     title="Delete Skill"
                                 >close</span>
                             </span>
@@ -1604,7 +1597,7 @@ const Profile = () => {
                 >
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         {formData.experiences.map((exp, i) => (
-                            <div key={i} className="timeline-card" style={{ border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div key={i} className="timeline-card" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: '1.5rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                                     <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-light)', textTransform: 'uppercase' }}>Experience #{i + 1}</span>
                                     <button onClick={() => removeArrayItem('experiences', i)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }} title="Delete">
@@ -1649,7 +1642,7 @@ const Profile = () => {
                 >
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         {formData.educations.map((edu, i) => (
-                            <div key={i} className="timeline-card" style={{ border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div key={i} className="timeline-card" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: '1.5rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                                     <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-light)', textTransform: 'uppercase' }}>Education #{i + 1}</span>
                                     <button onClick={() => removeArrayItem('educations', i)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }} title="Delete">
@@ -1690,7 +1683,7 @@ const Profile = () => {
                 >
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {formData.certificates.map((cert, i) => (
-                            <div key={i} className="timeline-card" style={{ border: '1px solid rgba(255,255,255,0.05)', padding: '1rem' }}>
+                            <div key={i} className="timeline-card" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: '1.5rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                                     <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-light)' }}>CERTIFICATE #{i + 1}</span>
                                     <button onClick={() => removeArrayItem('certificates', i)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }} title="Delete">
@@ -1709,6 +1702,34 @@ const Profile = () => {
                     {formData.certificates.length === 0 && <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No certificates listed.</p>}
                 </CollapsibleCard>
 
+                {/* Recommendations Section */}
+                <CollapsibleCard 
+                    title="Recommendations" 
+                    defaultExpanded={false}
+                    onAdd={() => addArrayItem('recommendations', { text: '', recommender: '', relationship: '', url: '' })}
+                    addTitle="Add Recommendation"
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {formData.recommendations.map((rec, i) => (
+                            <div key={i} className="timeline-card" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: '1.5rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-light)' }}>RECOMMENDATION #{i + 1}</span>
+                                    <button onClick={() => removeArrayItem('recommendations', i)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }} title="Delete">
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>delete</span>
+                                    </button>
+                                </div>
+                                <textarea className="input-premium" placeholder="Recommendation Text..." value={rec.text} onChange={(e) => handleArrayItemUpdate('recommendations', i, 'text', e.target.value)} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', minHeight: '80px' }} />
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                                    <input className="input-premium" placeholder="Recommender Name" value={rec.recommender} onChange={(e) => handleArrayItemUpdate('recommendations', i, 'recommender', e.target.value)} style={{ padding: '0.5rem' }} />
+                                    <input className="input-premium" placeholder="Relationship" value={rec.relationship} onChange={(e) => handleArrayItemUpdate('recommendations', i, 'relationship', e.target.value)} style={{ padding: '0.5rem' }} />
+                                    <input className="input-premium" placeholder="LinkedIn URL" value={rec.url} onChange={(e) => handleArrayItemUpdate('recommendations', i, 'url', e.target.value)} style={{ padding: '0.5rem' }} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {formData.recommendations.length === 0 && <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>No recommendations listed.</p>}
+                </CollapsibleCard>
+
                 {/* Other Section */}
                 <CollapsibleCard 
                     title="Other Information" 
@@ -1718,7 +1739,7 @@ const Profile = () => {
                 >
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {formData.other.map((item, i) => (
-                            <div key={i} className="timeline-card" style={{ border: '1px solid rgba(255,255,255,0.05)', padding: '1rem' }}>
+                            <div key={i} className="timeline-card" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: '1.5rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                                     <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-light)' }}>ENTRY #{i + 1}</span>
                                     <button onClick={() => removeArrayItem('other', i)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }} title="Delete">

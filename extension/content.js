@@ -1,4 +1,15 @@
 // ─── Utility helpers ────────────────────────────────────────────────────────
+/**
+ * Send a log message to the backend via the background script.
+ */
+function extLog(level, message, context = null) {
+  try {
+    chrome.runtime.sendMessage({ action: 'log', level, message, context }).catch(() => {});
+  } catch (e) {}
+}
+
+extLog('INFO', 'Content script initialized', { url: window.location.href });
+
 
 /**
  * Try a list of CSS selectors in order, return the trimmed innerText of the
@@ -44,6 +55,36 @@ const getLIRoot = () =>
   document.querySelector('.top-card-layout') ||
   document.querySelector('#workspace') ||
   document;
+
+/**
+ * Advanced label-based extraction. Finds a label (e.g. "Location:") 
+ * and attempts to find the corresponding value in the next sibling,
+ * parent text, or adjacent table cell.
+ */
+function extractByLabel(labelRegex, maxLength = 200) {
+  // Use findLeafText to find nodes matching the label
+  const leaves = findLeafText(t => labelRegex.test(t), 10);
+  for (const leaf of leaves) {
+    // 1. Check next sibling element
+    let val = leaf.el.nextElementSibling?.innerText?.trim();
+    if (val && val.length > 0 && val.length < maxLength) return val;
+    
+    // 2. Check parent text (excluding the label itself)
+    const parentText = leaf.el.parentElement?.innerText?.trim();
+    if (parentText) {
+      val = parentText.replace(labelRegex, '').replace(/^[:\s-]+/, '').trim();
+      if (val && val.length > 0 && val.length < maxLength) return val;
+    }
+    
+    // 3. Table cell logic: if label is in a cell, value might be in the next cell
+    const cell = leaf.el.closest('td, th');
+    if (cell && cell.nextElementSibling) {
+      val = cell.nextElementSibling.innerText.trim();
+      if (val && val.length > 0 && val.length < maxLength) return val;
+    }
+  }
+  return null;
+}
 
 // ─── LinkedIn scraper ────────────────────────────────────────────────────────
 //
@@ -805,6 +846,18 @@ const CAREERBUILDER_SCRAPER = {
   description: () => document.querySelector('.jdp_description')?.innerText || null,
 };
 
+// ─── MTA scraper ─────────────────────────────────────────────────────────────
+
+const MTA_SCRAPER = {
+  isJobPage: () => window.location.hostname.includes('mta.org'),
+  title: () => firstMatch(['h1']),
+  company: () => 'MTA',
+  location: () => extractByLabel(/location:/i) || extractByLabel(/location/i),
+  salary: () => extractByLabel(/salary range:/i) || extractByLabel(/salary:/i),
+  datePosted: () => extractByLabel(/date posted:/i),
+  description: () => document.querySelector('.description, #description, [class*="description"], .job-description')?.innerText || document.body.innerText,
+};
+
 // ─── Site registry & fallback ────────────────────────────────────────────────
 
 const KERNEL_SCRAPER = {
@@ -828,6 +881,7 @@ const SCRAPERS = {
   'simplyhired.com': SIMPLYHIRED_SCRAPER,
   'monster.com': MONSTER_SCRAPER,
   'careerbuilder.com': CAREERBUILDER_SCRAPER,
+  'mta.org': MTA_SCRAPER,
   'localhost': KERNEL_SCRAPER,
 };
 
@@ -883,6 +937,9 @@ const FALLBACK_SCRAPER = {
     return null;
   },
   location: () => {
+    const fromLabel = extractByLabel(/location:/i) || extractByLabel(/location/i) || extractByLabel(/city:/i);
+    if (fromLabel) return fromLabel;
+
     const patterns = [/location/i, /city/i, /remote/i];
     for (const p of patterns) {
       const el = findLeafText(t => p.test(t), 1)[0];
@@ -913,8 +970,8 @@ const FALLBACK_SCRAPER = {
     return largest || null;
   },
   type: () => null,
-  salary: () => null,
-  datePosted: () => null,
+  salary: () => extractByLabel(/salary range:/i) || extractByLabel(/salary:/i) || extractByLabel(/compensation:/i) || extractByLabel(/pay range:/i),
+  datePosted: () => extractByLabel(/date posted:/i) || extractByLabel(/posted on:/i) || extractByLabel(/posted:/i),
   companyLogo: () => {
     return document.querySelector('link[rel*="icon"]')?.href || document.querySelector('meta[property="og:image"]')?.content || null;
   },
@@ -1054,7 +1111,11 @@ function updateButtonState(btn, isOpen) {
 }
 
 function isExtValid() {
-  return typeof chrome !== 'undefined' && chrome.runtime && !!chrome.runtime.id;
+  try {
+    return typeof chrome !== 'undefined' && chrome.runtime && !!chrome.runtime.id;
+  } catch (e) {
+    return false;
+  }
 }
 
 function safeSendMessage(message, callback) {
@@ -1073,6 +1134,7 @@ function safeSendMessage(message, callback) {
   try {
     if (callback) {
       chrome.runtime.sendMessage(message, (response) => {
+        if (!isExtValid()) return;
         if (chrome.runtime.lastError) {
           if (!isBenignError(chrome.runtime.lastError)) {
             console.warn('[JobAutomator] Message error:', chrome.runtime.lastError);
@@ -1092,6 +1154,7 @@ function safeSendMessage(message, callback) {
 }
 
 function injectFloatingButton() {
+  if (!isExtValid()) return;
   let btn = document.getElementById('job-automator-btn');
   if (btn) {
     // Already injected — just sync the visual state and return
@@ -1133,6 +1196,7 @@ function injectFloatingButton() {
         } else {
           const jobData = scrapeJobData();
           console.log('[JobAutomator] Scraped Job Data:', jobData);
+          extLog('INFO', `Scraped job data for ${jobData.company || 'Unknown Company'}`, { title: jobData.title, url: jobData.url });
           safeSendMessage({ action: 'open_and_store', data: jobData }, () => {
             if (chrome.runtime.lastError) console.warn(chrome.runtime.lastError);
             updateButtonState(btn, true);
@@ -1165,6 +1229,7 @@ if (isExtValid()) {
 }
 
 function checkIfJobPage() {
+  if (!isExtValid()) return;
   const scraper = getScraper();
   if (scraper.isJobPage()) {
     injectFloatingButton();
@@ -1210,6 +1275,7 @@ function handleJobNavigation() {
   scrapeTimer = setTimeout(() => {
     const jobData = scrapeJobData();
     console.log('[JobAutomator] Auto-scraped new job:', jobData);
+    extLog('INFO', `Auto-scraped job: ${jobData.title} @ ${jobData.company}`, { url: jobData.url });
     
     // Check for network matches if on LinkedIn
     if (window.location.hostname.includes('linkedin.com')) {
@@ -1268,7 +1334,9 @@ const urlPollInterval = setInterval(() => {
   lastJobIdValue = currentId;
   lastJobUrl = currentUrl;
 
-  setTimeout(checkIfJobPage, 800);
+  setTimeout(() => {
+    if (isExtValid()) checkIfJobPage();
+  }, 800);
 
   try {
     if (getScraper().isJobPage()) handleJobNavigation();
@@ -1595,6 +1663,7 @@ async function getMatches(companyId, companyName) {
 }
 
 async function processLinkedInConnections() {
+  if (!isExtValid()) return;
   if (!LINKEDIN_SCRAPER.isJobPage()) return;
   if (isProcessingConnections) return;
   isProcessingConnections = true;
@@ -1801,11 +1870,15 @@ const urlObserver = new MutationObserver(() => {
       console.log('[JobAutomator] Job selection changed — re-scraping.');
       // Give the DOM a moment to settle
       setTimeout(() => {
+        if (!isExtValid()) return;
         const jobData = scrapeJobData();
         if (jobData) {
           console.log('[JobAutomator] Auto-scraped data:', jobData);
+          extLog('INFO', `Auto-scraped data for ${jobData.company || 'Unknown'}`, { title: jobData.title });
           chrome.storage.local.set({ latestJobData: jobData }, () => {
-            console.log('[JobAutomator] Storage set result check:', chrome.runtime.lastError ? 'FAILED' : 'SUCCESS');
+            if (isExtValid() && chrome.runtime.lastError) {
+              console.log('[JobAutomator] Storage set result check: FAILED');
+            }
           });
           safeSendMessage({ action: 'store_job_data', data: jobData });
         }
@@ -1819,7 +1892,11 @@ if (LINKEDIN_SCRAPER.isJobPage()) {
   urlObserver.observe(document.querySelector('title') || document.head, { childList: true });
   
   // Also poll slightly for URL because popstate/mutation isn't always reliable on all SPAs
-  setInterval(() => {
+  const urlPollInterval2 = setInterval(() => {
+    if (!isExtValid()) {
+      clearInterval(urlPollInterval2);
+      return;
+    }
     if (window.location.href !== lastUrl) {
       const u = new URL(window.location.href);
       const oldId = new URLSearchParams(new URL(lastUrl).search).get('currentJobId');
@@ -1829,6 +1906,7 @@ if (LINKEDIN_SCRAPER.isJobPage()) {
         lastUrl = window.location.href;
         console.log('[JobAutomator] URL change detected (poll) — re-scraping.');
         setTimeout(() => {
+          if (!isExtValid()) return;
           const jobData = scrapeJobData();
           if (jobData) {
             chrome.storage.local.set({ latestJobData: jobData });
@@ -1862,31 +1940,79 @@ window.addEventListener('JOB_KERNEL_APP_UPDATED', (e) => {
  * If we are on the JobKernel web app, listen for changes to the 'token' in localStorage
  * and sync it to chrome.storage.local so the extension sidepanel can use it.
  */
-if (window.location.hostname === 'localhost' && (window.location.port === '5173' || window.location.port === '3000')) {
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
   console.log('[JobKernel] Auth sync active on web app');
 
+  // Listen for messages from the web app
+  window.addEventListener('message', (event) => {
+    if (event.source !== window) return;
+    if (event.data && event.data.type === 'JOB_AUTOMATOR_SCRAPE_LINKEDIN') {
+      if (!isExtValid()) {
+        console.warn('[JobKernel] Extension context invalidated. Please refresh the page.');
+        return;
+      }
+      console.log('[JobKernel] Received scrape request from web app');
+      try {
+        chrome.runtime.sendMessage({ action: 'SCRAPE_LINKEDIN_PROFILE' }, (response) => {
+          // Even if context is invalidated, window.postMessage is a DOM API and safe
+          window.postMessage({
+            type: 'JOB_AUTOMATOR_SCRAPE_LINKEDIN_RESPONSE',
+            response: response
+          }, '*');
+        });
+      } catch (err) {
+        console.warn('[JobKernel] Failed to send message to extension:', err);
+      }
+    }
+  });
+
+
+  const isJobKernelApp = () => {
+    // Only sync if we're fairly sure this is the JobKernel app
+    return document.title.includes('JobKernel') || 
+           !!document.querySelector('meta[name="description"][content*="JobKernel"]') ||
+           !!document.querySelector('img[src*="job-kernel-logo"]') ||
+           (window.location.hostname === 'localhost' && window.location.port === '5173');
+  };
+
   const syncToken = () => {
+    if (!isExtValid() || !isJobKernelApp()) return;
+    
     const token = localStorage.getItem('token');
-    if (token) {
-      chrome.storage.local.set({ token }, () => {
-        console.log('[JobKernel] Token synced to extension');
-      });
-    } else {
-      chrome.storage.local.remove('token', () => {
-        console.log('[JobKernel] Token cleared from extension');
+    // Only sync if the token exists and looks like a valid credential (length check)
+    if (token && token.length > 20 && token !== 'null' && token !== 'undefined') {
+      const apiUrl = document.querySelector('meta[name="jobkernel-api-url"]')?.content;
+      const appUrl = document.querySelector('meta[name="jobkernel-app-url"]')?.content;
+      
+      const storageUpdate = { token };
+      if (apiUrl) storageUpdate.jobkernelApiUrl = apiUrl;
+      if (appUrl) storageUpdate.jobkernelAppUrl = appUrl;
+
+      chrome.storage.local.set(storageUpdate, () => {
+        console.log('[JobKernel] Auth and URLs synced to extension');
       });
     }
+    // We explicitly DO NOT remove the token if it's missing in localStorage here,
+    // to avoid clearing a manually-pasted key when visiting other localhost apps.
   };
 
   // Sync once on load
-  syncToken();
+  if (isJobKernelApp()) {
+    syncToken();
 
-  // Listen for storage events (if changed in another tab)
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'token') syncToken();
-  });
+    // Listen for storage events (if changed in another tab)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'token') syncToken();
+    });
 
-  // Since React might update localStorage without triggering a 'storage' event in the same tab,
-  // we poll occasionally or we could patch localStorage.setItem. Polling is safer.
-  setInterval(syncToken, 2000);
+    // Since React might update localStorage without triggering a 'storage' event in the same tab,
+    // we poll occasionally. Polling is safer than patching setItem.
+    const authSyncInterval = setInterval(() => {
+      if (!isExtValid()) {
+        clearInterval(authSyncInterval);
+        return;
+      }
+      syncToken();
+    }, 5000); // Polling every 5s is plenty for auth sync
+  }
 }

@@ -32,8 +32,14 @@ echo "🐳 Building and starting Docker containers..."
 # Check if docker needs sudo
 if ! docker info > /dev/null 2>&1; then
     echo "⚠️  Docker permission denied. Trying with sudo..."
+    sudo docker-compose --env-file ./backend/.env build --no-cache frontend
     sudo docker-compose --env-file ./backend/.env up --build -d
 else
+    # Rebuild frontend without cache so JS changes are always picked up
+    docker-compose --env-file ./backend/.env build --no-cache frontend
     docker-compose --env-file ./backend/.env up --build -d
 fi
+
+echo ""
+echo "✅ Startup complete at: $(date)"
 

@@ -115,7 +115,7 @@ const ResetPassword = () => {
             </div>
 
             {/* Reuse Auth.jsx styles by including them here or in a shared CSS */}
-            <style jsx>{`
+            <style>{`
                 .auth-container {
                     display: flex;
                     align-items: center;
@@ -130,7 +130,7 @@ const ResetPassword = () => {
                     background: var(--bg-secondary);
                     border-radius: 24px;
                     padding: 3rem;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
                     border: 1px solid var(--border-color);
                 }
                 .auth-header {
@@ -163,8 +163,8 @@ const ResetPassword = () => {
                     color: var(--text-secondary);
                 }
                 .form-group input {
-                    background: var(--bg-tertiary);
-                    border: 1px solid var(--border-color);
+                    background: var(--bg-input);
+                    border: 1px solid var(--border-color-input);
                     border-radius: 12px;
                     padding: 1rem;
                     color: var(--text-primary);

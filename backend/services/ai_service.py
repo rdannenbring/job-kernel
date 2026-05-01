@@ -273,10 +273,17 @@ class AIService:
 
     def _parse_json_response(self, content: str) -> dict:
         """Helper to parse JSON from AI response, stripping markdown formatting if present."""
-        if not content:
+        if not content or not isinstance(content, str):
             return {}
             
         content = content.strip()
+        if not content:
+            return {}
+
+        if content.startswith("Error:") or content.startswith("AI provider not configured"):
+            logger.error(f"AI Error string passed to parser: {content}")
+            return {}
+
         if content.startswith("```"):
             first_newline_idx = content.find("\n")
             if first_newline_idx != -1:
@@ -290,6 +297,7 @@ class AIService:
         try:
             return json.loads(content, strict=False)
         except json.JSONDecodeError as e:
+            logger.warning(f"Failed to parse JSON response. Attempting recovery. Content: {content[:200]}...")
             content_fixed = re.sub(r'\bTrue\b', 'true', content)
             content_fixed = re.sub(r'\bFalse\b', 'false', content_fixed)
             content_fixed = re.sub(r'\bNone\b', 'null', content_fixed)
@@ -305,6 +313,7 @@ class AIService:
                         return json.loads(cleaned_json, strict=False)
                     except:
                         pass
+            logger.error(f"JSON recovery failed. Error: {e}")
             raise e
 
     def load_config(self):
@@ -396,6 +405,9 @@ class AIService:
                         response_mime_type="application/json" if response_format == "json_object" else "text/plain"
                     )
                 )
+                if not response.text:
+                    logger.warning(f"Gemini returned empty text. Response: {response}")
+                    return ""
                 return response.text
             elif provider == "anthropic":
                 temp_client = anthropic.Anthropic(api_key=api_key)
@@ -406,37 +418,38 @@ class AIService:
                 return response.content[0].text
 
         if not self._has_active_client():
-            return "AI provider not configured"
+            raise Exception("AI provider not configured")
             
-        try:
-            if self.provider in ["openai", "local", "openrouter", "deepseek", "mistral", "azure", "groq", "meta", "alibaba", "ollama"]:
-                is_reasoning_model = any(x in self.model_name.lower() for x in ["o1", "o3", "gpt-5"])
-                request_kwargs = {
-                    "model": self.model_name,
-                    "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
-                    "response_format": {"type": "json_object"} if response_format == "json_object" else None,
-                }
-                if not is_reasoning_model: request_kwargs["temperature"] = temperature
-                response = self.client.chat.completions.create(**request_kwargs)
-                return response.choices[0].message.content
-            elif self.provider == "anthropic":
-                response = self.anthropic_client.messages.create(
-                    model=self.model_name, max_tokens=4096, system=system_prompt,
-                    messages=[{"role": "user", "content": user_prompt}], temperature=temperature
+        if self.provider in ["openai", "local", "openrouter", "deepseek", "mistral", "azure", "groq", "meta", "alibaba", "ollama"]:
+            is_reasoning_model = any(x in self.model_name.lower() for x in ["o1", "o3", "gpt-5"])
+            request_kwargs = {
+                "model": self.model_name,
+                "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+                "response_format": {"type": "json_object"} if response_format == "json_object" else None,
+            }
+            if not is_reasoning_model: request_kwargs["temperature"] = temperature
+            response = self.client.chat.completions.create(**request_kwargs)
+            return response.choices[0].message.content
+        elif self.provider == "anthropic":
+            response = self.anthropic_client.messages.create(
+                model=self.model_name, max_tokens=4096, system=system_prompt,
+                messages=[{"role": "user", "content": user_prompt}], temperature=temperature
+            )
+            return response.content[0].text
+        elif self.provider == "gemini":
+            response = self.gemini_model.generate_content(
+                f"{system_prompt}\n\n{user_prompt}",
+                generation_config=genai.types.GenerationConfig(
+                    temperature=temperature,
+                    response_mime_type="application/json" if response_format == "json_object" else "text/plain"
                 )
-                return response.content[0].text
-            elif self.provider == "gemini":
-                response = self.gemini_model.generate_content(
-                    f"{system_prompt}\n\n{user_prompt}",
-                    generation_config=genai.types.GenerationConfig(
-                        temperature=temperature,
-                        response_mime_type="application/json" if response_format == "json_object" else "text/plain"
-                    )
-                )
-                return response.text
-        except Exception as e:
-            return f"Error: {str(e)}"
-        return "Unsupported AI provider"
+            )
+            if not response.text:
+                logger.warning(f"Gemini returned empty text. Response: {response}")
+                return ""
+            return response.text
+        
+        raise Exception(f"Unsupported or unconfigured AI provider: {self.provider}")
 
     async def analyze_job_description(self, job_description: str, config: dict = None) -> Dict[str, Any]:
         """Analyze a job description using optional per-user config."""

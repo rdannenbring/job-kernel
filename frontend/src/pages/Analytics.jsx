@@ -365,12 +365,79 @@ const Analytics = ({ setScreen }) => {
         </div>
       </header>
 
-      {error && (
-        <div style={{ marginBottom: '1.5rem', padding: '0.9rem 1.25rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '0.65rem', color: '#ef4444', fontSize: '0.88rem' }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>error</span>
-          Failed to load analytics: {error}. Is the backend running?
+      {/* --- Error Handling & Empty States --- */}
+      {error ? (
+        <div style={{ 
+          marginBottom: '2.5rem', 
+          padding: '3.5rem 2rem', 
+          background: 'rgba(239,68,68,0.04)', 
+          border: '1px dashed rgba(239,68,68,0.2)', 
+          borderRadius: '16px', 
+          textAlign: 'center',
+          animation: 'fadeIn 0.5s ease-out'
+        }}>
+          <div style={{ width: '64px', height: '64px', background: 'rgba(239,68,68,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '2rem', color: '#ef4444' }}>error_outline</span>
+          </div>
+          <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem', fontWeight: 600 }}>Analytics Data Unavailable</h2>
+          <p style={{ color: 'var(--text-secondary)', maxWidth: '500px', margin: '0 auto 1.5rem', fontSize: '0.95rem', lineHeight: 1.5 }}>
+            {error.includes("500") 
+              ? "We're having trouble calculating your analytics. This usually happens when your database is brand new. Try adding your first application or syncing your profile to get started!"
+              : `There was a problem loading your analytics: ${error}`}
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <button 
+              onClick={() => setScreen('new_app')}
+              className="btn-primary"
+              style={{ padding: '0.6rem 1.5rem', borderRadius: '10px' }}
+            >
+              Add Your First Job
+            </button>
+            <button 
+              onClick={fetchAnalytics}
+              className="btn-secondary"
+              style={{ padding: '0.6rem 1.5rem', borderRadius: '10px' }}
+            >
+              Retry
+            </button>
+          </div>
         </div>
-      )}
+      ) : total === 0 && !loading ? (
+        <div style={{ 
+          marginBottom: '2.5rem', 
+          padding: '3.5rem 2rem', 
+          background: 'rgba(37, 106, 244, 0.04)', 
+          border: '1px dashed rgba(37, 106, 244, 0.2)', 
+          borderRadius: '16px', 
+          textAlign: 'center',
+          animation: 'fadeIn 0.5s ease-out'
+        }}>
+          <div style={{ width: '64px', height: '64px', background: 'rgba(37, 106, 244, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '2rem', color: 'var(--primary)' }}>auto_graph</span>
+          </div>
+          <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem', fontWeight: 600 }}>Your Journey Starts Here</h2>
+          <p style={{ color: 'var(--text-secondary)', maxWidth: '500px', margin: '0 auto 1.5rem', fontSize: '0.95rem', lineHeight: 1.5 }}>
+            Once you start tracking your job applications, this dashboard will visualize your funnel, success rates, and weekly activity.
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <button 
+              onClick={() => setScreen('new_app')}
+              className="btn-primary"
+              style={{ padding: '0.6rem 1.5rem', borderRadius: '10px' }}
+            >
+              Add Your First Job
+            </button>
+            <button 
+              onClick={() => setScreen('profile')}
+              className="btn-secondary"
+              style={{ padding: '0.6rem 1.5rem', borderRadius: '10px' }}
+            >
+              Setup Profile
+            </button>
+          </div>
+        </div>
+      ) : null}
+
 
       {/* ── Stat Cards ── */}
       <div className="stat-grid">

@@ -52,7 +52,7 @@ function NewApplication({ onComplete }) {
                 id: 'long_form_profile'
             })
         }
-        if (data.additional_docs) {
+        if (data && data.additional_docs && Array.isArray(data.additional_docs)) {
             profileDocs = [
                 ...profileDocs,
                 ...data.additional_docs.map(doc => ({
@@ -760,7 +760,7 @@ function NewApplication({ onComplete }) {
                             <div style={{
                                 position: 'absolute', top: '1rem', left: '1rem', right: '1rem', zIndex: 10,
                                 background: '#fee2e2', border: '1px solid #ef4444', color: '#b91c1c',
-                                padding: '1rem', borderRadius: '0.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                padding: '1rem', borderRadius: 'var(--radius-md)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                             }}>
                                 <span className="material-symbols-outlined" style={{ verticalAlign: 'middle', marginRight: '0.4rem', fontSize: '1.2rem' }}>warning</span><strong>Error: </strong> {error}
                             </div>
@@ -835,7 +835,7 @@ function NewApplication({ onComplete }) {
                             </div>
                         )}
 
-                        <div style={{ flex: 1, background: 'transparent', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                        <div style={{ flex: 1, background: 'transparent', borderRadius: 'var(--radius-md)', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                             <iframe
                                 src={`${API_URL}${coverLetterResult.files.pdf}?t=${Date.now()}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
                                 style={{ width: '100%', height: '100%', border: 'none' }}
@@ -847,7 +847,7 @@ function NewApplication({ onComplete }) {
                     {/* RIGHT: Sidebar */}
                     <div style={{ width: '380px', background: 'var(--bg-card)', borderLeft: '1px solid var(--border-color-card)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', overflowY: 'auto' }}>
                         {/* Refinement */}
-                        <div style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: '0.5rem', border: '1px solid var(--border-color-card)' }}>
+                        <div style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color-card)' }}>
                             <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>edit_note</span>
                                 Tweak Cover Letter
@@ -1172,7 +1172,7 @@ function NewApplication({ onComplete }) {
                                 <input type="url" className="form-input" placeholder="https://example.com/job" value={jobUrl} onChange={(e) => setJobUrl(e.target.value)} onFocus={(e) => e.target.select()} />
                             )}
                             {inputMode === 'url' && jobUrl.toLowerCase().includes('linkedin.com') && (
-                                <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(245, 158, 11, 0.1)', padding: '0.5rem', borderRadius: '4px' }}>
+                                <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(245, 158, 11, 0.1)', padding: '0.5rem', borderRadius: 'var(--radius-sm)' }}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>warning</span>
                                     <span>LinkedIn blocks automated scraping. For best results, switch to <b>Paste Text</b> mode.</span>
                                 </div>

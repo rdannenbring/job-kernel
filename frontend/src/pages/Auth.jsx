@@ -174,7 +174,7 @@ const Auth = () => {
         )}
       </div>
 
-      <style jsx>{`
+      <style>{`
         .auth-container {
           display: flex;
           align-items: center;
@@ -182,6 +182,7 @@ const Auth = () => {
           min-height: 100vh;
           background: var(--bg-primary);
           padding: 2rem;
+          position: relative;
         }
         .auth-card {
           width: 100%;
@@ -189,8 +190,9 @@ const Auth = () => {
           background: var(--bg-secondary);
           border-radius: 24px;
           padding: 3rem;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.3);
           border: 1px solid var(--border-color);
+          z-index: 10;
           animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
         @keyframes slideUp {
@@ -236,8 +238,8 @@ const Auth = () => {
           letter-spacing: 0.05em;
         }
         .form-group input {
-          background: var(--bg-tertiary);
-          border: 1px solid var(--border-color);
+          background: var(--bg-input);
+          border: 1px solid var(--border-color-input);
           border-radius: 12px;
           padding: 1rem;
           color: var(--text-primary);

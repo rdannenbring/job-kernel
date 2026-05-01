@@ -15,12 +15,13 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 async function fetchWithAuthBackground(url, options = {}) {
   return new Promise((resolve, reject) => {
-    chrome.storage.local.get(['token'], async (result) => {
-      const token = result.token;
+    chrome.storage.local.get(['apiKey', 'token', 'jobkernelApiUrl'], async (result) => {
+      const token = result.apiKey || result.token;
+      const currentApiUrl = result.jobkernelApiUrl || API_URL;
       const headers = { ...options.headers };
       
-      if (token && url.startsWith(API_URL)) {
-        headers['Authorization'] = `Bearer ${token}`;
+      if (token && url.startsWith(currentApiUrl)) {
+        headers['X-API-Key'] = token;
       }
       
       if ((options.method === 'POST' || options.method === 'PUT') && !headers['Content-Type'] && !(options.body instanceof FormData)) {
@@ -35,6 +36,32 @@ async function fetchWithAuthBackground(url, options = {}) {
       }
     });
   });
+}
+
+/**
+ * Send a log message to the backend.
+ */
+async function remoteLog(level, message, context = null) {
+  // Always log to local console first
+  const consoleMethod = level.toLowerCase() === 'error' ? 'error' : 
+                        level.toLowerCase() === 'warning' ? 'warn' : 'log';
+  console[consoleMethod](`[RemoteLog] ${message}`, context || '');
+
+  try {
+    // Only attempt if we have an API URL
+    chrome.storage.local.get(['jobkernelApiUrl'], async (res) => {
+      const currentApiUrl = res.jobkernelApiUrl || API_URL;
+      if (!currentApiUrl) return;
+
+      await fetchWithAuthBackground(`${currentApiUrl}/api/extension/logs`, {
+        method: 'POST',
+        body: JSON.stringify({ level, message, context })
+      });
+    });
+  } catch (e) {
+    // Fallback if remote logging itself fails
+    console.warn('[JobAutomator] Failed to send remote log:', e);
+  }
 }
 chrome.runtime.onInstalled.addListener(() => {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
@@ -53,7 +80,7 @@ function broadcastPanelState(isOpen) {
   });
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+const handleMessage = (message, sender, sendResponse) => {
   const fromContentScript = !!(sender && sender.tab);
 
   // ── Open side panel ────────────────────────────────────────────────────
@@ -62,9 +89,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!windowId) { sendResponse({ error: 'no windowId' }); return true; }
     chrome.sidePanel.open({ windowId }).then(() => {
       broadcastPanelState(true);
+      remoteLog('INFO', 'Side panel opened from content script');
       sendResponse({ success: true });
     }).catch((err) => {
-      console.error('[JobAutomator] open_side_panel error:', err);
+      remoteLog('ERROR', `open_side_panel error: ${err.message}`);
       sendResponse({ error: err.message });
     });
     return true;
@@ -214,48 +242,103 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const publicId = meData.miniProfile.publicIdentifier;
 
         // 2. Get Profile Detail (Location, Bio)
-        const profileRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}`, {
-          headers: {
-            'csrf-token': csrfToken,
-            'x-restli-protocol-version': '2.0.0',
-            'accept': 'application/json'
-          },
-          credentials: 'include'
-        });
-        const profile = profileRes.ok ? await profileRes.json() : {};
+        let profile = {};
+        try {
+          const profileRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}`, {
+            headers: {
+              'csrf-token': csrfToken,
+              'x-restli-protocol-version': '2.0.0',
+              'accept': 'application/json'
+            },
+            credentials: 'include'
+          });
+          if (profileRes.ok) profile = await profileRes.json();
+        } catch (err) { console.warn('[SCRAPE_LINKEDIN_PROFILE] Error fetching profile detail:', err); }
 
         // 3. Get Positions
-        const posRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}/positions`, {
-          headers: {
-            'csrf-token': csrfToken,
-            'x-restli-protocol-version': '2.0.0',
-            'accept': 'application/json'
-          },
-          credentials: 'include'
-        });
-        const positions = posRes.ok ? await posRes.json() : { elements: [] };
+        let positions = { elements: [] };
+        try {
+          const posRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}/positions`, {
+            headers: {
+              'csrf-token': csrfToken,
+              'x-restli-protocol-version': '2.0.0',
+              'accept': 'application/json'
+            },
+            credentials: 'include'
+          });
+          if (posRes.ok) positions = await posRes.json();
+        } catch (err) { console.warn('[SCRAPE_LINKEDIN_PROFILE] Error fetching positions:', err); }
 
         // 4. Get Education
-        const eduRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}/educations`, {
-          headers: {
-            'csrf-token': csrfToken,
-            'x-restli-protocol-version': '2.0.0',
-            'accept': 'application/json'
-          },
-          credentials: 'include'
-        });
-        const educations = eduRes.ok ? await eduRes.json() : { elements: [] };
+        let educations = { elements: [] };
+        try {
+          const eduRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}/educations`, {
+            headers: {
+              'csrf-token': csrfToken,
+              'x-restli-protocol-version': '2.0.0',
+              'accept': 'application/json'
+            },
+            credentials: 'include'
+          });
+          if (eduRes.ok) educations = await eduRes.json();
+        } catch (err) { console.warn('[SCRAPE_LINKEDIN_PROFILE] Error fetching educations:', err); }
 
         // 5. Get Skills
-        const skillRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}/skills`, {
-          headers: {
-            'csrf-token': csrfToken,
-            'x-restli-protocol-version': '2.0.0',
-            'accept': 'application/json'
-          },
-          credentials: 'include'
-        });
-        const skills = skillRes.ok ? await skillRes.json() : { elements: [] };
+        let skills = { elements: [] };
+        try {
+          const skillRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}/skills`, {
+            headers: {
+              'csrf-token': csrfToken,
+              'x-restli-protocol-version': '2.0.0',
+              'accept': 'application/json'
+            },
+            credentials: 'include'
+          });
+          if (skillRes.ok) skills = await skillRes.json();
+        } catch (err) { console.warn('[SCRAPE_LINKEDIN_PROFILE] Error fetching skills:', err); }
+
+        // 6. Get Certifications
+        let certifications = { elements: [] };
+        try {
+          const certRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}/certifications`, {
+            headers: {
+              'csrf-token': csrfToken,
+              'x-restli-protocol-version': '2.0.0',
+              'accept': 'application/json'
+            },
+            credentials: 'include'
+          });
+          if (certRes.ok) certifications = await certRes.json();
+        } catch (err) { console.warn('[SCRAPE_LINKEDIN_PROFILE] Error fetching certifications:', err); }
+
+        // 7. Get Recommendations
+        let recommendations = { elements: [] };
+        try {
+          // We will try `recommendationsReceived` first, if it fails, try `recommendations`
+          const recRes = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}/recommendationsReceived`, {
+            headers: {
+              'csrf-token': csrfToken,
+              'x-restli-protocol-version': '2.0.0',
+              'accept': 'application/json'
+            },
+            credentials: 'include'
+          });
+          if (recRes.ok) {
+              recommendations = await recRes.json();
+          } else {
+              const recResBackup = await fetch(`https://www.linkedin.com/voyager/api/identity/profiles/${publicId}/recommendations`, {
+                headers: {
+                  'csrf-token': csrfToken,
+                  'x-restli-protocol-version': '2.0.0',
+                  'accept': 'application/json'
+                },
+                credentials: 'include'
+              });
+              if (recResBackup.ok) {
+                  recommendations = await recResBackup.json();
+              }
+          }
+        } catch (err) { console.warn('[SCRAPE_LINKEDIN_PROFILE] Error fetching recommendations:', err); }
 
         // Normalize data for the App
         const normalized = {
@@ -282,7 +365,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             start_date: e.timePeriod?.startDate ? String(e.timePeriod.startDate.year) : '',
             end_date: e.timePeriod?.endDate ? String(e.timePeriod.endDate.year) : ''
           })),
-          skills: (skills.elements || []).map(s => s.name || s.skill?.name).filter(Boolean)
+          skills: (skills.elements || []).map(s => s.name || s.skill?.name).filter(Boolean),
+          certificates: (certifications.elements || []).map(c => {
+            const name = c.name || '';
+            if (!name) return null;
+            return {
+              name: name,
+              issuer: c.authority || '',
+              date: c.timePeriod?.startDate ? `${c.timePeriod.startDate.month ? c.timePeriod.startDate.month + '/' : ''}${c.timePeriod.startDate.year || ''}` : '',
+              url: c.url || ''
+            };
+          }).filter(Boolean),
+          recommendations: (recommendations.elements || []).map(r => {
+            const textRaw = r.recommendationText || r.recommendation;
+            const text = typeof textRaw === 'object' ? (textRaw.text || '') : (textRaw || '');
+            if (!text) return null;
+            return {
+              text: text,
+              recommender: r.recommender ? `${r.recommender.firstName || ''} ${r.recommender.lastName || ''}`.trim() : '',
+              relationship: '',
+              url: r.recommender?.publicIdentifier ? `https://www.linkedin.com/in/${r.recommender.publicIdentifier}` : ''
+            };
+          }).filter(Boolean)
         };
 
         sendResponse({ success: true, data: normalized });
@@ -292,8 +396,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     })();
     return true;
+  } else if (message.action === 'log') {
+    remoteLog(message.level || 'INFO', message.message, message.context);
+    sendResponse({ success: true });
+    return true;
   }
-});
+};
+
+chrome.runtime.onMessage.addListener(handleMessage);
+chrome.runtime.onMessageExternal.addListener(handleMessage);
 
 // ── LinkedIn Connection Sync Logic ───────────────────────────────────────
 
@@ -326,6 +437,7 @@ async function fetchConnectionsBatch(start = 0, count = 40) {
   if (start === 0) {
     syncRunningTotal = 0;
     syncExpectedTotal = 0;
+    remoteLog('INFO', 'LinkedIn connection sync started');
   }
   
   const csrfToken = await getCsrfToken();
@@ -457,6 +569,10 @@ async function fetchConnectionsBatch(start = 0, count = 40) {
 
     console.log(`[LinkedInSync] Progress: ${progressPercent}% (${syncRunningTotal}/${syncExpectedTotal || '?'})`);
     
+    if (syncRunningTotal % 200 === 0 || syncRunningTotal === batchConnections.length) {
+      remoteLog('INFO', `LinkedIn sync progress: ${syncRunningTotal}/${syncExpectedTotal || 'unknown'}`);
+    }
+    
     chrome.runtime.sendMessage({ 
       action: 'LINKEDIN_SYNC_PROGRESS', 
       progress: progressPercent,
@@ -472,6 +588,7 @@ async function fetchConnectionsBatch(start = 0, count = 40) {
     } else {
       isSyncing = false;
       console.log(`[LinkedInSync] Sync complete. Total processed: ${syncRunningTotal}`);
+      remoteLog('INFO', `LinkedIn connection sync complete. Processed ${syncRunningTotal} connections.`);
       chrome.runtime.sendMessage({ 
         action: 'LINKEDIN_SYNC_COMPLETE',
         count: syncRunningTotal
@@ -480,6 +597,7 @@ async function fetchConnectionsBatch(start = 0, count = 40) {
   } catch (error) {
     isSyncing = false;
     console.error('[LinkedInSync] Voyager API Fetch Error:', error);
+    remoteLog('ERROR', `LinkedIn sync error: ${error.message}`);
     chrome.runtime.sendMessage({ action: 'LINKEDIN_SYNC_ERROR', error: error.message }).catch(() => {});
   }
 }

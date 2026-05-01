@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline-variant": "#1e293b",
+            "surface-container-lowest": "#080c14",
+            "primary": "#256af4",
+            "on-secondary": "#f8fafc",
+            "surface": "#101622",
+            "secondary-container": "#1e293b",
+            "on-tertiary": "#ffffff",
+            "inverse-surface": "#f8fafc",
+            "on-surface-variant": "#94a3b8",
+            "on-error": "#ffffff",
+            "on-primary": "#ffffff",
+            "inverse-primary": "#60a5fa",
+            "surface-bright": "#1e293b",
+            "background": "#101622",
+            "error": "#ef4444",
+            "primary-fixed": "#dbeafe",
+            "on-background": "#f1f5f9",
+            "surface-variant": "#1e293b",
+            "surface-tint": "#256af4",
+            "surface-container-low": "#1e293b66",
+            "on-surface": "#f1f5f9",
+            "outline": "#334155",
+            "error-container": "#450a0a",
+            "surface-container-highest": "#2d3748",
+            "secondary": "#334155",
+            "surface-dim": "#0b0f18",
+            "primary-container": "#256af433",
+            "on-error-container": "#fca5a5",
+            "surface-container-high": "#1e293b99",
+            "surface-container": "#1e293b80",
+            "on-tertiary-container": "#fb7185",
+            "inverse-on-surface": "#0f172a",
+            "on-primary-fixed": "#1e3a8a",
+            "secondary-fixed-dim": "#cbd5e1",
+            "tertiary": "#f43f5e",
+            "tertiary-container": "#f43f5e22",
+            "on-secondary-container": "#cbd5e1"
+          },
+          "fontFamily": {
+            "headline": ["Manrope"],
+            "display": ["Manrope"],
+            "body": ["Manrope"],
+            "label": ["Manrope"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .neon-text-shadow {
+      text-shadow: 0 0 10px rgba(37, 106, 244, 0.4);
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0f18; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 bg-slate-950/40 backdrop-blur-md border-b border-white/10 glass-panel shadow-lg shadow-blue-500/5 flex justify-between items-center px-6 py-3">
+<div class="flex items-center gap-8">
+<div class="text-xl font-bold tracking-tighter text-slate-100 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="blur_on">blur_on</span>
+        Midnight Glass
+      </div>
+<nav class="hidden md:flex gap-6">
+<a class="font-manrope text-slate-300 hover:text-blue-400 transition-colors text-blue-500 font-bold border-b-2 border-blue-500" href="#">Pipeline</a>
+<a class="font-manrope text-slate-300 hover:text-blue-400 transition-colors text-slate-400 font-medium" href="#">Analytics</a>
+<a class="font-manrope text-slate-300 hover:text-blue-400 transition-colors text-slate-400 font-medium" href="#">Resources</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm" data-icon="search">search</span>
+<input class="bg-slate-900 border border-slate-700 rounded-full pl-10 pr-4 py-1.5 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary w-64" placeholder="Search applications..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-slate-400 hover:text-blue-400 transition-all" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-slate-400 hover:text-blue-400 transition-all" data-icon="settings">settings</button>
+<img class="w-8 h-8 rounded-full border border-white/10 object-cover" data-alt="Close-up portrait of a professional man in a dark turtleneck looking thoughtfully into the distance with cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsYq_9-WmxzK10zxEzdcVhGyfylTKqO1FSdGi6MekbftGx34FTWbK3kYr7dPmPxnzatlO3PrKey-rhTQmkuyHWbJOwwZBGabw2egeoC512dNxDrCoZiOQ4Pwa3HoqRIf-acawQsmaSRlAith2EtBe63IDB65QUZYw95yIkO24vCX7vbhAX67frN4IuRhtCSmytMyaphdaNVPMqqWWvhQHAu7kvLEJXl0kWjOuj4eAPUXCImJ9KgzrUUlyAXluY1F_L7NvClib0NTY"/>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed h-screen left-0 top-0 w-64 bg-slate-950 border-r border-white/5 flex flex-col py-8 gap-4 z-40 hidden md:flex">
+<div class="px-6 mb-8 mt-12">
+<div class="text-lg font-black text-blue-500 uppercase tracking-widest">TrackPad</div>
+<div class="text-[10px] uppercase tracking-widest text-slate-500 mt-1 font-bold">Application Pipeline</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-4 px-6 py-3 font-manrope text-sm font-medium tracking-wide text-slate-100 bg-blue-600/10 border-r-4 border-blue-500 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="bookmark" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+        Saved
+      </a>
+<a class="flex items-center gap-4 px-6 py-3 font-manrope text-sm font-medium tracking-wide text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+        Generated
+      </a>
+<a class="flex items-center gap-4 px-6 py-3 font-manrope text-sm font-medium tracking-wide text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+        Applied
+      </a>
+<a class="flex items-center gap-4 px-6 py-3 font-manrope text-sm font-medium tracking-wide text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+        Interviewing
+      </a>
+<a class="flex items-center gap-4 px-6 py-3 font-manrope text-sm font-medium tracking-wide text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="workspace_premium">workspace_premium</span>
+        Offers
+      </a>
+</nav>
+<div class="px-6 mt-auto flex flex-col gap-4">
+<button class="w-full bg-primary text-white py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+        New Application
+      </button>
+<div class="flex flex-col border-t border-white/5 pt-4 gap-1">
+<a class="flex items-center gap-4 px-2 py-2 text-slate-400 text-sm hover:text-slate-200 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+          Help
+        </a>
+<a class="flex items-center gap-4 px-2 py-2 text-slate-400 text-sm hover:text-slate-200 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+          Logout
+        </a>
+</div>
+</div>
+</aside>
+<!-- Main Stage -->
+<main class="md:pl-64 pt-20 p-8 min-h-screen">
+<div class="max-w-6xl mx-auto">
+<!-- Atmosphere Background Glows -->
+<div class="fixed top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+<div class="fixed bottom-0 left-64 w-[300px] h-[300px] bg-blue-600/5 rounded-full blur-[100px] pointer-events-none -z-10"></div>
+<!-- Header & Progress -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary neon-text-shadow">Job Identity extracted</span>
+<div class="h-px w-12 bg-primary/30"></div>
+</div>
+<h1 class="text-4xl font-extrabold text-slate-100 tracking-tight mb-2">Senior Product Designer</h1>
+<p class="text-slate-400 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="domain">domain</span>
+            Linear • San Francisco, CA (Remote) • $180k - $240k
+          </p>
+</div>
+<div class="w-full md:w-80 glass-panel p-5 rounded-2xl border border-white/5">
+<div class="flex justify-between items-center mb-3">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Phase Completion</span>
+<span class="text-xs font-bold text-primary">20%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary shadow-[0_0_8px_rgba(37,106,244,0.6)] w-1/5"></div>
+</div>
+<p class="text-[10px] text-slate-500 mt-3 flex items-center gap-1 italic">
+<span class="material-symbols-outlined text-[10px]" data-icon="info">info</span>
+            Next step: Stakeholder review and validation
+          </p>
+</div>
+</section>
+<!-- Primary Tabs -->
+<nav class="flex flex-wrap items-center gap-2 mb-8 bg-surface-container-low p-1.5 rounded-2xl border border-white/5 inline-flex">
+<button class="px-5 py-2 rounded-xl text-xs font-bold bg-primary text-white shadow-lg shadow-primary/20 transition-all">Saved</button>
+<button class="px-5 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition-all">Generated</button>
+<button class="px-5 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition-all">Applied</button>
+<button class="px-5 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition-all">Interviewing</button>
+<button class="px-5 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition-all">Rejected</button>
+<button class="px-5 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition-all">Offered</button>
+<button class="px-5 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition-all">Accepted</button>
+<button class="px-5 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition-all">Withdrawn</button>
+</nav>
+<!-- Content Bento Grid -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Sidebar Navigation (Sub-stages) -->
+<div class="col-span-12 lg:col-span-3 flex flex-col gap-2">
+<button class="flex items-center justify-between p-4 rounded-xl border-l-2 border-primary bg-primary/10 transition-all group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-sm font-bold text-slate-100">Parsed</span>
+</div>
+<span class="text-[10px] font-bold text-primary px-2 py-0.5 bg-primary/20 rounded-md">ACTIVE</span>
+</button>
+<button class="flex items-center justify-between p-4 rounded-xl hover:bg-white/5 transition-all group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-500 group-hover:text-slate-300" data-icon="radio_button_unchecked">radio_button_unchecked</span>
+<span class="text-sm font-medium text-slate-400 group-hover:text-slate-300">Reviewed</span>
+</div>
+</button>
+<button class="flex items-center justify-between p-4 rounded-xl hover:bg-white/5 transition-all group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-500 group-hover:text-slate-300" data-icon="radio_button_unchecked">radio_button_unchecked</span>
+<span class="text-sm font-medium text-slate-400 group-hover:text-slate-300">Network Contacts</span>
+</div>
+</button>
+<button class="flex items-center justify-between p-4 rounded-xl hover:bg-white/5 transition-all group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-500 group-hover:text-slate-300" data-icon="radio_button_unchecked">radio_button_unchecked</span>
+<span class="text-sm font-medium text-slate-400 group-hover:text-slate-300">Company Research</span>
+</div>
+</button>
+<button class="flex items-center justify-between p-4 rounded-xl hover:bg-white/5 transition-all group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-500 group-hover:text-slate-300" data-icon="radio_button_unchecked">radio_button_unchecked</span>
+<span class="text-sm font-medium text-slate-400 group-hover:text-slate-300">Prioritized</span>
+</div>
+</button>
+</div>
+<!-- AI Parsed Content Area -->
+<div class="col-span-12 lg:col-span-9 flex flex-col gap-6">
+<!-- Experience & Level Glass Card -->
+<div class="glass-panel rounded-2xl p-6 border border-white/10">
+<div class="flex items-center gap-3 mb-6">
+<div class="p-2 bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="neurology">neurology</span>
+</div>
+<h3 class="text-lg font-bold text-slate-100">AI Experience Analysis</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="space-y-1">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Years Required</p>
+<p class="text-xl font-bold text-slate-100">6+ Years</p>
+</div>
+<div class="space-y-1">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Seniority Level</p>
+<p class="text-xl font-bold text-slate-100">Senior / Lead</p>
+</div>
+<div class="space-y-1">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Contract Type</p>
+<p class="text-xl font-bold text-slate-100">Full-time</p>
+</div>
+</div>
+</div>
+<!-- Skills & Responsibilities Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Skills Panel -->
+<div class="glass-panel rounded-2xl p-6 border border-white/10 flex flex-col">
+<h4 class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs" data-icon="terminal">terminal</span>
+                Required Skillset
+              </h4>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold rounded-full uppercase">Product Strategy</span>
+<span class="px-3 py-1 bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold rounded-full uppercase">Visual Systems</span>
+<span class="px-3 py-1 bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold rounded-full uppercase">Figma Mastery</span>
+<span class="px-3 py-1 bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold rounded-full uppercase">Prototyping</span>
+<span class="px-3 py-1 bg-slate-800/50 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-full uppercase">React/Tailwind</span>
+<span class="px-3 py-1 bg-slate-800/50 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-full uppercase">User Research</span>
+<span class="px-3 py-1 bg-slate-800/50 border border-slate-700 text-slate-300 text-[10px] font-bold rounded-full uppercase">Project Management</span>
+</div>
+<div class="mt-6 pt-6 border-t border-white/5">
+<p class="text-xs text-slate-400 leading-relaxed italic">
+                  "Candidate must show a portfolio demonstrating a high bar for craft and the ability to simplify complex technical workflows into elegant interfaces."
+                </p>
+</div>
+</div>
+<!-- Responsibilities Panel -->
+<div class="glass-panel rounded-2xl p-6 border border-white/10">
+<h4 class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs" data-icon="assignment">assignment</span>
+                Primary Responsibilities
+              </h4>
+<ul class="space-y-4">
+<li class="flex gap-3">
+<div class="mt-1 w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+<p class="text-xs text-slate-300 leading-relaxed">Own end-to-end design process for the core collaboration features of the platform.</p>
+</li>
+<li class="flex gap-3">
+<div class="mt-1 w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+<p class="text-xs text-slate-300 leading-relaxed">Collaborate with engineering to define and implement visual design languages.</p>
+</li>
+<li class="flex gap-3">
+<div class="mt-1 w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+<p class="text-xs text-slate-300 leading-relaxed">Drive UX consistency across mobile and desktop application ecosystems.</p>
+</li>
+<li class="flex gap-3">
+<div class="mt-1 w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+<p class="text-xs text-slate-300 leading-relaxed">Mentor junior designers and contribute to the growth of the design team culture.</p>
+</li>
+</ul>
+</div>
+</div>
+<!-- Detailed Job Description / AI Insight -->
+<div class="glass-panel rounded-2xl border border-white/10 overflow-hidden">
+<div class="bg-surface-container-highest/30 px-6 py-4 border-b border-white/5 flex justify-between items-center">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-200">Raw Source Context</span>
+<button class="text-[10px] font-bold text-primary flex items-center gap-1 hover:underline">
+                View Original Posting
+                <span class="material-symbols-outlined text-xs" data-icon="open_in_new">open_in_new</span>
+</button>
+</div>
+<div class="p-6">
+<p class="text-sm text-slate-400 leading-relaxed mb-4">
+                Linear is looking for a designer who is obsessed with quality. We don’t just build software; we build the tools that empower builders. As a Senior Product Designer, you will work directly with the founders and engineering leads to shape the future of our product.
+              </p>
+<div class="p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="auto_awesome">auto_awesome</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-100">AI Confidence Score: 98%</span>
+</div>
+<p class="text-xs text-slate-500">Extraction performed 2 minutes ago. All primary fields successfully mapped to your profile requirements.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile Bottom Nav -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full bg-slate-950/80 backdrop-blur-xl border-t border-white/10 flex justify-around items-center py-3 z-50">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" data-icon="bookmark" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Saved</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">AI</span>
+</button>
+<div class="relative -top-6">
+<button class="w-12 h-12 bg-primary rounded-full shadow-lg shadow-primary/30 flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Apply</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Profile</span>
+</button>
+</nav>
+</body></html>

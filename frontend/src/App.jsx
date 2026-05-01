@@ -52,6 +52,26 @@ function App() {
   // Profile dirty-state ref — Profile.jsx sets window.__profileIsDirty = true/false
   const isDirtyRef = useRef(false);
 
+  // Expose API URL for the extension to discover
+  useEffect(() => {
+    let meta = document.querySelector('meta[name="jobkernel-api-url"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'jobkernel-api-url';
+      document.head.appendChild(meta);
+    }
+    meta.content = API_URL;
+    
+    // Also expose App URL for complete discovery
+    let appMeta = document.querySelector('meta[name="jobkernel-app-url"]');
+    if (!appMeta) {
+      appMeta = document.createElement('meta');
+      appMeta.name = 'jobkernel-app-url';
+      document.head.appendChild(appMeta);
+    }
+    appMeta.content = window.location.origin;
+  }, []);
+
   // Expose a setter so Profile can update the ref without re-renders
   useEffect(() => {
     window.__setProfileDirty = (val) => { isDirtyRef.current = val; };
@@ -103,11 +123,23 @@ function App() {
     try {
       const res = await fetchWithAuth(`${API_URL}/api/applications`)
       const data = await res.json()
-      setApps(data)
+      if (Array.isArray(data)) {
+        setApps(data)
+      } else {
+        console.error("API returned non-array data for applications:", data)
+        setApps([])
+      }
     } catch (e) {
       console.error("Failed to load apps", e)
+      setApps([])
     }
   }
+
+  useEffect(() => {
+    if (!token) {
+      setSelectedApp(null);
+    }
+  }, [token]);
 
   useEffect(() => {
     if (!token) return;
@@ -187,7 +219,14 @@ function App() {
         window.history.replaceState({ screen: initialScreen }, '', SCREEN_TO_HASH[initialScreen] || '#dashboard');
       }
     }
-  }, [])
+  }, [token])
+  
+  // Guard: if on detail/lifecycle screen but no app is selected, go back to dashboard
+  useEffect(() => {
+    if ((currentScreen === 'detail' || currentScreen === 'lifecycle') && !selectedApp) {
+      setScreen('dashboard', { replace: true });
+    }
+  }, [currentScreen, selectedApp]);
 
   // Apply and listen to theme changes
   useEffect(() => {
@@ -319,7 +358,7 @@ function App() {
         return <Dashboard apps={apps} onStartNew={handleStartNew} onViewApp={handleViewApp} onStatusUpdate={handleStatusUpdate} onUpdate={handleAppUpdate} />
       case 'new_app':
         return <NewApplication onComplete={handleAppComplete} />
-      case 'detail':
+      case 'detail': {
         if (!selectedApp) {
           return (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
@@ -332,7 +371,7 @@ function App() {
         }
         const appsWithScore = apps.filter(a => a.match_score != null);
         const avgScore = appsWithScore.length > 0
-            ? appsWithScore.reduce((sum, a) => sum + a.match_score, 0) / appsWithScore.length
+            ? appsWithScore.reduce((sum, a) => sum + Number(a.match_score || 0), 0) / appsWithScore.length
             : null;
         return <ApplicationDetail 
                  app={selectedApp} 
@@ -367,11 +406,8 @@ function App() {
                  }} 
                  avgScore={avgScore}
                />
+      }
       case 'lifecycle':
-        if (!selectedApp) {
-          setScreen('dashboard', { replace: true });
-          return null;
-        }
         return <ApplicationLifecycle app={selectedApp} onBack={() => setScreen('detail')} onUpdate={handleAppUpdate} />
       case 'capture':
         return <MobileCapture onSaved={loadApplications} onGoToDashboard={() => setScreen('dashboard')} />

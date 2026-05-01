@@ -19,7 +19,7 @@
 .process-status {
   font-size: 1.8rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--text-primary);
   margin-top: 2.5rem;
   text-align: center;
   z-index: 10;
@@ -190,11 +190,11 @@
 }
 
 .construction-doc {
-  background: white;
+  background: #f1f5f9;
   width: 160px;
   height: 220px;
   border-radius: 4px;
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.4); /* Glowing doc */
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.2); /* Softened glow */
   position: relative;
   overflow: hidden;
   padding: 15px;

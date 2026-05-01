@@ -152,91 +152,269 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputJobKernelApiKey = document.getElementById('setting-jobkernel-api-key');
   const btnSaveConnection = document.getElementById('btn-save-connection');
   const connectionStatus = document.getElementById('connection-status');
+  
+  // Magic Setup Info Modal
+  const btnMagicInfo = document.getElementById('btn-magic-info');
+  const magicInfoModal = document.getElementById('magic-info-modal');
+  const magicInfoClose = document.getElementById('magic-info-close');
+  const magicInfoOverlay = document.getElementById('magic-info-overlay');
+  const btnMagicInfoOk = document.getElementById('btn-magic-info-ok');
 
   let API_URL = 'http://localhost:8000';
   let APP_URL = 'http://localhost:5173';
 
-  // Load connection settings
-  chrome.storage.local.get(['jobkernelAppUrl', 'jobkernelApiUrl', 'token'], (res) => {
-    if (res.jobkernelAppUrl) {
-      APP_URL = res.jobkernelAppUrl;
-      if (inputJobKernelAppUrl) inputJobKernelAppUrl.value = APP_URL;
-    } else {
-      if (inputJobKernelAppUrl) inputJobKernelAppUrl.value = APP_URL;
-    }
-    if (res.jobkernelApiUrl) {
-      API_URL = res.jobkernelApiUrl;
-      if (inputJobKernelApiUrl) inputJobKernelApiUrl.value = API_URL;
-    } else {
-      if (inputJobKernelApiUrl) inputJobKernelApiUrl.value = API_URL;
-    }
-    if (res.token) {
-      if (inputJobKernelApiKey) inputJobKernelApiKey.value = res.token;
-    }
+  // Load connection settings asynchronously and expose a promise
+  const settingsPromise = new Promise((resolve) => {
+    chrome.storage.local.get(['jobkernelAppUrl', 'jobkernelApiUrl', 'apiKey', 'token'], (res) => {
+      if (res.jobkernelAppUrl) {
+        APP_URL = res.jobkernelAppUrl;
+        if (inputJobKernelAppUrl) inputJobKernelAppUrl.value = APP_URL;
+      } else {
+        if (inputJobKernelAppUrl) inputJobKernelAppUrl.value = APP_URL;
+      }
+      if (res.jobkernelApiUrl) {
+        API_URL = res.jobkernelApiUrl;
+        if (inputJobKernelApiUrl) inputJobKernelApiUrl.value = API_URL;
+      } else {
+        if (inputJobKernelApiUrl) inputJobKernelApiUrl.value = API_URL;
+      }
+      if (res.apiKey || res.token) {
+        if (inputJobKernelApiKey) inputJobKernelApiKey.value = res.apiKey || res.token;
+      }
+      resolve();
+    });
   });
 
   if (btnSaveConnection) {
-    btnSaveConnection.addEventListener('click', () => {
+    btnSaveConnection.addEventListener('click', async () => {
       const appUrl = inputJobKernelAppUrl.value.trim().replace(/\/$/, '');
       const apiUrl = inputJobKernelApiUrl.value.trim().replace(/\/$/, '');
       const key = inputJobKernelApiKey.value.trim();
+      const testResultEl = document.getElementById('connection-test-result');
+      
       if (!appUrl || !apiUrl || !key) {
         connectionStatus.textContent = 'Please enter App URL, API URL, and API Key';
         connectionStatus.style.color = 'var(--error)';
         return;
       }
-      APP_URL = appUrl;
-      API_URL = apiUrl;
-      chrome.storage.local.set({ jobkernelAppUrl: appUrl, jobkernelApiUrl: apiUrl, token: key }, () => {
-        connectionStatus.textContent = 'Connection settings saved!';
-        connectionStatus.style.color = 'var(--success, #10b981)';
-        setTimeout(() => {
-          connectionStatus.textContent = 'Configure server URL and API Key';
-          connectionStatus.style.color = '';
-        }, 3000);
-      });
+      
+      btnSaveConnection.disabled = true;
+      btnSaveConnection.textContent = 'Testing Connection...';
+      testResultEl.style.display = 'none';
+
+      try {
+        // Test connection using the provided key and url directly
+        const res = await fetch(`${apiUrl}/api/auth/me`, {
+          headers: {
+            'X-API-Key': key
+          }
+        });
+
+        if (res.ok) {
+          // Success! Save to storage.
+          APP_URL = appUrl;
+          API_URL = apiUrl;
+          chrome.storage.local.set({ jobkernelAppUrl: appUrl, jobkernelApiUrl: apiUrl, apiKey: key }, () => {
+            connectionStatus.textContent = 'Connection settings saved!';
+            connectionStatus.style.color = 'var(--success, #10b981)';
+            testResultEl.textContent = 'Connection successful!';
+            testResultEl.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+            testResultEl.style.color = 'var(--success, #10b981)';
+            testResultEl.style.display = 'block';
+            checkConnectionStatus(); // Update global indicator
+            setTimeout(() => {
+              connectionStatus.textContent = 'Configure server URL and API Key';
+              connectionStatus.style.color = '';
+              testResultEl.style.display = 'none';
+            }, 4000);
+          });
+        } else {
+          // Valid URL but bad auth or other error
+          let errorMsg = `HTTP ${res.status}`;
+          if (res.status === 401 || res.status === 403) errorMsg += ' (Check API Key)';
+          testResultEl.textContent = `Connection failed: ${errorMsg}`;
+          testResultEl.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+          testResultEl.style.color = 'var(--error, #ef4444)';
+          testResultEl.style.display = 'block';
+        }
+      } catch (err) {
+        // Network error or bad URL
+        testResultEl.textContent = `Connection failed: ${err.message}`;
+        testResultEl.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+        testResultEl.style.color = 'var(--error, #ef4444)';
+        testResultEl.style.display = 'block';
+      } finally {
+        btnSaveConnection.disabled = false;
+        btnSaveConnection.textContent = 'Save & Test Connection';
+      }
     });
   }
+
+  const btnMagicSetup = document.getElementById('btn-magic-setup');
+  if (btnMagicSetup) {
+    btnMagicSetup.addEventListener('click', async () => {
+      // 1. Check if we have a synced JWT token to use for setup
+      const res = await chrome.storage.local.get(['token', 'jobkernelApiUrl']);
+      const syncedToken = res.token;
+      const targetApiUrl = res.jobkernelApiUrl || API_URL;
+      
+      if (!syncedToken) {
+        alert('Please open the JobKernel web app in a browser tab first so the extension can detect your session.');
+        return;
+      }
+
+      btnMagicSetup.disabled = true;
+      btnMagicSetup.innerHTML = '<span class="material-symbols-outlined spin" style="font-size: 18px;">sync</span> Working...';
+
+      try {
+        // 2. Call the API to create a new key for the extension
+        const createRes = await fetch(`${targetApiUrl}/api/user/api-keys`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${syncedToken}`
+          },
+          body: JSON.stringify({ name: 'Extension (Auto-Setup)' })
+        });
+
+        if (!createRes.ok) {
+          const err = await createRes.json();
+          throw new Error(err.detail || 'Failed to generate key. Are you logged in to the app?');
+        }
+
+        const keyData = await createRes.json();
+        const newApiKey = keyData.api_key;
+
+        // 3. Fill the form and simulate a save
+        if (inputJobKernelApiKey) inputJobKernelApiKey.value = newApiKey;
+        if (inputJobKernelApiUrl) inputJobKernelApiUrl.value = targetApiUrl;
+        
+        // Auto-save the new configuration
+        btnSaveConnection.click();
+        
+        btnMagicSetup.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px; color: var(--success);">check_circle</span> Success!';
+        setTimeout(() => {
+          btnMagicSetup.disabled = false;
+          btnMagicSetup.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">magic_button</span> Auto-Setup from App';
+        }, 3000);
+
+      } catch (err) {
+        console.error('[JobKernel] Magic setup failed:', err);
+        alert('Setup failed: ' + err.message);
+        btnMagicSetup.disabled = false;
+        btnMagicSetup.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">magic_button</span> Auto-Setup from App';
+      }
+    });
+  }
+
+  // Magic Setup Info Modal Listeners
+  if (btnMagicInfo) {
+    btnMagicInfo.addEventListener('click', () => {
+      magicInfoModal.classList.add('visible');
+      magicInfoModal.setAttribute('aria-hidden', 'false');
+    });
+  }
+
+  const closeMagicInfo = () => {
+    magicInfoModal.classList.remove('visible');
+    magicInfoModal.setAttribute('aria-hidden', 'true');
+  };
+
+  if (magicInfoClose) magicInfoClose.addEventListener('click', closeMagicInfo);
+  if (magicInfoOverlay) magicInfoOverlay.addEventListener('click', closeMagicInfo);
+  if (btnMagicInfoOk) btnMagicInfoOk.addEventListener('click', closeMagicInfo);
+
+  /**
+   * Send a log message to the backend via the background script.
+   */
+  function extLog(level, message, context = null) {
+    try {
+      chrome.runtime.sendMessage({ action: 'log', level, message, context }).catch(() => {});
+    } catch (e) {}
+  }
+
+  extLog('INFO', 'Side panel initialized');
 
   /**
    * Helper to fetch with authentication token from chrome.storage.local
    */
   async function fetchWithAuth(url, options = {}) {
-    return new Promise((resolve, reject) => {
-      chrome.storage.local.get(['token'], async (result) => {
-        const token = result.token;
-        const headers = { 
-          ...options.headers 
-        };
-        
-        // Add Bearer token for our own API
-        if (token && url.startsWith(API_URL)) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        // Ensure content-type is set for POST/PUT if not already
-        if ((options.method === 'POST' || options.method === 'PUT') && !headers['Content-Type'] && !(options.body instanceof FormData)) {
-          headers['Content-Type'] = 'application/json';
-        }
-        
-        try {
-          const res = await fetch(url, { ...options, headers });
-          if (res.status === 401 && url.startsWith(API_URL)) {
-            console.warn('[JobKernel] Sidepanel received 401 Unauthorized. User might need to login.');
-          }
-          resolve(res);
-        } catch (err) {
-          reject(err);
-        }
-      });
-    });
+    await settingsPromise;
+    
+    // Get token/apiKey using a promise-based wrapper
+    const result = await new Promise(resolve => chrome.storage.local.get(['apiKey', 'token'], resolve));
+    const token = result.apiKey || result.token;
+    
+    const headers = { ...options.headers };
+    
+    // Add API key for our own API
+    if (url.startsWith(API_URL)) {
+      if (token) {
+        headers['X-API-Key'] = token;
+      } else {
+        console.warn('[JobKernel] Attempted request to API_URL without token:', url);
+      }
+    }
+    
+    // Ensure content-type is set for POST/PUT if not already
+    if ((options.method === 'POST' || options.method === 'PUT') && !headers['Content-Type'] && !(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
+    try {
+      const res = await fetch(url, { ...options, headers });
+      if (res.status === 401 && url.startsWith(API_URL)) {
+        console.warn('[JobKernel] Sidepanel received 401 Unauthorized. User might need to login.');
+      }
+      return res;
+    } catch (err) {
+      console.error('[JobKernel] fetchWithAuth error:', err);
+      throw err;
+    }
   }
+
+  // ── Global Connection Status Polling ──────────────────────────────────────
+  const globalStatusContainer = document.getElementById('global-connection-status');
+  const globalStatusDot = document.getElementById('global-status-dot');
+
+  async function checkConnectionStatus() {
+    if (!globalStatusContainer || !globalStatusDot) return;
+    try {
+      await settingsPromise; // Ensure settings are loaded before check
+      const res = await fetchWithAuth(`${API_URL}/api/auth/me`);
+      if (res.ok) {
+        globalStatusDot.style.background = 'var(--success, #10b981)';
+        globalStatusDot.style.boxShadow = '0 0 5px rgba(16, 185, 129, 0.5)';
+        globalStatusContainer.title = 'Connected to JobKernel API';
+        return true;
+      } else {
+        globalStatusDot.style.background = 'var(--error, #ef4444)';
+        globalStatusDot.style.boxShadow = '0 0 5px rgba(239, 68, 68, 0.5)';
+        let errorMsg = res.statusText;
+        if (res.status === 401 || res.status === 403) errorMsg = 'Invalid API Key';
+        globalStatusContainer.title = 'API Error: ' + errorMsg;
+        return false;
+      }
+    } catch (e) {
+      globalStatusDot.style.background = 'var(--error, #ef4444)';
+      globalStatusDot.style.boxShadow = '0 0 5px rgba(239, 68, 68, 0.5)';
+      globalStatusContainer.title = 'Connection Failed: ' + e.message;
+      return false;
+    }
+  }
+
+  // Check periodically every minute
+  setInterval(checkConnectionStatus, 60000);
+  
+  // Initial check after a slight delay to allow storage to load
+  setTimeout(checkConnectionStatus, 1000);
 
   let loadingTimeout = null;
   // The current application record from the server (if it exists)
   let currentAppRecord = null;
   // The scraped data from the browser
   let scrapedData = null;
+  let scoringTimeout = null;
 
   // ── Tell background we're alive so it can track panel state ─────────────
   const port = chrome.runtime.connect({ name: 'sidepanel' });
@@ -300,12 +478,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentMode = 'details';
 
   function setMode(mode) {
+    if (mode === 'settings') return; // Settings is handled as an overlay now
     currentMode = mode;
     
     // Hide all main containers
     detailsContainer.style.display = 'none';
     applyContainer.style.display = 'none';
-    settingsContainer.style.display = 'none';
     applyJobPicker.style.display = 'none';
     footerActions.style.display = 'none';
     savedBanner.style.display = 'none';
@@ -324,10 +502,6 @@ document.addEventListener('DOMContentLoaded', () => {
       detailsContainer.style.display = 'block';
       footerActions.style.display = 'flex';
       savedBanner.style.display = ''; 
-    } else if (mode === 'settings') {
-      settingsContainer.style.display = 'block';
-      detailsModeBtn.classList.remove('active');
-      applyModeBtn.classList.remove('active');
     }
   }
 
@@ -420,8 +594,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  btnSettings.addEventListener('click', () => setMode('settings'));
-  btnSettingsBack.addEventListener('click', () => setMode('details'));
+  btnSettings.addEventListener('click', () => {
+    settingsContainer.style.display = 'flex';
+  });
+  btnSettingsBack.addEventListener('click', () => {
+    settingsContainer.style.display = 'none';
+  });
   btnGoSync.addEventListener('click', () => {
     btnGoSync.disabled = true;
     btnGoSync.textContent = 'Syncing...';
@@ -988,6 +1166,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const isDetails = mode === 'details';
     const score = app.match_score;
     
+    // Update the Details-specific badge container if it exists
+    if (isDetails) {
+      const detailsScoreContainer = document.getElementById('details-match-score-container');
+      if (detailsScoreContainer) {
+        if (isLoading) {
+          detailsScoreContainer.innerHTML = `
+            <div class="summary-tag is-loading" style="cursor:wait; opacity:0.8; width: 100%; justify-content: center; padding: 0.5rem; border-radius: 2rem;">
+              <span class="material-symbols-outlined rotating" style="font-size:1.1rem; margin-right:8px;">progress_activity</span>
+              <span style="font-weight:700; font-size: 0.85rem;">Analyzing Match...</span>
+            </div>
+          `;
+          detailsScoreContainer.style.display = 'block';
+        } else {
+          detailsScoreContainer.innerHTML = '';
+          const badge = buildMatchScoreBadge(score, avgMatchScore, false);
+          if (badge) {
+            detailsScoreContainer.appendChild(badge);
+            detailsScoreContainer.style.display = 'block';
+          } else {
+            detailsScoreContainer.style.display = 'none';
+          }
+        }
+      }
+    }
+
     // Elements mapping based on mode
     const empty  = isDetails ? detailsMatchEmpty : matchEmpty;
     const result = isDetails ? detailsMatchResult : matchResult;
@@ -1302,9 +1505,24 @@ document.addEventListener('DOMContentLoaded', () => {
     markMissingFields();
   }
 
+  function enterEditMode() {
+    savedBanner.classList.remove('visible');
+    savedBanner.setAttribute('aria-hidden', 'true');
+    // currentAppRecord stays INTACT so we know to do a PUT instead of POST
+    if (btnSaveLabel)    btnSaveLabel.textContent    = 'Update';
+    if (btnProcessLabel) btnProcessLabel.textContent = 'Process Now';
+    btnSave.style.display    = '';
+    btnProcess.style.display = '';
+    form.classList.remove('form-readonly');
+    document.querySelectorAll('.field-diff-wrapper').forEach(w => {
+      w.classList.remove('field-has-diff');
+    });
+    markMissingFields();
+  }
+
   // "Edit details" button dismisses the confirmation and reveals the form
   if (kernelEditBtn) {
-    kernelEditBtn.addEventListener('click', hideSavedBanner);
+    kernelEditBtn.addEventListener('click', enterEditMode);
   }
 
   // ── Check if job URL is already in the database ───────────────────────────
@@ -1327,6 +1545,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Data Loading Logic ────────────────────────────────────────────────────
   const loadData = async ({ silent = false } = {}) => {
+    await settingsPromise;
     try {
       if (!silent) showLoading('Loading Job', 'Fetching page data\u2026');
       
@@ -1402,9 +1621,10 @@ document.addEventListener('DOMContentLoaded', () => {
           // We use a small timeout to ensure the faster fetches above get a head start 
           // on the backend, particularly if it's single-threaded.
           if (targetData.match_score == null) {
-            setTimeout(() => {
+            if (scoringTimeout) clearTimeout(scoringTimeout);
+            scoringTimeout = setTimeout(() => {
               handleCalculateScore(null, currentMode === 'apply' ? 'apply' : 'details');
-            }, 200);
+            }, 300); // Slightly longer debounce
           }
         } catch (innerErr) {
           console.error('[JobAutomator] Error in loadData storage callback:', innerErr);
@@ -1910,6 +2130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function checkNetworkStatus() {
     try {
+      await settingsPromise;
       // 1. Check DB for existing connections
       const dbRes = await fetchWithAuth(`${API_URL}/api/linkedin/debug?limit=1`);
       if (dbRes.ok) {
@@ -2060,16 +2281,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.ok) {
           updateLoadingProgress(80, 'Finalizing update\u2026');
           showStatus('Updated!', 'success');
+          extLog('INFO', `Updated application: ${data.title} @ ${data.company}`, { id: currentAppRecord.id });
           // Refresh the local record and remove diff highlights
           const updated = await checkExistingApplication(data.link);
           if (updated) {
             currentAppRecord = updated;
             applyDiffHighlights(updated, scrapedData);
+            showSavedBanner(updated); // Re-show banner after update
           }
           updateLoadingProgress(100);
         } else {
-          const err = await res.json();
-          showStatus(err.detail || 'Failed to update', 'error');
+          if (res.status === 401) {
+            showStatus('Authentication failed. Check your API key in settings.', 'error');
+          } else {
+            const err = await res.json();
+            showStatus(err.detail || 'Failed to update', 'error');
+            extLog('ERROR', `Failed to update application: ${err.detail || 'Unknown error'}`, { id: currentAppRecord.id });
+          }
         }
       } catch (e) {
         showStatus('Connection error. Is the backend running?', 'error');
@@ -2110,6 +2338,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.ok) {
           updateLoadingProgress(80, 'Sycing with local storage\u2026');
           showStatus('Saved!', 'success');
+          extLog('INFO', `Saved new application: ${data.title} @ ${data.company}`);
           chrome.storage.local.remove('latestJobData');
           // Show the banner for the newly saved record
           const saved = await checkExistingApplication(data.link);
@@ -2122,6 +2351,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           const err = await res.json();
           showStatus(err.detail || 'Failed to save', 'error');
+          extLog('ERROR', `Failed to save application: ${err.detail || 'Unknown error'}`, { title: data.title });
         }
       } catch (e) {
         showStatus('Connection error. Is the backend running?', 'error');
@@ -2148,6 +2378,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchAverageMatchScore() {
     try {
+      await settingsPromise;
       const resp = await fetchWithAuth(`${API_URL}/api/analytics`);
       if (resp.ok) {
         const stats = await resp.json();
@@ -2165,68 +2396,85 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchAverageMatchScore();
 
   function buildMatchScoreBadge(score, avgScore, isSummaryTag = true) {
-    let badgeContent = '';
     let tooltipText = '';
-    let containerStyle = '';
-
+    let scoreColor, scoreBg, scoreBorder;
+    
     if (score == null) {
-      // Placeholder for unsaved/unscored jobs
-      const scoreColor = `hsl(0, 0%, 55%)`;
-      const scoreBg = `hsla(0, 0%, 40%, 0.15)`;
-      const scoreBorder = `hsla(0, 0%, 50%, 0.6)`;
+      scoreColor = `hsl(0, 0%, 55%)`;
+      scoreBg = `hsla(0, 0%, 40%, 0.15)`;
+      scoreBorder = `hsla(0, 0%, 50%, 0.6)`;
       tooltipText = 'Match Score: Pending (Save & Process to calculate with AI)';
-      
-      badgeContent = `
-        <span style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:${scoreBg};border:2px solid ${scoreBorder};color:${scoreColor};font-size:0.62rem;font-weight:800;flex-shrink:0;">
-          ?
-        </span>
-        <span style="color:${scoreColor};font-weight:700;">Score Pending</span>
-      `;
-      containerStyle = `display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 2rem; background: ${scoreBg}; border: 1px dashed ${scoreBorder}; width: fit-content; cursor: help; font-size: 0.8rem;`;
     } else {
       const hue = Math.round((score / 100) * 120);
-      const scoreColor = `hsl(${hue}, 75%, 55%)`;
-      const scoreBg = `hsla(${hue}, 75%, 40%, 0.15)`;
-      const scoreBorder = `hsla(${hue}, 75%, 50%, 0.6)`;
-
-      let arrowHtml = '';
-      tooltipText = `Match Score: ${score}`;
+      scoreColor = `hsl(${hue}, 75%, 55%)`;
+      scoreBg = `hsla(${hue}, 75%, 40%, 0.15)`;
+      scoreBorder = `hsla(${hue}, 75%, 50%, 0.6)`;
+      tooltipText = `Match Score: ${score}%`;
       if (avgScore !== null) {
         const diff = score - avgScore;
-        const absDiff = Math.abs(Math.round(diff));
-        const isAbove = diff >= 1;
-        const isBelow = diff <= -1;
-        if (isAbove || isBelow) {
-          const arrowColor = isAbove ? '#10b981' : '#ef4444';
-          const arrowChar = isAbove ? '\u25b2' : '\u25bc';
-          tooltipText = `Match Score: ${score} \u2014 ${isAbove ? '\u2191' : '\u2193'} ${absDiff} pts ${isAbove ? 'above' : 'below'} your avg (${Math.round(avgScore)})`;
-          arrowHtml = `<span style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;border-radius:50%;background:${arrowColor};display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:900;color:white;border:1px solid rgba(0,0,0,0.25);line-height:1;">${arrowChar}</span>`;
-        } else {
-          tooltipText = `Match Score: ${score} \u2014 equal to your avg (${Math.round(avgScore)})`;
-        }
+        tooltipText += ` \u2014 ${diff >= 0 ? 'above' : 'below'} average (${Math.round(avgScore)}%)`;
       }
+    }
 
+    const getSummary = (s) => {
+      if (s === null) return "Evaluating your profile...";
+      if (s >= 90) return "Excellent profile match";
+      if (s >= 80) return "Strong candidate alignment";
+      if (s >= 70) return "Good baseline fit";
+      if (s >= 60) return "Moderate match level";
+      if (s >= 50) return "Fair alignment found";
+      return "Needs review/gaps exist";
+    };
+
+    let badgeContent = '';
+    let containerStyle = '';
+
+    if (isSummaryTag) {
       badgeContent = `
         <span style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:${scoreBg};border:2px solid ${scoreBorder};color:${scoreColor};font-size:0.62rem;font-weight:800;flex-shrink:0;">
-          ${score}
-          ${arrowHtml}
+          ${score !== null ? score : '?'}
         </span>
-        <span style="color:${scoreColor};font-weight:700;">Match</span>
+        <span style="color:${scoreColor};font-weight:700;">${score !== null ? 'Match' : 'Score Pending'}</span>
       `;
-      containerStyle = `display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 2rem; background: ${scoreBg}; border: 1px solid ${scoreBorder}; width: fit-content; cursor: help; font-size: 0.8rem;`;
+      containerStyle = `display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 2rem; background: ${scoreBg}; border: 1px solid ${scoreBorder}; width: fit-content; cursor: default; font-size: 0.8rem;`;
+    } else {
+      const summary = getSummary(score);
+      badgeContent = `
+        <span style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:${scoreBg};border:2px solid ${scoreBorder};color:${scoreColor};font-size:0.85rem;font-weight:800;flex-shrink:0; margin-right: 4px;">
+          ${score !== null ? score : '?'}
+        </span>
+        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+          <span style="color:${scoreColor}; font-weight:700; font-size: 0.9rem; line-height: 1.1;">${score !== null ? 'Match Score' : 'Score Pending'}</span>
+          <span style="color:var(--text-secondary); font-size: 0.75rem; font-weight: 500; line-height: 1.1;">${summary}</span>
+        </div>
+      `;
+      containerStyle = `display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; border-radius: 2rem; background: ${scoreBg}; border: 1px solid ${scoreBorder}; width: 100%; justify-content: center; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;`;
     }
 
     const containerEl = document.createElement('div');
-    if (isSummaryTag) {
-      containerEl.className = 'summary-tag';
-      containerEl.title = tooltipText;
-      containerEl.style.cssText = 'cursor:default;';
-      containerEl.innerHTML = badgeContent;
-    } else {
-      containerEl.title = tooltipText;
-      containerEl.style.cssText = containerStyle;
-      containerEl.innerHTML = badgeContent;
+    containerEl.title = tooltipText;
+    containerEl.innerHTML = badgeContent;
+    containerEl.style.cssText = containerStyle;
+
+    if (!isSummaryTag) {
+      containerEl.className = 'drill-down-trigger';
+      containerEl.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showMatchDetailsPanel(currentAppRecord || scrapedData);
+      };
+      containerEl.onmouseenter = () => {
+        containerEl.style.filter = 'brightness(1.1)';
+        containerEl.style.transform = 'translateY(-1px)';
+        containerEl.style.borderColor = score == null ? 'var(--text-muted)' : `hsl(${Math.round((score / 100) * 120)}, 75%, 65%)`;
+      };
+      containerEl.onmouseleave = () => {
+        containerEl.style.filter = '';
+        containerEl.style.transform = '';
+        containerEl.style.borderColor = score == null ? `hsla(0, 0%, 50%, 0.6)` : `hsla(${Math.round((score / 100) * 120)}, 75%, 50%, 0.6)`;
+      };
     }
+    
     return containerEl;
   }
 
@@ -2776,15 +3024,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Match Score Analysis ────────────────────────────────────────────────
   async function handleCalculateScore(btn, mode = 'apply') {
+    await settingsPromise; // Ensure settings are loaded
     const target = currentAppRecord || scrapedData;
-    if (!target) return;
+    if (!target || !API_URL) {
+      console.warn('[JobKernel] Scoring skipped: no target or API_URL.');
+      return;
+    }
     
+    // If target ALREADY has a score, don't re-calculate automatically
+    if (target.match_score != null && !btn) {
+       console.log('[JobKernel] Scoring skipped: score already present on target.');
+       return;
+    }
+
     // Fallback to title/company for throttling new jobs without IDs
     const appId = target.id;
     const scoreKey = appId ? String(appId) : `${target.job_title || target.title}-${target.company}`;
     
-    if (scoringJobs.has(scoreKey)) return;
+    if (scoringJobs.has(scoreKey)) {
+      console.log('[JobKernel] Scoring already in progress for:', scoreKey);
+      return;
+    }
     scoringJobs.add(scoreKey);
+
+    console.log('[JobKernel] Starting match score calculation for:', scoreKey);
 
     const originalHtml        = btn ? btn.innerHTML : null;
     const originalSaveText    = btnSaveLabel ? btnSaveLabel.textContent : null;
@@ -2808,41 +3071,57 @@ document.addEventListener('DOMContentLoaded', () => {
       if (btnProcessLabel) btnProcessLabel.textContent = 'Analyzing...';
     }
 
-    // Show loading state in UI
-    updateMatchScoreUI(target, mode, true);
+    // Show loading state in UI for both panels
+    updateMatchScoreUI(target, 'apply', true);
+    updateMatchScoreUI(target, 'details', true);
 
     try {
       const formData = new FormData();
       if (appId) formData.append('application_id', appId);
       
       const description = target.job_description || target.description;
-      if (description) formData.append('job_description', description);
+      if (description) {
+        formData.append('job_description', description);
+      } else {
+        console.warn('[JobKernel] No description found for scoring.');
+      }
       
       formData.append('use_default_resume', 'true');
 
       const resp = await fetchWithAuth(`${API_URL}/api/score-job-match`, {
         method: 'POST',
-        body: formData // fetch sets multipart/form-data for FormData
+        body: formData 
       });
 
       if (resp.ok) {
         const result = await resp.json();
+        console.log('[JobKernel] Scoring successful:', result);
         const score = result.overall_score || result.match_score || 0;
         
-        // Update current target
+        // Update current target and global state
         target.match_score = score;
         target.match_details = result; 
+        if (currentAppRecord && currentAppRecord.id === appId) {
+           currentAppRecord.match_score = score;
+           currentAppRecord.match_details = result;
+        }
         
-        updateMatchScoreUI(target, 'apply');
-        updateMatchScoreUI(target, 'details');
+        updateMatchScoreUI(target, 'apply', false);
+        updateMatchScoreUI(target, 'details', false);
         
         fetchAverageMatchScore();
       } else {
-        updateMatchScoreUI(target, mode, false);
+        const errorData = await resp.json().catch(() => ({}));
+        console.error('[JobKernel] Scoring failed with status:', resp.status, errorData);
+        updateMatchScoreUI(target, 'apply', false);
+        updateMatchScoreUI(target, 'details', false);
+        showStatus('Match analysis failed. Check server logs.', 'error');
       }
     } catch (e) {
-      console.error('Scoring error:', e);
-      updateMatchScoreUI(target, mode, false);
+      console.error('[JobKernel] Scoring error exception:', e);
+      updateMatchScoreUI(target, 'apply', false);
+      updateMatchScoreUI(target, 'details', false);
+      showStatus('Scoring error. Is the server reachable?', 'error');
     } finally {
       scoringJobs.delete(scoreKey);
       if (btn) {

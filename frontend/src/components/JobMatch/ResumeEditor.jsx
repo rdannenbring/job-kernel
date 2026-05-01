@@ -146,7 +146,7 @@ const ResumeEditor = ({
                 throw new Error('OnlyOffice Document Server is not available. Make sure the onlyoffice container is running.');
             }
 
-            const configUrl = new URL(`${API_URL}/api/onlyoffice/config/${docxFilename}`);
+            const configUrl = new URL(`${API_URL}/api/onlyoffice/config/${docxFilename}`, window.location.origin);
             configUrl.searchParams.append('t', Date.now());
             if (applicationId) {
                 configUrl.searchParams.append('application_id', applicationId);

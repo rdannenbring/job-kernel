@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, text, Float
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, text, Float, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -84,7 +84,14 @@ class Application(Base):
 
     match_score = Column(Integer, nullable=True)
     match_details = Column(Text) # JSON string containing scoring and coaching plan
-    
+
+    # AI-enriched job context fields (generated on first view)
+    job_summary = Column(Text, nullable=True)     # High-level mission / what the company does
+    core_purpose = Column(Text, nullable=True)    # Core purpose of the role
+    function_dept = Column(Text, nullable=True)   # Function / department
+    reporting_line = Column(Text, nullable=True)  # Who this role reports to
+    team_context = Column(Text, nullable=True)    # Team size / composition context
+
     # Relationships
     sub_steps = relationship("ApplicationSubStep", back_populates="application", cascade="all, delete-orphan")
     contacts = relationship("ApplicationContact", back_populates="application", cascade="all, delete-orphan")
@@ -149,6 +156,7 @@ class UserProfile(Base):
     skills = Column(Text) # JSON list of strings
     certificates = Column(Text) # JSON list of dicts/strings
     other = Column(Text) # JSON list of dicts/strings
+    recommendations = Column(Text) # JSON list of dicts/strings
     base_resume_path = Column(String)
     long_form_resume_path = Column(String)
     additional_docs = Column(Text)  # JSON list of {filename, path, label}
@@ -264,6 +272,24 @@ class DatabaseService:
         except Exception as e:
             session.rollback()
             raise e
+        finally:
+            session.close()
+
+    def vacuum(self):
+        session = self.Session()
+        try:
+            session.execute(text("VACUUM"))
+            session.commit()
+        finally:
+            session.close()
+
+    def reset_database(self):
+        session = self.Session()
+        try:
+            from sqlalchemy import text
+            for table in reversed(Base.metadata.sorted_tables):
+                session.execute(table.delete())
+            session.commit()
         finally:
             session.close()
 
@@ -553,6 +579,12 @@ class DatabaseService:
             "ALTER TABLE application_contacts ADD COLUMN headline TEXT",
             "ALTER TABLE applications ADD COLUMN match_score INTEGER",
             "ALTER TABLE applications ADD COLUMN match_details TEXT",
+            "ALTER TABLE applications ADD COLUMN cover_letter_changes_summary TEXT",
+            "ALTER TABLE applications ADD COLUMN job_summary TEXT",
+            "ALTER TABLE applications ADD COLUMN core_purpose TEXT",
+            "ALTER TABLE applications ADD COLUMN function_dept TEXT",
+            "ALTER TABLE applications ADD COLUMN reporting_line TEXT",
+            "ALTER TABLE applications ADD COLUMN team_context TEXT",
             "ALTER TABLE application_sub_steps ADD COLUMN phase TEXT DEFAULT 'saved'",
             "ALTER TABLE users ADD COLUMN first_name TEXT",
             "ALTER TABLE users ADD COLUMN last_name TEXT",
@@ -594,14 +626,19 @@ class DatabaseService:
             """
             CREATE TABLE IF NOT EXISTS linkedin_connections (
                 id INTEGER PRIMARY KEY,
+                user_id INTEGER,
                 name TEXT,
                 headline TEXT,
                 profile_url TEXT,
                 company_id TEXT,
                 company_name TEXT,
+                degree TEXT,
+                is_alumni BOOLEAN DEFAULT FALSE,
                 last_synced TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """,
+            "ALTER TABLE linkedin_connections ADD COLUMN degree TEXT",
+            "ALTER TABLE linkedin_connections ADD COLUMN is_alumni BOOLEAN DEFAULT FALSE",
             """
             CREATE TABLE IF NOT EXISTS user_api_keys (
                 id SERIAL PRIMARY KEY,
@@ -634,6 +671,19 @@ class DatabaseService:
         if s in ['rejected', 'declined', 'archived']: return s
         return 'saved'
 
+    def _is_valid_progression(self, current_stage: str, next_stage: str) -> bool:
+        """
+        Check if the move from current_stage to next_stage is a forward progression.
+        Returns True if forward or neutral, False if backward.
+        """
+        STAGES = ['saved', 'generated', 'applied', 'interviewing', 'decision', 'accepted']
+        
+        # If either is an end-state or unknown, we allow it (manual or terminal move)
+        if current_stage not in STAGES or next_stage not in STAGES:
+            return True
+            
+        return STAGES.index(next_stage) >= STAGES.index(current_stage)
+
     def _wait_for_db(self, retries=30, delay=2):
         """Wait for database to be ready."""
         print(f"Waiting for database at {self.db_url}...")
@@ -653,7 +703,7 @@ class DatabaseService:
                     print("Database connection failed after retries.")
                     raise
         
-    def save_application(self, data: Dict[str, Any], user_id: int = None) -> int:
+    def save_application(self, data: Dict[str, Any], user_id: int = None, force: bool = False) -> int:
         session = self.Session()
         try:
             app_id = data.get('application_id')
@@ -667,7 +717,23 @@ class DatabaseService:
                         self._log_event(app.id, 'stage_change', f"Pipeline stage updated to {data['pipeline_stage']}", session=session)
 
                     if user_id: app.user_id = user_id
-                    app.status = data.get('status', 'Generated')
+                    
+                    # Track if we should update status/stage based on progression rules
+                    new_status = data.get('status')
+                    new_stage = data.get('pipeline_stage') or (self._get_stage_from_status(new_status) if new_status else None)
+                    
+                    should_update_stage = True
+                    if new_stage and not force:
+                        if not self._is_valid_progression(app.pipeline_stage or 'saved', new_stage):
+                            print(f"DEBUG: Blocking backward stage progression from {app.pipeline_stage} to {new_stage}")
+                            should_update_stage = False
+
+                    if new_status and (should_update_stage or force):
+                        app.status = new_status
+                    
+                    if new_stage and (should_update_stage or force):
+                        app.pipeline_stage = new_stage
+
                     app.job_title = data.get('job_title', app.job_title)
                     app.company = data.get('company', app.company)
                     if data.get('company_logo'): app.company_logo = data.get('company_logo')
@@ -705,10 +771,7 @@ class DatabaseService:
                     if 'override_cover_letter_path' in data: app.override_cover_letter_path = data['override_cover_letter_path']
                     if 'active_resume_type' in data: app.active_resume_type = data['active_resume_type'] or 'generated'
                     if 'active_cover_letter_type' in data: app.active_cover_letter_type = data['active_cover_letter_type'] or 'generated'
-                    if 'pipeline_stage' in data: 
-                        app.pipeline_stage = data['pipeline_stage']
-                    elif 'status' in data:
-                        app.pipeline_stage = self._get_stage_from_status(data['status'])
+                    # Stage update handled above with progression logic
                     if 'match_score' in data: app.match_score = data['match_score']
                     if 'match_details' in data: 
                         app.match_details = json.dumps(data['match_details']) if isinstance(data['match_details'], (dict, list)) else data['match_details']
@@ -783,7 +846,7 @@ class DatabaseService:
         finally:
             session.close()
 
-    def update_application_status(self, app_id: int, new_status: str, user_id: int = None) -> bool:
+    def update_application_status(self, app_id: int, new_status: str, user_id: int = None, force: bool = False) -> bool:
         session = self.Session()
         try:
             query = session.query(Application).filter(Application.id == app_id)
@@ -791,11 +854,18 @@ class DatabaseService:
                 query = query.filter(Application.user_id == user_id)
             app = query.first()
             if app:
+                new_stage = self._get_stage_from_status(new_status)
+                
+                if not force:
+                    if not self._is_valid_progression(app.pipeline_stage or 'saved', new_stage):
+                        print(f"DEBUG: Blocking backward stage progression from {app.pipeline_stage} to {new_stage} in update_application_status")
+                        return False
+
                 if app.status != new_status:
                     self._log_event(app.id, 'stage_change', f"Status updated to {new_status}", session=session)
                 app.status = new_status
                 # Sync pipeline stage
-                app.pipeline_stage = self._get_stage_from_status(new_status)
+                app.pipeline_stage = new_stage
                 session.commit()
                 return True
             return False
@@ -875,18 +945,22 @@ class DatabaseService:
 
     def get_config(self, user_id: int = None) -> Dict[str, Any]:
         """Fetch configuration for a specific user, falling back to global config if needed."""
+        # Always start with global config as base
+        config = self._load_global_config()
+        
+        if user_id is None:
+            return config
+            
         session = self.Session()
         try:
-            config_record = session.query(Config).filter(Config.user_id == user_id).first()
-            if config_record:
-                return json.loads(config_record.settings)
+            user_record = session.query(Config).filter(Config.user_id == user_id).first()
+            if user_record:
+                user_settings = json.loads(user_record.settings)
+                # Merge user settings into global config
+                # We use a shallow merge for top-level keys
+                config.update(user_settings)
             
-            # If user config doesn't exist, we return empty for specific users,
-            # or try to load global config if user_id is None
-            if user_id is None:
-                return self._load_global_config()
-            
-            return {}
+            return config
         finally:
             session.close()
 
@@ -1004,7 +1078,13 @@ class DatabaseService:
             "source": app.source,
             "sub_steps": [{"id": s.id, "title": s.title, "description": s.description, "status": s.status, "date": s.date, "phase": s.phase} for s in app.sub_steps],
             "contacts": [{"id": c.id, "name": c.name, "role": c.role, "email": c.email, "phone": c.phone, "linkedin_url": c.linkedin_url, "headline": c.headline} for c in app.contacts],
-            "events": [{"id": e.id, "event_type": e.event_type, "description": e.description, "timestamp": e.timestamp} for e in app.events]
+            "events": [{"id": e.id, "event_type": e.event_type, "description": e.description, "timestamp": e.timestamp} for e in app.events],
+            # AI-enriched fields
+            "job_summary": app.job_summary,
+            "core_purpose": app.core_purpose,
+            "function_dept": app.function_dept,
+            "reporting_line": app.reporting_line,
+            "team_context": app.team_context,
         }
 
     def get_application_by_resume_path(self, filename: str) -> Dict[str, Any]:
@@ -1065,7 +1145,7 @@ class DatabaseService:
         finally:
             session.close()
 
-    def update_application(self, app_id: int, data: Dict[str, Any], user_id: int = None) -> bool:
+    def update_application(self, app_id: int, data: Dict[str, Any], user_id: int = None, force: bool = False) -> bool:
         """Update an existing application."""
         session = self.Session()
         try:
@@ -1076,12 +1156,25 @@ class DatabaseService:
             if not app:
                 return False
             
-            # Check for status change
-            if 'status' in data and data['status'] != app.status:
-                self._log_event(app.id, 'stage_change', f"Status updated to {data['status']}", session=session)
-            elif 'pipeline_stage' in data and data['pipeline_stage'] != app.pipeline_stage:
-                # If stage changes but status doesn't (or status isn't provided)
-                self._log_event(app.id, 'stage_change', f"Pipeline stage updated to {data['pipeline_stage']}", session=session)
+            # Handle status/stage updates with progression rules
+            new_status = data.get('status')
+            new_stage = data.get('pipeline_stage') or (self._get_stage_from_status(new_status) if new_status else None)
+            
+            should_update_stage = True
+            if new_stage and not force:
+                if not self._is_valid_progression(app.pipeline_stage or 'saved', new_stage):
+                    print(f"DEBUG: Blocking backward stage progression from {app.pipeline_stage} to {new_stage} in update_application")
+                    should_update_stage = False
+
+            if new_status and (should_update_stage or force):
+                if new_status != app.status:
+                    self._log_event(app.id, 'stage_change', f"Status updated to {new_status}", session=session)
+                app.status = new_status
+            
+            if new_stage and (should_update_stage or force):
+                if new_stage != app.pipeline_stage:
+                    self._log_event(app.id, 'stage_change', f"Pipeline stage updated to {new_stage}", session=session)
+                app.pipeline_stage = new_stage
 
             if 'job_title' in data: app.job_title = data['job_title']
             if 'company' in data: app.company = data['company']
@@ -1105,7 +1198,7 @@ class DatabaseService:
             if 'interest_level' in data: app.interest_level = data['interest_level']
             if 'remarks' in data: app.remarks = data['remarks']
             if 'source' in data: app.source = data['source']
-            if 'status' in data: app.status = data['status']
+            # Status handled above
             if 'kanban_order' in data: app.kanban_order = data['kanban_order']
             if 'is_archived' in data: 
                 app.is_archived = 'true' if (data['is_archived'] is True or data['is_archived'] == 'true') else 'false'
@@ -1143,11 +1236,6 @@ class DatabaseService:
                 val = data['match_details']
                 app.match_details = json.dumps(val) if isinstance(val, (dict, list)) else val
             
-            if 'pipeline_stage' in data: 
-                app.pipeline_stage = data['pipeline_stage']
-            elif 'status' in data:
-                app.pipeline_stage = self._get_stage_from_status(data['status'])
-
             if 'commute_time_mins' in data: app.commute_time_mins = data['commute_time_mins']
             if 'commute_distance_miles' in data: app.commute_distance_miles = data['commute_distance_miles']
             if 'commute_details' in data:
@@ -1160,6 +1248,13 @@ class DatabaseService:
             if 'indeed_url' in data: app.indeed_url = data['indeed_url']
             if 'linkedin_rating' in data: app.linkedin_rating = data['linkedin_rating']
             if 'linkedin_url' in data: app.linkedin_url = data['linkedin_url']
+
+            # AI-enriched fields
+            if 'job_summary' in data: app.job_summary = data['job_summary']
+            if 'core_purpose' in data: app.core_purpose = data['core_purpose']
+            if 'function_dept' in data: app.function_dept = data['function_dept']
+            if 'reporting_line' in data: app.reporting_line = data['reporting_line']
+            if 'team_context' in data: app.team_context = data['team_context']
 
             session.commit()
             return True
@@ -1268,6 +1363,7 @@ class DatabaseService:
                     "end_date": edu.end_date
                 } for edu in profile.educations],
                 "certificates": json.loads(profile.certificates) if profile.certificates else [],
+                "recommendations": json.loads(profile.recommendations) if getattr(profile, 'recommendations', None) else [],
                 "other": json.loads(profile.other) if profile.other else [],
                 "base_resume_path": profile.base_resume_path,
                 "long_form_resume_path": profile.long_form_resume_path,
@@ -1337,6 +1433,7 @@ class DatabaseService:
                 profile.educations.append(new_edu)
             
             profile.certificates = json.dumps(data.get('certificates', []))
+            profile.recommendations = json.dumps(data.get('recommendations', []))
             profile.other = json.dumps(data.get('other', []))
             if data.get("base_resume_path") is not None:
                 profile.base_resume_path = data["base_resume_path"]

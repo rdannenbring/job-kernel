@@ -1,25 +1,86 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, BackgroundTasks, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 import os
 import shutil
 import tempfile
 import hashlib
 import time
+import csv
+import zipfile
+import io
+import platform
 from typing import Optional, List, Dict, Any
 from dotenv import load_dotenv
 import json
 import requests
 import httpx
+import threading
+from datetime import datetime, timedelta
 
 from services.document_service import DocumentService
 from services.ai_service import AIService
 from services.scraper_service import ScraperService
 from services.database_service import DatabaseService
 from services.auth_service import AuthService, get_current_user_id, get_admin_user_id
+import logging
+from logging.handlers import RotatingFileHandler
 
 load_dotenv()
+
+# Configure logging
+log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+log_file = os.path.join(os.path.dirname(__file__), 'backend.log')
+
+# Rotate at 5MB, keep 2 backups
+file_handler = RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=2)
+file_handler.setFormatter(log_formatter)
+
+# Console handler for Docker logs
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(log_formatter)
+
+# Configure the root logger
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+root_logger.addHandler(file_handler)
+root_logger.addHandler(console_handler)
+
+# Specific logger for application events
+logger = logging.getLogger("app")
+logger.setLevel(logging.INFO)
+# Root handlers already cover this, but we can be explicit if needed.
+# To avoid double logging, we don't add handlers here if they are on root.
+
+# Intercept Uvicorn loggers to ensure they use our formatter and files
+for logger_name in ["uvicorn", "uvicorn.error", "uvicorn.access"]:
+    uv_logger = logging.getLogger(logger_name)
+    uv_logger.handlers = []
+    uv_logger.addHandler(file_handler)
+    uv_logger.addHandler(console_handler)
+    uv_logger.propagate = False
+
+# Database logger (SQLAlchemy)
+db_log_file = os.path.join(os.path.dirname(__file__), 'database.log')
+db_logger = logging.getLogger("sqlalchemy.engine")
+db_logger.setLevel(logging.INFO)
+db_file_handler = RotatingFileHandler(db_log_file, maxBytes=5*1024*1024, backupCount=2)
+db_file_handler.setFormatter(log_formatter)
+db_logger.handlers = []
+db_logger.addHandler(db_file_handler)
+db_logger.propagate = False
+
+# Extension logger
+ext_log_file = os.path.join(os.path.dirname(__file__), 'extension.log')
+extension_logger = logging.getLogger("extension")
+extension_logger.setLevel(logging.INFO)
+ext_file_handler = RotatingFileHandler(ext_log_file, maxBytes=5*1024*1024, backupCount=2)
+ext_file_handler.setFormatter(log_formatter)
+extension_logger.handlers = []
+extension_logger.addHandler(ext_file_handler)
+extension_logger.propagate = False
+
 
 app = FastAPI(title="Resume Automator API")
 
@@ -46,6 +107,67 @@ document_service = DocumentService()
 ai_service = AIService()
 scraper_service = ScraperService()
 database_service = DatabaseService()
+
+
+def run_maintenance_loop():
+    """Background loop to handle scheduled database maintenance."""
+    # Wait for the app to start up properly
+    time.sleep(10)
+    print("MAINTENANCE: Background scheduler started.")
+    while True:
+        try:
+            # Check global config for maintenance settings
+            config = database_service.get_config(None)
+            m_config = config.get('maintenance', {})
+            
+            if m_config.get('cleanup_enabled', False):
+                freq = m_config.get('frequency', 'weekly')
+                start_time_str = m_config.get('start_time', '03:00')
+                day_of_week = m_config.get('day_of_week', 'Sunday')
+                day_of_month = int(m_config.get('day_of_month', 1))
+                last_run_str = m_config.get('last_run')
+                
+                now = datetime.now()
+                last_run = datetime.fromisoformat(last_run_str) if last_run_str else datetime.min
+                
+                should_run = False
+                curr_time_str = now.strftime("%H:%M")
+                
+                if freq == 'hourly':
+                    if (now - last_run) >= timedelta(hours=1):
+                        should_run = True
+                elif freq == 'daily':
+                    if (now - last_run) >= timedelta(days=1) and curr_time_str >= start_time_str:
+                        should_run = True
+                elif freq == 'weekly':
+                    if (now - last_run) >= timedelta(days=7) and now.strftime("%A") == day_of_week and curr_time_str >= start_time_str:
+                        should_run = True
+                elif freq == 'monthly':
+                    if (now - last_run) >= timedelta(days=28) and now.day == day_of_month and curr_time_str >= start_time_str:
+                        should_run = True
+
+                if should_run:
+                    print(f"MAINTENANCE: Running scheduled cleanup ({freq})...")
+                    database_service.vacuum()
+                    
+                    # Log retention
+                    retention_days = m_config.get('log_retention_days', 7)
+                    _internal_purge_logs(retention_days)
+                    
+                    m_config['last_run'] = now.isoformat()
+                    config['maintenance'] = m_config
+                    database_service.save_config(config, None)
+                    print("MAINTENANCE: Cleanup complete.")
+            
+            # Check every 10 minutes to minimize overhead
+            time.sleep(600) 
+                
+        except Exception as e:
+            print(f"MAINTENANCE ERROR: {e}")
+            time.sleep(600)
+
+# Start background maintenance thread
+threading.Thread(target=run_maintenance_loop, daemon=True).start()
 
 
 
@@ -255,6 +377,7 @@ class ApplicationSaveRequest(BaseModel):
     override_cover_letter_path: Optional[str] = None
     active_resume_type: Optional[str] = 'generated'
     active_cover_letter_type: Optional[str] = 'generated'
+    force: Optional[bool] = False
     
     match_score: Optional[int] = None
     match_details: Optional[Any] = None
@@ -308,6 +431,7 @@ class ProfileModel(BaseModel):
     experiences: List[ExperienceModel] = []
     educations: List[EducationModel] = []
     certificates: List[dict] = []
+    recommendations: List[dict] = []
     other: List[dict] = []
     base_resume_path: Optional[str] = None
     long_form_resume_path: Optional[str] = None
@@ -361,6 +485,11 @@ class LinkedInConnectionModel(BaseModel):
 
 class LinkedInSyncRequest(BaseModel):
     connections: List[LinkedInConnectionModel]
+
+class ExtensionLogRequest(BaseModel):
+    level: str = "INFO"
+    message: str
+    context: Optional[Dict[str, Any]] = None
 
 
 @app.get("/")
@@ -595,15 +724,307 @@ async def update_own_account(data: dict, user_id: int = Depends(get_current_user
     return {"message": "Account updated"}
 
 @app.get("/api/admin/config")
-async def get_admin_config(admin_id: int = Depends(get_admin_user_id)):
-    """Full config for admin (including AI secrets)"""
-    return database_service.get_config(None)
+async def get_admin_config(user_id: int = Depends(get_admin_user_id)):
+    config = database_service.get_config(None)
+    return config
 
 @app.post("/api/admin/config")
-async def update_admin_config(config: dict, admin_id: int = Depends(get_admin_user_id)):
-    """Update global AI configuration"""
+async def save_admin_config(config: Dict[str, Any], user_id: int = Depends(get_admin_user_id)):
     database_service.save_config(config, None)
-    return {"message": "Global configuration updated"}
+    return {"status": "success"}
+
+@app.get("/api/admin/logs")
+async def get_logs(type: str = "app", lines: int = 500, user_id: int = Depends(get_admin_user_id)):
+    """Retrieve the tail of application, database, or extension logs."""
+    if type == "extension":
+        filename = "extension.log"
+    elif type == "db":
+        filename = "database.log"
+    else:
+        filename = "backend.log"
+        
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(base_dir, filename)
+    
+    if not os.path.exists(path):
+        return {"logs": f"Log file {filename} not found."}
+        
+    try:
+        with open(path, 'r') as f:
+            all_lines = f.readlines()
+            tail = all_lines[-lines:] if len(all_lines) > lines else all_lines
+            return {"logs": "".join(tail)}
+    except Exception as e:
+        logger.error(f"Error reading logs: {e}")
+        return {"logs": f"Error reading logs: {str(e)}"}
+
+@app.post("/api/extension/logs")
+async def receive_extension_log(req: ExtensionLogRequest):
+    """Receive logs from the Chrome extension."""
+    level = req.level.upper()
+    message = req.message
+    if req.context:
+        message += f" | Context: {json.dumps(req.context)}"
+    
+    if level == "DEBUG":
+        extension_logger.debug(message)
+    elif level == "WARNING":
+        extension_logger.warning(message)
+    elif level == "ERROR":
+        extension_logger.error(message)
+    else:
+        extension_logger.info(message)
+        
+    return {"status": "success"}
+
+def parse_logs_structured(lines):
+    import re
+    ts_pattern = re.compile(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) - ([^ ]+) - ([^ ]+) - (.*)$')
+    structured = []
+    current_entry = None
+    
+    for line in lines:
+        match = ts_pattern.match(line)
+        if match:
+            if current_entry:
+                structured.append(current_entry)
+            current_entry = {
+                "timestamp": match.group(1),
+                "logger": match.group(2),
+                "level": match.group(3),
+                "message": match.group(4)
+            }
+        elif current_entry:
+            current_entry["message"] += "\n" + line.strip()
+        else:
+            # Lines before any timestamp
+            structured.append({"timestamp": None, "logger": None, "level": None, "message": line.strip()})
+            
+    if current_entry:
+        structured.append(current_entry)
+    return structured
+
+def process_log_files(files, format, start_date, end_date):
+    import re
+    all_lines = []
+    ts_pattern = re.compile(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})')
+    
+    start_dt = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1) if end_date else None
+    
+    include_current = not (start_dt or end_dt)
+    
+    for fpath in files:
+        if not os.path.exists(fpath): continue
+        with open(fpath, 'r') as f:
+            for line in f:
+                match = ts_pattern.match(line)
+                if match:
+                    if not start_dt and not end_dt:
+                        include_current = True
+                    else:
+                        try:
+                            line_dt = datetime.strptime(match.group(1).split(',')[0], "%Y-%m-%d %H:%M:%S")
+                            include_current = True
+                            if start_dt and line_dt < start_dt: include_current = False
+                            if end_dt and line_dt >= end_dt: include_current = False
+                        except:
+                            pass
+                if include_current:
+                    all_lines.append(line)
+    
+    if format == "log":
+        return "".join(all_lines).encode()
+    
+    structured = parse_logs_structured(all_lines)
+    if format == "jsonl":
+        return "\n".join([json.dumps(entry) for entry in structured]).encode()
+    if format == "csv":
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=["timestamp", "logger", "level", "message"])
+        writer.writeheader()
+        writer.writerows(structured)
+        return output.getvalue().encode()
+    return b""
+
+@app.get("/api/admin/logs/export")
+async def export_logs(
+    type: str = "app", 
+    format: str = "log", 
+    start_date: Optional[str] = None, 
+    end_date: Optional[str] = None,
+    user_id: int = Depends(get_admin_user_id)
+):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    if type == "all":
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for lt in ["app", "db", "extension"]:
+                if lt == "extension":
+                    filename = "extension.log"
+                elif lt == "db":
+                    filename = "database.log"
+                else:
+                    filename = "backend.log"
+
+                path = os.path.join(base_dir, filename)
+                files = [path]
+                for i in range(1, 3):
+                    p = f"{path}.{i}"
+                    if os.path.exists(p): files.append(p)
+                files.reverse()
+                
+                content_bytes = process_log_files(files, format, start_date, end_date)
+                zf.writestr(f"{lt}_logs.{format}", content_bytes)
+        
+        memory_file.seek(0)
+        return StreamingResponse(
+            memory_file,
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename=all_logs.zip"}
+        )
+
+    if type == "extension":
+        filename = "extension.log"
+    elif type == "db":
+        filename = "database.log"
+    else:
+        filename = "backend.log"
+    path = os.path.join(base_dir, filename)
+    files = [path]
+    for i in range(1, 3):
+        p = f"{path}.{i}"
+        if os.path.exists(p): files.append(p)
+    files.reverse()
+    
+    content_bytes = process_log_files(files, format, start_date, end_date)
+    
+    media_types = {
+        "log": "text/plain",
+        "jsonl": "application/x-jsonlines",
+        "csv": "text/csv"
+    }
+    
+    return StreamingResponse(
+        io.BytesIO(content_bytes),
+        media_type=media_types.get(format, "text/plain"),
+        headers={"Content-Disposition": f"attachment; filename={type}_logs.{format}"}
+    )
+
+def _internal_purge_logs(retention_days=None):
+    """Internal helper to clear or selectively purge logs based on age."""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    purged = []
+    current_time = time.time()
+    retention_seconds = int(retention_days) * 86400 if retention_days else None
+
+    for filename in ["backend.log", "database.log", "extension.log"]:
+        path = os.path.join(base_dir, filename)
+        
+        # If no retention days specified, truncate the main active log file
+        if retention_days is None:
+            if os.path.exists(path):
+                with open(path, 'w') as f:
+                    f.truncate(0)
+                purged.append(filename)
+        
+        # Process rotations (check up to 10 back files)
+        for i in range(1, 10):
+            rot_path = f"{path}.{i}"
+            if os.path.exists(rot_path):
+                if retention_seconds:
+                    mtime = os.path.getmtime(rot_path)
+                    if (current_time - mtime) > retention_seconds:
+                        try:
+                            os.remove(rot_path)
+                            purged.append(f"{filename}.{i}")
+                        except Exception as e:
+                            print(f"Error removing {rot_path}: {e}")
+                else:
+                    # No retention, purge all rotations
+                    try:
+                        os.remove(rot_path)
+                        purged.append(f"{filename}.{i}")
+                    except Exception as e:
+                        print(f"Error removing {rot_path}: {e}")
+    return purged
+
+@app.post("/api/admin/logs/purge")
+async def purge_logs(data: Dict[str, Any] = None, user_id: int = Depends(get_admin_user_id)):
+    """Clear or selectively purge application and database logs."""
+    retention_days = data.get('retention_days') if data else None
+    purged = _internal_purge_logs(retention_days)
+    return {"status": "success", "purged": purged}
+
+def mask_sensitive(data):
+    if isinstance(data, dict):
+        return {k: mask_sensitive(v) if not any(s in k.upper() for s in ['KEY', 'SECRET', 'TOKEN', 'PASSWORD', 'AUTH', 'API']) else '********' for k, v in data.items()}
+    return data
+
+@app.get("/api/admin/system/diagnostic-bundle")
+async def get_diagnostic_bundle(user_id: int = Depends(get_admin_user_id)):
+    """Generate a ZIP bundle with logs and configuration info."""
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+        # 1. Logs
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        for log_name in ["backend.log", "database.log", "extension.log"]:
+            path = os.path.join(base_dir, log_name)
+            if os.path.exists(path):
+                zf.write(path, arcname=f"logs/{log_name}")
+                for i in range(1, 3):
+                    p = f"{path}.{i}"
+                    if os.path.exists(p):
+                        zf.write(p, arcname=f"logs/{log_name}.{i}")
+        
+        # 2. Config Info
+        config_info = {
+            "system": {
+                "os": platform.system(),
+                "os_release": platform.release(),
+                "python_version": platform.python_version(),
+                "timestamp": datetime.now().isoformat()
+            },
+            "environment": mask_sensitive(dict(os.environ)),
+            "app_config": mask_sensitive(database_service.get_config(None))
+        }
+        zf.writestr("config_diagnostics.json", json.dumps(config_info, indent=2))
+        
+    memory_file.seek(0)
+    return StreamingResponse(
+        memory_file,
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=diagnostic_bundle.zip"}
+    )
+
+
+@app.post("/api/admin/db/vacuum")
+async def vacuum_db(admin_id: int = Depends(get_admin_user_id)):
+    """Reclaim unused space in the SQLite database"""
+    try:
+        database_service.vacuum()
+        return {"status": "success", "message": "Database optimized successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/admin/db/reset")
+async def reset_db(admin_id: int = Depends(get_admin_user_id)):
+    """Clear all data and force a restart to trigger the setup flow"""
+    try:
+        database_service.reset_database()
+        
+        # Define restart function
+        def restart_app():
+            time.sleep(1)
+            print("RESET: Restarting application to trigger setup flow...")
+            os._exit(0)
+            
+        threading.Thread(target=restart_app).start()
+        return {"status": "success", "message": "Database reset. Application will restart in 1 second."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 
@@ -1272,7 +1693,7 @@ async def refine_cover_letter_endpoint(request: RefineCoverLetterRequest, user_i
 @app.post("/api/save-application")
 async def save_application(request: ApplicationSaveRequest, background_tasks: BackgroundTasks, user_id: int = Depends(get_current_user_id)):
     try:
-        app_id = database_service.save_application(request.dict(), user_id)
+        app_id = database_service.save_application(request.dict(exclude_unset=True), user_id, force=request.force)
         background_tasks.add_task(calculate_commute_for_app, app_id)
         return {"message": "Application saved", "id": app_id}
     except Exception as e:
@@ -1295,7 +1716,7 @@ async def get_application(app_id: int, user_id: int = Depends(get_current_user_i
 async def update_application(app_id: int, request: ApplicationSaveRequest, background_tasks: BackgroundTasks, user_id: int = Depends(get_current_user_id)):
     """Update an existing application's fields."""
     try:
-        success = database_service.update_application(app_id, request.dict(exclude_unset=True), user_id)
+        success = database_service.update_application(app_id, request.dict(exclude_unset=True), user_id, force=request.force)
         if success:
             if 'location' in request.dict(exclude_unset=True) or 'location_type' in request.dict(exclude_unset=True):
                 background_tasks.add_task(calculate_commute_for_app, app_id)
@@ -1478,7 +1899,32 @@ async def get_analytics(user_id: int = Depends(get_current_user_id)):
             }
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"Error generating analytics: {str(e)}\n{error_detail}")
+        
+        # If we failed to get apps, we can't do much, but we can try to return a valid empty structure
+        # instead of a 500 error, which allows the frontend to show an empty state or a friendly message.
+        return {
+            "total_applications": 0,
+            "pipeline_stages": {},
+            "interest_levels": {},
+            "job_types": {},
+            "location_types": {},
+            "weekly_activity": [],
+            "avg_match_score": None,
+            "scores_count": 0,
+            "top_companies": [],
+            "recent_applications": [],
+            "linkedin_stats": {
+                "total_connections": 0,
+                "apps_with_connections": 0,
+                "percentage_with_connections": 0,
+                "distribution": {}
+            },
+            "error_context": str(e) if os.getenv("DEBUG") == "True" else None
+        }
+
 
 @app.put("/api/applications/{app_id}/status")
 async def update_application_status(app_id: int, request: StatusUpdateRequest, user_id: int = Depends(get_current_user_id)):
@@ -1492,6 +1938,153 @@ async def update_application_status(app_id: int, request: StatusUpdateRequest, u
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/applications/{app_id}/enrich")
+async def enrich_application(app_id: int, user_id: int = Depends(get_current_user_id)):
+    """AI-generate enrichment fields (job_summary, core_purpose, etc.) from the job description.
+    
+    Only calls the AI if any field is missing. Returns the enriched fields and saves them.
+    """
+    try:
+        app_data = database_service.get_application_by_id(app_id, user_id)
+        if not app_data:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        # Check if enrichment has already been done (at least the summary)
+        if app_data.get("job_summary"):
+            fields = ["job_summary", "core_purpose", "function_dept", "reporting_line", "team_context"]
+            return {k: app_data.get(k) for k in fields}
+
+        jd = app_data.get("job_description", "")
+        if not jd:
+            return {k: None for k in fields}
+
+        # Load per-user config for AI provider selection
+        user_config = {}
+        try:
+            user_config = database_service.get_config(user_id) or {}
+            logger.info(f"Enrichment config retrieved for user {user_id}. Keys: {list(user_config.keys())}")
+        except Exception as e:
+            logger.error(f"Error fetching config for enrichment: {e}")
+            pass
+
+        prompt = f"""Analyze the following job description and extract these specific details.
+
+JOB TITLE: {app_data.get('job_title', 'Unknown')}
+COMPANY: {app_data.get('company', 'Unknown')}
+
+JOB DESCRIPTION:
+{jd[:6000]}
+
+Return a JSON object with EXACTLY these fields:
+{{
+    "job_summary": "2-3 sentence summary of the company mission and what this role is about. If the company mission isn't explicit, infer it from context.",
+    "core_purpose": "1-2 sentences describing the core purpose of this specific role — what problem it solves or what it is accountable for.",
+    "function_dept": "The functional area or department (e.g., 'Engineering — Platform', 'Product Management', 'Data Science — Analytics'). Be specific.",
+    "reporting_line": "Who this role reports to, if stated or strongly implied. Use null if not determinable.",
+    "team_context": "Context about the team — size, composition, stage, or mission if available. Use null if not mentioned."
+}}
+
+Be concise and grounded in the text. Do not fabricate details not present or inferable from the description."""
+
+        content = await ai_service.execute_ai_request(
+            system_prompt="You are a precise job description analyst.",
+            user_prompt=prompt,
+            response_format="json_object",
+            temperature=0.2,
+            config=user_config,
+        )
+        result = ai_service._parse_json_response(content)
+
+        enrichment = {
+            "job_summary": result.get("job_summary"),
+            "core_purpose": result.get("core_purpose"),
+            "function_dept": result.get("function_dept"),
+            "reporting_line": result.get("reporting_line"),
+            "team_context": result.get("team_context"),
+        }
+
+        # Persist — use a direct SQL update to avoid touching other fields
+        database_service.update_application(app_id, enrichment, user_id)
+
+        return enrichment
+    except Exception as e:
+        logger.error(f"Error enriching application {app_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/applications/{app_id}/score")
+async def score_application_endpoint(app_id: int, user_id: int = Depends(get_current_user_id)):
+    """Re-calculate the AI match score for an application using the current profile/resume."""
+    try:
+        app_data = database_service.get_application_by_id(app_id, user_id)
+        if not app_data:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        config = await get_merged_config(user_id)
+        profile = database_service.get_profile(user_id)
+        
+        # Determine which resume to use
+        # 1. Stored resume_data (if already tailored/parsed)
+        # 2. Tailored resume file
+        # 3. Original resume file
+        # 4. Profile base resume
+        resume_text = ""
+        if app_data.get("resume_data"):
+            # Re-construct text from structured data or just use it if possible
+            # For now, let's look for files first as they are more reliable sources of truth
+            pass
+
+        file_to_score = None
+        if app_data.get("tailored_resume_path") and os.path.exists(app_data["tailored_resume_path"]):
+            file_to_score = app_data["tailored_resume_path"]
+        elif app_data.get("original_resume_path") and os.path.exists(app_data["original_resume_path"]):
+            file_to_score = app_data["original_resume_path"]
+        elif profile.get("base_resume_path") and os.path.exists(profile["base_resume_path"]):
+            file_to_score = profile["base_resume_path"]
+        
+        if file_to_score:
+            resume_text = document_service.extract_text(file_to_score)
+        else:
+            # Fallback to resume_data if no files found
+            res_data = app_data.get("resume_data", {})
+            if res_data and "full_text" in res_data:
+                resume_text = "\n".join(res_data["full_text"])
+        
+        if not resume_text:
+            raise HTTPException(status_code=400, detail="No resume content found to score.")
+
+        jd = app_data.get("job_description", "")
+        if not jd:
+            raise HTTPException(status_code=400, detail="No job description found to score.")
+
+        result = await ai_service.score_job_match(
+            resume_text=resume_text,
+            job_description=jd,
+            config=config
+        )
+
+        database_service.update_application(app_id, {
+            "match_score": result.get("overall_score"),
+            "match_details": json.dumps(result)
+        }, user_id)
+
+        return result
+    except Exception as e:
+        logger.error(f"Error scoring application {app_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error enriching application {app_id}: {e}")
+        # Return empty fields instead of 500 to allow the frontend to stop the loading animation
+        return {
+            "job_summary": None,
+            "core_purpose": None,
+            "function_dept": None,
+            "reporting_line": None,
+            "team_context": None
+        }
 
 @app.delete("/api/applications/{app_id}")
 async def delete_application(app_id: int, user_id: int = Depends(get_current_user_id)):

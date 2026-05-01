@@ -165,12 +165,12 @@ const PipelineProgressBar = ({ currentStage: stageProp, onStageClick, isArchived
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(6, 1fr)', 
-        gridTemplateRows: `repeat(${isArchived ? 3 : 2}, 100px)`, // Dynamic height
+        gridTemplateRows: 'repeat(3, 100px)', // Fixed to 3 rows to accommodate Withdrawn branch
         position: 'relative'
       }}>
         {/* SVG Connections Layer */}
         <svg 
-          viewBox={`0 0 600 ${isArchived ? 300 : 200}`} 
+          viewBox="0 0 600 300" 
           preserveAspectRatio="none"
           style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1, overflow: 'visible' }}
         >
