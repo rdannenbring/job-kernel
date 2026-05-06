@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#0b0f18",
+                    "secondary-container": "#1e293b",
+                    "primary-fixed-dim": "#bfdbfe",
+                    "primary-container": "#256af433",
+                    "secondary-fixed": "#e2e8f0",
+                    "on-primary-fixed": "#1e3a8a",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed-dim": "#fecdd3",
+                    "tertiary-container": "#f43f5e22",
+                    "inverse-on-surface": "#0f172a",
+                    "surface-bright": "#1e293b",
+                    "secondary": "#334155",
+                    "secondary-fixed-dim": "#cbd5e1",
+                    "on-primary-fixed-variant": "#1d4ed8",
+                    "surface": "#101622",
+                    "on-secondary": "#f8fafc",
+                    "inverse-primary": "#60a5fa",
+                    "surface-tint": "#256af4",
+                    "on-primary-container": "#60a5fa",
+                    "on-tertiary-container": "#fb7185",
+                    "on-background": "#f1f5f9",
+                    "on-secondary-fixed-variant": "#334155",
+                    "surface-container-high": "#1e293b99",
+                    "on-tertiary-fixed": "#4c0519",
+                    "error": "#ef4444",
+                    "outline-variant": "#1e293b",
+                    "tertiary-fixed": "#ffe4e6",
+                    "on-tertiary-fixed-variant": "#9f1239",
+                    "surface-variant": "#1e293b",
+                    "on-surface-variant": "#94a3b8",
+                    "on-secondary-container": "#cbd5e1",
+                    "surface-container": "#1e293b80",
+                    "surface-container-lowest": "#080c14",
+                    "on-error-container": "#fca5a5",
+                    "inverse-surface": "#f8fafc",
+                    "primary": "#256af4",
+                    "on-tertiary": "#ffffff",
+                    "on-surface": "#f1f5f9",
+                    "error-container": "#450a0a",
+                    "primary-fixed": "#dbeafe",
+                    "outline": "#334155",
+                    "on-secondary-fixed": "#0f172a",
+                    "surface-container-low": "#1e293b66",
+                    "surface-container-highest": "#2d3748",
+                    "background": "#101622",
+                    "tertiary": "#f43f5e",
+                    "on-primary": "#ffffff"
+            },
+            fontFamily: {
+              headline: ["Manrope", "sans-serif"],
+              display: ["Manrope", "sans-serif"],
+              body: ["Manrope", "sans-serif"],
+              label: ["Manrope", "sans-serif"],
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-glow {
+            text-shadow: 0 0 8px rgba(37, 106, 244, 0.6);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-surface-dim text-on-background font-body min-h-screen overflow-x-hidden selection:bg-primary/30">
+<!-- Sidebar Navigation Shell -->
+<aside class="fixed left-0 top-0 bottom-0 flex flex-col items-center py-6 z-50 bg-slate-950 w-20 border-r border-white/5 transition-all duration-300 ease-in-out">
+<div class="text-blue-500 font-black text-2xl mb-12">MG</div>
+<nav class="flex flex-col gap-8 flex-1">
+<a class="group relative flex flex-col items-center text-slate-500 hover:text-slate-200 hover:bg-white/5 p-2 rounded-xl transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-manrope tracking-widest text-[10px] font-bold uppercase mt-1">Dash</span>
+</a>
+<a class="group relative flex flex-col items-center text-blue-500 bg-blue-500/10 border-r-2 border-blue-500 p-2 rounded-l-xl transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="work" style="font-variation-settings: 'FILL' 1;">work</span>
+<span class="font-manrope tracking-widest text-[10px] font-bold uppercase mt-1">Apps</span>
+</a>
+<a class="group relative flex flex-col items-center text-slate-500 hover:text-slate-200 hover:bg-white/5 p-2 rounded-xl transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-manrope tracking-widest text-[10px] font-bold uppercase mt-1">Talent</span>
+</a>
+<a class="group relative flex flex-col items-center text-slate-500 hover:text-slate-200 hover:bg-white/5 p-2 rounded-xl transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-manrope tracking-widest text-[10px] font-bold uppercase mt-1">Data</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-6 items-center">
+<a class="text-slate-500 hover:text-blue-500 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</a>
+<div class="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-xs font-bold text-slate-300 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a senior recruiter in a dark suit against a minimalist charcoal background. The lighting is dramatic and cinematic, with a soft key light on the face creating sharp definitions and a high-end editorial feel. The overall mood is sophisticated and expert, fitting a luxury SaaS environment with cool blue and deep grey tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZgjny0VFfkYQ4dnuEtbapeC4fhCYH5g5xSANck60zPc1youPEb2tzILfM_T_p_zdIiPNG83XVmv0L0mxYVgYAqrTfuDqOpQ1PuMGvpKbQ7uMXfrhC3vM5T8-uSimYrMoLsow5tCIW_ZI74wlR3lHqkenK6G1DrZiZXEPdJOWwXXvLMPGs7qiTy3TqVbLUj9U6w64mJi74ZonKslhpGHVJ6A4TfB-RL9kU9CjUnLdelW4m_FLK5W4Pru0ylaKho0pSK_HvqrWTOgM"/>
+</div>
+</div>
+</aside>
+<!-- Top App Bar Shell -->
+<header class="fixed top-0 right-0 left-20 h-20 flex items-center px-12 justify-between z-40 bg-slate-900/40 backdrop-blur-xl transition-all duration-500">
+<div class="flex items-center gap-8">
+<h1 class="text-slate-100 text-xl font-bold tracking-tight">Applications</h1>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-slate-400 pb-4 font-manrope text-sm font-semibold tracking-tight hover:text-blue-300 transition-colors" href="#">Applied</a>
+<a class="text-slate-400 pb-4 font-manrope text-sm font-semibold tracking-tight hover:text-blue-300 transition-colors" href="#">In Review</a>
+<a class="text-slate-400 pb-4 font-manrope text-sm font-semibold tracking-tight hover:text-blue-300 transition-colors" href="#">Interview</a>
+<a class="text-slate-400 pb-4 font-manrope text-sm font-semibold tracking-tight hover:text-blue-300 transition-colors" href="#">Offer</a>
+<a class="text-blue-400 border-b-2 border-blue-500 pb-4 font-manrope text-sm font-semibold tracking-tight" href="#">Archived</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-blue-500 transition-colors cursor-pointer" data-icon="notifications">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border border-slate-900"></span>
+</div>
+<span class="material-symbols-outlined text-slate-400 hover:text-blue-500 transition-colors cursor-pointer" data-icon="chat_bubble">chat_bubble</span>
+<div class="h-8 w-[1px] bg-white/10 mx-2"></div>
+<button class="bg-primary hover:bg-blue-600 text-white px-5 py-2 rounded-full font-manrope text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/20">
+                Move to Archive
+            </button>
+</div>
+</header>
+<!-- Main Content Stage -->
+<main class="ml-20 pt-28 pb-12 px-12 max-w-7xl mx-auto">
+<!-- Atmosphere Background Blurs -->
+<div class="fixed top-0 right-0 w-[500px] h-[500px] bg-primary/10 blur-[120px] -z-10 rounded-full"></div>
+<div class="fixed bottom-0 left-20 w-[300px] h-[300px] bg-tertiary/5 blur-[100px] -z-10 rounded-full"></div>
+<!-- Hero Header -->
+<div class="mb-12 flex justify-between items-end">
+<div>
+<div class="flex items-center gap-3 mb-4">
+<span class="bg-tertiary/10 border border-tertiary/20 text-tertiary text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">Withdrawn Phase</span>
+<span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">ID: ARCH-9421-W</span>
+</div>
+<h2 class="text-4xl font-extrabold text-slate-100 tracking-tight leading-tight">Senior Product Designer <br/><span class="text-slate-400">at Stellar Systems Inc.</span></h2>
+</div>
+<div class="text-right">
+<p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Withdrawn On</p>
+<p class="text-xl font-bold text-slate-100">October 14, 2023</p>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Retrospective Timeline -->
+<div class="col-span-12 lg:col-span-8 glass-panel rounded-2xl p-8 relative overflow-hidden">
+<div class="flex items-center justify-between mb-10">
+<h3 class="text-lg font-bold text-slate-100 neon-glow flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="route">route</span>
+                        Application Journey
+                    </h3>
+<span class="text-slate-400 text-sm font-medium">42 Days Total Duration</span>
+</div>
+<div class="relative">
+<!-- Timeline Line -->
+<div class="absolute left-6 top-0 bottom-0 w-[2px] bg-gradient-to-b from-primary/40 via-primary/20 to-transparent"></div>
+<div class="space-y-12">
+<!-- Step 1 -->
+<div class="relative pl-16">
+<div class="absolute left-[18px] top-1 w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_10px_rgba(37,106,244,0.6)]"></div>
+<h4 class="text-slate-100 font-bold mb-1">Application Submitted</h4>
+<p class="text-slate-400 text-sm mb-2">Initial submission with portfolio and tailored CV.</p>
+<span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Sept 02, 2023</span>
+</div>
+<!-- Step 2 -->
+<div class="relative pl-16">
+<div class="absolute left-[18px] top-1 w-2.5 h-2.5 rounded-full bg-primary/60"></div>
+<h4 class="text-slate-100 font-bold mb-1">Recruiter Screening</h4>
+<p class="text-slate-400 text-sm mb-2">30-minute introductory call with Talent Acquisition.</p>
+<span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Sept 12, 2023</span>
+</div>
+<!-- Step 3 -->
+<div class="relative pl-16">
+<div class="absolute left-[18px] top-1 w-2.5 h-2.5 rounded-full bg-primary/40"></div>
+<h4 class="text-slate-100 font-bold mb-1">Technical Portfolio Review</h4>
+<p class="text-slate-400 text-sm mb-2">Deep dive into design systems and case studies with the Lead Designer.</p>
+<span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Sept 28, 2023</span>
+</div>
+<!-- Final Step -->
+<div class="relative pl-16 opacity-60">
+<div class="absolute left-[18px] top-1 w-2.5 h-2.5 rounded-full bg-tertiary shadow-[0_0_10px_rgba(244,63,94,0.6)]"></div>
+<h4 class="text-tertiary font-bold mb-1">User Withdrawal</h4>
+<p class="text-slate-400 text-sm mb-2">Candidate initiated withdrawal from the recruitment process.</p>
+<span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Oct 14, 2023</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Side Cards Column -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+<!-- Withdrawal Reason Card -->
+<div class="glass-panel rounded-2xl p-6 border-l-4 border-tertiary/50">
+<h3 class="text-slate-100 font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary" data-icon="cancel">cancel</span>
+                        Primary Reason
+                    </h3>
+<p class="text-slate-300 text-sm leading-relaxed bg-surface-container rounded-xl p-4 border border-white/5">
+                        "Accepted a competing offer from a Series B startup that aligns more closely with my interest in AI-driven design tools and remote-first culture."
+                    </p>
+<div class="mt-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-500 text-sm" data-icon="history">history</span>
+<span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Status: Finalized</span>
+</div>
+</div>
+<!-- Career Impact Metrics -->
+<div class="glass-panel rounded-2xl p-6">
+<h3 class="text-slate-100 font-bold mb-6">Career Metrics Impact</h3>
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="speed">speed</span>
+</div>
+<div>
+<p class="text-slate-100 text-sm font-bold">Interview Hit-Rate</p>
+<p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">+12.4% Increase</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-primary font-black">78%</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" data-icon="timer_off">timer_off</span>
+</div>
+<div>
+<p class="text-slate-100 text-sm font-bold">Opportunity Cost</p>
+<p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Time Reallocated</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-slate-100 font-black">18h</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-on-secondary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-300" data-icon="psychology">psychology</span>
+</div>
+<div>
+<p class="text-slate-100 text-sm font-bold">Skill Validation</p>
+<p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Market Value Index</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-slate-100 font-black">0.92</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Analysis Section -->
+<div class="col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-panel rounded-2xl p-6 flex flex-col items-center text-center">
+<div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4 border border-white/5">
+<span class="material-symbols-outlined text-slate-400" data-icon="compare_arrows">compare_arrows</span>
+</div>
+<h4 class="text-slate-100 font-bold mb-2">Market Comparison</h4>
+<p class="text-slate-400 text-xs">This role offered 15% lower equity compared to your current market average.</p>
+</div>
+<div class="glass-panel rounded-2xl p-6 flex flex-col items-center text-center">
+<div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4 border border-white/5">
+<span class="material-symbols-outlined text-slate-400" data-icon="verified">verified</span>
+</div>
+<h4 class="text-slate-100 font-bold mb-2">Decision Quality</h4>
+<p class="text-slate-400 text-xs">High. Withdrawal preserved your professional network for future opportunities.</p>
+</div>
+<div class="glass-panel rounded-2xl p-6 flex flex-col items-center text-center">
+<div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-4 border border-white/5">
+<span class="material-symbols-outlined text-slate-400" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<h4 class="text-slate-100 font-bold mb-2">Future Recommendation</h4>
+<p class="text-slate-400 text-xs">Maintain contact with Lead Designer Sarah Chen for Tier 1 collaborations.</p>
+</div>
+</div>
+</div>
+<!-- Visual Anchor / Editorial Content -->
+<div class="mt-12 h-[300px] w-full rounded-2xl relative overflow-hidden group">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A sprawling, cinematic view of a futuristic city at midnight, seen from a high altitude. The image is dominated by deep navy blue and ink-black tones, with webs of glowing electric blue and soft white fiber-optic lines tracing the city's infrastructure. The lighting is ethereal and atmospheric, with a soft blur on the horizon and sharp, crystalline details in the foreground. It evokes a sense of vast connectivity and professional data ecosystems in a high-end tech world." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyM_UN1ipkAn31Mjz8CSZld3QlZs_U8BtHZd4CveyP1qIy1791DqQtUQ9aMQ8FEy5ozANlHc_Qz1X0KfmS9IK1M1hEcuKCti9Ehj3U3jLfWq6W1C_lywNU5ZIeyHJdYqxMKCwCZEWn1IlAin4I4pFc4VbBCan72JCGiWeM2NIx9qC80eCvkHSaQs99Q6x6QlH-9xW2YKa1i6qRUg7iJBtx-QoqUO9k3vidMyWVIMeWncKxNp9fisayDz5MvCFdViX0ZYP82rDdE0k"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent flex flex-col justify-end p-12">
+<span class="text-primary text-[10px] font-bold uppercase tracking-[0.3em] mb-2">Retrospective View</span>
+<h3 class="text-2xl font-bold text-white max-w-xl">"Focusing on the next chapter while archiving the lessons from the current journey."</h3>
+</div>
+</div>
+</main>
+<!-- Contextual FAB (Suppressed as per rules for Details/Retrospective screens) -->
+</body></html>

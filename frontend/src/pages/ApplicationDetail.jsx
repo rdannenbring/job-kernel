@@ -686,6 +686,9 @@ const LogoPickerModal = ({ companyName, onSelect, onClose }) => {
 
 const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate, onViewLifecycle, onStartFullGeneration, avgScore }) => {
     const { fetchWithAuth } = useAuth();
+    const [profileDocs, setProfileDocs] = React.useState([]);
+    const [uploadingDoc, setUploadingDoc] = React.useState(false);
+    const docInputRef = React.useRef(null);
     const needsGeneration = !app.tailored_resume_path && !app.cover_letter_path;
     const [previewFile, setPreviewFile] = React.useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
@@ -706,9 +709,11 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
         if (app?.pipeline_stage) {
             const s = app.pipeline_stage.toLowerCase();
             if (s === 'accepted') setActivePhaseTab('Accepted');
-            else if (s === 'declined' || s === 'rejected') setActivePhaseTab('Rejected');
-            else if (s.includes('withdraw') || s.includes('cancel')) setActivePhaseTab('Withdrawn/Cancelled');
-            else if (s === 'offered' || s === 'decision') setActivePhaseTab('Offered');
+            else if (s === 'rejected') setActivePhaseTab('Rejected');
+            else if (s === 'declined') setActivePhaseTab('Declined');
+            else if (s.includes('withdraw') || s.includes('cancel')) setActivePhaseTab('Withdrawn');
+            else if (s === 'offered') setActivePhaseTab('Offered');
+            else if (s === 'decision') setActivePhaseTab('Decision');
             else if (['saved', 'generated', 'applied', 'interviewing'].includes(s)) {
                 setActivePhaseTab(s.charAt(0).toUpperCase() + s.slice(1));
             } else setActivePhaseTab('Saved');
@@ -765,11 +770,89 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
 
     // Sync formData when app changes
     React.useEffect(() => {
+        const loadProfileData = async () => {
+            try {
+                const res = await fetchWithAuth(`${API_URL}/api/profile`);
+                if (res.ok) {
+                    const profileData = await res.json();
+                    setProfileDocs(profileData.additional_docs || []);
+                    setProfilePrefs(profileData?.preferences || {});
+                    setProfileBaseResume(profileData?.base_resume_path || null);
+                    
+                    if (app.id && app.location) {
+                        const maxCommutePref = profileData?.preferences?.max_commute || '';
+                        let maxCommuteMins = null;
+                        if (maxCommutePref === '15 mins') maxCommuteMins = 15;
+                        else if (maxCommutePref === '30 mins') maxCommuteMins = 30;
+                        else if (maxCommutePref === '45 mins') maxCommuteMins = 45;
+                        else if (maxCommutePref === '1 hour') maxCommuteMins = 60;
+                        else if (maxCommutePref === '1.5 hours') maxCommuteMins = 90;
+                        else if (maxCommutePref === '2 hours') maxCommuteMins = 120;
+                        else if (maxCommutePref === 'Remote Only') maxCommuteMins = 0;
+
+                        if (app.location.toLowerCase().includes('remote') || app.location_type?.toLowerCase() === 'remote') {
+                            setCommuteInfo({ text: 'Remote (No Commute)' });
+                        } else {
+                            const commuteDetails = app.commute_details || {};
+                            const prefCommuteTypes = profileData?.preferences?.commute_types || ['Driving'];
+                            setAllCommutes(commuteDetails);
+                            
+                            let initialType = 'Driving';
+                            if (prefCommuteTypes.includes('Driving') && commuteDetails['Driving']) {
+                                initialType = 'Driving';
+                            } else if (prefCommuteTypes.length > 0) {
+                                const found = prefCommuteTypes.find(t => commuteDetails[t]);
+                                if (found) initialType = found;
+                                else {
+                                    const available = Object.keys(commuteDetails);
+                                    if (available.length > 0) initialType = available[0];
+                                }
+                            }
+                            setCurrentCommuteType(initialType);
+
+                            const updateCommuteDisplay = (type) => {
+                                const data = commuteDetails[type];
+                                if (!data) {
+                                    setCommuteInfo({ text: 'Pending...' });
+                                    return;
+                                }
+                                const mins = data.mins;
+                                const dist = data.distance;
+                                const isOverLimit = maxCommuteMins !== null && mins > maxCommuteMins;
+                                const originParts = [];
+                                if (profileData.address_line1) originParts.push(profileData.address_line1);
+                                if (profileData.city) originParts.push(profileData.city);
+                                if (profileData.state) originParts.push(profileData.state);
+                                const originStr = originParts.join(', ');
+                                let mode = 'driving';
+                                if (type === 'Walking') mode = 'walking';
+                                else if (type === 'Bicycle') mode = 'bicycling';
+                                else if (type === 'Public Transportation') mode = 'transit';
+                                else if (type === 'Flight') mode = 'driving';
+                                const directionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originStr)}&destination=${encodeURIComponent(app.location)}&travelmode=${mode}`;
+                                setCommuteInfo({
+                                    text: `${mins} min ${type.toLowerCase()} (${dist || 0} mi)`,
+                                    isOverLimit,
+                                    maxMins: maxCommuteMins,
+                                    url: directionsUrl,
+                                    type: type
+                                });
+                            };
+                            updateCommuteDisplay(initialType);
+                        }
+                    } else if (app.id && !app.location) {
+                        setCommuteInfo({ text: 'No Location Provided' });
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load profile data", err);
+            }
+        };
+
         setFormData({ ...app });
         setIsArchived(app.is_archived === 'true' || app.is_archived === true);
         setLogoUrl(app.company_logo || null);
 
-        // Fetch connections
         if (app.company) {
             fetchWithAuth(`${API_URL}/api/linkedin/matches/name/${encodeURIComponent(app.company)}`)
                 .then(res => res.json())
@@ -777,99 +860,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                 .catch(err => console.warn("Failed to fetch connections", err));
         }
 
-        // Use precalculated commute
-        if (app.id) {
-            const getPrefs = async () => {
-                try {
-                    const profileRes = await fetchWithAuth(`${API_URL}/api/profile`);
-                    const profileData = await profileRes.json();
-                    setProfilePrefs(profileData?.preferences || {});
-                    setProfileBaseResume(profileData?.base_resume_path || null);
-                    
-                    const maxCommutePref = profileData?.preferences?.max_commute || '';
-                    let maxCommuteMins = null;
-                    if (maxCommutePref === '15 mins') maxCommuteMins = 15;
-                    else if (maxCommutePref === '30 mins') maxCommuteMins = 30;
-                    else if (maxCommutePref === '45 mins') maxCommuteMins = 45;
-                    else if (maxCommutePref === '1 hour') maxCommuteMins = 60;
-                    else if (maxCommutePref === '1.5 hours') maxCommuteMins = 90;
-                    else if (maxCommutePref === '2 hours') maxCommuteMins = 120;
-                    else if (maxCommutePref === 'Remote Only') maxCommuteMins = 0;
-
-                    if (!app.location) {
-                        setCommuteInfo({ text: 'No Location Provided' });
-                        return;
-                    }
-
-                    if (app.location.toLowerCase().includes('remote') || app.location_type?.toLowerCase() === 'remote') {
-                        setCommuteInfo({ text: 'Remote (No Commute)' });
-                        return;
-                    }
-
-                    const commuteDetails = app.commute_details || {};
-                    const prefCommuteTypes = profileData?.preferences?.commute_types || ['Driving'];
-                    
-                    // Set all commutes state
-                    setAllCommutes(commuteDetails);
-                    
-                    // Set initial commute type (default to Driving if in prefs and available)
-                    let initialType = 'Driving';
-                    if (prefCommuteTypes.includes('Driving') && commuteDetails['Driving']) {
-                        initialType = 'Driving';
-                    } else if (prefCommuteTypes.length > 0) {
-                        // Find first available from prefs
-                        const found = prefCommuteTypes.find(t => commuteDetails[t]);
-                        if (found) initialType = found;
-                        else {
-                            const available = Object.keys(commuteDetails);
-                            if (available.length > 0) initialType = available[0];
-                        }
-                    }
-                    setCurrentCommuteType(initialType);
-
-                    const updateCommuteDisplay = (type) => {
-                        const data = commuteDetails[type];
-                        if (!data) {
-                            setCommuteInfo({ text: 'Pending...' });
-                            return;
-                        }
-
-                        const mins = data.mins;
-                        const dist = data.distance;
-                        const isOverLimit = maxCommuteMins !== null && mins > maxCommuteMins;
-                        
-                        const originParts = [];
-                        if (profileData.address_line1) originParts.push(profileData.address_line1);
-                        if (profileData.city) originParts.push(profileData.city);
-                        if (profileData.state) originParts.push(profileData.state);
-                        const originStr = originParts.join(', ');
-                        
-                        let mode = 'driving';
-                        if (type === 'Walking') mode = 'walking';
-                        else if (type === 'Bicycle') mode = 'bicycling';
-                        else if (type === 'Public Transportation') mode = 'transit';
-                        else if (type === 'Flight') mode = 'driving'; // no flight mode in gmaps web dir, driving fallback or map search
-
-                        const directionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(originStr)}&destination=${encodeURIComponent(app.location)}&travelmode=${mode}`;
-                        
-                        setCommuteInfo({
-                            text: `${mins} min ${type.toLowerCase()} (${dist || 0} mi)`,
-                            isOverLimit,
-                            maxMins: maxCommuteMins,
-                            url: directionsUrl,
-                            type: type
-                        });
-                    };
-
-                    updateCommuteDisplay(initialType);
-
-                } catch(e) {
-                    console.error("Commute calc error", e);
-                    setCommuteInfo({ text: 'Unavailable' });
-                }
-            };
-            getPrefs();
-        }
+        loadProfileData();
     }, [app]);
 
     const handleArchive = async (archive) => {
@@ -1061,9 +1052,19 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
         try {
             const body = new FormData();
             body.append('job_description', app.job_description);
-            // We use the profile's base resume by default
             body.append('use_default_resume', 'true'); 
             body.append('instructions', resumeInstructions);
+            
+            // Calculate additional context paths
+            const jobDocs = safeParseJSON(app.additional_docs, []);
+            const excludedPaths = safeParseJSON(app.excluded_profile_docs, []);
+            const filteredProfilePaths = profileDocs.filter(d => !excludedPaths.includes(d.path)).map(d => d.path);
+            const jobPaths = jobDocs.map(d => d.path);
+            const allContextPaths = [...filteredProfilePaths, ...jobPaths];
+            
+            if (allContextPaths.length > 0) {
+                body.append('additional_context_paths', JSON.stringify(allContextPaths));
+            }
             
             const res = await fetchWithAuth(`${API_URL}/api/tailor-resume`, {
                 method: 'POST',
@@ -1102,19 +1103,27 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
             // We need resume text. If we don't have it locally, we might need to fetch it or assume backend handles it.
             // Currently generate-cover-letter requires resume_text.
             // Let's see if we have resume_data in app.
-            const resumeData = safeParseJSON(app.resume_data, {});
-            const resumeText = resumeData?.full_text?.join('\n') || "";
+                const resumeData = safeParseJSON(app.resume_data, {});
+                const resumeText = resumeData?.full_text?.join('\n') || "";
 
-            const res = await fetchWithAuth(`${API_URL}/api/generate-cover-letter`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    resume_text: resumeText,
-                    job_description: app.job_description,
-                    base_filename: app.original_resume_path || "resume.docx",
-                    instructions: clInstructions
-                })
-            });
+                // Calculate additional context paths
+                const jobDocs = safeParseJSON(app.additional_docs, []);
+                const excludedPaths = safeParseJSON(app.excluded_profile_docs, []);
+                const filteredProfilePaths = profileDocs.filter(d => !excludedPaths.includes(d.path)).map(d => d.path);
+                const jobPaths = jobDocs.map(d => d.path);
+                const allContextPaths = [...filteredProfilePaths, ...jobPaths];
+
+                const res = await fetchWithAuth(`${API_URL}/api/generate-cover-letter`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resume_text: resumeText,
+                        job_description: app.job_description,
+                        base_filename: app.original_resume_path || "resume.docx",
+                        instructions: clInstructions,
+                        additional_context_paths: allContextPaths
+                    })
+                });
             
             if (res.ok) {
                 const data = await res.json();
@@ -1139,6 +1148,66 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
         } finally {
             setRegeneratingCL(false);
         }
+    };
+
+    const handleUploadAppDoc = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploadingDoc(true);
+        const formDataUpload = new FormData();
+        formDataUpload.append('document', file);
+
+        try {
+            const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}/upload-additional-doc`, {
+                method: 'POST',
+                body: formDataUpload
+            });
+            if (res.ok) {
+                const data = await res.json();
+                onUpdate({ ...app, additional_docs: data.docs });
+            } else {
+                alert("Failed to upload document");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error uploading document");
+        } finally {
+            setUploadingDoc(false);
+            if (docInputRef.current) docInputRef.current.value = '';
+        }
+    };
+
+    const handleRemoveDoc = async (docPath, isProfileDoc) => {
+        if (!window.confirm(`Are you sure you want to remove this ${isProfileDoc ? 'profile ' : '' }document from this job?`)) return;
+
+        let updatedFields = {};
+        if (isProfileDoc) {
+            const currentExclusions = safeParseJSON(app.excluded_profile_docs, []);
+            if (!currentExclusions.includes(docPath)) {
+                updatedFields.excluded_profile_docs = [...currentExclusions, docPath];
+            }
+        } else {
+            const currentDocs = safeParseJSON(app.additional_docs, []);
+            updatedFields.additional_docs = currentDocs.filter(d => d.path !== docPath);
+        }
+
+        try {
+            const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedFields)
+            });
+            if (res.ok) {
+                onUpdate({ ...app, ...updatedFields });
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleViewDoc = (path) => {
+        window.open(`${API_URL}/api/download/${path}`, '_blank');
     };
 
     const handleDelete = async () => {
@@ -2130,16 +2199,81 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                 <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.3rem' }}>folder_open</span>
                                 <span style={{ fontWeight: 600, fontSize: '1.05rem' }}>Additional Context</span>
                             </div>
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'var(--bg-card)', borderRadius: '0.5rem', border: '1px dashed var(--border-color)', opacity: 0.8 }}>
-                                    <div style={{ flex: 1, minWidth: 0, textAlign: 'center' }}>
-                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>No additional documents</div>
-                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', opacity: 0.7, marginTop: '0.2rem' }}>Used for AI generation context</div>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
-                                    <button className="btn-util" style={{ width: '100%', padding: '0.6rem', borderStyle: 'dashed' }} onClick={() => alert('Additional docs upload to be implemented')}>
-                                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>add</span> Add Document
+                            
+                            <input 
+                                type="file" 
+                                ref={docInputRef} 
+                                style={{ display: 'none' }} 
+                                onChange={handleUploadAppDoc} 
+                            />
+
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                {(() => {
+                                    const jobDocs = safeParseJSON(app.additional_docs, []);
+                                    const excludedPaths = safeParseJSON(app.excluded_profile_docs, []);
+                                    const filteredProfileDocs = profileDocs.filter(d => !excludedPaths.includes(d.path));
+                                    
+                                    const allDocs = [
+                                        ...filteredProfileDocs.map(d => ({ ...d, source: 'From Profile' })),
+                                        ...jobDocs.map(d => ({ ...d, source: 'Job Specific' }))
+                                    ];
+
+                                    if (allDocs.length === 0) {
+                                        return (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'var(--bg-card)', borderRadius: '0.5rem', border: '1px dashed var(--border-color)', opacity: 0.8 }}>
+                                                <div style={{ flex: 1, minWidth: 0, textAlign: 'center' }}>
+                                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>No additional documents</div>
+                                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', opacity: 0.7, marginTop: '0.2rem' }}>Used for AI generation context</div>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
+                                    return allDocs.map((doc, idx) => (
+                                        <div key={idx} className="doc-row" style={{ 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: '0.75rem', 
+                                            padding: '0.6rem 0.75rem', 
+                                            background: 'var(--bg-card)', 
+                                            borderRadius: '0.5rem', 
+                                            border: '1px solid var(--border-color)',
+                                            transition: 'transform 0.2s, box-shadow 0.2s',
+                                        }}>
+                                            <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>
+                                                {doc.filename?.endsWith('.pdf') ? 'picture_as_pdf' : 'description'}
+                                            </span>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontSize: '0.85rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {doc.filename}
+                                                </div>
+                                                <div style={{ fontSize: '0.65rem', color: doc.source === 'From Profile' ? 'var(--primary)' : 'var(--success)', fontWeight: 700, textTransform: 'uppercase' }}>
+                                                    {doc.source}
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                                <button className="btn-util" onClick={() => handleViewDoc(doc.path)} title="View Document">
+                                                    <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>visibility</span>
+                                                </button>
+                                                <button className="btn-util btn-danger" onClick={() => handleRemoveDoc(doc.path, doc.source === 'From Profile')} title="Remove from Job">
+                                                    <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>close</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ));
+                                })()}
+
+                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                    <button 
+                                        className="btn-util" 
+                                        style={{ width: '100%', padding: '0.6rem', borderStyle: 'dashed' }} 
+                                        onClick={() => docInputRef.current?.click()}
+                                        disabled={uploadingDoc}
+                                    >
+                                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>
+                                            {uploadingDoc ? 'sync' : 'add'}
+                                        </span> 
+                                        {uploadingDoc ? 'Uploading...' : 'Add Job-Specific Document'}
                                     </button>
                                 </div>
                             </div>
@@ -2302,10 +2436,12 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     { id: 'Generated', label: 'Generated' },
                     { id: 'Applied', label: 'Applied' },
                     { id: 'Interviewing', label: 'Interviewing' },
-                    { id: 'Rejected', label: 'Rejected' },
+                    { id: 'Decision', label: 'Decision' },
                     { id: 'Offered', label: 'Offered' },
                     { id: 'Accepted', label: 'Accepted' },
-                    { id: 'Withdrawn/Cancelled', label: 'Withdrawn/Cancelled' }
+                    { id: 'Rejected', label: 'Rejected' },
+                    { id: 'Declined', label: 'Declined' },
+                    { id: 'Withdrawn', label: 'Withdrawn' }
                 ].map(tab => {
                     const isTabActive = activePhaseTab === tab.id;
                     return (
@@ -2367,6 +2503,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     activePhaseTab={activePhaseTab}
                     onUpdate={onUpdate}
                     hideHeader={true}
+                    avgScore={avgScore}
                 />
             </div>
 

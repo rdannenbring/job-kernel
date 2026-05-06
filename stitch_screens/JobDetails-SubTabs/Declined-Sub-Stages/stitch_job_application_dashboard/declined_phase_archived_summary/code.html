@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#e2e8f0",
+                        "tertiary-fixed": "#ffe4e6",
+                        "outline-variant": "#1e293b",
+                        "inverse-on-surface": "#0f172a",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "surface-dim": "#0b0f18",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-container": "#fb7185",
+                        "on-primary-container": "#60a5fa",
+                        "on-tertiary-fixed": "#4c0519",
+                        "on-surface-variant": "#94a3b8",
+                        "outline": "#334155",
+                        "primary-fixed": "#dbeafe",
+                        "surface-container": "#1e293b80",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "on-secondary-fixed-variant": "#334155",
+                        "on-secondary-container": "#cbd5e1",
+                        "primary-container": "#256af433",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#f8fafc",
+                        "on-primary-fixed": "#1e3a8a",
+                        "tertiary": "#f43f5e",
+                        "secondary": "#334155",
+                        "surface": "#101622",
+                        "surface-variant": "#1e293b",
+                        "surface-container-highest": "#2d3748",
+                        "surface-bright": "#1e293b",
+                        "background": "#101622",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "surface-tint": "#256af4",
+                        "on-background": "#f1f5f9",
+                        "on-secondary-fixed": "#0f172a",
+                        "on-error-container": "#fca5a5",
+                        "tertiary-container": "#f43f5e22",
+                        "on-secondary": "#f8fafc",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#080c14",
+                        "error-container": "#450a0a",
+                        "surface-container-high": "#1e293b99",
+                        "inverse-primary": "#60a5fa",
+                        "primary": "#256af4",
+                        "on-surface": "#f1f5f9",
+                        "surface-container-low": "#1e293b66",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "error": "#ef4444",
+                        "secondary-container": "#1e293b"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-accent {
+            text-shadow: 0 0 10px rgba(37, 106, 244, 0.4);
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #101622; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen overflow-hidden">
+<!-- Side Navigation Shell (Rail) -->
+<nav class="fixed left-0 h-full w-20 border-r border-white/10 bg-[#101622] contrast-125 shadow-xl shadow-black/50 flex flex-col items-center py-8 gap-8 z-50">
+<div class="text-blue-500 font-bold text-lg mb-4">MG</div>
+<div class="flex flex-col gap-6 w-full items-center">
+<button class="text-slate-500 hover:text-blue-400 hover:bg-white/5 transition-all scale-95 active:scale-90 duration-200 p-3">
+<span class="material-symbols-outlined">grid_view</span>
+</button>
+<button class="text-slate-500 hover:text-blue-400 hover:bg-white/5 transition-all scale-95 active:scale-90 duration-200 p-3">
+<span class="material-symbols-outlined">work_history</span>
+</button>
+<button class="text-slate-500 hover:text-blue-400 hover:bg-white/5 transition-all scale-95 active:scale-90 duration-200 p-3">
+<span class="material-symbols-outlined">auto_awesome</span>
+</button>
+<button class="text-slate-500 hover:text-blue-400 hover:bg-white/5 transition-all scale-95 active:scale-90 duration-200 p-3">
+<span class="material-symbols-outlined">description</span>
+</button>
+<button class="text-slate-500 hover:text-blue-400 hover:bg-white/5 transition-all scale-95 active:scale-90 duration-200 p-3">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="mt-auto">
+<img alt="User Profile" class="w-10 h-10 rounded-full border border-white/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2qz3ynyXv5Z_RIXUXMg6tdhO2R9Yh49pRUfZbIKrtjGAIy6-dlRm28ZZjt_0p4FiQNnILQdsXPuhqavV8WaNVsgG4BnOh7F2cq7yk7ynWS6RLdSdbCYCYcUKddecCy6oA2mk_j0dTmroYiFe2X8jbILjWMWY52p9XmwONcWg38dHR7e0Bvh6GqGCYzd9TH9ypNkHeVy6Xb06PIcmuD74TkRWZ00N4MC6oX0f2H7AisMJ40qupVIYx5f2k8NovhhHnxe_0irVdPIg"/>
+</div>
+</nav>
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 right-0 w-[calc(100%-5rem)] h-16 border-b border-white/5 bg-slate-900/40 backdrop-blur-xl flex justify-between items-center px-8 z-40">
+<div class="flex items-center gap-8">
+<span class="text-slate-100 font-black tracking-tighter text-xl">Midnight Glass</span>
+<nav class="hidden md:flex gap-6">
+<a class="font-manrope text-sm font-medium tracking-wide uppercase text-slate-400 pb-1 hover:text-slate-100 transition-colors opacity-80 hover:opacity-100" href="#">Saved</a>
+<a class="font-manrope text-sm font-medium tracking-wide uppercase text-slate-400 pb-1 hover:text-slate-100 transition-colors opacity-80 hover:opacity-100" href="#">Applied</a>
+<a class="font-manrope text-sm font-medium tracking-wide uppercase text-slate-400 pb-1 hover:text-slate-100 transition-colors opacity-80 hover:opacity-100" href="#">Interviews</a>
+<a class="font-manrope text-sm font-medium tracking-wide uppercase text-slate-400 pb-1 hover:text-slate-100 transition-colors opacity-80 hover:opacity-100" href="#">Offered</a>
+<a class="font-manrope text-sm font-medium tracking-wide uppercase text-slate-400 pb-1 hover:text-slate-100 transition-colors opacity-80 hover:opacity-100" href="#">Accepted</a>
+<a class="font-manrope text-sm font-medium tracking-wide uppercase text-[#256af4] border-b-2 border-[#256af4] pb-1" href="#">Rejected</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-400 hover:text-on-background transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-400 hover:text-on-background transition-colors">
+<span class="material-symbols-outlined">bolt</span>
+</button>
+<div class="h-8 w-px bg-white/10 mx-2"></div>
+<div class="flex items-center gap-3">
+<span class="text-sm font-bold text-slate-100">Alex Reed</span>
+<img class="w-8 h-8 rounded-lg" data-alt="A professional headshot of a person with a neutral background, styled in a high-end cinematic dark aesthetic with soft blue rim lighting. The portrait is crisp, modern, and fits the sophisticated editorial tone of a premium SaaS application, featuring deep shadows and clear facial features." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNs_QjZH3r7Q6fg-UxSoG4HfVbPtdjS-9Njhi0hqW-LOmT_EHVFiDVgAgGz1i1_-jbal-UbIraie37fu-ONEFlsjFAacvMs-RxAwoMIjl9ayEoQ192MPCKxM1YD7FUMat23coUAYk0gmH9Gl75vLEX6fpWaaV8dmTYnROOKpsKJOHP6S7AKDlagQL0--aVrKJwvGshCZROjOGc80dj7fEhQC2VHHnHCe8OhH9UdrXO5EUICs4D4XSsVz_c9CnZutuNq_3uO42gNQg"/>
+</div>
+</div>
+</header>
+<main class="ml-20 pt-16 h-screen overflow-y-auto bg-surface-dim">
+<div class="max-w-[1200px] mx-auto p-10 flex gap-10">
+<!-- Vertical Sub-Navigation -->
+<aside class="w-64 flex flex-col gap-2 shrink-0">
+<div class="mb-6 px-4">
+<h3 class="text-[10px] tracking-widest uppercase font-bold text-slate-500">Declined Phase</h3>
+</div>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:bg-white/5 hover:text-slate-200 group" href="#">
+<span class="material-symbols-outlined text-sm">history</span>
+<span class="text-sm font-medium">History</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:bg-white/5 hover:text-slate-200 group" href="#">
+<span class="material-symbols-outlined text-sm">feedback</span>
+<span class="text-sm font-medium">Feedback</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 bg-white/5 text-slate-100 ring-1 ring-white/10 group shadow-lg shadow-black/20" href="#">
+<span class="material-symbols-outlined text-sm text-[#256af4]">inventory_2</span>
+<span class="text-sm font-bold">Archived</span>
+<span class="ml-auto w-1.5 h-1.5 rounded-full bg-[#256af4] animate-pulse"></span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:bg-white/5 hover:text-slate-200 group" href="#">
+<span class="material-symbols-outlined text-sm">analytics</span>
+<span class="text-sm font-medium">Exit Metrics</span>
+</a>
+<div class="mt-12 glass-panel p-5 rounded-2xl">
+<p class="text-[10px] tracking-widest uppercase font-bold text-slate-500 mb-3">Target Company</p>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center font-black text-slate-900 text-xl">S</div>
+<div>
+<p class="text-sm font-bold text-slate-100">Stripe</p>
+<p class="text-[10px] text-slate-400">Staff Software Engineer</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Content Area: Final Archival Summary -->
+<section class="flex-1 space-y-8 pb-20">
+<div class="flex justify-between items-end">
+<div>
+<h1 class="text-4xl font-display font-extrabold text-slate-100 tracking-tight neon-accent">Final Archival Summary</h1>
+<p class="text-slate-400 mt-2 text-lg">Retrospective analysis of the Stripe candidate journey.</p>
+</div>
+<div class="glass-panel px-4 py-2 rounded-full border-primary/20">
+<span class="text-[10px] font-black uppercase tracking-widest text-[#256af4]">Status: Declined by Candidate</span>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Journey Timeline Card -->
+<div class="col-span-8 glass-panel p-8 rounded-2xl relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-[#256af4]/10 blur-3xl -mr-10 -mt-10"></div>
+<div class="flex justify-between items-start mb-10">
+<div>
+<h2 class="text-xl font-bold text-slate-100 mb-1">112-Day Journey</h2>
+<p class="text-[10px] tracking-widest uppercase text-slate-500">March 12 — July 02, 2024</p>
+</div>
+<div class="text-right">
+<span class="text-4xl font-black text-slate-100 tracking-tighter">97%</span>
+<p class="text-[10px] tracking-widest uppercase text-[#256af4]">Match Score</p>
+</div>
+</div>
+<div class="space-y-6">
+<div class="relative pl-8 border-l border-white/10 py-1">
+<div class="absolute left-[-5px] top-2 w-2 h-2 rounded-full bg-slate-500"></div>
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Initial Outreach</p>
+<p class="text-slate-300 text-sm">Recruiter screen with James T. — Strong alignment on technical roadmap.</p>
+</div>
+<div class="relative pl-8 border-l border-white/10 py-1">
+<div class="absolute left-[-5px] top-2 w-2 h-2 rounded-full bg-slate-500"></div>
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Onsite Circuit</p>
+<p class="text-slate-300 text-sm">5 rounds including Architecture, Leadership, and Product Strategy.</p>
+</div>
+<div class="relative pl-8 border-l border-primary py-1">
+<div class="absolute left-[-5px] top-2 w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(37,106,244,0.6)]"></div>
+<p class="text-[10px] font-bold text-primary uppercase tracking-widest">Offer Extension</p>
+<p class="text-slate-300 text-sm">Extended at L6 level. Comprehensive package with sign-on bonus.</p>
+</div>
+</div>
+</div>
+<!-- Skills Matrix Card -->
+<div class="col-span-4 glass-panel p-8 rounded-2xl flex flex-col justify-between">
+<div>
+<h2 class="text-xl font-bold text-slate-100 mb-6">Skills Mastery</h2>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+<span>System Architecture</span>
+<span class="text-[#256af4]">Expert</span>
+</div>
+<div class="h-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[92%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+<span>Product Strategy</span>
+<span class="text-[#256af4]">Lead</span>
+</div>
+<div class="h-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[85%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+<span>Infrastructure Design</span>
+<span class="text-[#256af4]">Advanced</span>
+</div>
+<div class="h-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[78%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-white/5">
+<p class="text-slate-400 text-xs leading-relaxed italic">"Candidate demonstrated exceptional clarity in scaling multi-region payment clusters."</p>
+</div>
+</div>
+<!-- Reason for Decline Card -->
+<div class="col-span-12 glass-panel p-8 rounded-2xl flex items-center gap-10">
+<div class="w-16 h-16 rounded-2xl bg-tertiary/10 border border-tertiary/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-tertiary text-3xl">cancel</span>
+</div>
+<div class="flex-1">
+<h2 class="text-xl font-bold text-slate-100 mb-1">Final Decision Logic</h2>
+<p class="text-slate-400 text-sm">Better Competing Offer — Priority given to early-stage equity over established public RSUs. Terms from Series B startup offered higher long-term upside and CTO-track visibility.</p>
+</div>
+<div class="flex flex-col gap-2 min-w-[200px]">
+<div class="bg-surface-container px-4 py-3 rounded-xl border border-white/5">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Negotiation Delta</p>
+<p class="text-slate-100 font-bold">+12.5% Base Gap</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Action Area -->
+<div class="flex flex-col items-center justify-center pt-10 border-t border-white/5 space-y-6">
+<p class="text-slate-400 text-sm max-w-lg text-center">
+                        Archiving this profile will move all interview notes, offer documents, and performance feedback to the <span class="text-[#256af4]">Vault</span>. This journey is permanently closed but remains accessible for future reference.
+                    </p>
+<button class="group relative px-10 py-4 bg-primary text-on-primary font-bold rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all duration-300 overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500"></div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">archive</span>
+<span>Move to Archive</span>
+</div>
+</button>
+<button class="text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-slate-300 transition-colors">
+                        Download full journey export (PDF)
+                    </button>
+</div>
+</section>
+</div>
+</main>
+<!-- Background Decorative Elements -->
+<div class="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] bg-[#256af4]/5 blur-[120px] rounded-full pointer-events-none z-0"></div>
+<div class="fixed bottom-[-10%] right-[-5%] w-[30vw] h-[30vw] bg-tertiary/5 blur-[100px] rounded-full pointer-events-none z-0"></div>
+</body></html>

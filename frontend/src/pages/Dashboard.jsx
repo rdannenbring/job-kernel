@@ -247,7 +247,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         }
         return { ...app, matchJobType, matchLocType };
     }).filter(app => {
-        const archived = app.is_archived === true;
+        const archived = app.is_archived === true || app.is_archived === 'true';
         if (!showArchived && archived) return false;
         if (showArchived && !archived) return false;
         const lowerSearch = searchTerm.toLowerCase();
@@ -278,6 +278,9 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         const hasConnections = connectionCounts[app.company] > 0;
         const matchesHasConnections = !filterHasConnections || hasConnections;
         const matchesMinScore = filterMinScore === null || (app.match_score != null && app.match_score >= filterMinScore);
+
+        const isDraft = app.status === 'Draft';
+        if (isDraft) return false;
 
         return matchesSearch && matchesStatus && matchesJobType && matchesLocType && matchesInterest && matchesRelocation && matchesHasConnections && matchesMinScore;
     }).sort((a, b) => {
@@ -823,7 +826,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                             <span className="material-symbols-outlined text-[16px]">{showArchived ? 'visibility' : 'visibility_off'}</span>
                             <span className="max-md:hidden">Archive</span>
                         </button>
-                        <div className="text-sm text-slate-500 dark:text-slate-400">Showing {processedApps.length} of {apps.filter(a => showArchived ? a.is_archived === 'true' : a.is_archived !== 'true').length}</div>
+                        <div className="text-sm text-slate-500 dark:text-slate-400">Showing {processedApps.length} of {apps.filter(a => (showArchived ? a.is_archived === 'true' || a.is_archived === true : a.is_archived !== 'true' && a.is_archived !== true) && a.status !== 'Draft').length}</div>
                     </div>
                 </div>
 

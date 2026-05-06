@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "error": "#ef4444",
+                        "surface-container": "#1e293b80",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "tertiary": "#f43f5e",
+                        "primary-container": "#256af433",
+                        "on-secondary-container": "#cbd5e1",
+                        "surface-container-low": "#1e293b66",
+                        "outline": "#334155",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#4c0519",
+                        "background": "#101622",
+                        "on-tertiary-container": "#fb7185",
+                        "on-surface": "#f1f5f9",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "on-background": "#f1f5f9",
+                        "surface-container-high": "#1e293b99",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffe4e6",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "primary-fixed": "#dbeafe",
+                        "surface": "#101622",
+                        "secondary-container": "#1e293b",
+                        "outline-variant": "#1e293b",
+                        "on-secondary": "#f8fafc",
+                        "surface-dim": "#0b0f18",
+                        "surface-container-lowest": "#080c14",
+                        "secondary": "#334155",
+                        "inverse-primary": "#60a5fa",
+                        "surface-container-highest": "#2d3748",
+                        "secondary-fixed": "#e2e8f0",
+                        "on-primary-container": "#60a5fa",
+                        "surface-tint": "#256af4",
+                        "on-secondary-fixed-variant": "#334155",
+                        "on-error": "#ffffff",
+                        "primary": "#256af4",
+                        "on-secondary-fixed": "#0f172a",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "tertiary-container": "#f43f5e22",
+                        "inverse-surface": "#f8fafc",
+                        "on-primary-fixed": "#1e3a8a",
+                        "inverse-on-surface": "#0f172a",
+                        "error-container": "#450a0a",
+                        "on-surface-variant": "#94a3b8",
+                        "surface-variant": "#1e293b",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-error-container": "#fca5a5",
+                        "surface-bright": "#1e293b"
+                    },
+                    fontFamily: {
+                        headline: ["Manrope", "sans-serif"],
+                        display: ["Manrope", "sans-serif"],
+                        body: ["Manrope", "sans-serif"],
+                        label: ["Manrope", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #101622;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-accent {
+            text-shadow: 0 0 10px rgba(37, 106, 244, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- Side Navigation Anchor -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-slate-950/80 backdrop-blur-xl border-r border-white/10 flex flex-col py-8 px-4 z-50">
+<div class="mb-10 px-4">
+<h1 class="text-xl font-bold tracking-tighter text-white">Midnight Glass</h1>
+<p class="text-xs font-label uppercase tracking-widest text-slate-500 mt-1">Career Curator</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-600/20 text-blue-400 font-semibold border-r-2 border-blue-500 transition-transform active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">work</span>
+<span class="text-sm">Applications</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="text-sm">Saved Jobs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm">Network</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-sm">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto space-y-1 pt-4 border-t border-white/5">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="text-sm">Support</span>
+</a>
+</div>
+</aside>
+<!-- Top App Bar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-slate-900/40 backdrop-blur-md border-b border-white/5 flex justify-between items-center px-8 z-40">
+<div class="flex items-center gap-6">
+<div class="flex items-center bg-slate-900/60 rounded-full px-4 py-1.5 border border-white/5">
+<span class="material-symbols-outlined text-slate-400 text-sm mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm text-slate-100 placeholder-slate-500 w-48" placeholder="Search applications..." type="text"/>
+</div>
+<nav class="flex gap-6">
+<a class="text-slate-400 hover:text-blue-300 transition-colors text-sm font-medium" href="#">Dashboard</a>
+<a class="text-slate-400 hover:text-blue-300 transition-colors text-sm font-medium" href="#">Applications</a>
+<a class="text-blue-400 font-bold text-sm font-medium" href="#">Active</a>
+</nav>
+</div>
+<div class="flex items-center gap-5">
+<button class="text-slate-400 hover:text-blue-300 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-400 hover:text-blue-300 transition-colors">
+<span class="material-symbols-outlined">history</span>
+</button>
+<div class="w-8 h-8 rounded-full border border-primary/30 p-0.5">
+<img alt="User Profile Profile Image" class="w-full h-full rounded-full object-cover" data-alt="A professional headshot of a young professional user in a modern office setting with soft cinematic lighting and a neutral blurred background, styled with a high-end editorial feel using deep tones and vibrant blue accent highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8M_6ubrMOE08Fm1Lmj4_XjubHk8KK9rsnCg48HsWgNP96ep-T6zLnsgVRgnLrkssOQf0TmANaHsnJrAzpGcEhdxqT2OCyD-GcVfqTBKekzNr0xSTyD96tCkVYmpvVSh5wBPFwyIIuV8nKAT_pLIns6Yiqg7wxPisgRQ2wR7Qp2vf1Cc-6BM8idBNnIG2YGcHXKhYiIfFP-yiJ5bV_HxBGiKljk8fbcB3Jj7hjOL61BIzkLP_-miruihUnmzh6ZsEItg9OoSWv-9Q"/>
+</div>
+</div>
+</header>
+<!-- Main Stage Content -->
+<main class="ml-64 pt-24 pb-12 px-8">
+<!-- Breadcrumb & Header -->
+<div class="mb-10 flex justify-between items-end">
+<div>
+<nav class="flex items-center gap-2 mb-2 text-xs font-label uppercase tracking-widest text-slate-500">
+<span>Applications</span>
+<span class="material-symbols-outlined text-[10px]">chevron_right</span>
+<span class="text-primary/80">Senior Product Designer</span>
+<span class="material-symbols-outlined text-[10px]">chevron_right</span>
+<span class="text-slate-300">Accepted</span>
+</nav>
+<h2 class="text-3xl font-extrabold text-white neon-accent tracking-tight">Pre-onboarding Workspace</h2>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-full text-sm font-semibold shadow-lg shadow-primary/20 transition-all active:scale-95">
+                Go to Onboarding Hub
+            </button>
+</div>
+<div class="grid grid-cols-12 gap-8">
+<!-- Left Sub-Navigation & Checklist -->
+<div class="col-span-8 flex gap-8">
+<!-- Sub-nav Sidebar -->
+<div class="w-48 flex-shrink-0 space-y-4">
+<p class="text-[10px] font-label uppercase tracking-widest text-slate-500 mb-6">Sub-stages</p>
+<button class="w-full text-left px-4 py-2 text-sm font-semibold text-blue-400 border-l-2 border-blue-500 bg-primary/5">
+                        Pre-onboarding
+                    </button>
+<button class="w-full text-left px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors">
+                        Orientation
+                    </button>
+<button class="w-full text-left px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors">
+                        Training
+                    </button>
+<button class="w-full text-left px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors">
+                        First Project
+                    </button>
+</div>
+<!-- Main Content Panel -->
+<div class="flex-1 space-y-8">
+<!-- Progress Card -->
+<div class="glass-panel rounded-2xl p-6">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-lg font-bold text-white">Onboarding Checklist</h3>
+<span class="text-xs font-label uppercase tracking-widest text-slate-400">25% Complete</span>
+</div>
+<div class="w-full bg-slate-900 rounded-full h-1.5 mb-8">
+<div class="bg-primary h-full rounded-full w-[25%]" style="box-shadow: 0 0 8px #256af4;"></div>
+</div>
+<div class="space-y-4">
+<!-- Checklist Item 1 -->
+<div class="flex items-center gap-4 p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all group">
+<div class="w-6 h-6 rounded-md border-2 border-primary/40 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-sm font-bold" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-100">Background Check</h4>
+<p class="text-xs text-slate-400 mt-0.5">Verified on Oct 24, 2023</p>
+</div>
+<span class="text-[10px] font-label text-blue-400 bg-primary/10 px-2 py-1 rounded">DONE</span>
+</div>
+<!-- Checklist Item 2 -->
+<div class="flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/5 transition-all group">
+<div class="w-6 h-6 rounded-md border-2 border-slate-700 hover:border-primary/60 cursor-pointer"></div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-100">Paperwork</h4>
+<p class="text-xs text-slate-400 mt-0.5">Employee agreement and NDA signatures</p>
+</div>
+<span class="text-[10px] font-label text-slate-500 px-2 py-1">REQUIRED</span>
+</div>
+<!-- Checklist Item 3 -->
+<div class="flex items-center gap-4 p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all group">
+<div class="w-6 h-6 rounded-md border-2 border-slate-700 hover:border-primary/60 cursor-pointer"></div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-100">Tax Setup</h4>
+<p class="text-xs text-slate-400 mt-0.5">W-4 and banking information for direct deposit</p>
+</div>
+<span class="text-[10px] font-label text-slate-500 px-2 py-1">REQUIRED</span>
+</div>
+<!-- Checklist Item 4 -->
+<div class="flex items-center gap-4 p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all group">
+<div class="w-6 h-6 rounded-md border-2 border-slate-700 hover:border-primary/60 cursor-pointer"></div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-100">Equipment</h4>
+<p class="text-xs text-slate-400 mt-0.5">Select your hardware and peripherals preference</p>
+</div>
+<span class="text-[10px] font-label text-slate-500 px-2 py-1">LOCKED</span>
+</div>
+</div>
+</div>
+<!-- Welcome Resource (Visual Element) -->
+<div class="relative rounded-2xl overflow-hidden h-48 group">
+<img alt="Team Culture Banner" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A highly aesthetic, cinematic digital painting of a modern creative workspace at dusk. The scene is illuminated by neon blue and purple ambient lighting reflecting off glass surfaces and sleek black furniture. Stylized silhouettes of a diverse, collaborative team are visible in the background, creating a mood of innovation, excitement, and professional belonging. The visual style is polished, high-contrast, and deeply saturated." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmkpZZfdtN5m78mHg_OQxK1t6qKYT8_AkRb-zHJVx-QAiJFTCBODr79OgGdq3RmdXmNDR8mdKrxzzd32zhMRnJN7fz35Ocyfwuvjdr_1Fd_Y2I7wNdxn2U2Tn9uIWYojd5QgeJOoTaCz4pC6EFSWCe3OCiwVc7xcuXmM1UW8dhFaBJe90Ebj4n-nlB0r52X5QRJ7FRiw6vQEIB4XDBkj_j8RNfI5v_SIz7W88qRYn1_UW0IEb_UiAalp727nztw8GmZcJleB7n95A"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent p-6 flex flex-col justify-end">
+<h3 class="text-xl font-bold text-white mb-1">Company Culture Guide</h3>
+<p class="text-sm text-slate-300">Learn about our values and the mission you're joining.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar: Contacts & Countdown -->
+<div class="col-span-4 space-y-8">
+<!-- Countdown Card -->
+<div class="glass-panel rounded-2xl p-8 flex flex-col items-center text-center relative overflow-hidden">
+<!-- Subtle Background Glow -->
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/20 blur-3xl rounded-full"></div>
+<p class="text-xs font-label uppercase tracking-widest text-slate-400 mb-6">Day 1 Countdown</p>
+<div class="flex items-center gap-4 mb-4">
+<div class="text-5xl font-black text-white tracking-tighter">12</div>
+<div class="h-10 w-px bg-white/10"></div>
+<div class="text-left">
+<div class="text-lg font-bold text-primary">DAYS</div>
+<div class="text-xs font-medium text-slate-500 uppercase">Remaining</div>
+</div>
+</div>
+<p class="text-sm text-slate-300 leading-relaxed max-w-[200px]">Your journey officially begins on November 15, 2023.</p>
+</div>
+<!-- Important Contacts -->
+<div class="glass-panel rounded-2xl p-6">
+<h3 class="text-sm font-label uppercase tracking-widest text-slate-400 mb-6">Important Contacts</h3>
+<div class="space-y-6">
+<!-- Contact 1 -->
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-white/10">
+<img alt="Sarah Jenkins HR" class="w-full h-full object-cover" data-alt="A professional portrait of a senior Human Resources manager with a warm, approachable expression. The lighting is soft and high-key, highlighting her professional attire against a minimalist, slightly blurred architectural office background. The color palette features cool grays and deep blues to match the Midnight Glass aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5FOgXRBtLqRpEqNbBGkNRANn-kM4Jkf870O4UhaDUxBmowbdozXQYalZHh6M0KwzXa5MX5QeG4rs2kEnE7Vtbg1wyIz5qAyZ6gv7kqKEcyz_8YR7CG4dcpq5VHngYrGUK5rr3WCA2V48buTI2Bt0vHDVQZReLKJ4BVT90DPWGirEOa7aFdfG3HySeTRcmGt_8xVxal7FkFeSvzgQUBLb1QxNMl3zoAfsfTmXUIV2GZXLBrdwqDbQ6-C7496JPACraCLZayXqJHUg"/>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-100">Sarah Jenkins</h4>
+<p class="text-xs text-slate-500 uppercase tracking-wide">HR Coordinator</p>
+</div>
+<button class="text-slate-400 hover:text-blue-400 transition-colors">
+<span class="material-symbols-outlined text-lg">mail</span>
+</button>
+</div>
+<!-- Contact 2 -->
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-white/10">
+<img alt="David Chen Manager" class="w-full h-full object-cover" data-alt="A professional portrait of a tech-focused hiring manager with a confident and visionary look. The background is a sophisticated dark office with subtle neon accent lights and digital screens. He wears a dark tailored suit, and the overall image has a cinematic, high-end editorial feel with sharp focus and deep shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDroyASGyLS7e62jNSbfDxb3sI9ZNWhgo6sHU8hrSSCNVoJJUrGGnI8EQF1tgFBBvUC7cHi0jx8GFoAbgikMdddWTRJz1dnG3m4j-2T6UYA-iJ2AlxC53MFXnXvjsvEbF-iPT3XSUftR3mZpPIggr7EArkXyGPr1CFRpIdL9_nRclgnSwNmBtmCw9m341wc3QyQeoMZy2Iuhn6-8-gsdIjfY-VjSnIduCXECk9QbTyn8JcQsvIoOFIFtbt8CehNCElFQsudDAG4kGY"/>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-100">David Chen</h4>
+<p class="text-xs text-slate-500 uppercase tracking-wide">Product Manager</p>
+</div>
+<button class="text-slate-400 hover:text-blue-400 transition-colors">
+<span class="material-symbols-outlined text-lg">chat_bubble</span>
+</button>
+</div>
+</div>
+<button class="w-full mt-8 py-3 rounded-xl border border-white/10 text-sm font-medium text-slate-300 hover:bg-white/5 transition-all">
+                        View Full Team
+                    </button>
+</div>
+<!-- Next Step Mini Card -->
+<div class="bg-primary/10 border border-primary/20 rounded-2xl p-6">
+<div class="flex items-center gap-3 mb-3">
+<span class="material-symbols-outlined text-primary">info</span>
+<h4 class="text-sm font-bold text-primary">Pro-tip</h4>
+</div>
+<p class="text-xs text-slate-300 leading-relaxed">
+                        Complete your Tax Setup by Friday to ensure your first paycheck is processed on time for the next cycle.
+                    </p>
+</div>
+</div>
+</div>
+</main>
+<!-- Background Atmospheric Blurs -->
+<div class="fixed top-0 left-0 -z-10 w-96 h-96 bg-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="fixed bottom-0 right-0 -z-10 w-[500px] h-[500px] bg-primary/5 blur-[150px] rounded-full pointer-events-none"></div>
+</body></html>

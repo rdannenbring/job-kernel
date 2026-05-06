@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>JobKernel | Tomorrow Planning</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-tertiary-fixed": "#4c0519",
+                "surface-container-low": "#1e293b66",
+                "inverse-primary": "#60a5fa",
+                "surface-container-highest": "#2d3748",
+                "primary-container": "#256af433",
+                "tertiary-fixed-dim": "#fecdd3",
+                "secondary-fixed": "#e2e8f0",
+                "on-tertiary-fixed-variant": "#9f1239",
+                "on-secondary-fixed-variant": "#334155",
+                "on-primary-fixed-variant": "#1d4ed8",
+                "on-background": "#f1f5f9",
+                "surface-container-lowest": "#080c14",
+                "primary": "#256af4",
+                "outline-variant": "#1e293b",
+                "on-tertiary": "#ffffff",
+                "on-tertiary-container": "#fb7185",
+                "surface": "#101622",
+                "surface-variant": "#1e293b",
+                "primary-fixed": "#dbeafe",
+                "surface-bright": "#1e293b",
+                "outline": "#334155",
+                "error-container": "#450a0a",
+                "on-error-container": "#fca5a5",
+                "secondary-fixed-dim": "#cbd5e1",
+                "tertiary-fixed": "#ffe4e6",
+                "surface-tint": "#256af4",
+                "on-secondary-container": "#cbd5e1",
+                "on-primary": "#ffffff",
+                "on-error": "#ffffff",
+                "inverse-on-surface": "#0f172a",
+                "on-primary-container": "#60a5fa",
+                "on-secondary-fixed": "#0f172a",
+                "tertiary": "#f43f5e",
+                "primary-fixed-dim": "#bfdbfe",
+                "tertiary-container": "#f43f5e22",
+                "secondary-container": "#1e293b",
+                "surface-container-high": "#1e293b99",
+                "error": "#ef4444",
+                "secondary": "#334155",
+                "surface-dim": "#0b0f18",
+                "on-surface-variant": "#94a3b8",
+                "surface-container": "#1e293b80",
+                "inverse-surface": "#f8fafc",
+                "background": "#101622",
+                "on-secondary": "#f8fafc",
+                "on-surface": "#f1f5f9",
+                "on-primary-fixed": "#1e3a8a"
+            },
+            "fontFamily": {
+                "headline": ["Manrope"],
+                "display": ["Manrope"],
+                "body": ["Manrope"],
+                "label": ["Manrope"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #101622;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- SideNavBar Shell -->
+<nav class="docked fixed left-0 top-0 h-screen w-64 flex flex-col py-8 px-4 bg-[#101622] border-r border-white/5 bg-opacity-95 shadow-2xl shadow-blue-900/10 z-50">
+<div class="mb-10 px-4">
+<h1 class="text-xl font-black text-white tracking-tighter">JobKernel</h1>
+<p class="text-[10px] tracking-widest uppercase text-primary font-bold">AI Career Engine</p>
+</div>
+<div class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 hover:text-white transition-all duration-300 text-slate-400 font-medium" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 hover:text-white transition-all duration-300 text-slate-400 font-medium" href="#">
+<span class="material-symbols-outlined">assignment</span>
+                Applications
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 hover:text-white transition-all duration-300 text-slate-400 font-medium" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+                Saved Jobs
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 hover:text-white transition-all duration-300 text-slate-400 font-medium" href="#">
+<span class="material-symbols-outlined">group</span>
+                Network
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 hover:text-white transition-all duration-300 text-slate-400 font-medium" href="#">
+<span class="material-symbols-outlined">insights</span>
+                Analytics
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#256af4] font-bold border-r-2 border-[#256af4] bg-gradient-to-r from-[#256af4]/10 to-transparent transition-all duration-300" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+                Planner
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 hover:text-white transition-all duration-300 text-slate-400 font-medium" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+</div>
+<div class="mt-auto px-4">
+<button class="w-full py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                Optimize Resume
+            </button>
+</div>
+</nav>
+<!-- TopAppBar Shell -->
+<header class="sticky top-0 w-full z-40 bg-slate-900/40 backdrop-blur-xl border-b border-white/10 shadow-xl shadow-black/20 flex items-center justify-between h-16 px-6 ml-64">
+<div class="flex items-center gap-4">
+<span class="hidden md:block text-lg font-bold text-slate-100">JobKernel</span>
+<div class="h-4 w-[1px] bg-white/10 hidden md:block"></div>
+<span class="font-['Manrope'] text-xs tracking-widest uppercase text-slate-400">Planner / Tomorrow</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<input class="bg-slate-900/50 border border-white/10 rounded-full py-1.5 px-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 transition-shadow w-64" placeholder="Search insights..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-1.5 text-slate-500 text-sm">search</span>
+</div>
+<div class="flex items-center gap-4 text-slate-400">
+<button class="hover:bg-white/10 p-2 rounded-full transition-all duration-200">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:bg-white/10 p-2 rounded-full transition-all duration-200">
+<span class="material-symbols-outlined">smart_toy</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/20">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a person with a slight smile, set against a blurred cinematic office background with cool blue and deep charcoal tones. The lighting is soft and directional, highlighting facial features while maintaining a sleek, corporate tech aesthetic consistent with a high-end SaaS platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCn5c203r0BFwl2FlytsAPbuUYXopCR9uBlQNsxs2L_0_Qr77f2zoBtEPEFQxEBvHtTbczkdyLka8SG5z4Imm2kGOKmogNx_s_hhbt8YjCwJcP59A0fWTH-NHFbSNAZ5xz4_K7vxPtLscR89qhdzISAra-Ta1UxGT23_ZF_6o8JhyHmwnKaMZMsUdJ7DZKWzAvwBYbt_vSAa5wZEBuqhPPu5Ttps26F6zJqz6idcv8p0iJjoWHfqBPCWyKyqYm9_d7uORr5FQTqPQs"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-8 min-h-[calc(100vh-64px)] relative overflow-hidden">
+<!-- Atmosphere Background Glows -->
+<div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/10 blur-[120px] rounded-full -z-10"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-tertiary/5 blur-[100px] rounded-full -z-10"></div>
+<div class="max-w-6xl mx-auto space-y-8">
+<!-- Header Section -->
+<div class="flex justify-between items-end">
+<div>
+<span class="text-[10px] tracking-[0.3em] uppercase text-primary font-extrabold mb-2 block">Pre-Commitment Workspace</span>
+<h2 class="text-4xl font-bold text-white tracking-tight">Tomorrow Planning</h2>
+</div>
+<div class="text-right">
+<div class="glass-panel px-4 py-2 rounded-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<div>
+<p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Capacity Remaining</p>
+<p class="text-lg font-bold text-white">6h 00m <span class="text-slate-500 font-medium text-sm">free</span></p>
+</div>
+</div>
+</div>
+</div>
+<!-- Bento Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Left: AI Proposed Draft (7 columns) -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<div class="glass-panel p-6 rounded-2xl relative overflow-hidden">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<h3 class="text-xl font-bold text-white">AI-Proposed Draft</h3>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">Optimized</span>
+</div>
+<!-- Timeline View -->
+<div class="space-y-4">
+<!-- Slot 1 -->
+<div class="group relative flex gap-6 p-4 rounded-xl hover:bg-white/5 transition-colors">
+<div class="w-16 pt-1 text-right">
+<span class="text-xs font-bold text-slate-500 uppercase tracking-tighter">09:00 AM</span>
+</div>
+<div class="flex-1 space-y-1 border-l-2 border-primary/40 pl-6 pb-2">
+<div class="flex justify-between items-start">
+<h4 class="font-bold text-slate-100">Deep Work: Senior UX Engineer Resume Iteration</h4>
+<span class="text-[10px] font-bold uppercase text-slate-500 tracking-widest">90 MIN</span>
+</div>
+<p class="text-sm text-slate-400">Focusing on high-impact metric integration for FAANG applications.</p>
+</div>
+</div>
+<!-- Slot 2 -->
+<div class="group relative flex gap-6 p-4 rounded-xl hover:bg-white/5 transition-colors">
+<div class="w-16 pt-1 text-right">
+<span class="text-xs font-bold text-slate-500 uppercase tracking-tighter">11:00 AM</span>
+</div>
+<div class="flex-1 space-y-1 border-l-2 border-slate-700 pl-6 pb-2">
+<div class="flex justify-between items-start">
+<h4 class="font-bold text-slate-100">Coffee Chat with Sarah (Meta Recruiter)</h4>
+<span class="text-[10px] font-bold uppercase text-slate-500 tracking-widest">30 MIN</span>
+</div>
+<p class="text-sm text-slate-400">Virtual meeting. Preparation: Review Sarah's recent hiring posts.</p>
+</div>
+</div>
+<!-- Slot 3 (Gap for choice) -->
+<div class="group relative flex gap-6 p-4 rounded-xl bg-primary/5 border border-dashed border-primary/30 mx-4">
+<div class="w-16 pt-1 text-right">
+<span class="text-xs font-bold text-primary uppercase tracking-tighter">01:30 PM</span>
+</div>
+<div class="flex-1 flex items-center justify-between pl-6">
+<span class="text-sm italic text-primary/70">Open Slot — Drag recommended tasks here</span>
+<span class="material-symbols-outlined text-primary">add_circle</span>
+</div>
+</div>
+<!-- Slot 4 -->
+<div class="group relative flex gap-6 p-4 rounded-xl hover:bg-white/5 transition-colors">
+<div class="w-16 pt-1 text-right">
+<span class="text-xs font-bold text-slate-500 uppercase tracking-tighter">03:00 PM</span>
+</div>
+<div class="flex-1 space-y-1 border-l-2 border-slate-700 pl-6 pb-2">
+<div class="flex justify-between items-start">
+<h4 class="font-bold text-slate-100">Skill Lab: Advanced Prompt Engineering</h4>
+<span class="text-[10px] font-bold uppercase text-slate-500 tracking-widest">60 MIN</span>
+</div>
+<p class="text-sm text-slate-400">Module 4: Contextual Steering and Chain of Thought.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Plan Intensity Module -->
+<div class="glass-panel p-6 rounded-2xl">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-slate-400 text-sm">settings_input_component</span>
+<h3 class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Plan Intensity</h3>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<button class="p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all text-left group">
+<span class="material-symbols-outlined text-slate-500 group-hover:text-white transition-colors mb-2">flight</span>
+<p class="text-sm font-bold text-slate-300">Light</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Focus on rest</p>
+</button>
+<button class="p-4 rounded-xl bg-primary/20 border-2 border-primary/50 text-left relative overflow-hidden">
+<div class="absolute top-0 right-0 p-2">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<span class="material-symbols-outlined text-primary mb-2">balance</span>
+<p class="text-sm font-bold text-white">Balanced</p>
+<p class="text-[10px] text-primary font-bold uppercase tracking-widest mt-1">Optimal pace</p>
+</button>
+<button class="p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all text-left group">
+<span class="material-symbols-outlined text-slate-500 group-hover:text-white transition-colors mb-2">fitness_center</span>
+<p class="text-sm font-bold text-slate-300">Execution-heavy</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">High output</p>
+</button>
+</div>
+</div>
+</div>
+<!-- Right: Recommendation Pool (4 columns) -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<div class="glass-panel p-6 rounded-2xl h-full flex flex-col">
+<div class="mb-6">
+<h3 class="text-lg font-bold text-white mb-1">Recommendation Pool</h3>
+<p class="text-xs text-slate-400">Pick 3 tasks to 'Add to Tomorrow'</p>
+</div>
+<div class="space-y-4 flex-1">
+<!-- Task Card 1 -->
+<div class="p-4 rounded-xl bg-slate-900/60 border border-white/5 hover:border-primary/40 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary">Networking</span>
+<span class="material-symbols-outlined text-slate-600 group-hover:text-primary transition-colors">add</span>
+</div>
+<h4 class="text-sm font-bold text-slate-200">Personalize 5 LinkedIn connection invites</h4>
+<div class="mt-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-slate-500">schedule</span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">20 MIN</span>
+</div>
+</div>
+<!-- Task Card 2 -->
+<div class="p-4 rounded-xl bg-slate-900/60 border border-white/5 hover:border-primary/40 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold uppercase tracking-widest text-tertiary">Portfolio</span>
+<span class="material-symbols-outlined text-slate-600 group-hover:text-primary transition-colors">add</span>
+</div>
+<h4 class="text-sm font-bold text-slate-200">Audit Case Study: FinTech dashboard project</h4>
+<div class="mt-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-slate-500">schedule</span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">45 MIN</span>
+</div>
+</div>
+<!-- Task Card 3 -->
+<div class="p-4 rounded-xl bg-slate-900/60 border border-white/5 hover:border-primary/40 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Strategy</span>
+<span class="material-symbols-outlined text-slate-600 group-hover:text-primary transition-colors">add</span>
+</div>
+<h4 class="text-sm font-bold text-slate-200">Define 'Target Company' list for Q3</h4>
+<div class="mt-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-slate-500">schedule</span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">30 MIN</span>
+</div>
+</div>
+<!-- Task Card 4 -->
+<div class="p-4 rounded-xl bg-slate-900/60 border border-white/5 hover:border-primary/40 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary">Skill Up</span>
+<span class="material-symbols-outlined text-slate-600 group-hover:text-primary transition-colors">add</span>
+</div>
+<h4 class="text-sm font-bold text-slate-200">Read: 'The Future of AI Interfaces' Report</h4>
+<div class="mt-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-slate-500">schedule</span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">15 MIN</span>
+</div>
+</div>
+</div>
+<!-- Secondary Info -->
+<div class="mt-6 pt-6 border-t border-white/5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-slate-900 overflow-hidden border border-white/10 shrink-0">
+<img class="w-full h-full object-cover opacity-60" data-alt="A futuristic abstract digital painting with flowing neon blue lines and dark obsidian textures, representing high-speed data streams and sophisticated artificial intelligence. The composition is sleek and vertical, emphasizing a sense of growth and technological progression within a cinematic dark-mode interface environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAow-uavzP-xCXZqgzPB1NzZu8ZkP4edL2a9aC380HTlcrm6kS3STuzl0yin1DafOflH9tKZc0F4ISCVpYUd88RPcKfIRBVU2aw9-K8nALu4bN6mtdNme3w0SfZg74rWX6c2rHiCM4ihymrGc9kDzOMBw8xVrPOvNLxtLhMWsB_vvb5lE_wDJGi64q912xWBE_c1NZnFwt55vbihrK7u_eWw_D3GAJriO-aAHm6xTTMDxOGg6Mp07Bi4cv9rK6-6GxO3oSJetj0BHA"/>
+</div>
+<div>
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">AI Tip</p>
+<p class="text-xs text-slate-300 leading-relaxed">Tuesday is your highest engagement day. Front-load your outreach.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Action -->
+<div class="flex justify-center pt-8">
+<button class="px-12 py-5 bg-primary text-white rounded-2xl font-black text-lg tracking-tight shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:translate-y-[-2px] active:translate-y-[0px] transition-all flex items-center gap-3">
+                    Confirm Tomorrow's Plan
+                    <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Midnight Glass - Screening Answers</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface": "#101622",
+                        "on-surface-variant": "#94a3b8",
+                        "surface-tint": "#256af4",
+                        "primary-container": "#256af433",
+                        "surface-variant": "#1e293b",
+                        "surface-container-lowest": "#080c14",
+                        "secondary-container": "#1e293b",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#f1f5f9",
+                        "on-error": "#ffffff",
+                        "surface-container": "#1e293b80",
+                        "tertiary-container": "#f43f5e22",
+                        "primary-fixed": "#dbeafe",
+                        "on-error-container": "#fca5a5",
+                        "surface-container-high": "#1e293b99",
+                        "on-background": "#f1f5f9",
+                        "outline-variant": "#1e293b",
+                        "secondary": "#334155",
+                        "on-secondary-fixed-variant": "#334155",
+                        "error-container": "#450a0a",
+                        "on-secondary-container": "#cbd5e1",
+                        "surface-bright": "#1e293b",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "on-primary-fixed": "#1e3a8a",
+                        "inverse-surface": "#f8fafc",
+                        "secondary-fixed": "#e2e8f0",
+                        "on-secondary-fixed": "#0f172a",
+                        "background": "#101622",
+                        "tertiary-fixed": "#ffe4e6",
+                        "on-secondary": "#f8fafc",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "inverse-on-surface": "#0f172a",
+                        "error": "#ef4444",
+                        "surface-dim": "#0b0f18",
+                        "inverse-primary": "#60a5fa",
+                        "surface-container-highest": "#2d3748",
+                        "on-tertiary-fixed": "#4c0519",
+                        "on-primary-container": "#60a5fa",
+                        "on-primary": "#ffffff",
+                        "outline": "#334155",
+                        "tertiary": "#f43f5e",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "primary": "#256af4",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-tertiary-container": "#fb7185"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-accent {
+            text-shadow: 0 0 12px rgba(37, 106, 244, 0.4);
+        }
+        body {
+            background-color: #101622;
+            color: #f1f5f9;
+        }
+    </style>
+</head>
+<body class="font-body selection:bg-primary-container selection:text-primary overflow-x-hidden">
+<!-- Atmospheric Texture -->
+<div class="fixed top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -z-10 opacity-30"></div>
+<div class="fixed bottom-0 left-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[140px] -z-10 opacity-20"></div>
+<!-- SideNavBar (Shared Component) -->
+<nav class="fixed left-0 top-0 h-full w-64 border-r border-white/10 bg-slate-950/80 backdrop-blur-xl flex flex-col py-8 px-4 z-50">
+<div class="flex items-center gap-3 mb-10 px-2">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-white" data-icon="work">work</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tighter text-white">Midnight Glass</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant">Career Curator</p>
+</div>
+</div>
+<div class="space-y-1 flex-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-manrope text-sm tracking-wide">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-600/20 text-blue-400 font-semibold border-r-2 border-blue-500" href="#">
+<span class="material-symbols-outlined" data-icon="work">work</span>
+<span class="font-manrope text-sm tracking-wide">Applications</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="bookmark">bookmark</span>
+<span class="font-manrope text-sm tracking-wide">Saved Jobs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-manrope text-sm tracking-wide">Network</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-manrope text-sm tracking-wide">Analytics</span>
+</a>
+</div>
+<button class="w-full mt-6 bg-primary text-on-primary py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+        New Application
+    </button>
+<div class="mt-auto pt-6 border-t border-white/5 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-slate-400 hover:text-slate-100 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-manrope text-sm tracking-wide">Settings</span>
+</a>
+<div class="flex items-center gap-3 px-4 py-2 mt-4">
+<img alt="Premium User Avatar" class="w-8 h-8 rounded-full border border-white/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9AY3OWsb9KyoU5rT-ta8LajCBqEXZf5U2yvOXvDRWTguTyDz3pmRfFrjIFf0GOM_CFTkhm7iRmYsjNUdm7xvwCTWTPQ4PHsoB96AOtXX9lTWjp8KQGirUqq4KQw02jSaHg4WRoPMqiUm4WzLm59FSPxLkA0EN7TXVqK5uKRmy2Ad7rVz3wWRwRyNkQjl5tJ_M5918lUSRcd9ofLrNQwtwdzx7J2CAPX5s6IHSsZjB7yX2YVoIYvhYLi6zm4IsBNtV4PZBpejKUOk"/>
+<div class="overflow-hidden">
+<p class="text-xs font-bold text-slate-100 truncate">Julian Vance</p>
+<p class="text-[10px] text-slate-500 truncate">Premium Member</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Stage -->
+<main class="ml-64 min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-slate-900/40 backdrop-blur-md flex justify-between items-center px-8 z-40">
+<div class="flex items-center gap-8">
+<div class="flex items-center bg-slate-800/50 px-3 py-1.5 rounded-lg border border-white/5">
+<span class="material-symbols-outlined text-slate-400 text-sm" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-xs text-slate-200 placeholder-slate-500 w-64" placeholder="Search application assets..." type="text"/>
+</div>
+<nav class="flex items-center gap-6 font-manrope text-sm font-medium">
+<a class="text-slate-400 hover:text-blue-300 transition-colors" href="#">Dashboard</a>
+<a class="text-blue-400 font-bold" href="#">Applications</a>
+<a class="text-slate-400 hover:text-blue-300 transition-colors" href="#">Active</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:text-white transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border-2 border-slate-900"></span>
+</button>
+<button class="p-2 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</button>
+</div>
+</header>
+<!-- Page Content -->
+<div class="pt-24 pb-12 px-10">
+<!-- Contextual Nested Header -->
+<div class="mb-10 flex justify-between items-end">
+<div>
+<div class="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-blue-400 font-bold mb-2">
+<span class="material-symbols-outlined text-xs" data-icon="auto_awesome">auto_awesome</span>
+                    Phase: Generated Assets
+                </div>
+<h2 class="text-4xl font-extrabold text-slate-100 tracking-tight flex items-center gap-4">
+                    Answers <span class="text-slate-700 font-light">/ Screening Questions</span>
+</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex flex-col items-end gap-1">
+<span class="text-[10px] uppercase tracking-widest text-slate-500">Progress</span>
+<div class="flex items-center gap-3">
+<div class="w-48 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-blue-500" style="width: 75%;"></div>
+</div>
+<span class="text-sm font-bold text-slate-300">75%</span>
+</div>
+</div>
+<button class="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-white/10 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="bolt">bolt</span>
+                    Generate All
+                </button>
+</div>
+</div>
+<!-- Content Grid: Spacious 2-Column Layout -->
+<div class="grid grid-cols-2 gap-10">
+<!-- Left Column: Answers List -->
+<div class="space-y-8">
+<!-- Question Card 1 -->
+<div class="glass-panel p-8 rounded-2xl group hover:border-blue-500/30 transition-all duration-500">
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-lg font-bold text-slate-100 group-hover:text-blue-400 transition-colors">"Why are you the right fit for this role?"</h3>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full shrink-0">
+<span class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
+<span class="text-[10px] font-extrabold text-blue-400 uppercase tracking-widest">94% Match</span>
+</div>
+</div>
+<p class="text-slate-300 leading-relaxed mb-6">
+                        "With over 6 years of experience in product-led growth and high-end editorial UI design, I bridge the gap between technical requirements and artistic vision. I've consistently delivered systems that reduced churn by 20% while elevating brand perception through cinematic aesthetics."
+                    </p>
+<div class="flex flex-wrap gap-2 pt-6 border-t border-white/5">
+<span class="text-[10px] uppercase tracking-widest text-slate-500 mr-2 flex items-center">Keywords:</span>
+<span class="px-2.5 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase tracking-wider">Product-Led Growth</span>
+<span class="px-2.5 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase tracking-wider">Cinematic UI</span>
+<span class="px-2.5 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase tracking-wider">User Retention</span>
+</div>
+</div>
+<!-- Question Card 2 -->
+<div class="glass-panel p-8 rounded-2xl group hover:border-blue-500/30 transition-all duration-500">
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-lg font-bold text-slate-100 group-hover:text-blue-400 transition-colors">"Tell us about a time you solved a complex design challenge."</h3>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full shrink-0">
+<span class="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+<span class="text-[10px] font-extrabold text-blue-400 uppercase tracking-widest">88% Match</span>
+</div>
+</div>
+<p class="text-slate-300 leading-relaxed mb-6">
+                        "During the transition to 'Midnight Glass' architecture at Zenith, I navigated the conflict between legacy data tables and modern readability. By implementing a variable tonal-layering system instead of borders, we increased data scanning speeds by 14% without compromising depth."
+                    </p>
+<div class="flex flex-wrap gap-2 pt-6 border-t border-white/5">
+<span class="text-[10px] uppercase tracking-widest text-slate-500 mr-2 flex items-center">Keywords:</span>
+<span class="px-2.5 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase tracking-wider">Architecture</span>
+<span class="px-2.5 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase tracking-wider">Tonal Layering</span>
+<span class="px-2.5 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase tracking-wider">Data Scanning</span>
+</div>
+</div>
+<!-- Question Card 3 -->
+<div class="glass-panel p-8 rounded-2xl group hover:border-blue-500/30 transition-all duration-500">
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-lg font-bold text-slate-100 group-hover:text-blue-400 transition-colors">"How do you approach accessibility in high-end UI?"</h3>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full shrink-0">
+<span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+<span class="text-[10px] font-extrabold text-blue-400 uppercase tracking-widest">91% Match</span>
+</div>
+</div>
+<p class="text-slate-300 leading-relaxed mb-6">
+                        "Aesthetics should never compromise access. I utilize semantic contrast ratios and high-definition focus states that exceed WCAG 2.1 standards. My design systems integrate keyboard-first navigation patterns seamlessly into glassmorphic shells."
+                    </p>
+<div class="flex flex-wrap gap-2 pt-6 border-t border-white/5">
+<span class="text-[10px] uppercase tracking-widest text-slate-500 mr-2 flex items-center">Keywords:</span>
+<span class="px-2.5 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase tracking-wider">WCAG 2.1</span>
+<span class="px-2.5 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase tracking-wider">Semantic Contrast</span>
+<span class="px-2.5 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase tracking-wider">Accessibility</span>
+</div>
+</div>
+</div>
+<!-- Right Column: Secondary Modules -->
+<div class="space-y-10">
+<!-- Portfolio Module -->
+<div class="bg-slate-900/40 rounded-2xl p-8 border border-white/5 relative overflow-hidden">
+<div class="absolute -top-10 -right-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl"></div>
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-blue-500" data-icon="auto_stories">auto_stories</span>
+<h4 class="text-sm font-bold uppercase tracking-widest text-slate-100">Portfolio Bullets</h4>
+</div>
+<div class="space-y-8">
+<div class="relative pl-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-1.5 before:h-1.5 before:bg-blue-500 before:rounded-full">
+<p class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-2">Project: Nexus Rebrand</p>
+<p class="text-base text-slate-300 italic leading-relaxed">"Architected a scalable design language for 5+ product verticals, resulting in a 35% improvement in cross-team design efficiency."</p>
+</div>
+<div class="relative pl-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-1.5 before:h-1.5 before:bg-blue-500/60 before:rounded-full">
+<p class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-2">Project: Ethos Financial</p>
+<p class="text-base text-slate-300 italic leading-relaxed">"Designed a high-security dashboard interface using dark-mode optimization that increased daily active users by 18% within the first quarter."</p>
+</div>
+<div class="relative pl-6 before:content-[''] before:absolute before:left-0 before:top-2 before:w-1.5 before:h-1.5 before:bg-blue-500/30 before:rounded-full">
+<p class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-2">Project: Quantum Analytics</p>
+<p class="text-base text-slate-300 italic leading-relaxed">"Pioneered a glassmorphic visualization layer for real-time data streaming, enhancing perceptual clarity for analysts."</p>
+</div>
+</div>
+<button class="w-full mt-10 py-4 rounded-xl border border-blue-500/30 text-blue-400 text-xs font-bold uppercase tracking-widest hover:bg-blue-500/5 transition-colors">
+                        Refine Bullets
+                    </button>
+</div>
+<!-- Visual Context Card -->
+<div class="rounded-2xl overflow-hidden glass-panel group">
+<div class="h-64 w-full relative">
+<img alt="Tech Dashboard Visualization" class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-1000" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDx46ID2pZ0lSANzlv4B0LOmffajqiRFljkHgtIyYFRItEjkQifnkPNTozgNBVz6j0dwxxTvWIKxMV94kiiUK_zHQmzt9DbRBOMmWpaheXAkBGO93GKZHZUA01S194Tui-1xhTAbMWOJrZTZeiBugdesbmtaR7HvA54qltwC3C2mcJDF0JT2iZmy-0OxFaF9yPXxaV8tQ5HUsWpNXCVd4fJ_AB-O5MrO2oOdsplIgXxUGuaRxf5RjbDg46NhPZLJ1U3fPJPFMKCPPs"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent"></div>
+<div class="absolute bottom-6 left-6">
+<span class="px-3 py-1.5 bg-primary text-[10px] font-black uppercase tracking-widest rounded shadow-lg shadow-primary/40">Live Preview</span>
+</div>
+</div>
+<div class="p-8">
+<p class="text-sm text-slate-400 leading-relaxed">
+                            These answers are automatically tuned based on the <span class="text-blue-400 font-bold">Principal Product Designer</span> role description at <span class="text-white">Lumina Tech</span>.
+                        </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

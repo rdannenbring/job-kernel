@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Decision Phase | Midnight Glass</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-glow {
+            text-shadow: 0 0 8px rgba(37, 106, 244, 0.6);
+        }
+        .neon-border {
+            box-shadow: 0 0 15px rgba(37, 106, 244, 0.1);
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-container": "#fb7185",
+                        "background": "#101622",
+                        "surface": "#101622",
+                        "on-secondary-container": "#cbd5e1",
+                        "on-primary-fixed": "#1e3a8a",
+                        "tertiary-fixed": "#ffe4e6",
+                        "on-error-container": "#fca5a5",
+                        "secondary-container": "#1e293b",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-tertiary-fixed": "#4c0519",
+                        "on-secondary": "#f8fafc",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "inverse-on-surface": "#0f172a",
+                        "surface-container": "#1e293b80",
+                        "inverse-primary": "#60a5fa",
+                        "surface-bright": "#1e293b",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "on-secondary-fixed-variant": "#334155",
+                        "on-secondary-fixed": "#0f172a",
+                        "surface-container-highest": "#2d3748",
+                        "tertiary": "#f43f5e",
+                        "secondary": "#334155",
+                        "on-surface-variant": "#94a3b8",
+                        "error-container": "#450a0a",
+                        "primary-container": "#256af433",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "error": "#ef4444",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "on-background": "#f1f5f9",
+                        "tertiary-container": "#f43f5e22",
+                        "on-error": "#ffffff",
+                        "outline": "#334155",
+                        "surface-container-low": "#1e293b66",
+                        "on-surface": "#f1f5f9",
+                        "secondary-fixed": "#e2e8f0",
+                        "surface-container-high": "#1e293b99",
+                        "primary-fixed": "#dbeafe",
+                        "surface-variant": "#1e293b",
+                        "surface-dim": "#0b0f18",
+                        "primary": "#256af4",
+                        "inverse-surface": "#f8fafc",
+                        "surface-container-lowest": "#080c14",
+                        "surface-tint": "#256af4",
+                        "outline-variant": "#1e293b",
+                        "on-primary-container": "#60a5fa"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background selection:bg-primary/30 selection:text-primary-fixed min-h-screen flex overflow-hidden">
+<!-- Collapsed SideNavBar (Instruction: Icons Only) -->
+<aside class="fixed left-0 top-0 h-full w-20 bg-slate-950/80 backdrop-blur-xl border-r border-white/10 flex flex-col items-center py-8 z-50 shadow-xl shadow-blue-500/5">
+<div class="mb-10">
+<div class="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/40">
+<span class="material-symbols-outlined text-primary neon-glow" style="font-variation-settings: 'FILL' 1;">cloud</span>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-6">
+<button class="w-12 h-12 flex items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 border-r-2 border-blue-500 transition-all duration-300">
+<span class="material-symbols-outlined">dashboard</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 hover:text-slate-100 transition-all duration-300">
+<span class="material-symbols-outlined">work</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 hover:text-slate-100 transition-all duration-300">
+<span class="material-symbols-outlined">bookmark</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 hover:text-slate-100 transition-all duration-300">
+<span class="material-symbols-outlined">group</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 hover:text-slate-100 transition-all duration-300">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+</nav>
+<div class="mt-auto flex flex-col gap-6">
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-white/10 p-0.5">
+<img alt="User Profile" class="w-full h-full object-cover rounded-full" data-alt="A professional headshot of a person with a slight smile, positioned against a dark, moody studio background with subtle blue rim lighting. The style is cinematic and high-fidelity, matching a premium dark-mode dashboard aesthetic. The lighting is soft but dramatic, emphasizing clear features and a polished corporate look." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAv45qKUgMlqZRQbln-7lJT7iO9lRAlr0Euvy9ImoheAj7uPHxSNTi37oync65Uw1JzE59O1bBR7NkgS9Yf_BDfRN93wuOfQq_y_GzT1Os1WS-0CNQlAo0qCmidvgqGk5T3XYEeOKrNcTbVGCeaKrWySg9kfGDVoS-A6K1mWxstfKz1f6u-GldQQDpU8-3BW-em_236KCbm08dKVyJExprsM58ig2UOYXCg8xaUlvd1V7zLHkq7LvkOQXLZ0-B8blz6VJ6fxqUiUn8"/>
+</div>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-5rem)] h-16 bg-slate-900/40 backdrop-blur-md flex justify-between items-center px-8 z-40 border-b border-white/5">
+<div class="flex items-center gap-6">
+<h1 class="text-xl font-bold tracking-tighter text-white font-headline">Job Tracker</h1>
+<nav class="hidden md:flex gap-8 ml-4">
+<a class="text-slate-400 hover:text-blue-300 transition-colors font-manrope text-sm font-medium" href="#">Dashboard</a>
+<a class="text-slate-400 hover:text-blue-300 transition-colors font-manrope text-sm font-medium" href="#">Applications</a>
+<a class="text-blue-400 font-bold font-manrope text-sm font-medium" href="#">Active</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<input class="bg-surface-container-lowest border-none rounded-full px-4 py-1.5 text-xs w-64 focus:ring-1 focus:ring-primary/50 transition-all text-slate-300 placeholder:text-slate-500" placeholder="Search applications..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-1.5 text-slate-500 text-sm">search</span>
+</div>
+<button class="p-2 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">history</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-20 mt-16 flex-1 flex h-[calc(100vh-4rem)]">
+<!-- Sub-Navigation Sidebar -->
+<aside class="w-72 h-full bg-surface-container-low border-r border-white/5 py-8 px-6 flex flex-col gap-8">
+<div>
+<span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-4 block">Application Phase</span>
+<ul class="space-y-1">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600/10 text-blue-400 font-semibold border-l-4 border-blue-500 group transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">hourglass_empty</span>
+<span class="text-sm">Awaiting Decision</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px]">quick_reference_all</span>
+<span class="text-sm">References</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+<span class="text-sm">Verbal Offer</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span class="text-sm">Written Offer Pending</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px]">thumb_down</span>
+<span class="text-sm">Likely Reject</span>
+</a>
+</li>
+</ul>
+</div>
+<div class="mt-auto glass-panel p-4 rounded-2xl">
+<div class="flex items-center gap-3 mb-2">
+<img class="w-8 h-8 rounded-lg bg-slate-800" data-alt="A minimalist tech company logo featuring abstract geometric shapes in electric blue and metallic silver, set against a dark glassmorphic background. The aesthetic is clean, modern, and high-end tech corporate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDp5NsKWc_67KcZFlttUbNjvuu22iT45_g_wit4X2PUYHjEkCxGoSRd6tc4btVkfRYuSQ8JQoAEbdMxXYRdojNUvV4Cxo_s7XZn_ETO7Ki8u6HIGqy9iTvm69cBO4D_MfW2rT4KfPypB6anBZT_Y144cfA9P5ENK9JiofL9hK5xHXCfSgFu-xu19kCrTyIuc2Dd5D4oIEVrQmLxNGzz6DhoSrA7rd3ccKiX3D3lo0-D7NPVz-tGPdDoYnHFTMxclj2e0sHgH6-KJz0"/>
+<div>
+<p class="text-sm font-bold text-slate-100">Meta</p>
+<p class="text-[10px] uppercase tracking-widest text-slate-400">Senior Designer</p>
+</div>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden mt-3">
+<div class="h-full bg-primary w-[85%]"></div>
+</div>
+<p class="text-[10px] text-slate-500 mt-2 text-right">85% Process Complete</p>
+</div>
+</aside>
+<!-- Main Dashboard Surface -->
+<section class="flex-1 overflow-y-auto p-8 bg-surface-dim relative">
+<!-- Background Decorative Blur -->
+<div class="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="max-w-6xl mx-auto flex flex-col gap-8">
+<!-- Page Header -->
+<div class="flex items-end justify-between border-b border-white/5 pb-6">
+<div>
+<h2 class="text-3xl font-extrabold text-white tracking-tight mb-1 font-headline">Decision Phase</h2>
+<p class="text-slate-400 text-sm">Post-interview review and outcome estimation for Meta.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-5 py-2 rounded-full bg-slate-800 text-slate-200 text-xs font-bold uppercase tracking-widest hover:bg-slate-700 transition-all">Archive</button>
+<button class="px-5 py-2 rounded-full bg-primary text-white text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all">Update Status</button>
+</div>
+</div>
+<!-- Content Grid -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Left Column -->
+<div class="col-span-12 lg:col-span-7 flex flex-col gap-8">
+<!-- Decision Tracker Card -->
+<div class="glass-panel p-6 rounded-2xl flex flex-col gap-6 relative overflow-hidden">
+<div class="flex items-center justify-between z-10">
+<div>
+<span class="text-[10px] uppercase tracking-widest text-primary font-bold">Decision Tracker</span>
+<h3 class="text-xl font-bold text-white mt-1">Time Elapsed</h3>
+</div>
+<span class="material-symbols-outlined text-primary/40 text-4xl">timer</span>
+</div>
+<div class="flex items-center gap-8 z-10">
+<div class="text-center">
+<p class="text-4xl font-extrabold text-white tracking-tighter">04</p>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Days</p>
+</div>
+<div class="w-px h-12 bg-white/10"></div>
+<div class="text-center">
+<p class="text-4xl font-extrabold text-white tracking-tighter">18</p>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Hours</p>
+</div>
+<div class="w-px h-12 bg-white/10"></div>
+<div class="text-center">
+<p class="text-4xl font-extrabold text-white tracking-tighter">32</p>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Minutes</p>
+</div>
+</div>
+<p class="text-slate-400 text-sm z-10">Average decision time for this role: <span class="text-slate-200">7-10 Days</span></p>
+</div>
+<!-- Recruiter Signals Log -->
+<div class="glass-panel rounded-2xl overflow-hidden">
+<div class="p-6 border-b border-white/5 flex justify-between items-center">
+<h3 class="text-lg font-bold text-white">Recruiter Signals</h3>
+<span class="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-1 rounded font-bold uppercase">Live Log</span>
+</div>
+<div class="p-0">
+<div class="flex items-start gap-4 p-5 hover:bg-white/5 transition-all border-b border-white/5">
+<div class="w-2 h-2 rounded-full bg-green-500 mt-1.5 shadow-[0_0_10px_rgba(34,197,94,0.6)]"></div>
+<div>
+<p class="text-sm text-slate-200 font-medium">Recruiter viewed your LinkedIn profile</p>
+<p class="text-xs text-slate-500 mt-1">2 hours ago</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-5 hover:bg-white/5 transition-all border-b border-white/5">
+<div class="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shadow-[0_0_10px_rgba(59,130,246,0.6)]"></div>
+<div>
+<p class="text-sm text-slate-200 font-medium">Internal system update: Interview stages complete</p>
+<p class="text-xs text-slate-500 mt-1">Yesterday, 4:45 PM</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-5 hover:bg-white/5 transition-all">
+<div class="w-2 h-2 rounded-full bg-slate-600 mt-1.5"></div>
+<div>
+<p class="text-sm text-slate-200 font-medium">Final Round Feedback requested by HR</p>
+<p class="text-xs text-slate-500 mt-1">3 days ago</p>
+</div>
+</div>
+</div>
+</div>
+<!-- User Sentiment Slider -->
+<div class="glass-panel p-6 rounded-2xl">
+<h3 class="text-lg font-bold text-white mb-6">User Sentiment</h3>
+<div class="relative pt-1">
+<div class="flex mb-4 items-center justify-between">
+<div>
+<span class="text-[10px] font-bold uppercase tracking-widest inline-block py-1 px-2 rounded-full text-slate-400 bg-slate-800">
+                                            Confident
+                                        </span>
+</div>
+<div class="text-right">
+<span class="text-xs font-bold inline-block text-primary">
+                                            82% Positive
+                                        </span>
+</div>
+</div>
+<div class="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-slate-900 border border-white/5">
+<div class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary neon-border" style="width:82%"></div>
+</div>
+<p class="text-xs text-slate-500 leading-relaxed italic">"I felt really aligned with the team's culture during the systems design round. The technical challenge went smoothly."</p>
+</div>
+</div>
+</div>
+<!-- Right Column -->
+<div class="col-span-12 lg:col-span-5 flex flex-col gap-8">
+<!-- Outcome Predictor -->
+<div class="glass-panel p-8 rounded-2xl flex flex-col items-center text-center relative overflow-hidden border border-primary/20">
+<div class="absolute inset-0 bg-primary/5 pointer-events-none"></div>
+<span class="text-[10px] uppercase tracking-widest text-primary font-bold mb-6">Outcome Predictor</span>
+<div class="relative w-40 h-40 flex items-center justify-center mb-6">
+<!-- SVG Radial Chart -->
+<svg class="w-full h-full -rotate-90">
+<circle class="text-slate-800" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-dasharray="440" stroke-dashoffset="110" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-4xl font-extrabold text-white tracking-tighter neon-glow">75%</span>
+<span class="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Likely</span>
+</div>
+</div>
+<h4 class="text-white font-bold text-lg mb-2">High Likelihood</h4>
+<p class="text-slate-400 text-sm px-4">AI analysis of recruiter responsiveness and interview feedback indicates a strong chance of an offer.</p>
+</div>
+<!-- Follow-up Assistant -->
+<div class="glass-panel p-6 rounded-2xl">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-primary">auto_awesome</span>
+<h3 class="text-lg font-bold text-white">Follow-up Assistant</h3>
+</div>
+<div class="bg-surface-container-highest/30 p-4 rounded-xl border border-white/5">
+<p class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Recommendation</p>
+<p class="text-sm text-slate-200 font-medium">Wait until Friday morning before following up. The hiring manager is currently out of office.</p>
+<button class="mt-4 w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold rounded-lg transition-all">Draft Follow-up Email</button>
+</div>
+<div class="mt-6 flex flex-col gap-3">
+<div class="flex items-center justify-between text-xs p-3 rounded-lg hover:bg-white/5 cursor-pointer transition-all">
+<span class="text-slate-400">When should I follow up?</span>
+<span class="material-symbols-outlined text-sm text-slate-600">chevron_right</span>
+</div>
+<div class="flex items-center justify-between text-xs p-3 rounded-lg hover:bg-white/5 cursor-pointer transition-all">
+<span class="text-slate-400">How to handle a low-ball offer?</span>
+<span class="material-symbols-outlined text-sm text-slate-600">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Negotiation Prep Teaser -->
+<div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-all scale-150">
+<span class="material-symbols-outlined text-primary text-6xl">payments</span>
+</div>
+<h3 class="text-lg font-bold text-white mb-2">Negotiation Prep</h3>
+<p class="text-sm text-slate-400 mb-4">Unlock salary benchmarks and equity analysis for this specific Meta role and location.</p>
+<a class="inline-flex items-center gap-2 text-primary text-xs font-bold uppercase tracking-widest hover:gap-3 transition-all" href="#">
+                                View Strategy Guide
+                                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+<!-- Contextual Decorative Glass UI -->
+<div class="mt-12 max-w-6xl mx-auto opacity-40 grayscale">
+<div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8"></div>
+<div class="grid grid-cols-4 gap-8">
+<div class="h-20 glass-panel rounded-xl"></div>
+<div class="h-20 glass-panel rounded-xl"></div>
+<div class="h-20 glass-panel rounded-xl"></div>
+<div class="h-20 glass-panel rounded-xl"></div>
+</div>
+</div>
+</section>
+</main>
+</body></html>

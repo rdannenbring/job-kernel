@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Daily Plan | JobKernel</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-tertiary-fixed": "#4c0519",
+                "surface-container-low": "#1e293b66",
+                "inverse-primary": "#60a5fa",
+                "surface-container-highest": "#2d3748",
+                "primary-container": "#256af433",
+                "tertiary-fixed-dim": "#fecdd3",
+                "secondary-fixed": "#e2e8f0",
+                "on-tertiary-fixed-variant": "#9f1239",
+                "on-secondary-fixed-variant": "#334155",
+                "on-primary-fixed-variant": "#1d4ed8",
+                "on-background": "#f1f5f9",
+                "surface-container-lowest": "#080c14",
+                "primary": "#256af4",
+                "outline-variant": "#1e293b",
+                "on-tertiary": "#ffffff",
+                "on-tertiary-container": "#fb7185",
+                "surface": "#101622",
+                "surface-variant": "#1e293b",
+                "primary-fixed": "#dbeafe",
+                "surface-bright": "#1e293b",
+                "outline": "#334155",
+                "error-container": "#450a0a",
+                "on-error-container": "#fca5a5",
+                "secondary-fixed-dim": "#cbd5e1",
+                "tertiary-fixed": "#ffe4e6",
+                "surface-tint": "#256af4",
+                "on-secondary-container": "#cbd5e1",
+                "on-primary": "#ffffff",
+                "on-error": "#ffffff",
+                "inverse-on-surface": "#0f172a",
+                "on-primary-container": "#60a5fa",
+                "on-secondary-fixed": "#0f172a",
+                "tertiary": "#f43f5e",
+                "primary-fixed-dim": "#bfdbfe",
+                "tertiary-container": "#f43f5e22",
+                "secondary-container": "#1e293b",
+                "surface-container-high": "#1e293b99",
+                "error": "#ef4444",
+                "secondary": "#334155",
+                "surface-dim": "#0b0f18",
+                "on-surface-variant": "#94a3b8",
+                "surface-container": "#1e293b80",
+                "inverse-surface": "#f8fafc",
+                "background": "#101622",
+                "on-secondary": "#f8fafc",
+                "on-surface": "#f1f5f9",
+                "on-primary-fixed": "#1e3a8a"
+            },
+            "fontFamily": {
+                "headline": ["Manrope"],
+                "display": ["Manrope"],
+                "body": ["Manrope"],
+                "label": ["Manrope"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; background-color: #101622; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .neon-glow {
+            text-shadow: 0 0 10px rgba(37, 106, 244, 0.4);
+        }
+    </style>
+</head>
+<body class="text-on-background antialiased selection:bg-primary/30">
+<!-- SideNavBar -->
+<aside class="docked fixed left-0 top-0 h-screen w-64 flex flex-col py-8 px-4 bg-[#101622] border-r border-white/5 bg-opacity-95 shadow-2xl shadow-blue-900/10 z-50 font-['Manrope'] text-slate-300 antialiased tracking-normal">
+<div class="mb-10 px-2">
+<h1 class="text-xl font-black text-white tracking-tighter">JobKernel</h1>
+<p class="text-[10px] tracking-widest uppercase text-slate-500 font-bold mt-1">AI Career Engine</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 hover:bg-white/5 hover:text-white text-slate-400 font-medium group" href="#">
+<span class="material-symbols-outlined text-lg">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 hover:bg-white/5 hover:text-white text-slate-400 font-medium group" href="#">
+<span class="material-symbols-outlined text-lg">assignment</span>
+<span>Applications</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 hover:bg-white/5 hover:text-white text-slate-400 font-medium group" href="#">
+<span class="material-symbols-outlined text-lg">bookmark</span>
+<span>Saved Jobs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 hover:bg-white/5 hover:text-white text-slate-400 font-medium group" href="#">
+<span class="material-symbols-outlined text-lg">group</span>
+<span>Network</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 hover:bg-white/5 hover:text-white text-slate-400 font-medium group" href="#">
+<span class="material-symbols-outlined text-lg">insights</span>
+<span>Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-[#256af4] font-bold border-r-2 border-[#256af4] bg-gradient-to-r from-[#256af4]/10 to-transparent group" href="#">
+<span class="material-symbols-outlined text-lg">calendar_today</span>
+<span>Planner</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 hover:bg-white/5 hover:text-white text-slate-400 font-medium group" href="#">
+<span class="material-symbols-outlined text-lg">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="mt-auto px-2">
+<button class="w-full py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[0.98] transition-all duration-150">
+                Optimize Resume
+            </button>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="sticky top-0 w-full z-40 bg-slate-900/40 backdrop-blur-xl border-b border-white/10 shadow-xl shadow-black/20 font-['Manrope'] text-sm tracking-widest uppercase">
+<div class="flex items-center justify-between h-16 px-6 ml-64">
+<div class="hidden md:block text-lg font-bold text-slate-100 tracking-tighter normal-case">
+                JobKernel
+            </div>
+<div class="flex items-center gap-6">
+<div class="relative hidden lg:block">
+<input class="bg-slate-900/60 border-none rounded-full py-2 pl-10 pr-4 text-[10px] tracking-widest focus:ring-1 focus:ring-primary/50 text-slate-100 w-64 transition-all duration-200" placeholder="SEARCH TASKS..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg">search</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:bg-white/10 rounded-full transition-all duration-200">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-400 hover:bg-white/10 rounded-full transition-all duration-200">
+<span class="material-symbols-outlined">smart_toy</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-white/10">
+<img alt="User Profile Profile" class="h-full w-full object-cover" data-alt="A professional headshot of a young creative professional with a confident expression, set against a dark, architecturally lit studio background. The lighting is dramatic, highlighting the contours of the face with soft blue ambient glow reflecting the JobKernel primary color palette. The overall mood is sophisticated and tech-focused." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3xKmA3un5AzUp6SEYaWeWYUScNmrekwrjUXszcJHjXgSM4iI5mAf3DfKy7TOWrVLkgnFyopxnuDDAVIYtphZatfAVEBWsJH-1IfLIIlKjGuuuFtCY1Np4pTdGKbB4ggYDGlbWTuPGgZN8u9xGFLIMNNdeASqEl5NEYy7W6jX7UJuT3GAGla6I-WUWSp7uZaixeVxnWxN6NDKs2D1vohR_LCVUEjJ_FtA_ZZIbClZPGCmuhiC4fvn7noe2Iwi2Kl11CZnAuELNl8U"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="ml-64 p-8 min-h-screen relative overflow-hidden">
+<!-- Decorative Atmosphere -->
+<div class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 blur-[120px] -z-10 rounded-full"></div>
+<div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-tertiary/5 blur-[100px] -z-10 rounded-full"></div>
+<!-- Content Header -->
+<header class="mb-10">
+<div class="flex items-end justify-between">
+<div>
+<span class="text-[10px] font-bold tracking-[0.2em] text-primary uppercase neon-glow">Daily Execution Plan</span>
+<h2 class="text-4xl font-extrabold text-white mt-2">Wednesday, Oct 24</h2>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 glass-panel rounded-lg text-xs font-bold tracking-wider text-slate-300 hover:bg-white/10 transition-all">WEEK VIEW</button>
+<button class="px-4 py-2 bg-primary/20 text-primary border border-primary/30 rounded-lg text-xs font-bold tracking-wider hover:bg-primary/30 transition-all">TODAY</button>
+</div>
+</div>
+<!-- Carry-over Strip -->
+<div class="mt-8 flex items-center gap-4 p-4 glass-panel rounded-2xl border-l-4 border-tertiary">
+<div class="bg-tertiary/20 p-2 rounded-lg">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">history</span>
+</div>
+<div>
+<span class="text-[10px] font-bold tracking-widest text-slate-500 uppercase">Carry-over from yesterday</span>
+<div class="flex gap-6 mt-1">
+<div class="flex items-center gap-2 group cursor-pointer">
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary group-hover:scale-125 transition-transform"></div>
+<span class="text-sm font-semibold text-slate-200 group-hover:text-white">Review LinkedIn bio</span>
+</div>
+<div class="flex items-center gap-2 group cursor-pointer">
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary group-hover:scale-125 transition-transform"></div>
+<span class="text-sm font-semibold text-slate-200 group-hover:text-white">Log Amazon Referral</span>
+</div>
+</div>
+</div>
+<button class="ml-auto text-[10px] font-bold tracking-widest text-slate-400 hover:text-white transition-colors">CLEAR ALL</button>
+</div>
+</header>
+<div class="grid grid-cols-12 gap-8 items-start">
+<!-- Timeline & Tasks -->
+<div class="col-span-8 space-y-0">
+<!-- 08:00 AM - Buffer -->
+<div class="flex gap-6 group">
+<div class="w-16 pt-2 text-right">
+<span class="text-[10px] font-bold tracking-widest text-slate-500">08:00 AM</span>
+</div>
+<div class="flex-1 pb-8 border-l border-white/10 pl-8 relative">
+<div class="absolute -left-1 top-3 w-2 h-2 rounded-full bg-slate-700"></div>
+<div class="p-4 rounded-xl bg-slate-900/30 border border-white/5 text-slate-500 italic text-sm">
+                            Morning Routine &amp; Email Sweep (Buffer)
+                        </div>
+</div>
+</div>
+<!-- 10:00 AM - HIGH PRIORITY TASK -->
+<div class="flex gap-6">
+<div class="w-16 pt-2 text-right">
+<span class="text-[10px] font-bold tracking-widest text-primary neon-glow">10:00 AM</span>
+</div>
+<div class="flex-1 pb-12 border-l-2 border-primary pl-8 relative">
+<div class="absolute -left-1.5 top-3 w-3 h-3 rounded-full bg-primary shadow-[0_0_10px_#256af4]"></div>
+<div class="glass-panel p-6 rounded-2xl flex items-center justify-between group hover:border-primary/50 transition-all duration-300">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 rounded-2xl bg-black flex items-center justify-center p-3">
+<img alt="Meta Logo" class="w-full h-full object-contain" data-alt="The Meta logo depicted as a sleek, 3D chrome infinity symbol floating in a dark, digital space with vibrant blue and magenta neon highlights. The lighting is cinematic, casting long, sharp shadows and creating a high-end corporate tech aesthetic that fits seamlessly into the JobKernel dark mode design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBOzbKMgZRc7tmi2x9dOPHHsZBk3_C7X0leaPxGtLMD0qVxyxwJQoTnHXB1HbRrp1MlUrndwRIvO1XSPwsyaTCFuRzDYCXHdsDtvtNDSqOPQizZVjObX9KuFCa7-7d13hPJPeAhrzc9CC2orQE-nZBmGNyx1ZOnQUvTyl7aiWYlogdJHz5_KWN1AKUfHux5N53ZlNzPhv_HtboZa4N_-qL2PjacaDXjpP94FxvBisZbumPoO8UFlk3YyM2ye_JbYKsjAC53hN-i-Q"/>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/20 text-primary border border-primary/30 uppercase tracking-widest">High Priority</span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Interview Prep</span>
+</div>
+<h3 class="text-xl font-bold text-white">Interview Prep: Meta</h3>
+<p class="text-sm text-slate-400 mt-1">Focus: Product Design Systems &amp; Scalability cases.</p>
+</div>
+</div>
+<button class="bg-primary hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center gap-2 group-hover:scale-105">
+                                Start Task
+                                <span class="material-symbols-outlined text-sm">play_arrow</span>
+</button>
+</div>
+</div>
+</div>
+<!-- 11:30 AM - Buffer -->
+<div class="flex gap-6">
+<div class="w-16 pt-2 text-right">
+<span class="text-[10px] font-bold tracking-widest text-slate-500">11:30 AM</span>
+</div>
+<div class="flex-1 pb-8 border-l border-white/10 pl-8 relative">
+<div class="absolute -left-1 top-3 w-2 h-2 rounded-full bg-slate-700"></div>
+<div class="h-16 flex items-center justify-center border border-dashed border-white/10 rounded-xl text-[10px] font-bold tracking-[0.3em] text-slate-600 uppercase">
+                            Transition / Bio Break
+                        </div>
+</div>
+</div>
+<!-- 01:00 PM - MEDIUM PRIORITY TASK -->
+<div class="flex gap-6">
+<div class="w-16 pt-2 text-right">
+<span class="text-[10px] font-bold tracking-widest text-slate-300">01:00 PM</span>
+</div>
+<div class="flex-1 pb-12 border-l border-white/20 pl-8 relative">
+<div class="absolute -left-1.5 top-3 w-3 h-3 rounded-full bg-slate-400"></div>
+<div class="glass-panel p-6 rounded-2xl flex items-center justify-between group hover:border-white/20 transition-all duration-300">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 rounded-2xl bg-white flex items-center justify-center p-3">
+<img alt="Google Logo" class="w-full h-full object-contain" data-alt="A high-resolution, minimalist 3D rendering of the Google 'G' logo. The logo is clean and vibrant, set against a pristine white studio background with soft, diffused shadows. The image captures the iconic brand colors with precision, representing the professionalism and design excellence typical of a global tech leader." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaYeNJsgj3WX2EyKE6kWDM0nmwXFllf0iE63VYi8NApDWB7g4QU5pWvd_Cx6Fux32DClN-P35ZebkDfGvqMIKnzRThgFy6AR8PW5Sjq0sOQLHpIebfqpF36TsS7kjcCOoC5bgjaDwzqSmSpYpwI1PZw0RJ5R5TA3zOZOHQNReJazarEuwItPYdcc-7QPE07xjRqZORNixTOWlOlAM1n8mMhHcH9LzHYnukzHyhlImeaBCgdwk0zYj5l6FQYnmd0ynJfEyzSmy_n2E"/>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-white/5 text-slate-400 border border-white/10 uppercase tracking-widest">Medium</span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Resume Tailoring</span>
+</div>
+<h3 class="text-xl font-bold text-white">Resume Tailoring: Google</h3>
+<p class="text-sm text-slate-400 mt-1">Refine metrics for Cloud Platform projects.</p>
+</div>
+</div>
+<button class="bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold py-3 px-8 rounded-xl transition-all flex items-center gap-2">
+                                Start Task
+                                <span class="material-symbols-outlined text-sm">play_arrow</span>
+</button>
+</div>
+</div>
+</div>
+<!-- 04:00 PM - LOW PRIORITY TASK -->
+<div class="flex gap-6">
+<div class="w-16 pt-2 text-right">
+<span class="text-[10px] font-bold tracking-widest text-slate-300">04:00 PM</span>
+</div>
+<div class="flex-1 pb-12 border-l border-white/20 pl-8 relative">
+<div class="absolute -left-1.5 top-3 w-3 h-3 rounded-full bg-slate-600"></div>
+<div class="glass-panel p-6 rounded-2xl flex items-center justify-between group hover:border-white/20 transition-all duration-300">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-900 flex items-center justify-center p-3">
+<span class="material-symbols-outlined text-white text-3xl" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-white/5 text-slate-500 border border-white/10 uppercase tracking-widest">Routine</span>
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Networking</span>
+</div>
+<h3 class="text-xl font-bold text-white">Networking Outreach</h3>
+<p class="text-sm text-slate-400 mt-1">Connect with 5 Senior Designers at target companies.</p>
+</div>
+</div>
+<button class="bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold py-3 px-8 rounded-xl transition-all flex items-center gap-2">
+                                Start Task
+                                <span class="material-symbols-outlined text-sm">play_arrow</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Explainability Rail (Right) -->
+<div class="col-span-4 sticky top-24">
+<div class="space-y-6">
+<div class="glass-panel p-6 rounded-2xl">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<h4 class="text-xs font-bold tracking-[0.2em] text-white uppercase">Explainability Rail</h4>
+</div>
+<div class="space-y-8">
+<div>
+<h5 class="text-[10px] font-bold text-primary uppercase tracking-widest mb-3">Why Now?</h5>
+<p class="text-sm text-slate-300 leading-relaxed">
+                                    Your Meta interview is scheduled for <span class="text-white font-bold">Friday at 2 PM</span>. Morning execution peaks for cognitive tasks are between 10 AM and 12 PM according to your historical productivity data.
+                                </p>
+</div>
+<div class="p-4 bg-primary/10 rounded-xl border border-primary/20">
+<div class="flex items-end justify-between mb-2">
+<h5 class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Impact Score</h5>
+<span class="text-2xl font-black text-primary">94/100</span>
+</div>
+<div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[94%] shadow-[0_0_8px_#256af4]"></div>
+</div>
+<p class="text-[10px] text-slate-500 mt-3 italic text-center">Completing this block increases offer probability by 12%</p>
+</div>
+<div class="pt-4 border-t border-white/5">
+<h5 class="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-4">Contextual Insights</h5>
+<div class="space-y-4">
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-slate-500 text-lg">psychology</span>
+<p class="text-[11px] text-slate-400">Meta focuses heavily on "Scale" and "Systems Thinking" in Round 1. We've highlighted 3 specific case studies from your portfolio to review.</p>
+</div>
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-slate-500 text-lg">trending_up</span>
+<p class="text-[11px] text-slate-400">Application volume for the Google role is increasing. Finishing the resume today keeps you in the top 10% of early applicants.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Side FAB Suppression Logic Applied (No generic FAB here) -->
+<div class="glass-panel p-6 rounded-2xl bg-gradient-to-br from-primary/10 to-transparent border-primary/10">
+<h4 class="text-[10px] font-bold text-white uppercase tracking-widest mb-4">Optimizer Tip</h4>
+<p class="text-sm text-slate-400">You have a 90-minute gap between your resume work and outreach. We suggest a <span class="text-white">Focused Walk</span> to prevent cognitive fatigue.</p>
+<button class="mt-4 w-full py-2 text-[10px] font-black tracking-widest text-primary hover:text-white transition-colors uppercase">View Recovery Options</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

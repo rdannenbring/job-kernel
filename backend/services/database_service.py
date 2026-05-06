@@ -84,6 +84,9 @@ class Application(Base):
 
     match_score = Column(Integer, nullable=True)
     match_details = Column(Text) # JSON string containing scoring and coaching plan
+    substage_progress = Column(Text) # JSON dict of sub-stage completion status
+    additional_docs = Column(Text)  # JSON list of {filename, path, label}
+    excluded_profile_docs = Column(Text) # JSON list of paths (to exclude from profile docs)
 
     # AI-enriched job context fields (generated on first view)
     job_summary = Column(Text, nullable=True)     # High-level mission / what the company does
@@ -91,6 +94,11 @@ class Application(Base):
     function_dept = Column(Text, nullable=True)   # Function / department
     reporting_line = Column(Text, nullable=True)  # Who this role reports to
     team_context = Column(Text, nullable=True)    # Team size / composition context
+    parsed_requirements = Column(Text, nullable=True) # JSON list of concise requirements
+    parsed_preferences = Column(Text, nullable=True)  # JSON list of concise preferences
+    parsed_skills = Column(Text, nullable=True)       # JSON list of concise skills
+    bonus_equity = Column(Text, nullable=True)        # Summary of bonus/equity
+    travel_requirements = Column(Text, nullable=True) # Summary of travel requirements
 
     # Relationships
     sub_steps = relationship("ApplicationSubStep", back_populates="application", cascade="all, delete-orphan")
@@ -159,6 +167,7 @@ class UserProfile(Base):
     recommendations = Column(Text) # JSON list of dicts/strings
     base_resume_path = Column(String)
     long_form_resume_path = Column(String)
+    example_cover_letter_path = Column(String)
     additional_docs = Column(Text)  # JSON list of {filename, path, label}
     social_links = Column(Text) # JSON list of {name, url}
     preferences = Column(Text) # JSON dict of user preferences
@@ -563,6 +572,7 @@ class DatabaseService:
             "ALTER TABLE applications ADD COLUMN resume_changes_summary TEXT",
             "ALTER TABLE user_profile ADD COLUMN base_resume_path TEXT",
             "ALTER TABLE user_profile ADD COLUMN long_form_resume_path TEXT",
+            "ALTER TABLE user_profile ADD COLUMN example_cover_letter_path TEXT",
             "ALTER TABLE user_profile ADD COLUMN additional_docs TEXT",
             "ALTER TABLE user_profile ADD COLUMN social_links TEXT",
             "ALTER TABLE user_profile ADD COLUMN preferences TEXT",
@@ -579,16 +589,24 @@ class DatabaseService:
             "ALTER TABLE application_contacts ADD COLUMN headline TEXT",
             "ALTER TABLE applications ADD COLUMN match_score INTEGER",
             "ALTER TABLE applications ADD COLUMN match_details TEXT",
+            "ALTER TABLE applications ADD COLUMN substage_progress TEXT",
             "ALTER TABLE applications ADD COLUMN cover_letter_changes_summary TEXT",
             "ALTER TABLE applications ADD COLUMN job_summary TEXT",
             "ALTER TABLE applications ADD COLUMN core_purpose TEXT",
             "ALTER TABLE applications ADD COLUMN function_dept TEXT",
             "ALTER TABLE applications ADD COLUMN reporting_line TEXT",
             "ALTER TABLE applications ADD COLUMN team_context TEXT",
+            "ALTER TABLE applications ADD COLUMN parsed_requirements TEXT",
+            "ALTER TABLE applications ADD COLUMN parsed_preferences TEXT",
+            "ALTER TABLE applications ADD COLUMN parsed_skills TEXT",
+            "ALTER TABLE applications ADD COLUMN bonus_equity TEXT",
+            "ALTER TABLE applications ADD COLUMN travel_requirements TEXT",
             "ALTER TABLE application_sub_steps ADD COLUMN phase TEXT DEFAULT 'saved'",
             "ALTER TABLE users ADD COLUMN first_name TEXT",
             "ALTER TABLE users ADD COLUMN last_name TEXT",
             "ALTER TABLE users ADD COLUMN email TEXT",
+            "ALTER TABLE applications ADD COLUMN additional_docs TEXT",
+            "ALTER TABLE applications ADD COLUMN excluded_profile_docs TEXT",
             # Ensure tables are created if not already (Base.metadata.create_all handles this mostly, but explicit for clarity in migrations)
             """
             CREATE TABLE IF NOT EXISTS application_sub_steps (
@@ -775,6 +793,12 @@ class DatabaseService:
                     if 'match_score' in data: app.match_score = data['match_score']
                     if 'match_details' in data: 
                         app.match_details = json.dumps(data['match_details']) if isinstance(data['match_details'], (dict, list)) else data['match_details']
+                    if 'substage_progress' in data: 
+                        app.substage_progress = json.dumps(data['substage_progress']) if isinstance(data['substage_progress'], (dict, list)) else data['substage_progress']
+                    if 'additional_docs' in data:
+                        app.additional_docs = json.dumps(data['additional_docs']) if isinstance(data['additional_docs'], (dict, list)) else data['additional_docs']
+                    if 'excluded_profile_docs' in data:
+                        app.excluded_profile_docs = json.dumps(data['excluded_profile_docs']) if isinstance(data['excluded_profile_docs'], (dict, list)) else data['excluded_profile_docs']
                     
                     # Update company ratings
                     if data.get('glassdoor_rating') is not None: app.glassdoor_rating = data.get('glassdoor_rating')
@@ -835,6 +859,9 @@ class DatabaseService:
                 commute_time_mins=data.get('commute_time_mins'),
                 commute_distance_miles=data.get('commute_distance_miles'),
                 commute_details=json.dumps(data.get('commute_details')) if data.get('commute_details') else None,
+                substage_progress=json.dumps(data.get('substage_progress')) if data.get('substage_progress') else None,
+                additional_docs=json.dumps(data.get('additional_docs')) if isinstance(data.get('additional_docs'), (dict, list)) else data.get('additional_docs'),
+                excluded_profile_docs=json.dumps(data.get('excluded_profile_docs')) if isinstance(data.get('excluded_profile_docs'), (dict, list)) else data.get('excluded_profile_docs'),
                 source=data.get('source')
             )
 
@@ -1063,6 +1090,7 @@ class DatabaseService:
             "cover_letter_changes_summary": app.cover_letter_changes_summary,
             "match_score": app.match_score,
             "match_details": json.loads(app.match_details) if app.match_details else {},
+            "substage_progress": json.loads(app.substage_progress) if app.substage_progress else {},
             "original_filename": app.original_resume_path,
             "is_archived": app.is_archived == 'true',
             "kanban_order": app.kanban_order or 0,
@@ -1085,6 +1113,17 @@ class DatabaseService:
             "function_dept": app.function_dept,
             "reporting_line": app.reporting_line,
             "team_context": app.team_context,
+            "parsed_requirements": app.parsed_requirements,
+            "parsed_preferences": app.parsed_preferences,
+            "parsed_skills": app.parsed_skills,
+            "bonus_equity": app.bonus_equity,
+            "travel_requirements": app.travel_requirements,
+            "glassdoor_rating": app.glassdoor_rating,
+            "glassdoor_url": app.glassdoor_url,
+            "indeed_rating": app.indeed_rating,
+            "indeed_url": app.indeed_url,
+            "linkedin_rating": app.linkedin_rating,
+            "linkedin_url": app.linkedin_url,
         }
 
     def get_application_by_resume_path(self, filename: str) -> Dict[str, Any]:
@@ -1255,6 +1294,14 @@ class DatabaseService:
             if 'function_dept' in data: app.function_dept = data['function_dept']
             if 'reporting_line' in data: app.reporting_line = data['reporting_line']
             if 'team_context' in data: app.team_context = data['team_context']
+            if 'parsed_requirements' in data: app.parsed_requirements = data['parsed_requirements']
+            if 'parsed_preferences' in data: app.parsed_preferences = data['parsed_preferences']
+            if 'parsed_skills' in data: app.parsed_skills = data['parsed_skills']
+            if 'bonus_equity' in data: app.bonus_equity = data['bonus_equity']
+            if 'travel_requirements' in data: app.travel_requirements = data['travel_requirements']
+            if 'substage_progress' in data:
+                val = data['substage_progress']
+                app.substage_progress = json.dumps(val) if isinstance(val, (dict, list)) else val
 
             session.commit()
             return True
@@ -1367,6 +1414,7 @@ class DatabaseService:
                 "other": json.loads(profile.other) if profile.other else [],
                 "base_resume_path": profile.base_resume_path,
                 "long_form_resume_path": profile.long_form_resume_path,
+                "example_cover_letter_path": profile.example_cover_letter_path,
                 "additional_docs": json.loads(profile.additional_docs) if profile.additional_docs else [],
                 "social_links": json.loads(profile.social_links) if getattr(profile, 'social_links', None) else [],
                 "preferences": json.loads(profile.preferences) if getattr(profile, 'preferences', None) else {}
@@ -1439,6 +1487,8 @@ class DatabaseService:
                 profile.base_resume_path = data["base_resume_path"]
             if data.get("long_form_resume_path") is not None:
                 profile.long_form_resume_path = data["long_form_resume_path"]
+            if data.get("example_cover_letter_path") is not None:
+                profile.example_cover_letter_path = data["example_cover_letter_path"]
             if "additional_docs" in data and data.get("additional_docs") is not None:
                 profile.additional_docs = json.dumps(data.get("additional_docs", []))
             if "social_links" in data:

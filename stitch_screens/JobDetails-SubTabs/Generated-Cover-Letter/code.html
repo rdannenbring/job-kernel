@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Midnight Glass | Cover Letter Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface": "#101622",
+                        "on-surface-variant": "#94a3b8",
+                        "surface-tint": "#256af4",
+                        "primary-container": "#256af433",
+                        "surface-variant": "#1e293b",
+                        "surface-container-lowest": "#080c14",
+                        "secondary-container": "#1e293b",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#f1f5f9",
+                        "on-error": "#ffffff",
+                        "surface-container": "#1e293b80",
+                        "tertiary-container": "#f43f5e22",
+                        "primary-fixed": "#dbeafe",
+                        "on-error-container": "#fca5a5",
+                        "surface-container-high": "#1e293b99",
+                        "on-background": "#f1f5f9",
+                        "outline-variant": "#1e293b",
+                        "secondary": "#334155",
+                        "on-secondary-fixed-variant": "#334155",
+                        "error-container": "#450a0a",
+                        "on-secondary-container": "#cbd5e1",
+                        "surface-bright": "#1e293b",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "on-primary-fixed": "#1e3a8a",
+                        "inverse-surface": "#f8fafc",
+                        "secondary-fixed": "#e2e8f0",
+                        "on-secondary-fixed": "#0f172a",
+                        "background": "#101622",
+                        "tertiary-fixed": "#ffe4e6",
+                        "on-secondary": "#f8fafc",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "inverse-on-surface": "#0f172a",
+                        "error": "#ef4444",
+                        "surface-dim": "#0b0f18",
+                        "inverse-primary": "#60a5fa",
+                        "surface-container-highest": "#2d3748",
+                        "on-tertiary-fixed": "#4c0519",
+                        "surface-container-low": "#1e293b66",
+                        "on-primary-container": "#60a5fa",
+                        "on-primary": "#ffffff",
+                        "outline": "#334155",
+                        "tertiary": "#f43f5e",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "primary": "#256af4",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-tertiary-container": "#fb7185"
+                    },
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        display: ["Manrope"],
+                        body: ["Manrope"],
+                        label: ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .neon-glow {
+            text-shadow: 0 0 10px rgba(37, 106, 244, 0.4);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body min-h-screen">
+<!-- SideNavBar Anchor -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-slate-950/80 backdrop-blur-xl border-r border-white/10 flex flex-col py-8 px-4 z-50">
+<div class="mb-10 px-2">
+<h1 class="text-xl font-bold tracking-tighter text-white">Midnight Glass</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-label">Career Curator</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<span class="font-manrope text-sm tracking-wide">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600/20 text-blue-400 font-semibold border-r-2 border-blue-500 transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined text-xl">work</span>
+<span class="font-manrope text-sm tracking-wide">Applications</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined text-xl">bookmark</span>
+<span class="font-manrope text-sm tracking-wide">Saved Jobs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined text-xl">group</span>
+<span class="font-manrope text-sm tracking-wide">Network</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined text-xl">analytics</span>
+<span class="font-manrope text-sm tracking-wide">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto space-y-1 pt-4 border-t border-white/5">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-slate-100 transition-all duration-300" href="#">
+<span class="material-symbols-outlined text-xl">settings</span>
+<span class="font-manrope text-sm tracking-wide">Settings</span>
+</a>
+<div class="mt-4 p-3 glass-panel rounded-xl">
+<div class="flex items-center gap-3">
+<img alt="Premium User Avatar" class="w-10 h-10 rounded-full border border-primary/20" data-alt="A professional portrait of a tech executive in a high-end office environment. The subject is wearing a tailored navy blazer and has a confident, approachable expression. The background is a soft-focus architectural space with deep shadows and subtle electric blue accent lighting from modern digital displays, perfectly matching the Midnight Glass UI aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuClH8RoEP9LV8YCqBEtEzKuBiWbMTC5-zrysZxwap8gCqUbQjhKjSLjky-X4d6LGG3kqX_v5rk54M9v-1NFAC9aglJPCI0VZp-m8BsPT8jq2NNUwBELj2-wrUd4Pn9lztXoNdc0ynCi7dMujE1Igr1E9D4tIM5weG7UztlvtGPxDOpGS-IZID6lVcNra2JOhSTf4AfCZhafv42zOiS_5zbNtie-HWnVkHp-10cfvMTt367cNs2r2kRSqhOFhqEzR_AK_3hunzjFzbQ"/>
+<div>
+<p class="text-xs font-bold text-white">Alex Chen</p>
+<p class="text-[10px] text-primary uppercase tracking-tighter">Pro Member</p>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar Anchor -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-slate-900/40 backdrop-blur-md flex justify-between items-center px-8 z-40 border-b border-white/5">
+<div class="flex items-center gap-8">
+<div class="flex gap-6">
+<a class="text-slate-400 font-manrope text-sm font-medium hover:text-blue-300 transition-colors" href="#">Dashboard</a>
+<a class="text-blue-400 font-bold font-manrope text-sm" href="#">Applications</a>
+<a class="text-slate-400 font-manrope text-sm font-medium hover:text-blue-300 transition-colors" href="#">Active</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-white cursor-pointer">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full border-2 border-slate-900"></span>
+</div>
+<span class="material-symbols-outlined text-slate-400 hover:text-white cursor-pointer">history</span>
+<button class="bg-primary text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95">Generate All</button>
+</div>
+</header>
+<!-- Main Content Stage -->
+<main class="ml-64 pt-16 min-h-screen">
+<!-- Application Header -->
+<div class="px-8 py-6 flex items-center justify-between border-b border-white/5">
+<div class="flex items-center gap-4">
+<h2 class="text-2xl font-bold tracking-tight text-white neon-glow">Application Pack</h2>
+<div class="flex items-center gap-2 bg-surface-container px-3 py-1 rounded-full border border-white/5">
+<span class="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+<span class="block h-full bg-primary w-1/2"></span>
+</span>
+<span class="text-[10px] font-label text-on-surface-variant tracking-widest uppercase">50% Complete</span>
+</div>
+</div>
+</div>
+<div class="flex">
+<!-- Left Sub-navigation Sidebar -->
+<aside class="w-64 min-h-[calc(100vh-136px)] p-6 border-r border-white/5 space-y-2">
+<p class="text-[10px] font-label text-slate-500 tracking-widest uppercase mb-4 px-2">Artifacts</p>
+<button class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-white/5 transition-all text-left">
+<span class="material-symbols-outlined text-xl">description</span>
+                    Resume
+                </button>
+<button class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-primary bg-primary/10 border border-primary/20 text-left">
+<span class="material-symbols-outlined text-xl">mail</span>
+                    Cover Letter
+                </button>
+<button class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-white/5 transition-all text-left">
+<span class="material-symbols-outlined text-xl">quiz</span>
+                    Answers
+                </button>
+<button class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-white/5 transition-all text-left">
+<span class="material-symbols-outlined text-xl">package_2</span>
+                    Prep Artifacts
+                </button>
+<div class="pt-8 space-y-6">
+<div class="glass-panel rounded-2xl p-4">
+<h3 class="text-[10px] font-label text-slate-400 tracking-widest uppercase mb-4">JD Key Phrases</h3>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-surface-container-highest/50 rounded-md text-[10px] font-medium text-slate-300">Distributed Systems</span>
+<span class="px-2 py-1 bg-surface-container-highest/50 rounded-md text-[10px] font-medium text-slate-300">Edge Computing</span>
+<span class="px-2 py-1 bg-surface-container-highest/50 rounded-md text-[10px] font-medium text-slate-300">TypeScript Mastery</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Application Content Area: Restructured to 2 Columns -->
+<div class="flex-1 px-8 py-8 grid grid-cols-12 gap-8">
+<!-- Primary Focus: Document Preview (8/12 Columns) -->
+<div class="col-span-8 space-y-6">
+<div class="glass-panel rounded-2xl min-h-[800px] flex flex-col relative overflow-hidden">
+<!-- Editor Header -->
+<div class="flex items-center justify-between p-4 border-b border-white/5 bg-slate-900/20">
+<div class="flex gap-2">
+<div class="w-3 h-3 rounded-full bg-slate-700"></div>
+<div class="w-3 h-3 rounded-full bg-slate-700"></div>
+<div class="w-3 h-3 rounded-full bg-slate-700"></div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-xs font-medium text-slate-500">Auto-saved 2m ago</span>
+<div class="flex items-center gap-1">
+<button class="p-1.5 hover:bg-white/10 rounded-md text-slate-400"><span class="material-symbols-outlined text-lg">download</span></button>
+<button class="p-1.5 hover:bg-white/10 rounded-md text-slate-400"><span class="material-symbols-outlined text-lg">share</span></button>
+<button class="p-1.5 hover:bg-white/10 rounded-md text-slate-400"><span class="material-symbols-outlined text-lg">print</span></button>
+</div>
+</div>
+</div>
+<!-- Letter Body -->
+<div class="flex-1 p-12 bg-white/5 m-4 rounded-xl border border-white/5 overflow-y-auto no-scrollbar">
+<div class="max-w-prose mx-auto space-y-6 text-slate-300 leading-relaxed text-sm">
+<div class="mb-12">
+<p class="font-bold text-white text-lg">Alex Chen</p>
+<p class="text-slate-500">San Francisco, CA • alex.chen@example.com</p>
+</div>
+<div class="mb-12">
+<p>October 24, 2023</p>
+<p class="mt-4">Hiring Manager</p>
+<p>NextGen Dynamics</p>
+<p>Palo Alto, CA</p>
+</div>
+<p>Dear Hiring Manager,</p>
+<p>I am writing to express my enthusiastic interest in the Senior Frontend Engineer position at NextGen Dynamics. As a developer who has spent the last six years navigating the intersection of scalable architecture and refined user experience, I have long admired NextGen’s commitment to pushing the boundaries of distributed interface systems.</p>
+<p>My background at TechFlow, where I led the migration of our legacy systems to a modern <span class="bg-blue-500/20 text-blue-300 px-1 rounded">micro-frontend architecture</span>, aligns perfectly with your current technical roadmap. During this transition, we successfully reduced initial load times by 40% and improved developer velocity by establishing a robust Design Ops framework—a bridge between Figma and Production that I see as critical for NextGen’s upcoming Project Horizon.</p>
+<p>What excites me most about this role is the opportunity to apply my <span class="bg-blue-500/20 text-blue-300 px-1 rounded">TypeScript mastery</span> to a product that is fundamentally changing how users interact with data at the edge. I am particularly impressed by your recent work on high-concurrency dashboards, which mirrors my own efforts in building real-time analytics platforms.</p>
+<p>I am confident that my technical expertise and collaborative spirit would make me a valuable asset to your engineering team. Thank you for your time and consideration.</p>
+<p>Sincerely,</p>
+<p class="font-bold text-white mt-8">Alex Chen</p>
+</div>
+</div>
+<!-- AI Tools Floating Bar -->
+<div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 glass-panel rounded-2xl border-white/10 shadow-2xl">
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:opacity-90">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+                                Optimize with AI
+                            </button>
+<div class="w-px h-6 bg-white/10 mx-1"></div>
+<button class="p-2 text-slate-400 hover:text-white"><span class="material-symbols-outlined text-lg">translate</span></button>
+<button class="p-2 text-slate-400 hover:text-white"><span class="material-symbols-outlined text-lg">format_quote</span></button>
+</div>
+</div>
+</div>
+<!-- Secondary Support Data: Grouped (4/12 Columns) -->
+<div class="col-span-4 space-y-6">
+<!-- Sentiment Score (High Visibility) -->
+<div class="bg-primary/10 border border-primary/20 rounded-2xl p-6 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-primary/20 rounded-lg">
+<span class="material-symbols-outlined text-primary text-2xl">psychology</span>
+</div>
+<div>
+<h4 class="text-xs font-bold text-white uppercase tracking-wider">Sentiment Score</h4>
+<span class="text-xs font-label text-primary tracking-widest uppercase">Excellent Performance</span>
+</div>
+</div>
+<div class="text-4xl font-display font-bold text-white">92</div>
+</div>
+<!-- Value Propositions -->
+<div class="glass-panel rounded-2xl p-6 border-l-4 border-l-primary/40">
+<h3 class="text-xs font-label text-primary tracking-widest uppercase mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">stars</span>
+                            Value Propositions
+                        </h3>
+<div class="grid grid-cols-1 gap-4">
+<div class="p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors group">
+<p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Architecture Alignment</p>
+<p class="text-sm text-slate-200 leading-snug">Expertise in micro-frontend architectures matching the core stack requirements for Project Horizon.</p>
+</div>
+<div class="p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors group">
+<p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Scale Optimization</p>
+<p class="text-sm text-slate-200 leading-snug">Proven record reducing latency by 40% in large-scale React environments, direct match for performance KPIs.</p>
+</div>
+</div>
+</div>
+<!-- Outreach Drafts -->
+<div class="glass-panel rounded-2xl p-6">
+<h3 class="text-xs font-label text-slate-400 tracking-widest uppercase mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">send</span>
+                            Outreach Drafts
+                        </h3>
+<div class="grid grid-cols-1 gap-3">
+<div class="p-4 bg-surface-container-low rounded-xl border border-white/5 cursor-pointer hover:border-primary/30 transition-all">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-primary uppercase tracking-tighter">Recruiter Email</span>
+<span class="material-symbols-outlined text-slate-500 text-sm">open_in_new</span>
+</div>
+<p class="text-sm text-slate-300">"Hi Sarah, I just applied for the Senior FE role and noticed your work on..."</p>
+</div>
+<div class="p-4 bg-surface-container-low rounded-xl border border-white/5 cursor-pointer hover:border-primary/30 transition-all">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[10px] font-bold text-on-tertiary-container uppercase tracking-tighter">Personal Referral</span>
+<span class="material-symbols-outlined text-slate-500 text-sm">open_in_new</span>
+</div>
+<p class="text-sm text-slate-300">"Hey Mark, hope you're well! I'm interested in NextGen Dynamics..."</p>
+</div>
+</div>
+</div>
+<!-- Version History -->
+<div class="glass-panel rounded-2xl p-6">
+<h3 class="text-xs font-label text-slate-400 tracking-widest uppercase mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">history</span>
+                            Version History
+                        </h3>
+<div class="space-y-5 relative">
+<div class="absolute left-2 top-2 bottom-2 w-px bg-white/10"></div>
+<div class="relative pl-8 group">
+<div class="absolute left-0 top-1 w-4 h-4 rounded-full bg-primary border-4 border-slate-900 shadow-[0_0_8px_rgba(37,106,244,0.6)]"></div>
+<p class="text-xs font-bold text-white">v2.4 Current Version</p>
+<p class="text-[10px] text-slate-500 uppercase">Today, 2:45 PM</p>
+</div>
+<div class="relative pl-8 group cursor-pointer">
+<div class="absolute left-1 top-1.5 w-2 h-2 rounded-full bg-slate-700 group-hover:bg-slate-500"></div>
+<p class="text-xs font-medium text-slate-400 group-hover:text-slate-200">v2.3 AI-Powered Polish</p>
+<p class="text-[10px] text-slate-500 uppercase">Oct 23, 11:20 AM</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Background Decoration Elements -->
+<div class="fixed bottom-[-10%] right-[-5%] w-[40vw] h-[40vw] bg-primary/5 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+<div class="fixed top-[10%] left-[-5%] w-[30vw] h-[30vw] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none -z-10"></div>
+</body></html>

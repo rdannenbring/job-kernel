@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Formal Acceptance Sent | Midnight Glass</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error": "#ef4444",
+                    "surface-container": "#1e293b80",
+                    "secondary-fixed-dim": "#cbd5e1",
+                    "tertiary": "#f43f5e",
+                    "primary-container": "#256af433",
+                    "on-secondary-container": "#cbd5e1",
+                    "surface-container-low": "#1e293b66",
+                    "outline": "#334155",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed": "#4c0519",
+                    "background": "#101622",
+                    "on-tertiary-container": "#fb7185",
+                    "on-surface": "#f1f5f9",
+                    "primary-fixed-dim": "#bfdbfe",
+                    "on-background": "#f1f5f9",
+                    "surface-container-high": "#1e293b99",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#ffe4e6",
+                    "tertiary-fixed-dim": "#fecdd3",
+                    "primary-fixed": "#dbeafe",
+                    "surface": "#101622",
+                    "secondary-container": "#1e293b",
+                    "outline-variant": "#1e293b",
+                    "on-secondary": "#f8fafc",
+                    "surface-dim": "#0b0f18",
+                    "surface-container-lowest": "#080c14",
+                    "secondary": "#334155",
+                    "inverse-primary": "#60a5fa",
+                    "surface-container-highest": "#2d3748",
+                    "secondary-fixed": "#e2e8f0",
+                    "on-primary-container": "#60a5fa",
+                    "surface-tint": "#256af4",
+                    "on-secondary-fixed-variant": "#334155",
+                    "on-error": "#ffffff",
+                    "primary": "#256af4",
+                    "on-secondary-fixed": "#0f172a",
+                    "on-primary-fixed-variant": "#1d4ed8",
+                    "tertiary-container": "#f43f5e22",
+                    "inverse-surface": "#f8fafc",
+                    "on-primary-fixed": "#1e3a8a",
+                    "inverse-on-surface": "#0f172a",
+                    "error-container": "#450a0a",
+                    "on-surface-variant": "#94a3b8",
+                    "surface-variant": "#1e293b",
+                    "on-tertiary-fixed-variant": "#9f1239",
+                    "on-error-container": "#fca5a5",
+                    "surface-bright": "#1e293b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "2xl": "1rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "display": ["Manrope"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .glass-panel { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .neon-glow { text-shadow: 0 0 10px rgba(37, 106, 244, 0.5); }
+        .success-glow { box-shadow: 0 0 40px -10px rgba(37, 106, 244, 0.3); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary/30 min-h-screen">
+<!-- Atmospheric background accents -->
+<div class="fixed top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="fixed bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none"></div>
+<!-- Side Navigation Shell -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-slate-950/80 backdrop-blur-xl border-r border-white/10 flex flex-col h-full py-8 px-4 z-50">
+<div class="mb-10 px-4">
+<h1 class="text-xl font-bold tracking-tighter text-white">Midnight Glass</h1>
+<p class="text-xs text-slate-500 font-label tracking-widest uppercase mt-1">Career Curator</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="text-slate-400 hover:text-slate-100 transition-colors flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 group" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="font-manrope text-sm tracking-wide">Dashboard</span>
+</a>
+<a class="bg-blue-600/20 text-blue-400 font-semibold border-r-2 border-blue-500 flex items-center gap-3 px-4 py-3 rounded-xl group transition-all duration-300" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">work</span>
+<span class="font-manrope text-sm tracking-wide">Applications</span>
+</a>
+<a class="text-slate-400 hover:text-slate-100 transition-colors flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 group" href="#">
+<span class="material-symbols-outlined text-[20px]">bookmark</span>
+<span class="font-manrope text-sm tracking-wide">Saved Jobs</span>
+</a>
+<a class="text-slate-400 hover:text-slate-100 transition-colors flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 group" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span class="font-manrope text-sm tracking-wide">Network</span>
+</a>
+<a class="text-slate-400 hover:text-slate-100 transition-colors flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 group" href="#">
+<span class="material-symbols-outlined text-[20px]">analytics</span>
+<span class="font-manrope text-sm tracking-wide">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto space-y-1">
+<a class="text-slate-400 hover:text-slate-100 transition-colors flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-white/5 group" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-manrope text-sm tracking-wide">Settings</span>
+</a>
+<a class="text-slate-400 hover:text-slate-100 transition-colors flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-white/5 group" href="#">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+<span class="font-manrope text-sm tracking-wide">Support</span>
+</a>
+</div>
+</aside>
+<!-- Top App Bar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-slate-900/40 backdrop-blur-md border-b border-white/5 flex justify-between items-center px-8 z-40">
+<div class="flex items-center gap-8">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="bg-slate-900/50 border-none rounded-full pl-10 pr-4 py-1.5 text-sm text-slate-300 w-64 focus:ring-1 focus:ring-primary placeholder:text-slate-500" placeholder="Search applications..." type="text"/>
+</div>
+<nav class="flex gap-6">
+<a class="text-slate-400 font-manrope text-sm font-medium hover:text-blue-300 transition-colors" href="#">Dashboard</a>
+<a class="text-blue-400 font-bold font-manrope text-sm" href="#">Applications</a>
+<a class="text-slate-400 font-manrope text-sm font-medium hover:text-blue-300 transition-colors" href="#">Active</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:text-white transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+<button class="p-2 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">history</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/10 ml-2">
+<img alt="User Profile" data-alt="A professional close-up headshot portrait of a successful young executive with a confident expression, set against a blurred, moody urban background with cool blue and teal nighttime city lights. The lighting is sophisticated, with a gentle rim light highlighting the silhouette, fitting the high-end Midnight Glass aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxF2Cx022gwsijGMODHrajPxF6q0xgr29nva3FXcJRcZoNJACf_-pERV3c4PfZzYaldT2Yitjyk8_xx2gsxGtI1Yq9EQjrsuUJFYwphnN1mj1glMVFEcigz4tRPnO572By4gOXuarZTlZks8dJf0ej7zGjEw43FVu34ya1Hw_v4eIWw_ieqe-j6_DRaSBLWNRkVmb7gOjTN-xgG8Dqm1JQbGDqIYi8imotWTpKTZrZiMdcbvpasSdoBEJOfA26-M3zbVyywluvl_0"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 px-8 pb-12 min-h-screen">
+<!-- Page Header & Celebration -->
+<header class="mb-12 flex justify-between items-end">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<span class="px-2.5 py-0.5 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-bold uppercase tracking-widest text-primary">Stage: Accepted</span>
+<span class="text-slate-500 text-sm">•</span>
+<span class="text-slate-400 text-sm font-medium">Offer ID: #JK-9942</span>
+</div>
+<h2 class="text-4xl font-extrabold text-white tracking-tight neon-glow">Formal Acceptance</h2>
+<p class="text-slate-400 mt-2 text-lg">The final signature has been recorded. Welcome to the team.</p>
+</div>
+<button class="px-8 py-3 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 group">
+                Start Onboarding
+                <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</header>
+<div class="grid grid-cols-12 gap-8">
+<!-- Left Navigation (Sub-nav) -->
+<div class="col-span-3 space-y-6">
+<div class="glass-panel rounded-2xl p-4">
+<nav class="space-y-1">
+<p class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Phases</p>
+<a class="flex items-center justify-between px-4 py-3 text-slate-400 hover:text-slate-100 rounded-xl hover:bg-white/5 transition-all" href="#">
+<span class="text-sm font-medium">Verbal Offer</span>
+<span class="material-symbols-outlined text-sm text-primary">check_circle</span>
+</a>
+<a class="flex items-center justify-between px-4 py-3 text-slate-400 hover:text-slate-100 rounded-xl hover:bg-white/5 transition-all" href="#">
+<span class="text-sm font-medium">Offer Review</span>
+<span class="material-symbols-outlined text-sm text-primary">check_circle</span>
+</a>
+<a class="flex items-center justify-between px-4 py-3 bg-primary/10 text-primary border-l-2 border-primary rounded-r-xl transition-all" href="#">
+<span class="text-sm font-bold">Formal Acceptance</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">stars</span>
+</a>
+<a class="flex items-center justify-between px-4 py-3 text-slate-500 cursor-not-allowed" href="#">
+<span class="text-sm font-medium">Background Check</span>
+<span class="material-symbols-outlined text-sm opacity-20">lock</span>
+</a>
+</nav>
+</div>
+<div class="glass-panel rounded-2xl p-6 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors"></div>
+<h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Hiring Manager</h4>
+<div class="flex items-center gap-4 mb-4">
+<div class="w-12 h-12 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center">
+<img alt="Manager" class="w-full h-full rounded-xl object-cover" data-alt="A portrait of a senior creative director with sharp features and modern glasses, wearing a sleek black turtleneck, in a contemporary office setting with soft cinematic lighting and cool-toned shadows, perfectly matching the professional Midnight Glass aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsVOBEXLOLtV3sXtaijiEFZsV-OkYMlMhffTuKHaOs8R1YPhKcXOdQOLZR7h9HzadX6HZA0FS2CZ0kfiXtCLAhjttI-FmtTeh9luqxenCU59a6_kaLyyILgsvARUG7-jLHgg8SpqsYNwnzgM-lA83t_6RrYLmNzqu2ax6sbVmTh0Q-rxxvVnyKRH9HQ6-SBQ4GUwEg_4wdxX0OzoNh0nNL31sxTJzK3t3-Wn2N_2-kQfdnwqqdMnebgcqiW-SVQc6lowgdi-aUVa0"/>
+</div>
+<div>
+<p class="text-sm font-bold text-white">Julian Sterling</p>
+<p class="text-xs text-slate-400">Head of Product Design</p>
+</div>
+</div>
+<button class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">chat_bubble</span>
+                        Send Message
+                    </button>
+</div>
+</div>
+<!-- Main Dashboard Area (2-column layout requested) -->
+<div class="col-span-9 grid grid-cols-2 gap-8 items-start">
+<!-- Column 1: Acceptance Receipt -->
+<section class="space-y-8">
+<div class="glass-panel rounded-2xl p-8 success-glow relative">
+<div class="absolute top-6 right-8">
+<span class="material-symbols-outlined text-primary text-4xl animate-pulse">verified</span>
+</div>
+<h3 class="text-xl font-bold text-white mb-6">Acceptance Receipt</h3>
+<div class="space-y-6">
+<div class="flex justify-between items-center py-4 border-b border-white/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400">schedule</span>
+<span class="text-sm text-slate-300">Signed On</span>
+</div>
+<span class="text-sm font-bold text-white">Oct 24, 2023 | 14:32 EST</span>
+</div>
+<div class="flex justify-between items-center py-4 border-b border-white/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400">fingerprint</span>
+<span class="text-sm text-slate-300">Digital ID</span>
+</div>
+<span class="text-xs font-mono text-primary bg-primary/5 px-2 py-1 rounded">#auth_7822-xx-901</span>
+</div>
+<div class="mt-8">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Contract Document</p>
+<div class="group cursor-pointer">
+<div class="border-2 border-dashed border-white/10 hover:border-primary/50 transition-colors rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-white/[0.02]">
+<div class="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-3xl">upload_file</span>
+</div>
+<p class="text-sm font-medium text-slate-300">Signed_Contract_Sterling_Final.pdf</p>
+<p class="text-xs text-slate-500">Document sealed &amp; encrypted</p>
+<div class="flex gap-2 mt-2">
+<span class="px-3 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold rounded-full uppercase tracking-tighter hover:text-white transition-colors">View</span>
+<span class="px-3 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold rounded-full uppercase tracking-tighter hover:text-white transition-colors">Download</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Column 2: Final Terms & Next Steps -->
+<section class="space-y-8">
+<!-- Final Terms Snapshot -->
+<div class="glass-panel rounded-2xl p-8 overflow-hidden relative">
+<div class="absolute -right-12 -top-12 w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
+<h3 class="text-lg font-bold text-white mb-6">Final Terms Snapshot</h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container rounded-xl p-4 border border-white/5">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Annual Salary</p>
+<p class="text-xl font-extrabold text-white">$165,000</p>
+</div>
+<div class="bg-surface-container rounded-xl p-4 border border-white/5">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Equity (RSUs)</p>
+<p class="text-xl font-extrabold text-white">4,200</p>
+</div>
+<div class="bg-surface-container rounded-xl p-4 border border-white/5">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Start Date</p>
+<p class="text-xl font-extrabold text-white">Nov 12</p>
+</div>
+<div class="bg-surface-container rounded-xl p-4 border border-white/5">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Sign-on Bonus</p>
+<p class="text-xl font-extrabold text-white">$15,000</p>
+</div>
+</div>
+</div>
+<!-- Next Steps Module -->
+<div class="glass-panel rounded-2xl p-8 bg-gradient-to-br from-primary/10 to-transparent">
+<h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">rocket_launch</span>
+                            Next Steps: Pre-onboarding
+                        </h3>
+<div class="space-y-5">
+<div class="flex gap-4 items-start">
+<div class="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center flex-shrink-0 text-xs font-bold text-slate-400">01</div>
+<div>
+<h4 class="text-sm font-bold text-slate-200">Equipment Selection</h4>
+<p class="text-xs text-slate-500 mt-1">Choose your hardware package and peripherals for your remote setup.</p>
+</div>
+</div>
+<div class="flex gap-4 items-start">
+<div class="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center flex-shrink-0 text-xs font-bold text-slate-400">02</div>
+<div>
+<h4 class="text-sm font-bold text-slate-200">Legal Documentation</h4>
+<p class="text-xs text-slate-500 mt-1">Upload ID and complete tax withholding forms in the portal.</p>
+</div>
+</div>
+<div class="flex gap-4 items-start">
+<div class="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center flex-shrink-0 text-xs font-bold text-slate-400">03</div>
+<div>
+<h4 class="text-sm font-bold text-slate-200">Team Introduction</h4>
+<p class="text-xs text-slate-500 mt-1">Join the 'New Hires' Slack channel and schedule your first coffee chats.</p>
+</div>
+</div>
+</div>
+<div class="mt-8 p-4 bg-slate-900/50 rounded-xl border border-white/5">
+<div class="flex justify-between items-center mb-2">
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Setup Progress</span>
+<span class="text-[10px] font-bold text-primary uppercase">Ready to start</span>
+</div>
+<div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+<div class="w-0 h-full bg-primary rounded-full transition-all duration-1000"></div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Floating Progress Indicator -->
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 glass-panel rounded-full px-6 py-3 flex items-center gap-8 shadow-2xl border border-white/20 z-50">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="text-xs font-bold text-white uppercase tracking-widest">Formal Acceptance Complete</span>
+</div>
+<div class="h-4 w-[1px] bg-white/10"></div>
+<div class="flex gap-3">
+<button class="p-1 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-lg">share</span>
+</button>
+<button class="p-1 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-lg">print</span>
+</button>
+</div>
+</div>
+</main>
+</body></html>

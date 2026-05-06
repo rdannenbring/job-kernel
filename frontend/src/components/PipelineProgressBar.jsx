@@ -4,7 +4,7 @@ export const STAGE_TO_STATUS = {
   'generated': 'Generated',
   'applied': 'Applied',
   'interviewing': 'Interviewing',
-  'decision': 'Interviewing',
+  'decision': 'Decision',
   'accepted': 'Accepted',
   'declined': 'Declined',
   'rejected': 'Rejected',

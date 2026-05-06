@@ -140,6 +140,7 @@ const Profile = () => {
         preferences: { max_commute: '', work_setting: '', expected_salary: '' },
         base_resume_path: null,
         long_form_resume_path: null,
+        example_cover_letter_path: null,
         additional_docs: [],
     });
     const [extractedData, setExtractedData] = useState(null);
@@ -166,6 +167,10 @@ const Profile = () => {
     // Additional docs state
     const [uploadingAdditionalDoc, setUploadingAdditionalDoc] = useState(false);
     const additionalDocsInputRef = useRef(null);
+
+    // Example cover letter state
+    const [uploadingExampleCoverLetter, setUploadingExampleCoverLetter] = useState(false);
+    const exampleCoverLetterInputRef = useRef(null);
 
     // Document viewer state
     const [viewingDoc, setViewingDoc] = useState(null); // { filename, url }
@@ -231,6 +236,7 @@ const Profile = () => {
                         preferences: data.preferences || { max_commute: '', work_setting: '', expected_salary: '' },
                         base_resume_path: data.base_resume_path || null,
                         long_form_resume_path: data.long_form_resume_path || null,
+                        example_cover_letter_path: data.example_cover_letter_path || null,
                         additional_docs: data.additional_docs || [],
                     }));
                 }
@@ -291,6 +297,46 @@ const Profile = () => {
             setPendingProfileImportFile(file);
             setShowImportProfileDialog(true);
         }
+    };
+
+    const handleExampleCoverLetterUpload = async (file) => {
+        if (!file) return;
+        setUploadingExampleCoverLetter(true);
+        const fd = new FormData();
+        fd.append('document', file);
+        try {
+            const res = await fetchWithAuth(`${API_URL}/api/profile/upload-example-cover-letter`, { method: 'POST', body: fd });
+            if (res.ok) {
+                const data = await res.json();
+                setFormData(prev => ({ ...prev, example_cover_letter_path: data.path }));
+                showNotification(`Example cover letter saved!`, 'success');
+            } else {
+                showNotification('Failed to upload example cover letter.', 'error');
+            }
+        } catch {
+            showNotification('Error uploading example cover letter.', 'error');
+        } finally {
+            setUploadingExampleCoverLetter(false);
+        }
+    };
+
+    const handleDeleteExampleCoverLetter = async () => {
+        try {
+            const res = await fetchWithAuth(`${API_URL}/api/profile/example-cover-letter`, { method: 'DELETE' });
+            if (res.ok) {
+                setFormData(prev => ({ ...prev, example_cover_letter_path: null }));
+                showNotification('Example cover letter removed.', 'info');
+            }
+        } catch {
+            showNotification('Error removing example cover letter.', 'error');
+        }
+    };
+
+    const handleExampleCoverLetterFileSelect = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = '';
+        await handleExampleCoverLetterUpload(file);
     };
 
     const handleAdditionalDocUpload = async (files) => {
@@ -999,7 +1045,7 @@ const Profile = () => {
 
             {/* ===== RESUMES + DOCS — SINGLE ROW ===== */}
             <CollapsibleSection title="My Documents" icon={<span className="material-symbols-outlined">attach_file</span>} defaultExpanded={true}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
 
                 {/* ── Base Resume ── */}
                 <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -1063,6 +1109,38 @@ const Profile = () => {
                         </div>
                     )}
                     <input type="file" accept=".docx" ref={longFormResumeInputRef} style={{ display: 'none' }} onChange={(e) => handleResumeFileSelect(e, 'long_form')} />
+                </section>
+
+                {/* ── Example Cover Letter ── */}
+                <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <div style={{ width: '30px', height: '30px', borderRadius: 'var(--radius-sm)', background: 'var(--primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--info)' }}>mail</span>
+                        </div>
+                        <div>
+                            <h3 style={{ fontSize: '0.95rem', margin: 0, color: 'var(--info)', fontWeight: 600 }}>Example Cover Letter</h3>
+                            <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>For tone, structure &amp; style</p>
+                        </div>
+                    </div>
+                    {formData.example_cover_letter_path ? (() => {
+                        const fname = formData.example_cover_letter_path.split('/').pop();
+                        const short = fname.length > 18 ? fname.slice(0, 15) + '…' : fname;
+                        return (
+                            <div title={fname} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.6rem', background: 'var(--primary-glow)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--info)', flexShrink: 0 }}>mail</span>
+                                <span onClick={() => openDocViewer(formData.example_cover_letter_path, fname)} style={{ fontSize: '0.78rem', color: 'var(--info)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'underline' }}>{short}</span>
+                                <button onClick={() => handleDeleteExampleCoverLetter()} title="Remove" style={{ background: 'transparent', border: 'none', color: 'var(--error)', cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0, padding: '0 2px' }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>close</span>
+                                </button>
+                            </div>
+                        );
+                    })() : (
+                        <div onClick={() => exampleCoverLetterInputRef.current?.click()} style={{ border: '2px dashed var(--border-color)', borderRadius: 'var(--radius-md)', padding: '1.1rem', textAlign: 'center', cursor: 'pointer', flex: 1, transition: 'all var(--transition-base)' }} className="upload-dropzone">
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem', display: 'block' }}>upload</span>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0 }}>Click to upload (.docx, .pdf)</p>
+                        </div>
+                    )}
+                    <input type="file" accept=".docx,.pdf" ref={exampleCoverLetterInputRef} style={{ display: 'none' }} onChange={handleExampleCoverLetterFileSelect} />
                 </section>
 
                 {/* ── Additional AI Context Docs ── */}

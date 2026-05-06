@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Interviewing Phase | Final Round</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#256af4",
+                        "on-surface": "#f1f5f9",
+                        "inverse-on-surface": "#0f172a",
+                        "primary-container": "#256af433",
+                        "background": "#101622",
+                        "surface-container-low": "#1e293b66",
+                        "surface-container": "#1e293b80",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "inverse-primary": "#60a5fa",
+                        "surface-dim": "#0b0f18",
+                        "on-secondary-fixed-variant": "#334155",
+                        "on-secondary-fixed": "#0f172a",
+                        "tertiary-fixed": "#ffe4e6",
+                        "on-secondary-container": "#cbd5e1",
+                        "error": "#ef4444",
+                        "surface": "#101622",
+                        "error-container": "#450a0a",
+                        "on-error-container": "#fca5a5",
+                        "surface-bright": "#1e293b",
+                        "on-background": "#f1f5f9",
+                        "secondary": "#334155",
+                        "secondary-fixed": "#e2e8f0",
+                        "primary-fixed": "#dbeafe",
+                        "on-tertiary-container": "#fb7185",
+                        "surface-container-highest": "#2d3748",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-secondary": "#f8fafc",
+                        "surface-container-lowest": "#080c14",
+                        "secondary-container": "#1e293b",
+                        "on-tertiary-fixed": "#4c0519",
+                        "on-primary-container": "#60a5fa",
+                        "on-error": "#ffffff",
+                        "outline": "#334155",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#256af4",
+                        "tertiary-container": "#f43f5e22",
+                        "tertiary": "#f43f5e",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "on-surface-variant": "#94a3b8",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "surface-container-high": "#1e293b99",
+                        "surface-variant": "#1e293b",
+                        "outline-variant": "#1e293b",
+                        "inverse-surface": "#f8fafc",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "on-primary-fixed": "#1e3a8a"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-glow {
+            text-shadow: 0 0 10px rgba(37, 106, 244, 0.5);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen overflow-x-hidden">
+<!-- SideNavBar (Collapsed Version) -->
+<aside class="fixed left-0 top-0 h-full w-20 bg-slate-950/80 backdrop-blur-xl border-r border-white/10 flex flex-col py-8 items-center z-50">
+<div class="mb-10">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-white">dashboard</span>
+</div>
+</div>
+<nav class="flex flex-col gap-6 flex-1">
+<a class="text-blue-400 p-3 bg-blue-600/20 rounded-xl border-r-2 border-blue-500 transition-all" href="#">
+<span class="material-symbols-outlined">work</span>
+</a>
+<a class="text-slate-400 hover:text-slate-100 p-3 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+</a>
+<a class="text-slate-400 hover:text-slate-100 p-3 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">group</span>
+</a>
+<a class="text-slate-400 hover:text-slate-100 p-3 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+</a>
+</nav>
+<div class="flex flex-col gap-6 mt-auto">
+<a class="text-slate-400 hover:text-slate-100 p-3 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+</a>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-white/20">
+<img alt="Premium User Avatar" data-alt="A close-up professional portrait of a tech executive in a modern, glass-walled office at night. The lighting is low and atmospheric with subtle electric blue highlights reflecting off the glass surfaces. The mood is sophisticated and focused, representing a high-level corporate curator in a premium digital environment. The color palette is dominated by deep slates and sharp primary blues." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBI6YvYDVH-rITjj-LpwBxAbzrwi4h7EkPL36EkM0u0e1xoqEibcgAlRss_Xw_bwkIzJ3WF2tGdDNzSZanmCiRzOnObIwPAAz2eWjh_HIAuHmHfxuKT7s3HMDT6kZcmpgo8d2plNTkA2Mob7ZWPeXnIVawhayAsjm2vKd8MDreuMmjboM_vVYtqFDJNJJ0pCEzTNanwkCIACj_duzoouNa1e-HptM2uV-Dfyrm7SYQQcWfjWwGoEh9oWB-W2FAijxyPuuczxftIPmE"/>
+</div>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-5rem)] h-16 bg-slate-900/40 backdrop-blur-md border-b border-white/5 flex justify-between items-center px-8 z-40">
+<div class="flex items-center gap-6">
+<h1 class="text-lg font-bold tracking-tighter text-white">Job Tracker</h1>
+<div class="h-4 w-px bg-white/10"></div>
+<nav class="flex gap-6">
+<a class="text-slate-400 text-sm font-medium hover:text-blue-300 transition-colors" href="#">Dashboard</a>
+<a class="text-blue-400 text-sm font-bold transition-colors" href="#">Applications</a>
+<a class="text-slate-400 text-sm font-medium hover:text-blue-300 transition-colors" href="#">Active</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-400 hover:text-blue-300 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-400 hover:text-blue-300 transition-colors">
+<span class="material-symbols-outlined">history</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-20 pt-16 min-h-screen flex">
+<!-- Sub-stage Side Menu -->
+<aside class="w-64 border-r border-white/5 bg-surface-dim/30 flex flex-col p-6 gap-2">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Interviewing Stages</span>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all text-sm" href="#">
+<span class="material-symbols-outlined text-sm">filter_list</span> Screening
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all text-sm" href="#">
+<span class="material-symbols-outlined text-sm">psychology</span> Technical
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary border border-primary/20 transition-all text-sm font-semibold" href="#">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span> Final Round
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 transition-all text-sm opacity-50 cursor-not-allowed" href="#">
+<span class="material-symbols-outlined text-sm">description</span> Offer Phase
+            </a>
+</aside>
+<!-- Dynamic Content -->
+<div class="flex-1 p-8 overflow-y-auto">
+<div class="max-w-6xl mx-auto space-y-8">
+<!-- Hero Header -->
+<section class="flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary px-2 py-1 bg-primary/10 rounded border border-primary/20">Active Stage</span>
+<span class="text-slate-500 text-xs">Updated 2h ago</span>
+</div>
+<h2 class="text-4xl font-extrabold text-on-surface tracking-tight neon-glow">Final Round sub-stage</h2>
+<p class="text-slate-400 max-w-2xl">The ultimate alignment phase. Review key stakeholder profiles and prepare the cultural narrative before the transition to offer negotiation.</p>
+</section>
+<!-- Two Column Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Left Column: Executive Briefing -->
+<div class="space-y-6">
+<div class="glass-panel rounded-2xl p-6">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+<span class="material-symbols-outlined text-blue-400">badge</span>
+                                    Executive Briefing
+                                </h3>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">2 Stakeholders</span>
+</div>
+<div class="space-y-4">
+<!-- Stakeholder 1 -->
+<div class="bg-surface-container-low rounded-xl p-4 border border-white/5 hover:border-primary/30 transition-all group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/20">
+<img alt="CTO Profile" data-alt="Professional portrait of a female Chief Technology Officer in a high-tech corporate office setting. The background shows blurred server racks and glowing architectural elements. The lighting is sophisticated and moody, with cool blue tones and sharp highlights that emphasize her leadership and expertise. The visual style is premium, cinematic, and aligned with a futuristic editorial aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC51jsyV1_Ep4chgC7kzFe1U07vzqfZcEU1c_L4qIyRjt2xhN4VUEMWiwkWHVbi0thYeTrGhmG2wxSwFiGViJltV2JUul6feHZZrygciqOOWju9j6rz9tCnEqavNP5XnqAFj92znOnF7tH9jzEO2Fd3GPKNel7F6B7kyq18WKlmKb22gVXpiJFZ_FcVnUf3bzNPj-fPPM5fzaVAPJqjB3R_BW3ApRuGIzIc527Lukiq-zDf83CwtvaCqUU-sC4R1qkqaGTyz71ZEQw"/>
+</div>
+<div>
+<h4 class="font-bold text-slate-200">Elena Vance</h4>
+<p class="text-xs text-slate-400 uppercase tracking-widest">Chief Technology Officer</p>
+</div>
+<button class="ml-auto p-2 rounded-lg bg-white/5 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chat_bubble</span>
+</button>
+</div>
+<p class="mt-3 text-sm text-slate-300 italic">"Focus on scalability and how you manage high-stakes architectural shifts."</p>
+</div>
+<!-- Stakeholder 2 -->
+<div class="bg-surface-container-low rounded-xl p-4 border border-white/5 hover:border-primary/30 transition-all group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/20">
+<img alt="VP Product Profile" data-alt="Close-up portrait of a male VP of Product in a minimalist, glass-dominated workspace. The lighting features warm accent glows against a deep slate background, creating a professional yet innovative mood. The overall aesthetic is clean and high-end, utilizing a palette of deep blacks, greys, and electric blue hints in the reflection of his eyewear." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZLoAYC4ZmLfJjNveWQyPQg1TWJbQy663BFH45h0w6y9-v8AepGUa06qzSAVxsDZhphW3bhRoyM-3yL6Om3VC2oUM9v6t2mhs5nVWLbzwxrx2i7iEfIwWLhGsgivTP-Xc95KkPHKsv3nc1_7OtYJ3ysj1hzFcqd85X0Zcrnui8EeQCKBGbl22x9krBoy5j7uJOtC5UDgT0zrvSi4CjmWZVt8qYp7MWTLSyw81Xgnme8lZF_bgecKOhJLG6WaMiVb3Lzn96dy19IUU"/>
+</div>
+<div>
+<h4 class="font-bold text-slate-200">Marcus Thorne</h4>
+<p class="text-xs text-slate-400 uppercase tracking-widest">VP of Product</p>
+</div>
+<button class="ml-auto p-2 rounded-lg bg-white/5 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chat_bubble</span>
+</button>
+</div>
+<p class="mt-3 text-sm text-slate-300 italic">"He values cross-functional empathy and user-centric design cycles."</p>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-white/5">
+<h4 class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Final Round Logistics</h4>
+<ul class="space-y-3">
+<li class="flex items-center gap-3 text-sm text-slate-300">
+<span class="material-symbols-outlined text-primary text-lg">calendar_today</span>
+                                        Oct 24, 2023 at 2:00 PM (PT)
+                                    </li>
+<li class="flex items-center gap-3 text-sm text-slate-300">
+<span class="material-symbols-outlined text-primary text-lg">video_call</span>
+                                        Virtual Boardroom A (Link in Calendar)
+                                    </li>
+<li class="flex items-center gap-3 text-sm text-slate-300">
+<span class="material-symbols-outlined text-primary text-lg">timer</span>
+                                        90 Minutes Duration
+                                    </li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Right Column: Final Polish -->
+<div class="space-y-6">
+<div class="glass-panel rounded-2xl p-6 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -mr-16 -mt-16"></div>
+<h3 class="text-lg font-bold text-slate-100 flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-tertiary">auto_awesome</span>
+                                Final Polish
+                            </h3>
+<div class="space-y-6">
+<div>
+<label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-2">Culture Fit Strategy</label>
+<p class="text-sm text-slate-300 leading-relaxed">
+                                        Emphasize the 'Glass Culture'—transparency in feedback and radical ownership. Prepare stories about times you took responsibility for a project pivot.
+                                    </p>
+</div>
+<div>
+<label class="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-2">Vision Alignment</label>
+<p class="text-sm text-slate-300 leading-relaxed">
+                                        The company is moving toward AI-driven curation. Relate your experience in automation and algorithmic thinking to their 2024 roadmap.
+                                    </p>
+</div>
+<div class="bg-surface-container-highest rounded-xl p-5 border border-white/10">
+<h4 class="text-sm font-bold text-slate-100 mb-4">Ready to Move to Offer?</h4>
+<div class="space-y-3">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="w-5 h-5 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm text-slate-300 group-hover:text-white transition-colors">Stakeholder prep complete</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="w-5 h-5 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm text-slate-300 group-hover:text-white transition-colors">Cultural narratives defined</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm text-slate-300 group-hover:text-white transition-colors">Compensation range verified</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm text-slate-300 group-hover:text-white transition-colors">Portfolio links updated</span>
+</label>
+</div>
+<button class="w-full mt-6 py-3 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+                                        Request Offer Draft <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Section -->
+<section class="glass-panel rounded-2xl p-8">
+<h3 class="text-lg font-bold text-slate-100 mb-8 flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400">timeline</span>
+                        Interview Event History
+                    </h3>
+<div class="relative">
+<!-- Horizontal Timeline Line -->
+<div class="absolute top-5 left-0 w-full h-0.5 bg-slate-800"></div>
+<div class="grid grid-cols-4 gap-4 relative z-10">
+<!-- Event 1 -->
+<div class="flex flex-col items-center text-center gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-800 border-4 border-background flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<h5 class="text-xs font-bold text-slate-300 uppercase tracking-widest">Application</h5>
+<p class="text-[10px] text-slate-500 mt-1">Sept 12, 2023</p>
+</div>
+</div>
+<!-- Event 2 -->
+<div class="flex flex-col items-center text-center gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-800 border-4 border-background flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<h5 class="text-xs font-bold text-slate-300 uppercase tracking-widest">Screening Call</h5>
+<p class="text-[10px] text-slate-500 mt-1">Sept 18, 2023</p>
+</div>
+</div>
+<!-- Event 3 -->
+<div class="flex flex-col items-center text-center gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-800 border-4 border-background flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<h5 class="text-xs font-bold text-slate-300 uppercase tracking-widest">Technical Panel</h5>
+<p class="text-[10px] text-slate-500 mt-1">Oct 05, 2023</p>
+</div>
+</div>
+<!-- Event 4 (Current) -->
+<div class="flex flex-col items-center text-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary border-4 border-background flex items-center justify-center text-white ring-4 ring-primary/20">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+<div>
+<h5 class="text-xs font-bold text-primary uppercase tracking-widest">Final Round</h5>
+<p class="text-[10px] text-blue-400 mt-1 font-bold">Upcoming: Oct 24</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Atmosphere Blur Decoration -->
+<div class="fixed bottom-0 right-0 w-[40rem] h-[40rem] bg-primary/10 blur-[150px] -z-10 rounded-full translate-x-1/2 translate-y-1/2"></div>
+<div class="fixed top-0 left-0 w-[30rem] h-[30rem] bg-tertiary/5 blur-[120px] -z-10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+</div>
+</div>
+</main>
+</body></html>

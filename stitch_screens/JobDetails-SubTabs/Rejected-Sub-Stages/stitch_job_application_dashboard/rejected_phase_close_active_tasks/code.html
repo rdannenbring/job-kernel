@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Rejected Phase - Close Active Tasks | CareerFlow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffe4e6",
+                        "error-container": "#450a0a",
+                        "surface-bright": "#1e293b",
+                        "surface-container-low": "#1e293b66",
+                        "on-secondary-fixed": "#0f172a",
+                        "inverse-primary": "#60a5fa",
+                        "primary": "#256af4",
+                        "surface-variant": "#1e293b",
+                        "secondary-container": "#1e293b",
+                        "background": "#101622",
+                        "surface-container-lowest": "#080c14",
+                        "error": "#ef4444",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#1e3a8a",
+                        "inverse-surface": "#f8fafc",
+                        "outline-variant": "#1e293b",
+                        "surface-dim": "#0b0f18",
+                        "surface": "#101622",
+                        "tertiary-container": "#f43f5e22",
+                        "secondary": "#334155",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "on-background": "#f1f5f9",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "on-tertiary-container": "#fb7185",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "outline": "#334155",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#94a3b8",
+                        "primary-container": "#256af433",
+                        "on-secondary": "#f8fafc",
+                        "primary-fixed": "#dbeafe",
+                        "on-error-container": "#fca5a5",
+                        "on-primary-container": "#60a5fa",
+                        "on-tertiary-fixed": "#4c0519",
+                        "on-surface": "#f1f5f9",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-error": "#ffffff",
+                        "surface-container": "#1e293b80",
+                        "secondary-fixed": "#e2e8f0",
+                        "inverse-on-surface": "#0f172a",
+                        "surface-tint": "#256af4",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "on-secondary-fixed-variant": "#334155",
+                        "tertiary": "#f43f5e",
+                        "surface-container-highest": "#2d3748",
+                        "surface-container-high": "#1e293b99",
+                        "on-secondary-container": "#cbd5e1"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-accent {
+            text-shadow: 0 0 10px rgba(37, 106, 244, 0.4);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #101622;
+            color: #f1f5f9;
+            font-family: 'Manrope', sans-serif;
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full z-50 bg-slate-900/40 backdrop-blur-xl bg-gradient-to-b from-white/5 to-transparent shadow-xl shadow-blue-500/5 duration-300 ease-in-out">
+<div class="flex justify-between items-center h-16 px-8 w-full">
+<div class="text-xl font-black text-slate-100 tracking-tighter">CareerFlow</div>
+<div class="hidden md:flex gap-8 items-center">
+<a class="font-manrope text-sm tracking-widest uppercase text-slate-400 hover:text-slate-200 transition-colors" href="#">Dashboard</a>
+<a class="font-manrope text-sm tracking-widest uppercase text-blue-500 border-b-2 border-blue-500 pb-1 transition-colors" href="#">Job Tracker</a>
+<a class="font-manrope text-sm tracking-widest uppercase text-slate-400 hover:text-slate-200 transition-colors" href="#">Resume Lab</a>
+<a class="font-manrope text-sm tracking-widest uppercase text-slate-400 hover:text-slate-200 transition-colors" href="#">Analytics</a>
+</div>
+<div class="flex items-center gap-6">
+<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-white">notifications</span>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-white">settings</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/10">
+<img alt="User Profile" data-alt="A professional headshot of a young male executive with short groomed hair and a subtle confident smile, set against a blurred cinematic office background. The lighting is soft and directional, emphasizing facial features in a high-end corporate aesthetic that fits a premium SaaS application dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDfKSVmSkEZ0ozzqlIQWVGtVE1IsJBPTb8s6QQOtYinEiIi1aP1PAUexxSmOLRZioRXq6ySkjaoA_y11dEtLZWxj3edhpfWbl6zYUfhJB_Uk5aX5nEvskTdREFUmCGzlTURuO5LQ4PwRsiesBGAflVGfbm460QM9Q851SKycYFMcsfVl7JXLrZpCe9DptJ0PHFuYfg-8xlE2LNLi-qmEvIGvrbVD3mq-BbhJgrIUz2TsaqwC9ihOOEGs5ELAl4O6uEnXXg0IiPcdI"/>
+</div>
+</div>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="h-full w-64 fixed left-0 top-0 bg-[#101622] flex flex-col h-screen pt-20 border-r border-white/5 z-40">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30">
+<span class="material-symbols-outlined text-primary">person</span>
+</div>
+<div>
+<div class="text-slate-100 font-bold text-sm">Alex Rivera</div>
+<div class="text-[10px] tracking-widest uppercase text-slate-500">Premium Member</div>
+</div>
+</div>
+<nav class="flex-1">
+<a class="flex items-center gap-4 text-slate-400 py-3 px-6 font-manrope font-medium text-[12px] tracking-widest uppercase hover:bg-slate-800/50 hover:text-white transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span> Overview
+            </a>
+<a class="flex items-center gap-4 text-blue-400 bg-blue-500/10 border-r-4 border-blue-500 py-3 px-6 font-manrope font-medium text-[12px] tracking-widest uppercase transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">work</span> My Applications
+            </a>
+<a class="flex items-center gap-4 text-slate-400 py-3 px-6 font-manrope font-medium text-[12px] tracking-widest uppercase hover:bg-slate-800/50 hover:text-white transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">description</span> Resume Builder
+            </a>
+<a class="flex items-center gap-4 text-slate-400 py-3 px-6 font-manrope font-medium text-[12px] tracking-widest uppercase hover:bg-slate-800/50 hover:text-white transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">psychology</span> Interview Prep
+            </a>
+<a class="flex items-center gap-4 text-slate-400 py-3 px-6 font-manrope font-medium text-[12px] tracking-widest uppercase hover:bg-slate-800/50 hover:text-white transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">group</span> Network
+            </a>
+</nav>
+<div class="p-6">
+<button class="w-full py-3 bg-primary text-white text-[10px] font-bold tracking-widest uppercase rounded-lg shadow-lg shadow-primary/20 hover:brightness-110 transition-all">
+                Upgrade to Pro
+            </button>
+<a class="flex items-center gap-4 text-slate-400 py-3 mt-4 font-manrope font-medium text-[12px] tracking-widest uppercase hover:text-white" href="#">
+<span class="material-symbols-outlined">help</span> Help Center
+            </a>
+</div>
+</aside>
+<!-- Main Content Stage -->
+<main class="ml-64 pt-24 px-10 pb-12">
+<!-- Header & Context -->
+<header class="flex justify-between items-end mb-10">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="px-2 py-1 bg-error-container/40 border border-error/20 text-error text-[10px] font-bold tracking-widest uppercase rounded">Rejected Stage</span>
+<span class="text-slate-500 text-sm">/</span>
+<span class="text-slate-300 text-sm font-medium">Senior Product Designer @ Meta</span>
+</div>
+<h1 class="text-4xl font-extrabold text-slate-100 tracking-tight neon-accent">Rejected Phase - Close Active Tasks</h1>
+<p class="text-slate-400 mt-2 max-w-xl">Clean up your workspace for this application. Review all remaining items before archival to maintain a clean analytics pipeline.</p>
+</div>
+<div>
+<button class="flex items-center gap-2 px-8 py-4 bg-primary text-white rounded-xl font-bold tracking-widest uppercase shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined">sync</span>
+                    Close All &amp; Sync
+                </button>
+</div>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Cleanup Dashboard - Main Task List -->
+<div class="col-span-8 flex flex-col gap-6">
+<!-- Category: Pending Interview Events -->
+<section class="glass-panel rounded-2xl p-6">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-500">calendar_month</span>
+<h2 class="font-bold text-slate-100 tracking-wide">Interview Events</h2>
+</div>
+<span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">2 Items Found</span>
+</div>
+<div class="space-y-4">
+<div class="group flex items-center justify-between p-4 bg-surface-container rounded-xl border border-white/5 hover:border-blue-500/30 transition-all">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400">video_call</span>
+</div>
+<div>
+<h3 class="text-slate-100 font-medium">Technical Portfolio Review</h3>
+<p class="text-slate-400 text-sm">Scheduled for Oct 24, 2:00 PM</p>
+</div>
+</div>
+<button class="text-slate-500 hover:text-error transition-colors">
+<span class="material-symbols-outlined">cancel</span>
+</button>
+</div>
+<div class="group flex items-center justify-between p-4 bg-surface-container rounded-xl border border-white/5 hover:border-blue-500/30 transition-all">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400">group</span>
+</div>
+<div>
+<h3 class="text-slate-100 font-medium">Culture Fit Panel</h3>
+<p class="text-slate-400 text-sm">Follow-up pending organizer update</p>
+</div>
+</div>
+<button class="text-slate-500 hover:text-error transition-colors">
+<span class="material-symbols-outlined">cancel</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Category: Prep Tasks -->
+<section class="glass-panel rounded-2xl p-6">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-500">assignment</span>
+<h2 class="font-bold text-slate-100 tracking-wide">Preparation Tasks</h2>
+</div>
+<span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">3 Items Found</span>
+</div>
+<div class="grid grid-cols-1 gap-4">
+<div class="flex items-center p-4 bg-surface-container rounded-xl border border-white/5">
+<div class="mr-4">
+<div class="w-6 h-6 rounded border-2 border-slate-700 flex items-center justify-center cursor-pointer hover:border-blue-500"></div>
+</div>
+<div class="flex-1">
+<h3 class="text-slate-300">Finalize Slide Deck for Design Lead</h3>
+<span class="text-[10px] font-bold tracking-widest uppercase text-slate-600">Priority: High</span>
+</div>
+<span class="text-slate-600 text-xs">Today</span>
+</div>
+<div class="flex items-center p-4 bg-surface-container rounded-xl border border-white/5">
+<div class="mr-4">
+<div class="w-6 h-6 rounded border-2 border-slate-700 flex items-center justify-center cursor-pointer hover:border-blue-500"></div>
+</div>
+<div class="flex-1">
+<h3 class="text-slate-300">Research Meta Reality Labs Roadmap</h3>
+<span class="text-[10px] font-bold tracking-widest uppercase text-slate-600">Research</span>
+</div>
+<span class="text-slate-600 text-xs">Tomorrow</span>
+</div>
+<div class="flex items-center p-4 bg-surface-container rounded-xl border border-white/5">
+<div class="mr-4">
+<div class="w-6 h-6 rounded border-2 border-slate-700 flex items-center justify-center cursor-pointer hover:border-blue-500"></div>
+</div>
+<div class="flex-1">
+<h3 class="text-slate-300">Submit Reference List</h3>
+<span class="text-[10px] font-bold tracking-widest uppercase text-slate-600">Administrative</span>
+</div>
+<span class="text-slate-600 text-xs">Oct 26</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Sidebar - Action Context & Reminders -->
+<div class="col-span-4 flex flex-col gap-6">
+<!-- Quick Reminders Glass Card -->
+<section class="glass-panel rounded-2xl overflow-hidden">
+<div class="p-6 bg-gradient-to-br from-blue-500/10 to-transparent border-b border-white/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-500">notifications_active</span>
+<h2 class="font-bold text-slate-100 tracking-wide uppercase text-xs">Active Reminders</h2>
+</div>
+</div>
+<div class="p-6 space-y-6">
+<div class="flex gap-4">
+<div class="text-blue-500 mt-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">info</span>
+</div>
+<div>
+<p class="text-slate-300 text-sm leading-relaxed">Closing these tasks will permanently remove them from your active pipeline analytics.</p>
+</div>
+</div>
+<div class="space-y-4">
+<div class="p-3 bg-slate-900/50 rounded-lg border border-white/5">
+<div class="text-[10px] font-bold text-slate-500 tracking-widest uppercase mb-1">Follow up</div>
+<div class="text-slate-200 text-sm font-medium">Thank you note for Sarah J.</div>
+</div>
+<div class="p-3 bg-slate-900/50 rounded-lg border border-white/5">
+<div class="text-[10px] font-bold text-slate-500 tracking-widest uppercase mb-1">Alert</div>
+<div class="text-slate-200 text-sm font-medium">Withdraw LinkedIn application</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Statistics / Visual Context -->
+<section class="glass-panel rounded-2xl p-6 h-full min-h-[300px] flex flex-col justify-center items-center text-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 blur-3xl bg-blue-500 rounded-full scale-150 -z-10 translate-y-1/2"></div>
+<div class="w-32 h-32 rounded-full border-4 border-slate-800 border-t-blue-500 flex items-center justify-center mb-6">
+<div>
+<div class="text-3xl font-black text-slate-100">82%</div>
+<div class="text-[8px] font-bold tracking-widest uppercase text-slate-500">Pipeline Clean</div>
+</div>
+</div>
+<h3 class="text-slate-100 font-bold mb-2">Ready for Archival?</h3>
+<p class="text-slate-400 text-sm px-4">Once tasks are closed, this application will move to the 'Archived - Rejected' section of your career dashboard.</p>
+</section>
+<!-- Visual Detail Component -->
+<div class="rounded-2xl overflow-hidden h-40 border border-white/5">
+<img alt="Abstract Graphic" class="w-full h-full object-cover" data-alt="An abstract 3D render of flowing blue and violet glass ribbons intertwining in a dark void. The lighting is focused and dramatic, creating sharp highlights and deep, velvety shadows that reflect the premium midnight glass design system aesthetic. The atmosphere is calm, professional, and visually sophisticated." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1ET05k8y0kqBU4CFaK1CdwjXErKgMQbY46YCAv2osdlaG-RZggJ5OvnCm7SL_pUCHeLU_Vm8T12beq3ocR_QfYoeFmTZltR9OYeZ12heMuxhxBvPSYgHVlTp-vKXRy1T-WCynQhL39Di2MfVZ7QouDVwzOruG0y3D3ZnVXM3ZT3XvQBtPTjmv6naJm0KSyUT7aV_hYHDExkDoq6-nowBu6twsTvIGHZiQqBEqGTSkmUniEneBC6xwq4wQAo8pEt7CLFAQM4nKPWk"/>
+</div>
+</div>
+</div>
+<!-- Footer / Feedback Section -->
+<footer class="mt-12 flex justify-between items-center py-8 border-t border-white/5">
+<div class="flex gap-6">
+<a class="text-[10px] font-bold tracking-widest uppercase text-slate-500 hover:text-white transition-colors" href="#">Privacy Policy</a>
+<a class="text-[10px] font-bold tracking-widest uppercase text-slate-500 hover:text-white transition-colors" href="#">Data Export</a>
+<a class="text-[10px] font-bold tracking-widest uppercase text-slate-500 hover:text-white transition-colors" href="#">Feedback</a>
+</div>
+<div class="text-slate-600 text-xs font-medium">
+                Application Tracking ID: META-2023-992-RF
+            </div>
+</footer>
+</main>
+<!-- Background Atmospheric Glows -->
+<div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] pointer-events-none -z-20"></div>
+<div class="fixed bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-slate-800/20 blur-[120px] pointer-events-none -z-20"></div>
+</body></html>

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Interview Prep Center | Midnight Glass</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface": "#101622",
+                        "on-surface-variant": "#94a3b8",
+                        "surface-tint": "#256af4",
+                        "primary-container": "#256af433",
+                        "surface-variant": "#1e293b",
+                        "surface-container-lowest": "#080c14",
+                        "secondary-container": "#1e293b",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#f1f5f9",
+                        "on-error": "#ffffff",
+                        "surface-container": "#1e293b80",
+                        "tertiary-container": "#f43f5e22",
+                        "primary-fixed": "#dbeafe",
+                        "on-error-container": "#fca5a5",
+                        "surface-container-high": "#1e293b99",
+                        "on-background": "#f1f5f9",
+                        "outline-variant": "#1e293b",
+                        "secondary": "#334155",
+                        "on-secondary-fixed-variant": "#334155",
+                        "error-container": "#450a0a",
+                        "on-secondary-container": "#cbd5e1",
+                        "surface-bright": "#1e293b",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "on-primary-fixed": "#1e3a8a",
+                        "inverse-surface": "#f8fafc",
+                        "secondary-fixed": "#e2e8f0",
+                        "on-secondary-fixed": "#0f172a",
+                        "background": "#101622",
+                        "tertiary-fixed": "#ffe4e6",
+                        "on-secondary": "#f8fafc",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "inverse-on-surface": "#0f172a",
+                        "error": "#ef4444",
+                        "surface-dim": "#0b0f18",
+                        "inverse-primary": "#60a5fa",
+                        "surface-container-highest": "#2d3748",
+                        "on-tertiary-fixed": "#4c0519",
+                        "surface-container-low": "#1e293b66",
+                        "on-primary-container": "#60a5fa",
+                        "on-primary": "#ffffff",
+                        "outline": "#334155",
+                        "tertiary": "#f43f5e",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "primary": "#256af4",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-tertiary-container": "#fb7185"
+                    },
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        display: ["Manrope"],
+                        body: ["Manrope"],
+                        label: ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-glow {
+            text-shadow: 0 0 10px rgba(37, 106, 244, 0.4);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- Sidebar Navigation Shell -->
+<aside class="fixed left-0 top-0 h-full w-64 border-r border-white/10 bg-slate-950/80 backdrop-blur-xl flex flex-col py-8 px-4 z-50">
+<div class="mb-10 px-4">
+<h1 class="text-xl font-bold tracking-tighter text-white">Midnight Glass</h1>
+<p class="text-xs uppercase tracking-widest text-on-surface-variant mt-1">Career Curator</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-100 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-manrope text-sm tracking-wide">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-blue-600/20 text-blue-400 font-semibold border-r-2 border-blue-500 rounded-lg group" href="#">
+<span class="material-symbols-outlined">work</span>
+<span class="font-manrope text-sm tracking-wide">Applications</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-100 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="font-manrope text-sm tracking-wide">Saved Jobs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-100 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-manrope text-sm tracking-wide">Network</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-100 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-manrope text-sm tracking-wide">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto pt-8 border-t border-white/5 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-100 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-manrope text-sm tracking-wide">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-100 transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="font-manrope text-sm tracking-wide">Support</span>
+</a>
+</div>
+</aside>
+<!-- Top App Bar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 border-b border-white/5 bg-slate-900/40 backdrop-blur-md flex justify-between items-center px-8 z-40">
+<div class="flex items-center gap-8">
+<nav class="flex gap-6">
+<a class="text-slate-400 font-manrope text-sm font-medium hover:text-blue-300 transition-colors" href="#">Dashboard</a>
+<a class="text-slate-400 font-manrope text-sm font-medium hover:text-blue-300 transition-colors" href="#">Applications</a>
+<a class="text-blue-400 font-bold font-manrope text-sm" href="#">Active</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-blue-300 cursor-pointer transition-colors">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-blue-300 cursor-pointer transition-colors">history</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/20">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWwPzLEFQBKx6-ORIy3tjWMx-OOLqT-Y7zZ65GP4oVre8Jo1H9wDW-FfVFEcuxfiNG479-KyFK2AQXgp3T0tH17BcuWONvHrbrGlJa-V0hPWqasOo5j6pEyDs7k5la28Kp2M0JfcWFYDhWm3s5KlimzOwvx7lVr8kY438pm-dANiMlc1Xx-MB7-YPiLK6lBCsi2UQ6-N5F-QAYf2bEK2uAIViyvz4H-Pjudw6eYLqauJhL6iV-N07XdpLF579iOEC48DgJadii-7A"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pl-64 pt-16 min-h-screen">
+<div class="p-8 max-w-7xl mx-auto">
+<!-- Contextual Header -->
+<div class="flex justify-between items-end mb-12">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">Phase: Generated</span>
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">/</span>
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Prep Artifacts</span>
+</div>
+<h2 class="text-4xl font-bold tracking-tight text-white neon-glow">Interview Prep Center</h2>
+<p class="text-slate-400 mt-2 text-lg">Curated intelligence for your upcoming Senior Product Designer role.</p>
+</div>
+<div class="flex flex-col items-end gap-4">
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Preparation Progress</p>
+<p class="text-xl font-bold text-primary">100% Complete</p>
+</div>
+<div class="w-16 h-16 rounded-full border-4 border-primary/20 flex items-center justify-center relative">
+<div class="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-pulse"></div>
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+<button class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[0.98] transition-transform">
+                        Generate All Artifacts
+                    </button>
+</div>
+</div>
+<!-- Content Area with Sidebar Sub-navigation -->
+<div class="flex gap-8">
+<!-- Sub-navigation Sidebar -->
+<nav class="w-56 shrink-0 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 rounded-xl transition-all group" href="#">
+<span class="material-symbols-outlined text-xl">description</span>
+<span class="text-sm font-medium tracking-wide">Resume</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 rounded-xl transition-all group" href="#">
+<span class="material-symbols-outlined text-xl">mail</span>
+<span class="text-sm font-medium tracking-wide">Cover Letter</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 rounded-xl transition-all group" href="#">
+<span class="material-symbols-outlined text-xl">question_answer</span>
+<span class="text-sm font-medium tracking-wide">Answers</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary border border-primary/20 rounded-xl transition-all group" href="#">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="text-sm font-bold tracking-wide">Prep Artifacts</span>
+</a>
+</nav>
+<!-- Artifacts Content: 2-Column Grid -->
+<div class="flex-1 grid grid-cols-12 gap-6 items-start">
+<!-- Company Research Summary (Column 1 - Row 1) -->
+<div class="col-span-12 lg:col-span-6 glass-panel rounded-2xl p-8 overflow-hidden relative group self-stretch">
+<div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-8xl">corporate_fare</span>
+</div>
+<div class="relative z-10">
+<h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">analytics</span>
+                                Company Research
+                            </h3>
+<div class="space-y-6">
+<div>
+<p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Core Mission &amp; Values</p>
+<p class="text-slate-300 leading-relaxed text-sm">Pioneering decentralized infrastructure for the creative economy. Values focus heavily on 'Radical Transparency', 'User Sovereignty', and 'Architectural Elegance'.</p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-variant/40 p-3 rounded-xl border border-white/5">
+<p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Financial</p>
+<p class="text-white font-semibold text-sm">Series C ($140M)</p>
+</div>
+<div class="bg-surface-variant/40 p-3 rounded-xl border border-white/5">
+<p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Competitors</p>
+<p class="text-white font-semibold text-sm">Polygon, Arweave</p>
+</div>
+</div>
+<div>
+<p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Interview Insight</p>
+<ul class="space-y-2">
+<li class="flex items-start gap-2 text-xs text-slate-300">
+<span class="material-symbols-outlined text-[14px] text-primary mt-0.5">adjust</span>
+                                            Emphasize "Product Thinking" over pure visual craft.
+                                        </li>
+<li class="flex items-start gap-2 text-xs text-slate-300">
+<span class="material-symbols-outlined text-[14px] text-primary mt-0.5">adjust</span>
+                                            Discuss trade-offs between security and onboarding.
+                                        </li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<!-- Question Bank (Column 2 - Row 1) - Priority Width via col-span -->
+<div class="col-span-12 lg:col-span-6 glass-panel rounded-2xl p-8 self-stretch">
+<h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">quiz</span>
+                            Question Bank
+                        </h3>
+<div class="space-y-4">
+<div class="group cursor-pointer">
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs font-bold text-primary tracking-wide">BEHAVIORAL</span>
+<span class="text-[10px] text-slate-500 font-bold uppercase">85% Match</span>
+</div>
+<p class="text-slate-100 text-sm font-medium group-hover:text-primary transition-colors">"Tell me about a time you had to advocate for a user need against business constraints."</p>
+</div>
+<div class="h-px bg-white/5"></div>
+<div class="group cursor-pointer">
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs font-bold text-tertiary tracking-wide">TECHNICAL</span>
+<span class="text-[10px] text-slate-500 font-bold uppercase">92% Match</span>
+</div>
+<p class="text-slate-100 text-sm font-medium group-hover:text-primary transition-colors">"How would you approach designing a multi-chain wallet interface for non-technical users?"</p>
+</div>
+<div class="h-px bg-white/5"></div>
+<div class="group cursor-pointer">
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs font-bold text-primary tracking-wide">CULTURAL</span>
+<span class="text-[10px] text-slate-500 font-bold uppercase">70% Match</span>
+</div>
+<p class="text-slate-100 text-sm font-medium group-hover:text-primary transition-colors">"Our team works in 2-week rapid sprints. How do you maintain quality under pressure?"</p>
+</div>
+<button class="w-full mt-2 py-2.5 border border-white/10 rounded-xl text-slate-400 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5 transition-all">
+                                View All 15 Questions
+                            </button>
+</div>
+</div>
+<!-- STAR Method Stories (Column 1 & 2 - Row 2) - Priority width -->
+<div class="col-span-12 glass-panel rounded-2xl p-8">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-xl font-bold text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">auto_stories</span>
+                                STAR Method Stories
+                            </h3>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg bg-surface-variant hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="p-2 rounded-lg bg-surface-variant hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-container-low p-6 rounded-2xl border border-white/5 hover:border-primary/30 transition-all">
+<p class="text-[10px] font-bold text-primary mb-3">#01 COMPLEX PROBLEM</p>
+<h4 class="text-white font-bold mb-4 text-sm">Data Dashboard Revamp</h4>
+<div class="space-y-3">
+<div class="text-xs">
+<span class="text-slate-500 font-bold block uppercase tracking-tighter mb-0.5">Situation</span>
+<span class="text-slate-300">Conversion dropped 20% on explorer.</span>
+</div>
+<div class="text-xs">
+<span class="text-slate-500 font-bold block uppercase tracking-tighter mb-0.5">Action</span>
+<span class="text-slate-300">Simplified filter logic via interviews.</span>
+</div>
+<div class="text-xs">
+<span class="text-slate-500 font-bold block uppercase tracking-tighter mb-0.5">Result</span>
+<span class="text-slate-300">Engagement increased 45%.</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-2xl border border-white/5 hover:border-primary/30 transition-all">
+<p class="text-[10px] font-bold text-primary mb-3">#02 STAKEHOLDERS</p>
+<h4 class="text-white font-bold mb-4 text-sm">Aligning Product &amp; Eng</h4>
+<div class="space-y-3">
+<div class="text-xs">
+<span class="text-slate-500 font-bold block uppercase tracking-tighter mb-0.5">Situation</span>
+<span class="text-slate-300">Tech debt stalled implementation.</span>
+</div>
+<div class="text-xs">
+<span class="text-slate-500 font-bold block uppercase tracking-tighter mb-0.5">Action</span>
+<span class="text-slate-300">Created shared Tokens library.</span>
+</div>
+<div class="text-xs">
+<span class="text-slate-500 font-bold block uppercase tracking-tighter mb-0.5">Result</span>
+<span class="text-slate-300">Slashed hand-off time by 30%.</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-2xl border border-white/5 hover:border-primary/30 transition-all">
+<p class="text-[10px] font-bold text-primary mb-3">#03 LEADERSHIP</p>
+<h4 class="text-white font-bold mb-4 text-sm">Mentoring Designers</h4>
+<div class="space-y-3">
+<div class="text-xs">
+<span class="text-slate-500 font-bold block uppercase tracking-tighter mb-0.5">Situation</span>
+<span class="text-slate-300">New hires struggled with DS.</span>
+</div>
+<div class="text-xs">
+<span class="text-slate-500 font-bold block uppercase tracking-tighter mb-0.5">Action</span>
+<span class="text-slate-300">Developed Onboarding Bootcamp.</span>
+</div>
+<div class="text-xs">
+<span class="text-slate-500 font-bold block uppercase tracking-tighter mb-0.5">Result</span>
+<span class="text-slate-300">100% success rate in Q3.</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Final Checklist (Column 1 & 2 - Row 3) -->
+<div class="col-span-12 glass-panel rounded-2xl p-8 bg-gradient-to-br from-surface-container to-slate-900">
+<div class="flex flex-col md:flex-row gap-12 items-center">
+<div class="flex-1">
+<h3 class="text-xl font-bold text-white mb-6">Ready to Apply?</h3>
+<div class="space-y-4">
+<label class="flex items-center gap-4 group cursor-pointer">
+<div class="w-6 h-6 rounded border-2 border-primary bg-primary flex items-center justify-center transition-all">
+<span class="material-symbols-outlined text-sm text-white font-bold">check</span>
+</div>
+<span class="text-slate-300 group-hover:text-white transition-colors text-sm">Questions reviewed and practiced</span>
+</label>
+<label class="flex items-center gap-4 group cursor-pointer">
+<div class="w-6 h-6 rounded border-2 border-primary bg-primary flex items-center justify-center transition-all">
+<span class="material-symbols-outlined text-sm text-white font-bold">check</span>
+</div>
+<span class="text-slate-300 group-hover:text-white transition-colors text-sm">Company research summary internalized</span>
+</label>
+<label class="flex items-center gap-4 group cursor-pointer">
+<div class="w-6 h-6 rounded border-2 border-primary bg-primary flex items-center justify-center transition-all">
+<span class="material-symbols-outlined text-sm text-white font-bold">check</span>
+</div>
+<span class="text-slate-300 group-hover:text-white transition-colors text-sm">STAR stories tailored for JD</span>
+</label>
+</div>
+</div>
+<div class="w-full md:w-auto text-center px-12 border-l border-white/5">
+<p class="text-xs text-slate-400 mb-6 max-w-xs mx-auto">All preparation artifacts are generated and validated. Your application is primed.</p>
+<button class="bg-primary text-on-primary w-full md:w-56 py-4 rounded-xl font-extrabold text-xs uppercase tracking-[0.2em] shadow-2xl shadow-primary/40 active:scale-95 transition-all">
+                                    Move to Applied
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Visual Atmosphere Blur -->
+<div class="fixed -bottom-40 -left-40 w-96 h-96 bg-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="fixed top-20 -right-40 w-80 h-80 bg-primary/5 blur-[100px] rounded-full pointer-events-none"></div>
+</main>
+</body></html>

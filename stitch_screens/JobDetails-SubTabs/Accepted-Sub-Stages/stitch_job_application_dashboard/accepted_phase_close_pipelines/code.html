@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error": "#ef4444",
+                    "surface-container": "#1e293b80",
+                    "secondary-fixed-dim": "#cbd5e1",
+                    "tertiary": "#f43f5e",
+                    "primary-container": "#256af433",
+                    "on-secondary-container": "#cbd5e1",
+                    "surface-container-low": "#1e293b66",
+                    "outline": "#334155",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed": "#4c0519",
+                    "background": "#101622",
+                    "on-tertiary-container": "#fb7185",
+                    "on-surface": "#f1f5f9",
+                    "primary-fixed-dim": "#bfdbfe",
+                    "on-background": "#f1f5f9",
+                    "surface-container-high": "#1e293b99",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#ffe4e6",
+                    "tertiary-fixed-dim": "#fecdd3",
+                    "primary-fixed": "#dbeafe",
+                    "surface": "#101622",
+                    "secondary-container": "#1e293b",
+                    "outline-variant": "#1e293b",
+                    "on-secondary": "#f8fafc",
+                    "surface-dim": "#0b0f18",
+                    "surface-container-lowest": "#080c14",
+                    "secondary": "#334155",
+                    "inverse-primary": "#60a5fa",
+                    "surface-container-highest": "#2d3748",
+                    "secondary-fixed": "#e2e8f0",
+                    "on-primary-container": "#60a5fa",
+                    "surface-tint": "#256af4",
+                    "on-secondary-fixed-variant": "#334155",
+                    "on-error": "#ffffff",
+                    "primary": "#256af4",
+                    "on-secondary-fixed": "#0f172a",
+                    "on-primary-fixed-variant": "#1d4ed8",
+                    "tertiary-container": "#f43f5e22",
+                    "inverse-surface": "#f8fafc",
+                    "on-primary-fixed": "#1e3a8a",
+                    "inverse-on-surface": "#0f172a",
+                    "error-container": "#450a0a",
+                    "on-surface-variant": "#94a3b8",
+                    "surface-variant": "#1e293b",
+                    "on-tertiary-fixed-variant": "#9f1239",
+                    "on-error-container": "#fca5a5",
+                    "surface-bright": "#1e293b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "2xl": "1rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "display": ["Manrope"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-accent {
+            text-shadow: 0 0 10px rgba(37, 106, 244, 0.4);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen overflow-x-hidden">
+<!-- Atmospheric Glows -->
+<div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="fixed bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-full w-64 bg-slate-950/80 backdrop-blur-xl border-r border-white/10 flex flex-col h-full py-8 px-4 z-50">
+<div class="mb-10 px-2">
+<h1 class="text-xl font-bold tracking-tighter text-white">Midnight Glass</h1>
+<p class="text-xs text-slate-500 font-label tracking-widest uppercase mt-1">Career Curator</p>
+</div>
+<div class="space-y-1 mb-auto">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-100 transition-colors hover:bg-white/5 rounded-lg group" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-manrope tracking-wide">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-blue-600/20 text-blue-400 font-semibold border-r-2 border-blue-500 rounded-lg group" href="#">
+<span class="material-symbols-outlined">work</span>
+<span class="text-sm font-manrope tracking-wide">Applications</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-100 transition-colors hover:bg-white/5 rounded-lg group" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="text-sm font-manrope tracking-wide">Saved Jobs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-100 transition-colors hover:bg-white/5 rounded-lg group" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-manrope tracking-wide">Network</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-100 transition-colors hover:bg-white/5 rounded-lg group" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-sm font-manrope tracking-wide">Analytics</span>
+</a>
+</div>
+<div class="pt-6 border-t border-white/5 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-100 transition-colors hover:bg-white/5 rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-manrope tracking-wide">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-100 transition-colors hover:bg-white/5 rounded-lg" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="text-sm font-manrope tracking-wide">Support</span>
+</a>
+</div>
+</nav>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-slate-900/40 backdrop-blur-md border-b border-white/5 flex justify-between items-center px-8 z-40">
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="bg-slate-900/50 border border-slate-700 rounded-full pl-10 pr-4 py-1.5 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all w-64" placeholder="Search applications..." type="text"/>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-slate-400 font-manrope text-sm font-medium hover:text-blue-300 transition-colors" href="#">Dashboard</a>
+<a class="text-slate-400 font-manrope text-sm font-medium hover:text-blue-300 transition-colors" href="#">Applications</a>
+<a class="text-blue-400 font-manrope text-sm font-bold" href="#">Active</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-400 hover:text-white transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full border-2 border-slate-900"></span>
+</button>
+<button class="text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">history</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
+<img alt="User Profile Profile Image" data-alt="A professional close-up portrait of a user with a friendly expression, set against a dark architectural background. The lighting is cinematic with soft blue highlights on the contours of the face, aligning with a high-end glassmorphic UI aesthetic. The overall mood is sophisticated, modern, and trustworthy." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWs5EHa1MYym39CKZMEu1I9RwkPuR3KZCgif4I4Ecz1m1Ps2DY_yqXJTQnGf_zwBgslx5gapAl7phUxFt9YySxxFTsx8aiabED00JEcAw5okbn76PK0SPQO7-yTR601ij41cNyxedlCnjE0tW6JpO8UEu3dXkvl8QEXKL2H72Dt55wUZ1oDfBKqF5tglUCBx1j2s9snG73NKIaAnkSwspdQGhkjGmjmRXe4eYrGGiZatSL1JjA7bm_ZiBf2t1IlngZjEfB0a-XAA4"/>
+</div>
+</div>
+</header>
+<!-- Main Content Stage -->
+<main class="pl-64 pt-16 min-h-screen">
+<div class="max-w-[1400px] mx-auto p-12">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-12">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="px-2 py-0.5 bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary rounded tracking-widest uppercase">Phase: Accepted</span>
+<span class="text-slate-500 text-xs">/</span>
+<span class="text-slate-300 text-xs font-medium uppercase tracking-widest">Close Pipelines</span>
+</div>
+<h2 class="text-4xl font-bold text-white tracking-tight neon-accent">Close Competing Pipelines</h2>
+<p class="text-slate-400 mt-2 max-w-xl">You've successfully secured an offer. Now, professionally notify other organizations to maintain your network and archive your search journey.</p>
+</div>
+<button class="bg-primary text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[0.98] transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined">archive</span>
+                    Finalize &amp; Archive Search
+                </button>
+</div>
+<!-- Content Grid -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Column 1: Active Applications -->
+<div class="col-span-12 lg:col-span-7 space-y-6">
+<div class="flex items-center justify-between px-2">
+<h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+<span class="material-symbols-outlined text-blue-400">pending_actions</span>
+                            Active Applications
+                        </h3>
+<span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">4 Items Remaining</span>
+</div>
+<div class="space-y-4">
+<!-- App Card 1 -->
+<div class="glass-panel rounded-2xl p-6 flex items-center gap-6 group hover:bg-white/5 transition-all">
+<input class="w-5 h-5 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary focus:ring-offset-slate-900" type="checkbox"/>
+<div class="h-12 w-12 rounded-xl bg-slate-800/50 flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-slate-400">corporate_fare</span>
+</div>
+<div class="flex-grow">
+<h4 class="text-slate-100 font-bold">Senior Product Designer</h4>
+<p class="text-slate-400 text-sm">Velocity Dynamics • Interview Phase</p>
+</div>
+<button class="px-4 py-2 bg-slate-800 text-slate-200 text-xs font-bold rounded-lg hover:bg-error/20 hover:text-error transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">cancel</span>
+                                Withdraw
+                            </button>
+</div>
+<!-- App Card 2 -->
+<div class="glass-panel rounded-2xl p-6 flex items-center gap-6 group hover:bg-white/5 transition-all">
+<input class="w-5 h-5 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary focus:ring-offset-slate-900" type="checkbox"/>
+<div class="h-12 w-12 rounded-xl bg-slate-800/50 flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-slate-400">rocket_launch</span>
+</div>
+<div class="flex-grow">
+<h4 class="text-slate-100 font-bold">Creative Director</h4>
+<p class="text-slate-400 text-sm">Nova Sphere • Second Interview</p>
+</div>
+<button class="px-4 py-2 bg-slate-800 text-slate-200 text-xs font-bold rounded-lg hover:bg-error/20 hover:text-error transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">cancel</span>
+                                Withdraw
+                            </button>
+</div>
+<!-- App Card 3 -->
+<div class="glass-panel rounded-2xl p-6 flex items-center gap-6 group hover:bg-white/5 transition-all">
+<input class="w-5 h-5 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary focus:ring-offset-slate-900" type="checkbox"/>
+<div class="h-12 w-12 rounded-xl bg-slate-800/50 flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-slate-400">token</span>
+</div>
+<div class="flex-grow">
+<h4 class="text-slate-100 font-bold">UI Engineer</h4>
+<p class="text-slate-400 text-sm">BitStream Systems • Technical Review</p>
+</div>
+<button class="px-4 py-2 bg-slate-800 text-slate-200 text-xs font-bold rounded-lg hover:bg-error/20 hover:text-error transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">cancel</span>
+                                Withdraw
+                            </button>
+</div>
+<!-- App Card 4 -->
+<div class="glass-panel rounded-2xl p-6 flex items-center gap-6 group hover:bg-white/5 transition-all">
+<input class="w-5 h-5 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary focus:ring-offset-slate-900" type="checkbox"/>
+<div class="h-12 w-12 rounded-xl bg-slate-800/50 flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-slate-400">explore</span>
+</div>
+<div class="flex-grow">
+<h4 class="text-slate-100 font-bold">Interaction Specialist</h4>
+<p class="text-slate-400 text-sm">Alt-Path Digital • Intro Call</p>
+</div>
+<button class="px-4 py-2 bg-slate-800 text-slate-200 text-xs font-bold rounded-lg hover:bg-error/20 hover:text-error transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">cancel</span>
+                                Withdraw
+                            </button>
+</div>
+</div>
+</div>
+<!-- Column 2: Withdrawal Templates -->
+<div class="col-span-12 lg:col-span-5 space-y-6">
+<div class="px-2">
+<h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary">mail_lock</span>
+                            Withdrawal Templates
+                        </h3>
+</div>
+<div class="glass-panel rounded-2xl p-8 sticky top-24">
+<div class="flex gap-2 mb-6 p-1 bg-slate-900/50 rounded-xl border border-white/5">
+<button class="flex-1 py-2 text-xs font-bold uppercase tracking-widest text-primary bg-primary/10 rounded-lg">Professional</button>
+<button class="flex-1 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-200 transition-colors">Direct</button>
+<button class="flex-1 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-200 transition-colors">Vague</button>
+</div>
+<div class="bg-slate-900/80 rounded-xl p-6 border border-slate-800 mb-6">
+<p class="text-slate-300 text-sm leading-relaxed">
+                                Subject: Withdrawal of Application - [Your Name]<br/><br/>
+                                Dear [Recruiter Name],<br/><br/>
+                                Thank you very much for the opportunity to interview for the [Job Title] role. I am writing to formally withdraw my application as I have accepted another offer that aligns closely with my current career objectives.<br/><br/>
+                                I truly appreciated learning about [Company Name] and enjoyed our conversation. I hope we might have the chance to connect again in the future.<br/><br/>
+                                Best regards,<br/>
+                                [Your Name]
+                            </p>
+</div>
+<div class="space-y-3">
+<button class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined text-lg">content_copy</span>
+                                Copy to Clipboard
+                            </button>
+<button class="w-full py-3 border border-white/10 hover:bg-white/5 text-slate-300 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined text-lg">open_in_new</span>
+                                Open in Mail Client
+                            </button>
+</div>
+<div class="mt-8 pt-8 border-t border-white/5">
+<div class="flex items-center gap-4 text-slate-400">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">lightbulb</span>
+</div>
+<div>
+<h5 class="text-xs font-bold uppercase tracking-widest text-slate-200">Pro Tip</h5>
+<p class="text-[11px] leading-snug">Withdrawing early saves time for recruiters and keeps your reputation pristine for future roles.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Background Decorative Element -->
+<div class="fixed top-1/2 right-10 -translate-y-1/2 w-64 h-96 pointer-events-none opacity-20">
+<img class="w-full h-full object-cover rounded-3xl blur-md" data-alt="A stylized 3D render of an abstract crystalline structure reflecting deep blue and violet light. The composition features sharp geometric edges and soft glowing core highlights, suggesting high-tech precision and professional clarity. This element serves as a background textural detail for a premium dark-mode software interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwGKtJNBEkZYqIl-Ol-bY62s9GAfsvA0Kejd-ArQL0JSj9-8h_QD__0fCQexYXuZnYAk6SJiGqfLTMjacIB9W5tIj9ZrjzuVF2lZFyNpj5az16E-aJ_62dqUIWFJi4YDV0tPilMeZ38JL3Xj-np2HpZZMNjyktpCApH3Yga7El0XLU0vt8H1cAd3ofiR2Dy5jVEDpuJR_9dfDwBGrgQyJd-zWzf-awIAo7fWX7T5w29CKkEK2WfLBQoJo4T7xnIXr-wOy_hL9PdjU"/>
+</div>
+</body></html>

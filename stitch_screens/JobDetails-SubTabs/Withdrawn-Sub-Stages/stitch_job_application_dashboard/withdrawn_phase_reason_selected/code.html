@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Withdrawn Phase - Midnight Glass</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-dim": "#0b0f18",
+                        "secondary-container": "#1e293b",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "primary-container": "#256af433",
+                        "secondary-fixed": "#e2e8f0",
+                        "on-primary-fixed": "#1e3a8a",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "tertiary-container": "#f43f5e22",
+                        "inverse-on-surface": "#0f172a",
+                        "surface-bright": "#1e293b",
+                        "secondary": "#334155",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "surface": "#101622",
+                        "on-secondary": "#f8fafc",
+                        "inverse-primary": "#60a5fa",
+                        "surface-tint": "#256af4",
+                        "on-primary-container": "#60a5fa",
+                        "on-tertiary-container": "#fb7185",
+                        "on-background": "#f1f5f9",
+                        "on-secondary-fixed-variant": "#334155",
+                        "surface-container-high": "#1e293b99",
+                        "on-tertiary-fixed": "#4c0519",
+                        "error": "#ef4444",
+                        "outline-variant": "#1e293b",
+                        "tertiary-fixed": "#ffe4e6",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "surface-variant": "#1e293b",
+                        "on-surface-variant": "#94a3b8",
+                        "on-secondary-container": "#cbd5e1",
+                        "surface-container": "#1e293b80",
+                        "surface-container-lowest": "#080c14",
+                        "on-error-container": "#fca5a5",
+                        "inverse-surface": "#f8fafc",
+                        "primary": "#256af4",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#f1f5f9",
+                        "error-container": "#450a0a",
+                        "primary-fixed": "#dbeafe",
+                        "outline": "#334155",
+                        "on-secondary-fixed": "#0f172a",
+                        "surface-container-low": "#1e293b66",
+                        "surface-container-highest": "#2d3748",
+                        "background": "#101622",
+                        "tertiary": "#f43f5e",
+                        "on-primary": "#ffffff"
+                    },
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        display: ["Manrope"],
+                        body: ["Manrope"],
+                        label: ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(37, 106, 244, 0.2); border-radius: 10px; }
+        .neon-accent { text-shadow: 0 0 15px rgba(37, 106, 244, 0.5); }
+    </style>
+</head>
+<body class="bg-surface-dim text-on-background selection:bg-primary/30">
+<!-- Atmosphere Blobs -->
+<div class="fixed top-0 left-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -z-10 -translate-x-1/2 -translate-y-1/2"></div>
+<div class="fixed bottom-0 right-0 w-[600px] h-[600px] bg-tertiary/5 rounded-full blur-[150px] -z-10 translate-x-1/3 translate-y-1/3"></div>
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 bottom-0 flex flex-col items-center py-6 z-50 bg-slate-950 h-full w-20 border-r border-white/5 transition-all duration-300 ease-in-out">
+<div class="mb-10 text-blue-500 font-black text-2xl">MG</div>
+<div class="flex flex-col space-y-8 flex-1">
+<div class="group flex flex-col items-center gap-1 cursor-pointer transition-all duration-300 ease-in-out text-slate-500 hover:text-slate-200">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-manrope tracking-widest text-[10px] font-bold uppercase">Dashboard</span>
+</div>
+<div class="group flex flex-col items-center gap-1 cursor-pointer transition-all duration-300 ease-in-out text-blue-500 bg-blue-500/10 border-r-2 border-blue-500">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">work</span>
+<span class="font-manrope tracking-widest text-[10px] font-bold uppercase">Applications</span>
+</div>
+<div class="group flex flex-col items-center gap-1 cursor-pointer transition-all duration-300 ease-in-out text-slate-500 hover:text-slate-200">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-manrope tracking-widest text-[10px] font-bold uppercase">Talent</span>
+</div>
+<div class="group flex flex-col items-center gap-1 cursor-pointer transition-all duration-300 ease-in-out text-slate-500 hover:text-slate-200">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-manrope tracking-widest text-[10px] font-bold uppercase">Analytics</span>
+</div>
+</div>
+<div class="mt-auto flex flex-col items-center space-y-6">
+<div class="p-2 rounded-xl bg-blue-500/10 text-blue-500 cursor-pointer hover:bg-blue-500/20 transition-all">
+<span class="material-symbols-outlined">add_task</span>
+</div>
+<div class="group flex flex-col items-center gap-1 cursor-pointer text-slate-500 hover:text-slate-200">
+<span class="material-symbols-outlined">settings</span>
+</div>
+</div>
+</nav>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-20 h-20 flex items-center px-12 justify-between z-40 bg-slate-900/40 backdrop-blur-xl transition-all duration-500 shadow-lg shadow-white/5">
+<div class="flex items-center gap-8">
+<h1 class="text-slate-100 text-xl font-bold tracking-tight">Applications</h1>
+<nav class="hidden md:flex gap-6">
+<a class="text-slate-400 font-manrope text-sm font-semibold tracking-tight hover:text-blue-300 transition-colors" href="#">Applied</a>
+<a class="text-slate-400 font-manrope text-sm font-semibold tracking-tight hover:text-blue-300 transition-colors" href="#">In Review</a>
+<a class="text-slate-400 font-manrope text-sm font-semibold tracking-tight hover:text-blue-300 transition-colors" href="#">Interview</a>
+<a class="text-slate-400 font-manrope text-sm font-semibold tracking-tight hover:text-blue-300 transition-colors" href="#">Offer</a>
+<a class="text-blue-400 border-b-2 border-blue-500 pb-4 font-manrope text-sm font-semibold tracking-tight" href="#">Archived</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="material-symbols-outlined text-slate-400 hover:text-blue-400 cursor-pointer">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full"></span>
+</div>
+<span class="material-symbols-outlined text-slate-400 hover:text-blue-400 cursor-pointer">chat_bubble</span>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-white/10">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a recruitment manager in a dark studio setting. He is wearing a minimalist black turtleneck, and the lighting is cinematic with deep blue rim lighting that fits the midnight glass aesthetic. The background is softly out of focus with subtle digital light particles." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhVsbw8KbgRwxSrNQ3qZpNAOYAoewF6rSLMxCRNrcVrhkgmP058wdKWSvW19O2Hz0G4VigvNvay0PlfRPnnHpCBDN6EocHtkdGfFmZ7bvmtkgbA1qsp0EWBPKfj8Epb0R6w3Xu6xgQ2pg5yypuDzFYumgTREerRVyZorGPXa3l2wuR87d0WuBMNhXbU6nPdHXyauf0keEYY8bpIdWkXXAmhbKXAfxsp3SN1Z6fNoerEWqtxRFhCAllxJal8VyznilITrWM_dRvbX8"/>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="pl-20 pt-20 min-h-screen">
+<div class="p-12 flex flex-col lg:flex-row gap-8">
+<!-- Selection Section -->
+<div class="flex-1 space-y-8">
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2 text-primary font-bold text-[10px] tracking-widest uppercase">
+<span class="material-symbols-outlined text-xs">arrow_back</span>
+                        Back to Candidate Profile
+                    </div>
+<h2 class="text-4xl font-extrabold text-slate-100 tracking-tight">Withdrawn Phase</h2>
+<p class="text-slate-400 max-w-2xl">Candidacy concluded. Please specify the primary reason for withdrawal to improve our matching algorithms and pipeline health analysis.</p>
+</div>
+<!-- Diagnostic Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+<!-- Reason Card: Competing Offer -->
+<div class="glass-panel p-6 rounded-2xl group cursor-pointer hover:bg-primary/5 transition-all duration-300 border-primary/20">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-primary bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-white font-bold">check</span>
+</div>
+</div>
+<h3 class="text-lg font-bold text-slate-100 mb-1">Competing Offer</h3>
+<p class="text-sm text-slate-400">Accepted an offer from another company with better terms.</p>
+</div>
+<!-- Reason Card: Role Mismatch -->
+<div class="glass-panel p-6 rounded-2xl group cursor-pointer hover:bg-white/5 transition-all duration-300">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
+<span class="material-symbols-outlined">rule</span>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
+</div>
+<h3 class="text-lg font-bold text-slate-100 mb-1">Role Mismatch</h3>
+<p class="text-sm text-slate-400">Daily responsibilities didn't align with their expectations.</p>
+</div>
+<!-- Reason Card: Company Culture -->
+<div class="glass-panel p-6 rounded-2xl group cursor-pointer hover:bg-white/5 transition-all duration-300">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
+<span class="material-symbols-outlined">diversity_3</span>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
+</div>
+<h3 class="text-lg font-bold text-slate-100 mb-1">Company Culture</h3>
+<p class="text-sm text-slate-400">Concerns regarding team dynamics or organizational values.</p>
+</div>
+<!-- Reason Card: Compensation -->
+<div class="glass-panel p-6 rounded-2xl group cursor-pointer hover:bg-white/5 transition-all duration-300">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
+<span class="material-symbols-outlined">monetization_on</span>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
+</div>
+<h3 class="text-lg font-bold text-slate-100 mb-1">Compensation</h3>
+<p class="text-sm text-slate-400">Salary expectations or benefits package was not met.</p>
+</div>
+<!-- Reason Card: Personal -->
+<div class="glass-panel p-6 rounded-2xl group cursor-pointer hover:bg-white/5 transition-all duration-300">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
+<span class="material-symbols-outlined">home_health</span>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
+</div>
+<h3 class="text-lg font-bold text-slate-100 mb-1">Personal</h3>
+<p class="text-sm text-slate-400">Relocation issues, family commitments, or private health.</p>
+</div>
+<!-- Reason Card: Other -->
+<div class="glass-panel p-6 rounded-2xl group cursor-pointer hover:bg-white/5 transition-all duration-300">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all">
+<span class="material-symbols-outlined">more_horiz</span>
+</div>
+<div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
+</div>
+<h3 class="text-lg font-bold text-slate-100 mb-1">Other</h3>
+<p class="text-sm text-slate-400">A specific reason not covered by the categories above.</p>
+</div>
+</div>
+<!-- Feedback Section -->
+<div class="space-y-4">
+<label class="block font-manrope tracking-widest text-[10px] font-bold uppercase text-slate-400">Additional Feedback Notes</label>
+<textarea class="w-full bg-slate-900 border-slate-700 rounded-xl p-4 text-slate-300 focus:ring-primary focus:border-primary placeholder:text-slate-600 min-h-[120px]" placeholder="Provide more context on the candidate's decision..."></textarea>
+</div>
+<div class="flex items-center justify-end gap-4 pt-4">
+<button class="px-8 py-4 bg-slate-800 text-slate-100 rounded-xl font-bold hover:bg-slate-700 transition-colors">Discard Draft</button>
+<button class="px-8 py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:brightness-110 transition-all flex items-center gap-2">
+                        Save Reason &amp; Choose Contact Path
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Impact Sidebar -->
+<aside class="w-full lg:w-96 space-y-6">
+<div class="glass-panel p-8 rounded-2xl relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-6xl">query_stats</span>
+</div>
+<h3 class="font-manrope tracking-widest text-[10px] font-bold uppercase text-blue-400 mb-6">Impact Analysis</h3>
+<div class="space-y-6">
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="text-slate-400 text-xs font-semibold">Pipeline Health</span>
+<span class="text-error font-bold text-sm">-14.2%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-error w-3/4 rounded-full"></div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="text-slate-400 text-xs font-semibold">Offer Acceptance Rate</span>
+<span class="text-slate-400 font-bold text-sm">Target: 85%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[62%] rounded-full"></div>
+</div>
+</div>
+<div class="pt-6 border-t border-white/5 space-y-4">
+<div class="flex items-start gap-3">
+<div class="w-2 h-2 rounded-full bg-error mt-1.5"></div>
+<div>
+<h4 class="text-sm font-bold text-slate-200">Competitor Velocity</h4>
+<p class="text-xs text-slate-400">Withdrawals for "Competing Offer" have increased by 8% this quarter in Engineering.</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="w-2 h-2 rounded-full bg-primary mt-1.5 shadow-[0_0_8px_rgba(37,106,244,0.6)]"></div>
+<div>
+<h4 class="text-sm font-bold text-slate-200">Action Required</h4>
+<p class="text-xs text-slate-400">Review compensation benchmarks for Sr. Frontend Engineer roles.</p>
+</div>
+</div>
+</div>
+<div class="mt-8 rounded-xl bg-primary-container p-4 flex items-center gap-4">
+<div class="flex-1">
+<p class="text-[10px] uppercase tracking-widest font-bold text-blue-400 mb-1">Forecast Adjustment</p>
+<p class="text-sm text-blue-200 leading-tight">Closing this role may take +12 days based on current attrition trends.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Similar Withdrawals -->
+<div class="glass-panel p-6 rounded-2xl">
+<h3 class="font-manrope tracking-widest text-[10px] font-bold uppercase text-slate-400 mb-4">Historical Context</h3>
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full border border-white/10" data-alt="A close-up portrait of a diverse male candidate in a high-tech office environment. Soft natural light illuminates his face while the background shows blurred monitor screens and neon accent lighting typical of a modern startup office." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNx3l40iPlpMHLUFWvtC4D2re6Tpx28njBFTun_WA53OgCw1c34QORU4_J1C6v7IB22CjZZVyyy6Bp2bnbDpL6WY1FmCty0PdbTr63A7BHOaFxma5fRuLGAB90LXm0z3bQOxSz-y919-4ikOzRjsDbJMhHIcl1MWzCEoc1XqSqNmLic_6J6QOSlKZKwUXDmkoN0waYxnMQZrNb0v46wJSYbqER-IZnIQ1jMc5ur6-wAIrIEyWerwBu4DANtv2c5ICj6qjoUpwULTU"/>
+<div>
+<p class="text-xs font-bold text-slate-200">David Chen</p>
+<p class="text-[10px] text-slate-500">Withdrew: Competing Offer (2d ago)</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full border border-white/10" data-alt="A portrait of a confident female candidate with a warm smile, set against a dark architectural background. The lighting is focused and professional, with a cool blue tint that complements the design system's color palette. Her expression is approachable and bright." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaN2NadCM19ZRujV0_r9iqlb6eae5GjF4XKXa_I1xe4_8SQOxrTin14ODJmm3WYs1P0ekdB20p7ALMMcIlc8rtlcvGjdfjVKGE-uTwnDKCxwhjP7F1HUVx1r_txWLnrusmE8gG5At9DLh0YOuodSJUrGh1SMaTZY09nghl46TrtZ7AvlBY9b8273cXGxiLKVeq43hFdonZtL7aCn7d-PiIRreRm5SgEuImUKoE5NuaQuw3ZH1lILszIvxpGuAvtFweVRPwQdzft14"/>
+<div>
+<p class="text-xs font-bold text-slate-200">Sarah Jenkins</p>
+<p class="text-[10px] text-slate-500">Withdrew: Personal (5d ago)</p>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Contextual FAB -->
+<div class="fixed bottom-8 right-8 z-50">
+<button class="w-14 h-14 bg-slate-900 border border-primary/40 rounded-full flex items-center justify-center text-primary shadow-2xl shadow-primary/20 hover:scale-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</body></html>

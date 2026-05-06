@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Spotify Financial Analysis | Midnight Glass</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-bright": "#1e293b",
+                        "error": "#ef4444",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "inverse-on-surface": "#0f172a",
+                        "surface-container-high": "#1e293b99",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "on-tertiary-container": "#fb7185",
+                        "primary-fixed": "#dbeafe",
+                        "surface-container-highest": "#2d3748",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "secondary": "#334155",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#1e293b",
+                        "surface-container": "#1e293b80",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "secondary-container": "#1e293b",
+                        "background": "#101622",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "surface-dim": "#0b0f18",
+                        "inverse-primary": "#60a5fa",
+                        "tertiary-fixed": "#ffe4e6",
+                        "surface-container-lowest": "#080c14",
+                        "surface": "#101622",
+                        "secondary-fixed": "#e2e8f0",
+                        "on-background": "#f1f5f9",
+                        "inverse-surface": "#f8fafc",
+                        "surface-variant": "#1e293b",
+                        "on-tertiary-fixed": "#4c0519",
+                        "on-surface": "#f1f5f9",
+                        "tertiary": "#f43f5e",
+                        "surface-container-low": "#1e293b66",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#256af4",
+                        "on-secondary-fixed": "#0f172a",
+                        "on-secondary": "#f8fafc",
+                        "error-container": "#450a0a",
+                        "on-primary-fixed": "#1e3a8a",
+                        "outline": "#334155",
+                        "on-surface-variant": "#94a3b8",
+                        "primary": "#256af4",
+                        "on-secondary-fixed-variant": "#334155",
+                        "on-error-container": "#fca5a5",
+                        "tertiary-container": "#f43f5e22",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#60a5fa",
+                        "primary-container": "#256af433",
+                        "on-secondary-container": "#cbd5e1"
+                    },
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        display: ["Manrope"],
+                        body: ["Manrope"],
+                        label: ["Manrope"]
+                    }
+                }
+            }
+        };
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-glow {
+            text-shadow: 0 0 8px rgba(37, 106, 244, 0.6);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #101622;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30">
+<div class="flex h-screen overflow-hidden">
+<!-- SIDE NAVIGATION BAR (SHARED COMPONENT INTEGRITY) -->
+<aside class="w-72 bg-surface border-r border-outline flex flex-col shrink-0">
+<div class="p-6 flex flex-col gap-8 h-full">
+<!-- Branding -->
+<div class="flex gap-3 items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Spotify corporate logo displayed on a clean, dark textured background with subtle studio lighting and high-end professional aesthetics. The visual style is premium and corporate, aligning with the Midnight Glass theme using deep blues and high-contrast whites." style='background-image: url("https://lh3.googleusercontent.com/aida/ADBb0ui76yRKVlXCbBVHE18gI-A_mSycucKGeoI2I7SX6Cy8fiIZMMIqXA5Gnr5SbJEahYnPM9q4AUXSmUDLW-tyxOE3Q1qQVHtyEuHQLY-xVTfnYbHqRyUY4pROigaDKOMzfJRJzjdyjqwGGs5E-mF9KKm0tScdVy8fq2iZXe2_elGrg5gthdA0v1F5WT9kZrxBO19fumVBr6AsfzHL50o-1NrTcIIDuMkzIG0WfV1rTM5enKIT13Ln7WtazPH9SJq7rS2Io2AjlzFZ2Q");'></div>
+<div class="flex flex-col">
+<h1 class="text-on-surface text-base font-semibold leading-normal">Spotify Technology</h1>
+<p class="text-on-surface-variant text-xs font-medium leading-normal tracking-wider">SPOT (NYSE)</p>
+</div>
+</div>
+<!-- Nav Links -->
+<nav class="flex flex-col gap-2 flex-1">
+<div class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-container rounded-xl transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">dashboard</span>
+<p class="text-on-surface-variant text-sm font-medium">Overview</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-container rounded-xl transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">strategy</span>
+<p class="text-on-surface-variant text-sm font-medium">Product Strategy</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 bg-primary-container text-primary rounded-xl">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bar_chart</span>
+<p class="text-sm font-bold">Financials &amp; Market</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-container rounded-xl transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">groups</span>
+<p class="text-on-surface-variant text-sm font-medium">Culture &amp; Team</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-container rounded-xl transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+<p class="text-on-surface-variant text-sm font-medium">Operations</p>
+</div>
+</nav>
+<button class="w-full bg-primary text-white py-3 rounded-xl font-bold text-sm tracking-wide shadow-lg shadow-primary/20 hover:brightness-110 transition-all">
+                    View Annual Report
+                </button>
+</div>
+</aside>
+<!-- MAIN STAGE -->
+<main class="flex-1 overflow-y-auto custom-scrollbar relative">
+<!-- Background Atmosphere -->
+<div class="absolute top-0 right-0 w-96 h-96 bg-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="absolute bottom-0 left-0 w-80 h-80 bg-tertiary/5 blur-[100px] rounded-full pointer-events-none"></div>
+<!-- HEADER -->
+<header class="sticky top-0 z-10 glass-panel border-t-0 border-x-0 px-8 py-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl">analytics</span>
+<h2 class="text-xl font-bold tracking-tight text-on-surface">Financial Intelligence</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
+<input class="w-full bg-surface-container border-none rounded-lg pl-10 text-sm py-2 focus:ring-1 focus:ring-primary placeholder:text-on-surface-variant" placeholder="Search analytics..." type="text"/>
+</div>
+<div class="flex gap-2">
+<button class="p-2 bg-surface-container hover:bg-surface-container-high rounded-lg text-on-surface transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 bg-surface-container hover:bg-surface-container-high rounded-lg text-on-surface transition-colors">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+<div class="w-10 h-10 rounded-full border border-primary/20 p-0.5">
+<div class="w-full h-full rounded-full bg-cover bg-center" data-alt="A close-up portrait of a professional analyst in a high-tech office setting, softly lit by blue-toned screen reflections. The aesthetic is cinematic and professional, using high-end photography techniques with a shallow depth of field to emphasize expertise in a modern, dark-mode corporate environment." style='background-image: url("https://lh3.googleusercontent.com/aida/ADBb0ugvqvpCW7gnJbuwJlDb_z6Ag-mUxBMKOHftRiXREuhV3tmbwoeg_d-thxprkOBDcmxuljcExyQrGflAwU8gjc0LG0GY83NOsayCzo_EbzdajL-WqNHVYYSgxlHlx3VpwEZg84sq0IEJThNRVRoPpAt7dxi35Ma7wppf1V4N13lg5DysXXiryw5nSeojxanauFJuxH7KHCfv8N7aIhkSQqyeaDeu_1FdJ6uCGfyjxbQf4MPE0BQm2SHlIsZILTAxk2YHwLM9ijK7ig");'></div>
+</div>
+</div>
+</header>
+<!-- CONTENT SECTION -->
+<div class="p-8 max-w-7xl mx-auto space-y-8">
+<!-- Page Title Area -->
+<div class="flex flex-col gap-2">
+<h1 class="text-4xl font-black text-on-surface tracking-tight">Financials &amp; Market</h1>
+<p class="text-on-surface-variant text-lg max-w-2xl">Deep dive into Spotify's economic performance, competitive positioning, and strategic portfolio expansion.</p>
+</div>
+<!-- KPI Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-panel p-6 rounded-2xl flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<span class="text-xs font-bold tracking-widest text-on-surface-variant uppercase">Total Revenue</span>
+<span class="material-symbols-outlined text-primary">payments</span>
+</div>
+<div>
+<p class="text-3xl font-bold text-on-surface">€13.2B</p>
+<p class="text-sm font-medium text-green-400 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span> +13% YoY
+                            </p>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-2xl flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<span class="text-xs font-bold tracking-widest text-on-surface-variant uppercase">Gross Margin</span>
+<span class="material-symbols-outlined text-primary">pie_chart</span>
+</div>
+<div>
+<p class="text-3xl font-bold text-on-surface">26.4%</p>
+<p class="text-sm font-medium text-green-400 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span> +2.1% improvement
+                            </p>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-2xl flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<span class="text-xs font-bold tracking-widest text-on-surface-variant uppercase">Premium Subs</span>
+<span class="material-symbols-outlined text-primary">stars</span>
+</div>
+<div>
+<p class="text-3xl font-bold text-on-surface">236M</p>
+<p class="text-sm font-medium text-on-surface-variant mt-1">Stable vs. Previous Quarter</p>
+</div>
+</div>
+</section>
+<!-- Stock & Performance Chart Area -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Stock Card -->
+<div class="lg:col-span-2 glass-panel rounded-2xl overflow-hidden flex flex-col">
+<div class="p-6 flex items-center justify-between border-b border-white/5">
+<div>
+<h3 class="text-lg font-bold text-on-surface">SPOT Stock Performance</h3>
+<p class="text-sm text-on-surface-variant">Trailing 12-month historical growth</p>
+</div>
+<div class="text-right">
+<p class="text-2xl font-bold text-on-surface">$312.45</p>
+<p class="text-xs font-bold text-green-400 tracking-wider">+84.2% (1Y)</p>
+</div>
+</div>
+<div class="flex-1 min-h-[300px] relative p-6">
+<div class="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity" data-alt="A professional financial technical analysis chart with clean white lines and glowing blue accents on a dark slate background. The image depicts stock market trends with high precision, showing growth curves and data points in an editorial, high-tech aesthetic that matches the Midnight Glass design language." style='background-image: url("https://lh3.googleusercontent.com/aida/ADBb0uiOGhBfnlrmQzFfCKqPQniqZIfBQyCb4MZLhWrPQmVvHnuy2LOQZz2H2jDAQaF7eqAM_tzUqtIUEwp614Lnjv9laznjBV0Wk06RfumHjbnArmsP94IvYK__EvaTl7wxXD2626zMK4m914RyOA-UV2B1GZzSVf0HMINA4FA45oH1-TbeoRLiVG5rBy7-NHE_FD5zrng1ZOAtXrnXNMpqc38jyWQMync7qmgTyFxJdKlzF0pWsekpfq7mRQ5C4LzpORpJtAuXvuzYCg");'></div>
+<!-- SVG Overlay for clean UI integration -->
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none">
+<defs>
+<lineargradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#256af4" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#256af4" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0 200 Q 100 180, 200 120 T 400 80 T 600 40 T 800 60" fill="transparent" stroke="#256af4" stroke-width="3"></path>
+</svg>
+</div>
+<div class="p-4 grid grid-cols-6 gap-2 border-t border-white/5">
+<span class="text-[10px] text-center font-bold text-on-surface-variant uppercase tracking-widest">Jan</span>
+<span class="text-[10px] text-center font-bold text-on-surface-variant uppercase tracking-widest">Mar</span>
+<span class="text-[10px] text-center font-bold text-on-surface-variant uppercase tracking-widest">May</span>
+<span class="text-[10px] text-center font-bold text-on-surface-variant uppercase tracking-widest">Jul</span>
+<span class="text-[10px] text-center font-bold text-on-surface-variant uppercase tracking-widest">Sep</span>
+<span class="text-[10px] text-center font-bold text-on-surface-variant uppercase tracking-widest">Nov</span>
+</div>
+</div>
+<!-- Market Positioning Card -->
+<div class="glass-panel rounded-2xl p-6 flex flex-col gap-6">
+<div>
+<h3 class="text-lg font-bold text-on-surface">Market Positioning</h3>
+<span class="text-[10px] font-bold tracking-widest text-on-surface-variant uppercase">Current Status: Dominant</span>
+</div>
+<div class="space-y-4">
+<div class="p-4 bg-surface-container rounded-xl">
+<p class="text-xs font-bold text-primary mb-1 uppercase tracking-widest">Audience Reach</p>
+<p class="text-sm text-on-surface leading-relaxed">Maintaining 31% market share in global streaming, outperforming competitors by 12% in user retention metrics.</p>
+</div>
+<div class="p-4 bg-surface-container rounded-xl">
+<p class="text-xs font-bold text-tertiary mb-1 uppercase tracking-widest">Competitive Moat</p>
+<p class="text-sm text-on-surface leading-relaxed">AI-driven personalization and deep podcast vertical integration drive high lifetime value (LTV).</p>
+</div>
+</div>
+<div class="mt-auto h-32 rounded-xl bg-cover bg-center border border-white/5" data-alt="An abstract visualization of market networks and connectivity, featuring glowing blue and violet nodes connected by delicate light filaments. The aesthetic is digital, ethereal, and data-driven, representing a sophisticated global market reach within a dark, premium corporate interface." style='background-image: url("https://lh3.googleusercontent.com/aida/ADBb0ugkx-k_JDKr6tkdvcK3HGkUALuqBtExaKZiuTkJIGQdYBJQ1-4q4dqFtmv_a8atyoUQeTm83a2yVelrcYtUm-6MGMP7ZlOpy6MU8Vl6-AbbB9eaIxcNu0X6xoBE5pRbYb1c0wWWkXPT6oUF7mMLqpN3SQ5FCIBXA-c9gsoAq5rnik7WuVyubXL1MQLiTgD9LKFyJx4M-FIm0Wp2RBMzTaJrbaPjAcx1uv3Lea7d2CwAoO_r-3yd_PQf5xsNAF6KTIit1Uev-h8xWQ");'></div>
+</div>
+</section>
+<!-- Acquisitions & History -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="glass-panel rounded-2xl p-8 flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<h3 class="text-xl font-bold text-on-surface">Recent Acquisitions</h3>
+<button class="text-sm font-bold text-primary hover:underline">View All</button>
+</div>
+<div class="space-y-4">
+<div class="flex items-center gap-4 p-3 hover:bg-white/5 rounded-xl transition-all cursor-pointer group">
+<div class="w-12 h-12 bg-surface-container-high rounded-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">mic</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">Findaway</p>
+<p class="text-xs text-on-surface-variant">Audiobook infrastructure &amp; distribution</p>
+</div>
+<div class="ml-auto text-right">
+<p class="text-xs font-bold text-on-surface">Nov 2021</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Strategic</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-3 hover:bg-white/5 rounded-xl transition-all cursor-pointer group">
+<div class="w-12 h-12 bg-surface-container-high rounded-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">psychology</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">Sonantic</p>
+<p class="text-xs text-on-surface-variant">AI-generated voice technology</p>
+</div>
+<div class="ml-auto text-right">
+<p class="text-xs font-bold text-on-surface">Jun 2022</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">R&amp;D</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-3 hover:bg-white/5 rounded-xl transition-all cursor-pointer group">
+<div class="w-12 h-12 bg-surface-container-high rounded-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">podcasts</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">Podz</p>
+<p class="text-xs text-on-surface-variant">Podcast discovery and highlight reels</p>
+</div>
+<div class="ml-auto text-right">
+<p class="text-xs font-bold text-on-surface">Jun 2021</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Product</p>
+</div>
+</div>
+</div>
+</div>
+<div class="glass-panel rounded-2xl overflow-hidden flex">
+<div class="w-1/3 bg-cover bg-center" data-alt="A vertical, atmospheric architectural photograph of a modern tech headquarters corridor, illuminated with soft neon blue lighting that casts long, elegant shadows. The style is minimalist and high-end, evoking a sense of corporate progress and clean, futuristic design consistent with Spotify's brand identity." style='background-image: url("https://lh3.googleusercontent.com/aida/ADBb0ujTVWkTWma7a0KkzFs5GdAnFN2gn67sAFXagdIeaMEoPJ_fm9u8vjtSvqk2SW7_swnUckOed1u3BcJtnlzPHZtTSjqvZNxKlwYn1y9OM058XIFrI9tTiuHiZwOGikkEARE8aeCDWCxRQeB7io-qW_-YiR6bMSAj9DhOq9qg9ZocXrn4OnVxR8zm6Yq9QRzjA5VgSg8N3V1KbczcPUh5kNCxxL6SxKTJrWTQCd8ArxvlKqob0D-psltndTz-MgHnHv3lnL4eomNIzA");'></div>
+<div class="w-2/3 p-8 flex flex-col justify-center gap-4">
+<h3 class="text-xl font-bold text-on-surface">Capital Allocation</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+                                Spotify continues to prioritize long-term growth over short-term operating margins, with significant investments in:
+                            </p>
+<ul class="space-y-2">
+<li class="flex items-center gap-2 text-sm text-on-surface">
+<span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                                    Content exclusivity (Podcasts)
+                                </li>
+<li class="flex items-center gap-2 text-sm text-on-surface">
+<span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                                    AI-driven advertising platforms
+                                </li>
+<li class="flex items-center gap-2 text-sm text-on-surface">
+<span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                                    Two-sided marketplace tools
+                                </li>
+</ul>
+<div class="mt-4">
+<button class="px-6 py-2 bg-surface-container-highest text-on-surface rounded-lg font-bold text-sm border border-white/10 hover:bg-white/10 transition-all">
+                                    Investment Strategy
+                                </button>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer Meta -->
+<footer class="p-8 border-t border-white/5 flex justify-between items-center text-on-surface-variant text-[10px] font-bold uppercase tracking-[0.2em]">
+<div>Last Updated: Q3 2023 FY</div>
+<div class="flex gap-4">
+<a class="hover:text-primary" href="#">Legal</a>
+<a class="hover:text-primary" href="#">Investor Relations</a>
+<a class="hover:text-primary" href="#">Data Policy</a>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

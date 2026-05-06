@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#ffe4e6",
+                    "error-container": "#450a0a",
+                    "surface-bright": "#1e293b",
+                    "surface-container-low": "#1e293b66",
+                    "on-secondary-fixed": "#0f172a",
+                    "inverse-primary": "#60a5fa",
+                    "primary": "#256af4",
+                    "surface-variant": "#1e293b",
+                    "secondary-container": "#1e293b",
+                    "background": "#101622",
+                    "surface-container-lowest": "#080c14",
+                    "error": "#ef4444",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed": "#1e3a8a",
+                    "inverse-surface": "#f8fafc",
+                    "outline-variant": "#1e293b",
+                    "surface-dim": "#0b0f18",
+                    "surface": "#101622",
+                    "tertiary-container": "#f43f5e22",
+                    "secondary": "#334155",
+                    "tertiary-fixed-dim": "#fecdd3",
+                    "on-background": "#f1f5f9",
+                    "primary-fixed-dim": "#bfdbfe",
+                    "on-tertiary-container": "#fb7185",
+                    "on-primary-fixed-variant": "#1d4ed8",
+                    "outline": "#334155",
+                    "on-primary": "#ffffff",
+                    "on-surface-variant": "#94a3b8",
+                    "primary-container": "#256af433",
+                    "on-secondary": "#f8fafc",
+                    "primary-fixed": "#dbeafe",
+                    "on-error-container": "#fca5a5",
+                    "on-primary-container": "#60a5fa",
+                    "on-tertiary-fixed": "#4c0519",
+                    "on-surface": "#f1f5f9",
+                    "on-tertiary-fixed-variant": "#9f1239",
+                    "on-error": "#ffffff",
+                    "surface-container": "#1e293b80",
+                    "secondary-container": "#1e293b80",
+                    "secondary-fixed": "#e2e8f0",
+                    "inverse-on-surface": "#0f172a",
+                    "surface-tint": "#256af4",
+                    "secondary-fixed-dim": "#cbd5e1",
+                    "on-secondary-fixed-variant": "#334155",
+                    "tertiary": "#f43f5e",
+                    "surface-container-highest": "#2d3748",
+                    "surface-container-high": "#1e293b99",
+                    "on-secondary-container": "#cbd5e1"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "display": ["Manrope"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .neon-glow { text-shadow: 0 0 10px rgba(37, 106, 244, 0.5); }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen overflow-hidden flex">
+<!-- Primary Vertical Sidebar (Collapsed/Icons only as requested) -->
+<aside class="w-20 h-screen flex flex-col items-center py-6 bg-[#101622] border-r border-white/5 z-50">
+<div class="mb-10">
+<span class="material-symbols-outlined text-primary text-3xl font-black">deployed_code</span>
+</div>
+<nav class="flex flex-col gap-8 flex-1">
+<div class="p-3 rounded-xl bg-surface-container-highest text-primary shadow-lg shadow-primary/10">
+<span class="material-symbols-outlined">dashboard</span>
+</div>
+<div class="p-3 text-slate-500 hover:text-slate-200 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">work</span>
+</div>
+<div class="p-3 text-slate-500 hover:text-slate-200 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div class="p-3 text-slate-500 hover:text-slate-200 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">psychology</span>
+</div>
+<div class="p-3 text-slate-500 hover:text-slate-200 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">group</span>
+</div>
+</nav>
+<div class="mt-auto flex flex-col gap-6">
+<div class="p-3 text-slate-500 hover:text-slate-200 cursor-pointer">
+<span class="material-symbols-outlined">help</span>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-white/10">
+<img class="w-full h-full object-cover" data-alt="Professional corporate headshot of a person with a focused expression, set against a dark architectural background. The lighting is cinematic with deep shadows and soft rim lights, matching a premium dark mode aesthetic with high contrast and subtle blue tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtN2gkJByuUW1WIczAEGVNTNyjWGi8WcZSwOCHV66ofLZ8yT52aR04L1f_T81_P8d6oqeqG4n25nhLDHNkq8AetIvLs5hz9IKVBdgdpYdwUFwWtj99g4F5Nbv9gWaJ8aOcgYLzRFEC1kLAJv2X5n1A_4MIrAaJ6UjDaUMvcOhm_0UBFMNOVhqqZ-PXkaqaT40cvciRHajxblRtRjcIMgFU2YcDgHo6yhonQHYJZwVQyQG_KRvPJG-5PxwP-Yxl-L_TyPCZwl6oY0c"/>
+</div>
+</div>
+</aside>
+<!-- Main Sub-Layout Container -->
+<div class="flex-1 flex flex-col h-screen overflow-hidden">
+<!-- TopAppBar (Mapped from Shared Components) -->
+<header class="fixed top-0 left-20 right-0 z-40 bg-slate-900/40 backdrop-blur-xl flex justify-between items-center h-16 px-8 border-b border-white/5">
+<div class="flex items-center gap-4">
+<h1 class="text-xl font-black text-slate-100 tracking-tighter uppercase">CareerFlow</h1>
+<div class="h-4 w-[1px] bg-white/10 mx-2"></div>
+<span class="font-manrope text-[10px] tracking-widest uppercase text-slate-400">Rejected Phase / Rejection Received</span>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex gap-8">
+<a class="font-manrope text-sm tracking-widest uppercase text-slate-400 hover:text-slate-200 duration-300 transition-colors" href="#">Dashboard</a>
+<a class="font-manrope text-sm tracking-widest uppercase text-blue-500 border-b-2 border-blue-500 pb-1" href="#">Job Tracker</a>
+<a class="font-manrope text-sm tracking-widest uppercase text-slate-400 hover:text-slate-200 duration-300 transition-colors" href="#">Resume Lab</a>
+<a class="font-manrope text-sm tracking-widest uppercase text-slate-400 hover:text-slate-200 duration-300 transition-colors" href="#">Analytics</a>
+</nav>
+<div class="flex items-center gap-4 border-l border-white/10 pl-6">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">settings</span>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 flex pt-16 overflow-hidden">
+<!-- Sub-Navigation Sidebar (The Stages) -->
+<nav class="w-72 bg-[#101622] flex flex-col pt-8 pb-12 border-r border-white/5 overflow-y-auto">
+<div class="px-8 mb-6">
+<h2 class="text-[10px] tracking-[0.2em] font-bold text-slate-500 uppercase">Process Stages</h2>
+</div>
+<div class="flex flex-col">
+<!-- Active Stage -->
+<a class="flex items-center gap-4 text-blue-400 bg-blue-500/10 border-r-4 border-blue-500 py-4 px-8 group transition-all duration-300" href="#">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">cancel</span>
+<span class="font-manrope text-[11px] font-bold tracking-widest uppercase">Rejection Received</span>
+</a>
+<a class="flex items-center gap-4 text-slate-400 py-4 px-8 hover:bg-slate-800/50 hover:text-white transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">category</span>
+<span class="font-manrope text-[11px] font-medium tracking-widest uppercase">Rejection Classified</span>
+</a>
+<a class="flex items-center gap-4 text-slate-400 py-4 px-8 hover:bg-slate-800/50 hover:text-white transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">reply_all</span>
+<span class="font-manrope text-[11px] font-medium tracking-widest uppercase">Optional Response</span>
+</a>
+<a class="flex items-center gap-4 text-slate-400 py-4 px-8 hover:bg-slate-800/50 hover:text-white transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">rate_review</span>
+<span class="font-manrope text-[11px] font-medium tracking-widest uppercase">Feedback Logged</span>
+</a>
+<a class="flex items-center gap-4 text-slate-400 py-4 px-8 hover:bg-slate-800/50 hover:text-white transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">task_alt</span>
+<span class="font-manrope text-[11px] font-medium tracking-widest uppercase">Close Active Tasks</span>
+</a>
+<a class="flex items-center gap-4 text-slate-400 py-4 px-8 hover:bg-slate-800/50 hover:text-white transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">self_improvement</span>
+<span class="font-manrope text-[11px] font-medium tracking-widest uppercase">Reflection Recorded</span>
+</a>
+<a class="flex items-center gap-4 text-slate-400 py-4 px-8 hover:bg-slate-800/50 hover:text-white transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">event_repeat</span>
+<span class="font-manrope text-[11px] font-medium tracking-widest uppercase">Reapply Decision</span>
+</a>
+<div class="mx-8 my-6 h-[1px] bg-white/5"></div>
+<a class="flex items-center gap-4 text-slate-500 py-4 px-8 hover:bg-slate-800/50 hover:text-white transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined text-xl">archive</span>
+<span class="font-manrope text-[11px] font-medium tracking-widest uppercase text-slate-500">Archived</span>
+</a>
+</div>
+</nav>
+<!-- Main Canvas Area -->
+<section class="flex-1 p-10 overflow-y-auto bg-surface-container-low relative">
+<!-- Signature Ambient Blur -->
+<div class="absolute -top-20 -right-20 w-96 h-96 bg-primary/10 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-20 left-20 w-64 h-64 bg-tertiary/5 rounded-full blur-[100px]"></div>
+<div class="max-w-5xl mx-auto">
+<!-- Hero Header Section -->
+<div class="mb-12 flex justify-between items-end">
+<div>
+<span class="text-[10px] font-bold tracking-[0.3em] uppercase text-tertiary mb-2 block">Stage 01: Finalized</span>
+<h2 class="text-4xl font-black text-slate-100 tracking-tight mb-2 neon-glow">Rejection Received</h2>
+<p class="text-slate-400 max-w-xl">A formal record of the decision communicated by the organization. This module archives the context and timing of the rejection for long-term career analytics.</p>
+</div>
+<div class="flex gap-4">
+<button class="bg-slate-800 text-slate-100 px-6 py-2.5 rounded-xl font-manrope text-xs font-bold uppercase tracking-widest hover:bg-slate-700 transition-colors">Export Record</button>
+<button class="bg-primary text-white px-6 py-2.5 rounded-xl font-manrope text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">Proceed to Classification</button>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Primary Module: Rejection Record -->
+<div class="col-span-12 lg:col-span-8 glass-panel rounded-2xl p-8 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-6">
+<span class="material-symbols-outlined text-white/5 text-8xl font-thin">receipt_long</span>
+</div>
+<div class="flex items-center gap-3 mb-8">
+<div class="w-2 h-8 bg-tertiary rounded-full"></div>
+<h3 class="text-xl font-bold text-slate-100 uppercase tracking-tighter">Rejection Record</h3>
+</div>
+<div class="grid grid-cols-2 gap-12 relative z-10">
+<div class="space-y-8">
+<div class="group">
+<label class="block text-[10px] tracking-widest uppercase text-slate-500 font-bold mb-2">Decision Timestamp</label>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">calendar_today</span>
+<span class="text-lg text-slate-200 font-medium">October 24, 2023</span>
+</div>
+<div class="mt-1 text-xs text-slate-500">14:42 GMT-5 (Local Time)</div>
+</div>
+<div class="group">
+<label class="block text-[10px] tracking-widest uppercase text-slate-500 font-bold mb-2">Communication Channel</label>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">mail</span>
+<span class="text-lg text-slate-200 font-medium">Email Communication</span>
+</div>
+<div class="mt-1 text-xs text-slate-500">Sender: talent.acquisition@nexus-tech.io</div>
+</div>
+</div>
+<div class="space-y-8">
+<div class="group">
+<label class="block text-[10px] tracking-widest uppercase text-slate-500 font-bold mb-2">Elimination Stage</label>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary">groups</span>
+<span class="text-lg text-slate-200 font-medium">Technical Panel</span>
+</div>
+<div class="mt-1 text-xs text-slate-500">Stage 4 of 6 in Pipeline</div>
+</div>
+<div class="group">
+<label class="block text-[10px] tracking-widest uppercase text-slate-500 font-bold mb-2">Application ID</label>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">fingerprint</span>
+<span class="text-lg text-slate-200 font-medium font-mono tracking-tighter">APP-9921-XRT</span>
+</div>
+<div class="mt-1 text-xs text-slate-500">Role: Senior Staff Engineer</div>
+</div>
+</div>
+</div>
+<!-- Visual Stage Tracker -->
+<div class="mt-12 pt-8 border-t border-white/5">
+<label class="block text-[10px] tracking-widest uppercase text-slate-500 font-bold mb-6">Journey Progression</label>
+<div class="flex justify-between items-center relative">
+<div class="absolute h-[2px] bg-slate-800 w-full top-1/2 -translate-y-1/2 left-0 z-0"></div>
+<div class="absolute h-[2px] bg-primary w-2/3 top-1/2 -translate-y-1/2 left-0 z-0"></div>
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold border-4 border-[#101622]">1</div>
+<span class="mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-tight">Applied</span>
+</div>
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold border-4 border-[#101622]">2</div>
+<span class="mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-tight">Screening</span>
+</div>
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold border-4 border-[#101622]">3</div>
+<span class="mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-tight">Cultural</span>
+</div>
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-12 h-12 rounded-full bg-tertiary flex items-center justify-center text-white shadow-lg shadow-tertiary/30 border-4 border-[#101622]">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">close</span>
+</div>
+<span class="mt-2 text-[10px] text-tertiary font-black uppercase tracking-tight">Technical</span>
+</div>
+<div class="relative z-10 flex flex-col items-center opacity-30">
+<div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 text-[10px] font-bold border-4 border-[#101622]">5</div>
+<span class="mt-2 text-[10px] text-slate-500 font-bold uppercase tracking-tight">System Design</span>
+</div>
+<div class="relative z-10 flex flex-col items-center opacity-30">
+<div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 text-[10px] font-bold border-4 border-[#101622]">6</div>
+<span class="mt-2 text-[10px] text-slate-500 font-bold uppercase tracking-tight">Offer</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Secondary: Quick Context Card -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+<!-- Company Branding Mini Glass -->
+<div class="glass-panel rounded-2xl p-6 flex flex-col items-center text-center">
+<div class="w-16 h-16 rounded-2xl bg-white mb-4 flex items-center justify-center overflow-hidden">
+<img class="w-10 h-10 object-contain" data-alt="A minimalist logo for a technology company called Nexus Tech, featuring sharp geometric lines and a futuristic aesthetic. The image shows a clean corporate brand mark against a solid white background, evoking professionalism and high-end engineering excellence." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_V55oBHC-4auuyxrtkRQywkIawyADykU1b8V-BKzgxOcvl8hvmr7amQTERhtgE-QNfARq27CfFiBociz6phCLqWUkgUSZ4Ug7PVj89tTstS_Ai9VZo72ji6gUPMeRmPV-LNuqJEZNblTo_RX5CJUMpzQSN9ZExhiTimxItAJJDXCQDpffIjrbAWrp0eli7N7KK9C3t3n92n249TIWnl-9NmH1aDIFePPbcB6qe1BL5jZEk74K939IuQze63wzGTBtuFdEiwywyeY"/>
+</div>
+<h4 class="text-lg font-bold text-slate-100">Nexus Tech</h4>
+<p class="text-xs text-slate-500 uppercase tracking-widest font-bold mb-4">Cloud Infrastructure</p>
+<div class="flex gap-2">
+<span class="bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase py-1 px-3 rounded-full">Remote</span>
+<span class="bg-white/5 border border-white/10 text-slate-300 text-[10px] font-bold uppercase py-1 px-3 rounded-full">$180k - $220k</span>
+</div>
+</div>
+<!-- Rejection Stats -->
+<div class="glass-panel rounded-2xl p-6 flex-1">
+<h4 class="text-[10px] tracking-widest uppercase text-slate-500 font-bold mb-6">Cohort Insights</h4>
+<div class="space-y-6">
+<div class="flex justify-between items-center">
+<span class="text-sm text-slate-400">Survival Rate</span>
+<span class="text-sm font-bold text-slate-200">12%</span>
+</div>
+<div class="w-full bg-slate-800 h-1.5 rounded-full">
+<div class="bg-primary h-full rounded-full" style="width: 12%"></div>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-sm text-slate-400">Total Applicants</span>
+<span class="text-sm font-bold text-slate-200">4,281</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-sm text-slate-400">Avg. Process Time</span>
+<span class="text-sm font-bold text-slate-200">24 Days</span>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-white/5">
+<p class="text-[11px] text-slate-500 italic leading-relaxed">
+                                        "This stage typically sees a 65% dropout rate for external candidates." 
+                                        <span class="block mt-1 font-bold not-italic text-slate-400">— System Analyst</span>
+</p>
+</div>
+</div>
+</div>
+<!-- Bottom Row: Detailed Transcript / Message -->
+<div class="col-span-12 glass-panel rounded-2xl p-8">
+<div class="flex justify-between items-center mb-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400">description</span>
+<h3 class="text-lg font-bold text-slate-100 uppercase tracking-tighter">Decision Transcript</h3>
+</div>
+<span class="bg-tertiary-container text-tertiary text-[10px] font-bold uppercase py-1 px-4 rounded-full">Negative Outcome</span>
+</div>
+<div class="bg-slate-900/50 rounded-xl p-8 border border-white/5">
+<div class="font-mono text-sm text-slate-400 leading-relaxed space-y-4">
+<p>Dear Alex Rivera,</p>
+<p>Thank you for taking the time to meet with our Technical Panel last Tuesday. We were impressed with your deep knowledge of distributed systems and your recent work with Kubernetes orchestration.</p>
+<p>At this time, we have decided to move forward with another candidate whose background more closely aligns with the specific high-frequency trading requirements of this staff-level role. This decision was difficult, and we truly appreciate the effort you put into the evaluation process.</p>
+<p>We will keep your profile in our internal talent network and will reach out if a more suitable position opens in the future.</p>
+<p>Regards,<br/>Nexus Tech Recruiting Team</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+</body></html>

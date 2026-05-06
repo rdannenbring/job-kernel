@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Offer Received | Midnight Glass</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ef4444",
+                        "surface-container": "#1e293b80",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "tertiary": "#f43f5e",
+                        "primary-container": "#256af433",
+                        "on-secondary-container": "#cbd5e1",
+                        "surface-container-low": "#1e293b66",
+                        "outline": "#334155",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#4c0519",
+                        "background": "#101622",
+                        "on-tertiary-container": "#fb7185",
+                        "on-surface": "#f1f5f9",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "on-background": "#f1f5f9",
+                        "surface-container-high": "#1e293b99",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffe4e6",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "primary-fixed": "#dbeafe",
+                        "surface": "#101622",
+                        "secondary-container": "#1e293b",
+                        "outline-variant": "#1e293b",
+                        "on-secondary": "#f8fafc",
+                        "surface-dim": "#0b0f18",
+                        "surface-container-lowest": "#080c14",
+                        "secondary": "#334155",
+                        "inverse-primary": "#60a5fa",
+                        "surface-container-highest": "#2d3748",
+                        "secondary-fixed": "#e2e8f0",
+                        "on-primary-container": "#60a5fa",
+                        "surface-tint": "#256af4",
+                        "on-secondary-fixed-variant": "#334155",
+                        "on-error": "#ffffff",
+                        "primary": "#256af4",
+                        "on-secondary-fixed": "#0f172a",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "tertiary-container": "#f43f5e22",
+                        "inverse-surface": "#f8fafc",
+                        "on-primary-fixed": "#1e3a8a",
+                        "inverse-on-surface": "#0f172a",
+                        "error-container": "#450a0a",
+                        "on-surface-variant": "#94a3b8",
+                        "surface-variant": "#1e293b",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-error-container": "#fca5a5",
+                        "surface-bright": "#1e293b"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-glow {
+            text-shadow: 0 0 10px rgba(37, 106, 244, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen flex overflow-hidden">
+<!-- Fixed Collapsed SideNavBar (Immutable Content Logic) -->
+<aside class="fixed left-0 top-0 h-full w-20 bg-slate-950/80 backdrop-blur-xl border-r border-white/10 flex flex-col items-center py-8 z-50">
+<div class="mb-10">
+<span class="text-xl font-bold tracking-tighter text-white neon-glow">M</span>
+</div>
+<nav class="flex flex-col gap-8 flex-1">
+<!-- Applications is the parent phase of 'Accepted' -->
+<div class="relative group">
+<span class="material-symbols-outlined text-blue-400 cursor-pointer p-3 bg-blue-600/20 rounded-xl border-r-2 border-blue-500 transition-all duration-300">work</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 hover:text-slate-100 cursor-pointer transition-all">dashboard</span>
+<span class="material-symbols-outlined text-slate-400 hover:text-slate-100 cursor-pointer transition-all">bookmark</span>
+<span class="material-symbols-outlined text-slate-400 hover:text-slate-100 cursor-pointer transition-all">group</span>
+<span class="material-symbols-outlined text-slate-400 hover:text-slate-100 cursor-pointer transition-all">analytics</span>
+</nav>
+<div class="flex flex-col gap-6 mt-auto">
+<span class="material-symbols-outlined text-slate-400 hover:text-slate-100 cursor-pointer transition-all">help_outline</span>
+<span class="material-symbols-outlined text-slate-400 hover:text-slate-100 cursor-pointer transition-all">settings</span>
+</div>
+</aside>
+<!-- Sub-Navigation (Left Aligned for Accepted Stages) -->
+<aside class="fixed left-20 top-0 h-full w-64 bg-surface-dim/50 border-r border-white/5 flex flex-col py-8 px-6 z-40">
+<div class="mb-8">
+<h2 class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-4">Accepted Phase</h2>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 font-semibold border-r-2 border-blue-500" href="#">
+<span class="text-xs">Offer Received</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-white/5 transition-all" href="#">
+<span class="text-xs">Offer Reviewed</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-white/5 transition-all" href="#">
+<span class="text-xs">Negotiated</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-white/5 transition-all" href="#">
+<span class="text-xs">Formal Acceptance</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-white/5 transition-all" href="#">
+<span class="text-xs">Pre-onboarding</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-white/5 transition-all" href="#">
+<span class="text-xs">Close Pipelines</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Stage -->
+<main class="ml-84 pl-84 flex-1 h-screen overflow-y-auto pt-24 pb-12 px-12" style="margin-left: 21rem;">
+<!-- TopAppBar Context (Mapped from JSON logic) -->
+<header class="fixed top-0 right-0 w-[calc(100%-21rem)] h-16 bg-slate-900/40 backdrop-blur-md flex justify-between items-center px-8 z-40 border-b border-white/5">
+<div class="flex items-center gap-4">
+<div class="h-8 w-8 rounded-lg bg-blue-600/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-blue-400 text-lg" style="font-variation-settings: 'FILL' 1;">description</span>
+</div>
+<nav class="flex gap-6">
+<span class="text-slate-400 font-medium text-sm hover:text-blue-300 cursor-pointer">Dashboard</span>
+<span class="text-blue-400 font-bold text-sm">Applications</span>
+<span class="text-slate-400 font-medium text-sm hover:text-blue-300 cursor-pointer">Active</span>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<span class="material-symbols-outlined text-slate-400 hover:text-blue-300 cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-slate-400 hover:text-blue-300 cursor-pointer">history</span>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-white/10">
+<img alt="User Profile" data-alt="A professional portrait of a senior software engineer in a high-tech studio environment. The lighting is moody and cinematic with deep blues and subtle neon highlights that match a midnight glass aesthetic. He is wearing a minimalist dark turtleneck, looking confidently at the camera, reflecting a successful career curator persona." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBidMdHEZJi7Ov_RnRydaNgmZuV57Wb5V7rJIULMIsgeAOBacbUxKKqPDk8Zuc0OEzhtXrBAFz37cIg_gN7Pp95-oviMxa3CE_kWLrVi3Ya-v8ruqtrKZfiofck8FVLE4cUnSbGLEPbA1vF9Fh5oA6y6enuaf1PkQMvRd9HxiKJwngKnhzmBmTGjZsxukasbSJWB0inu3YDOpgfTkGqFH1YlHhWEAtAZk3A-Cz-oFvs012uIZY987s8YiACSnsgHBw0D_zYDHjLylQ"/>
+</div>
+</div>
+</header>
+<!-- Page Header Area -->
+<div class="mb-12">
+<div class="flex items-center gap-3 mb-2">
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-md">Offer Phase</span>
+<span class="h-1 w-1 bg-slate-700 rounded-full"></span>
+<span class="text-xs text-slate-400">Received 2 hours ago</span>
+</div>
+<h1 class="text-4xl font-extrabold text-white tracking-tight mb-2">Offer Received</h1>
+<p class="text-slate-400 max-w-2xl">Capture and review the formal offer details from <span class="text-white font-semibold">Nexus Dynamics</span> for the <span class="text-white font-semibold">Staff Product Designer</span> position.</p>
+</div>
+<!-- 2-Column Bento Layout -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Column 1: Document & Compensation (8 Columns) -->
+<div class="col-span-8 space-y-8">
+<!-- Document Upload/View Module -->
+<section class="glass-panel rounded-2xl p-8 group">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                Formal Offer Document
+                            </h3>
+<p class="text-xs text-slate-400 mt-1">Uploaded PDF or Docx version of the official offer letter.</p>
+</div>
+<button class="bg-primary hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 rounded-lg shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+                            Upload New
+                        </button>
+</div>
+<div class="relative aspect-[16/9] w-full rounded-xl overflow-hidden bg-slate-900 border border-white/5 flex items-center justify-center group-hover:border-primary/30 transition-all">
+<!-- Mock PDF Preview Interior -->
+<div class="absolute inset-0 opacity-20 pointer-events-none">
+<img class="w-full h-full object-cover" data-alt="A high-fidelity mockup of a professional job offer letter presented on a digital screen. The document features clean typography, a corporate logo placeholder, and sections for salary and benefits. The scene is set in a dimly lit modern office with cool blue ambient lighting and soft bokeh effects in the background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjKrL7_8FOPkallzfky9Ki9c9VxeWM7aIofF1S7HuPE6xgS04jGu-z9P5CJk8nMT55bMOqJBR4E15M27uTbZNxNyCEQkt8XqJQWXFXKvJw7pU14oUuOixNc979_mwtYYuLbGyZrgWClkK3jmQW0VhBgxVz3BLHio6ymv-GXOKUBie-t60gfIuCh6Azek1aPIOnMYVunl7eRJmdp_Zbf87DBvfEkAD95mYH4Xg585TLsllqn7MIKnOXT5YyRv6C5DBrq-CTq6S81K4"/>
+</div>
+<div class="text-center z-10">
+<span class="material-symbols-outlined text-5xl text-blue-400 mb-3" style="font-variation-settings: 'FILL' 1;">picture_as_pdf</span>
+<p class="text-slate-200 font-semibold">Offer_Letter_Nexus_Dynamics.pdf</p>
+<p class="text-xs text-slate-500 mt-1">2.4 MB • Signed by Hiring Manager</p>
+<div class="mt-6 flex justify-center gap-3">
+<button class="bg-white/5 hover:bg-white/10 text-white text-xs py-2 px-6 rounded-full border border-white/10 transition-all">View Fullscreen</button>
+<button class="bg-white/5 hover:bg-white/10 text-white text-xs py-2 px-6 rounded-full border border-white/10 transition-all">Download</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Compensation Package Grid -->
+<section class="glass-panel rounded-2xl p-8">
+<h3 class="text-lg font-bold text-white mb-6">Base Compensation Package</h3>
+<div class="grid grid-cols-3 gap-6">
+<div class="bg-white/5 rounded-xl p-6 border border-white/5">
+<span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold block mb-1">Base Salary</span>
+<div class="text-2xl font-bold text-white">$185,000</div>
+<div class="text-[10px] text-blue-400 mt-1 font-medium">+12% vs Target</div>
+</div>
+<div class="bg-white/5 rounded-xl p-6 border border-white/5">
+<span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold block mb-1">Equity (RSUs)</span>
+<div class="text-2xl font-bold text-white">$240,000</div>
+<div class="text-[10px] text-slate-500 mt-1 font-medium">Vesting over 4 years</div>
+</div>
+<div class="bg-white/5 rounded-xl p-6 border border-white/5">
+<span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold block mb-1">Sign-on Bonus</span>
+<div class="text-2xl font-bold text-white">$25,000</div>
+<div class="text-[10px] text-slate-500 mt-1 font-medium">One-time payment</div>
+</div>
+</div>
+<div class="mt-8 pt-8 border-t border-white/5 grid grid-cols-2 gap-8">
+<div>
+<h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4">Health &amp; Wellness</h4>
+<ul class="space-y-3">
+<li class="flex items-center gap-3 text-sm text-slate-400">
+<span class="material-symbols-outlined text-blue-500 text-sm">check_circle</span>
+                                    100% Medical/Dental/Vision
+                                </li>
+<li class="flex items-center gap-3 text-sm text-slate-400">
+<span class="material-symbols-outlined text-blue-500 text-sm">check_circle</span>
+                                    $2,500 Annual Wellness Stipend
+                                </li>
+</ul>
+</div>
+<div>
+<h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4">Work Environment</h4>
+<ul class="space-y-3">
+<li class="flex items-center gap-3 text-sm text-slate-400">
+<span class="material-symbols-outlined text-blue-500 text-sm">check_circle</span>
+                                    Fully Remote (Hybrid Optional)
+                                </li>
+<li class="flex items-center gap-3 text-sm text-slate-400">
+<span class="material-symbols-outlined text-blue-500 text-sm">check_circle</span>
+                                    $1,000 Home Office Budget
+                                </li>
+</ul>
+</div>
+</div>
+</section>
+</div>
+<!-- Column 2: Checklist & Compare (4 Columns) -->
+<div class="col-span-4 space-y-8">
+<!-- Quick Review Checklist -->
+<section class="glass-panel rounded-2xl p-8">
+<h3 class="text-lg font-bold text-white mb-6">Quick Review</h3>
+<div class="space-y-4">
+<label class="flex items-start gap-4 p-4 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
+<input class="mt-1 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary focus:ring-offset-slate-900" type="checkbox"/>
+<div>
+<span class="text-sm font-semibold text-slate-200 block group-hover:text-white transition-colors">Start Date Confirmed</span>
+<span class="text-xs text-slate-500">Proposed: October 14, 2024</span>
+</div>
+</label>
+<label class="flex items-start gap-4 p-4 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
+<input checked="" class="mt-1 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary focus:ring-offset-slate-900" type="checkbox"/>
+<div>
+<span class="text-sm font-semibold text-slate-200 block group-hover:text-white transition-colors">Vesting Schedule Verified</span>
+<span class="text-xs text-slate-500">Standard 1-year cliff, 4-year total</span>
+</div>
+</label>
+<label class="flex items-start gap-4 p-4 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
+<input class="mt-1 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary focus:ring-offset-slate-900" type="checkbox"/>
+<div>
+<span class="text-sm font-semibold text-slate-200 block group-hover:text-white transition-colors">Non-Compete Clause Review</span>
+<span class="text-xs text-slate-500">Check Section 8.4 for restrictions</span>
+</div>
+</label>
+<label class="flex items-start gap-4 p-4 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
+<input class="mt-1 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary focus:ring-offset-slate-900" type="checkbox"/>
+<div>
+<span class="text-sm font-semibold text-slate-200 block group-hover:text-white transition-colors">Notice Period Requirement</span>
+<span class="text-xs text-slate-500">Check for 30-day exit clauses</span>
+</div>
+</label>
+</div>
+</section>
+<!-- Action Card -->
+<section class="glass-panel rounded-2xl p-8 bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+<h3 class="text-lg font-bold text-white mb-2">Compare Offer</h3>
+<p class="text-xs text-slate-400 mb-6">See how this package stacks up against your other active offers or market data.</p>
+<button class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm font-bold py-3 px-4 rounded-xl transition-all mb-3">
+<span class="material-symbols-outlined text-lg">compare_arrows</span>
+                        Compare with Market
+                    </button>
+<button class="w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-slate-300 text-sm font-bold py-3 px-4 rounded-xl border border-white/5 transition-all">
+<span class="material-symbols-outlined text-lg">history</span>
+                        View Version History
+                    </button>
+</section>
+<!-- Floating Atmosphere Element (Internal) -->
+<div class="p-8 rounded-2xl bg-blue-600/5 border border-blue-500/10 flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-blue-400 text-3xl mb-4" style="font-variation-settings: 'FILL' 1;">rocket_launch</span>
+<h4 class="text-white font-bold mb-2">Ready to move forward?</h4>
+<p class="text-xs text-slate-400 mb-6">Completing this review unlocks the "Offer Reviewed" stage for formal feedback.</p>
+<button class="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold text-sm shadow-xl shadow-blue-500/20 transition-all active:scale-[0.98]">
+                        Complete Review
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Background Decoration (Atmospheric Blurs) -->
+<div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+<div class="fixed bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none -z-10"></div>
+</body></html>

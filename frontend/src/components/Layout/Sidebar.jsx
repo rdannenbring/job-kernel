@@ -8,14 +8,15 @@ const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle, user, onLogou
     // Auto-collapse based on window width
     React.useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth < 1025) {
+            const threshold = (currentScreen === 'detail' || currentScreen === 'lifecycle') ? 1400 : 1025;
+            if (window.innerWidth < threshold) {
                 setCollapsed(true);
             }
         };
-        handleResize(); // Initial check
+        handleResize(); // Initial check and check on screen change
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    }, [currentScreen]);
 
     // Derived active theme for icon state
     const [activeTheme, setActiveTheme] = useState(() => document.documentElement.getAttribute('data-theme') || 'dark');

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Applied Phase - Follow-up Sent</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#fca5a5",
+                        "error-container": "#450a0a",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "on-tertiary-fixed": "#4c0519",
+                        "primary-fixed": "#dbeafe",
+                        "outline": "#334155",
+                        "on-secondary-fixed": "#0f172a",
+                        "surface-container-low": "#1e293b66",
+                        "surface-variant": "#1e293b",
+                        "tertiary": "#f43f5e",
+                        "primary": "#256af4",
+                        "surface-container-high": "#1e293b99",
+                        "background": "#101622",
+                        "on-background": "#f1f5f9",
+                        "tertiary-container": "#f43f5e22",
+                        "surface-dim": "#0b0f18",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#94a3b8",
+                        "outline-variant": "#1e293b",
+                        "secondary": "#334155",
+                        "inverse-surface": "#f8fafc",
+                        "inverse-primary": "#60a5fa",
+                        "surface-container-highest": "#2d3748",
+                        "secondary-container": "#1e293b",
+                        "on-surface": "#f1f5f9",
+                        "on-primary-container": "#60a5fa",
+                        "secondary-fixed": "#e2e8f0",
+                        "on-secondary": "#f8fafc",
+                        "surface-container": "#1e293b80",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-tertiary-container": "#fb7185",
+                        "on-primary-fixed": "#1e3a8a",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "on-secondary-fixed-variant": "#334155",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "surface": "#101622",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "primary-container": "#256af433",
+                        "surface-container-lowest": "#080c14",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#0f172a",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#256af4",
+                        "error": "#ef4444",
+                        "surface-bright": "#1e293b",
+                        "on-secondary-container": "#cbd5e1",
+                        "tertiary-fixed": "#ffe4e6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-[#101623] dark group/design-root overflow-x-hidden" style='font-family: Manrope, "Noto Sans", sans-serif;'>
+<div class="layout-container flex h-full grow flex-col">
+<div class="px-10 lg:px-40 flex flex-1 justify-center py-5">
+<div class="layout-content-container flex flex-col max-w-[1200px] flex-1">
+<!-- Shared Header Component -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#222f49] px-4 py-3">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-white">
+<div class="size-4 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_6_319)">
+<path d="M8.57829 8.57829C5.52816 11.6284 3.451 15.5145 2.60947 19.7452C1.76794 23.9758 2.19984 28.361 3.85056 32.3462C5.50128 36.3314 8.29667 39.7376 11.8832 42.134C15.4698 44.5305 19.6865 45.8096 24 45.8096C28.3135 45.8096 32.5302 44.5305 36.1168 42.134C39.7033 39.7375 42.4987 36.3314 44.1494 32.3462C45.8002 28.361 46.2321 23.9758 45.3905 19.7452C44.549 15.5145 42.4718 11.6284 39.4217 8.57829L24 24L8.57829 8.57829Z" fill="currentColor"></path>
+</g>
+<defs>
+<clippath id="clip0_6_319"><rect fill="white" height="48" width="48"></rect></clippath>
+</defs>
+</svg>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">ApplicantTracker</h2>
+</div>
+<label class="flex flex-col min-w-40 !h-10 max-w-64 hidden md:flex">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-[#90a4cb] flex border-none bg-[#222f49] items-center justify-center pl-4 rounded-l-lg border-r-0" data-icon="MagnifyingGlass" data-size="24px" data-weight="regular">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#222f49] focus:border-none h-full placeholder:text-[#90a4cb] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" placeholder="Search" value=""/>
+</div>
+</label>
+</div>
+<div class="flex flex-1 justify-end gap-4 md:gap-8">
+<div class="flex gap-2">
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-[#222f49] text-white gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
+<div class="text-white" data-icon="Bell" data-size="20px" data-weight="regular">
+<span class="material-symbols-outlined">notifications</span>
+</div>
+</button>
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-[#222f49] text-white gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
+<div class="text-white" data-icon="Gear" data-size="20px" data-weight="regular">
+<span class="material-symbols-outlined">settings</span>
+</div>
+</button>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-primary/20" data-alt="A professional headshot of a recruitment manager in a high-end corporate setting. The lighting is dramatic, with cool blue tones highlighting the sharp features and sleek professional attire. The background is a soft-focus office interior with glass walls and minimalist furniture, maintaining a modern and sophisticated aesthetic." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAgAXliBbqpeEhwKi6zlQc1TmGwLt31ttgC6SNOr2-rcyy1oQZ4uvYTwOxUJMI3GCZfe-ybciZfc3TTqhUB3Rqqx1s7ZPNtOflkhoyKumrRwYtZfLLeYxy1mqNNG16l-yJbl1m4F1Xx5N5DzJ_O5QYaXd7Iu20IThbrhF7s0ivyiSp84wGIY9k3qCcr2NXxMqpnsdOZSdutIv4aPVcdVwSbzlHBA94jiBYwvkksLQYU7PfzTxvVENamSIcWWg12ELvQ_M6ccylqzVI");'></div>
+</div>
+</header>
+<!-- Page Header Section -->
+<div class="flex flex-wrap justify-between gap-3 p-4 mt-4">
+<div class="flex min-w-72 flex-col gap-1">
+<div class="flex items-center gap-2 mb-2">
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">Active Stage</span>
+</div>
+<p class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Applied Phase</p>
+<p class="text-[#90a4cb] text-base font-normal leading-normal flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">subdirectory_arrow_right</span>
+                            Sub-stage: Follow-up Sent
+                        </p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-surface-container text-white text-sm font-bold leading-normal tracking-[0.015em] transition-all hover:bg-surface-container-high border border-white/5">
+<span class="truncate">View Job Description</span>
+</button>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] shadow-[0_0_20px_rgba(37,106,244,0.3)]">
+<span class="truncate">Edit Application</span>
+</button>
+</div>
+</div>
+<!-- Progress Bar Section -->
+<div class="flex flex-col gap-3 p-4 mx-4 glass-panel rounded-2xl mb-6">
+<div class="flex gap-6 justify-between">
+<p class="text-white text-base font-medium leading-normal">Applied Phase Completion</p>
+<p class="text-primary text-sm font-bold leading-normal">100%</p>
+</div>
+<div class="rounded-full bg-slate-800 h-2 w-full overflow-hidden">
+<div class="h-full rounded-full bg-primary shadow-[0_0_10px_rgba(37,106,244,0.5)]" style="width: 100%;"></div>
+</div>
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<p class="text-sm font-semibold leading-normal">Ready to transition to Interviewing</p>
+</div>
+</div>
+<!-- Sub-navigation Tabs -->
+<div class="pb-3 mb-6">
+<div class="flex border-b border-[#314368] px-4 gap-8">
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-[#90a4cb] pb-[13px] pt-4 hover:text-white transition-colors" href="#">
+<p class="text-sm font-bold leading-normal tracking-[0.015em]">Submitted</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-[#90a4cb] pb-[13px] pt-4 hover:text-white transition-colors" href="#">
+<p class="text-sm font-bold leading-normal tracking-[0.015em]">Confirmed</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-[#90a4cb] pb-[13px] pt-4 hover:text-white transition-colors" href="#">
+<p class="text-sm font-bold leading-normal tracking-[0.015em]">Follow-up Due</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-primary text-white pb-[13px] pt-4" href="#">
+<p class="text-sm font-bold leading-normal tracking-[0.015em]">Follow-up Sent</p>
+</a>
+</div>
+</div>
+<!-- Main 2-Column Content Area -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
+<!-- Left Column: Activity Log -->
+<div class="lg:col-span-2 flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">Activity Log</h2>
+<button class="text-primary text-sm font-bold hover:underline">View All</button>
+</div>
+<div class="flex flex-col gap-4">
+<!-- Activity Item 1 (Follow-up Sent) -->
+<div class="glass-panel p-6 rounded-2xl border-l-4 border-l-primary flex gap-4">
+<div class="bg-primary/20 p-2 rounded-lg self-start">
+<span class="material-symbols-outlined text-primary" data-icon="send">send</span>
+</div>
+<div class="flex flex-col flex-1">
+<div class="flex items-center justify-between mb-1">
+<p class="text-slate-100 font-bold">Follow-up Sent</p>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Oct 24, 2023 • 2:45 PM</p>
+</div>
+<p class="text-slate-400 text-sm leading-relaxed mb-3">
+                                        Second follow-up communication dispatched to hiring manager. Template used: <span class="text-primary font-medium">Professional Re-engagement v2.1</span>
+</p>
+<div class="bg-black/20 rounded-lg p-3 border border-white/5 italic text-slate-500 text-xs">
+                                        "Hi [Name], I'm reaching out to express my continued interest in the Senior UI Designer position..."
+                                    </div>
+</div>
+</div>
+<!-- Activity Item 2 (Earlier Log) -->
+<div class="glass-panel p-6 rounded-2xl border-l-4 border-l-slate-700 flex gap-4 opacity-70">
+<div class="bg-slate-800 p-2 rounded-lg self-start">
+<span class="material-symbols-outlined text-slate-400" data-icon="notifications_active">notifications_active</span>
+</div>
+<div class="flex flex-col flex-1">
+<div class="flex items-center justify-between mb-1">
+<p class="text-slate-100 font-bold">Follow-up Due Reminder</p>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Oct 24, 2023 • 9:00 AM</p>
+</div>
+<p class="text-slate-400 text-sm leading-relaxed">
+                                        System generated notification: 7 days since last contact. Recommendation: Send polite follow-up.
+                                    </p>
+</div>
+</div>
+<!-- Activity Item 3 (Earlier Log) -->
+<div class="glass-panel p-6 rounded-2xl border-l-4 border-l-slate-700 flex gap-4 opacity-50">
+<div class="bg-slate-800 p-2 rounded-lg self-start">
+<span class="material-symbols-outlined text-slate-400" data-icon="mail">mail</span>
+</div>
+<div class="flex flex-col flex-1">
+<div class="flex items-center justify-between mb-1">
+<p class="text-slate-100 font-bold">Application Confirmed</p>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Oct 17, 2023 • 11:20 AM</p>
+</div>
+<p class="text-slate-400 text-sm leading-relaxed">
+                                        Automated receipt confirmation from Greenhouse ATS received.
+                                    </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Next Steps Module -->
+<div class="flex flex-col gap-6">
+<div class="glass-panel p-6 rounded-2xl flex flex-col gap-6 border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+<div>
+<h3 class="text-white text-lg font-bold mb-1">Next Steps</h3>
+<p class="text-slate-400 text-xs">Recommended actions for this stage.</p>
+</div>
+<!-- Checklist -->
+<div class="flex flex-col gap-4">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Ready to move to Interviewing?</p>
+<div class="flex flex-col gap-3">
+<label class="flex items-center gap-3 group cursor-pointer">
+<div class="size-5 rounded border border-primary bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: 'wght' 700">check</span>
+</div>
+<span class="text-slate-300 text-sm group-hover:text-white transition-colors">Follow-up email sent</span>
+</label>
+<label class="flex items-center gap-3 group cursor-pointer">
+<div class="size-5 rounded border border-primary bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: 'wght' 700">check</span>
+</div>
+<span class="text-slate-300 text-sm group-hover:text-white transition-colors">7 days post-application reached</span>
+</label>
+<label class="flex items-center gap-3 group cursor-pointer">
+<div class="size-5 rounded border border-primary bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: 'wght' 700">check</span>
+</div>
+<span class="text-slate-300 text-sm group-hover:text-white transition-colors">Contact person identified</span>
+</label>
+</div>
+</div>
+<div class="h-px bg-white/10"></div>
+<!-- Primary CTAs -->
+<div class="flex flex-col gap-3">
+<button class="w-full flex items-center justify-center gap-2 h-12 bg-primary hover:bg-blue-600 text-white font-bold rounded-lg transition-all shadow-[0_0_20px_rgba(37,106,244,0.2)]">
+<span class="material-symbols-outlined text-base">forward</span>
+                                    Move to Interviewing
+                                </button>
+<button class="w-full h-12 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg transition-all border border-white/5">
+                                    Wait for Response
+                                </button>
+<button class="w-full h-12 bg-transparent hover:bg-error/10 text-error/80 hover:text-error text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-base">archive</span>
+                                    Archive Application
+                                </button>
+</div>
+</div>
+<!-- Mini Card: Contact Info -->
+<div class="glass-panel p-6 rounded-2xl">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-4">Hiring Manager</p>
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A portrait of a male tech recruiter with a friendly smile, set against a blurred background of a modern office lounge. He is wearing a dark polo shirt. The image is crisp with warm lighting that highlights professional approachability within a corporate tech environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHRTk14KKSSI9akZHsZwJFsRQBDaKkZA1DZSWHX36M5oIMB7mCShZ6kTdPjjvXzeM-nqaCTEaOZAlJTXvhV2hJurqv9y5Z1Pfk9JFL3XJuL1lSAjk_8P4vljSmlx8L2jgwg9nXGRrk_ZaG5v0ez5JNesrO6-QEheVYtRme5kgoeThUEYM4tTxr6HELcDcyIfTJgKgXLydZoO1oDrz-U2qX-E20tnxipw_LiiAzDcbJUopLApg3yoZSezO6bawaN2wrSBNG6QVdWYo"/>
+</div>
+<div class="flex flex-col">
+<p class="text-white text-sm font-bold">Marcus Sterling</p>
+<p class="text-slate-400 text-xs">Design Lead at Linear</p>
+</div>
+<button class="ml-auto text-primary">
+<span class="material-symbols-outlined text-lg">chat_bubble</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

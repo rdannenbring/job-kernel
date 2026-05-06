@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Spotify Strategy - Competitor Matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "surface-bright": "#1e293b",
+                  "error": "#ef4444",
+                  "tertiary-fixed-dim": "#fecdd3",
+                  "inverse-on-surface": "#0f172a",
+                  "surface-container-high": "#1e293b99",
+                  "on-primary-fixed-variant": "#1d4ed8",
+                  "on-tertiary-container": "#fb7185",
+                  "primary-fixed": "#dbeafe",
+                  "surface-container-highest": "#2d3748",
+                  "secondary-fixed-dim": "#cbd5e1",
+                  "secondary": "#334155",
+                  "on-error": "#ffffff",
+                  "outline-variant": "#1e293b",
+                  "surface-container": "#1e293b80",
+                  "primary-fixed-dim": "#bfdbfe",
+                  "secondary-container": "#1e293b",
+                  "background": "#101622",
+                  "on-tertiary-fixed-variant": "#9f1239",
+                  "surface-dim": "#0b0f18",
+                  "inverse-primary": "#60a5fa",
+                  "tertiary-fixed": "#ffe4e6",
+                  "surface-container-lowest": "#080c14",
+                  "surface": "#101622",
+                  "secondary-fixed": "#e2e8f0",
+                  "on-background": "#f1f5f9",
+                  "inverse-surface": "#f8fafc",
+                  "surface-variant": "#1e293b",
+                  "on-tertiary-fixed": "#4c0519",
+                  "on-surface": "#f1f5f9",
+                  "tertiary": "#f43f5e",
+                  "surface-container-low": "#1e293b66",
+                  "on-primary": "#ffffff",
+                  "surface-tint": "#256af4",
+                  "on-secondary-fixed": "#0f172a",
+                  "on-secondary": "#f8fafc",
+                  "error-container": "#450a0a",
+                  "on-primary-fixed": "#1e3a8a",
+                  "outline": "#334155",
+                  "on-surface-variant": "#94a3b8",
+                  "primary": "#256af4",
+                  "on-secondary-fixed-variant": "#334155",
+                  "on-error-container": "#fca5a5",
+                  "tertiary-container": "#f43f5e22",
+                  "on-tertiary": "#ffffff",
+                  "on-primary-container": "#60a5fa",
+                  "primary-container": "#256af433",
+                  "on-secondary-container": "#cbd5e1"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "2xl": "1rem",
+                  "full": "9999px"
+          },
+          "fontFamily": {
+                  "headline": ["Manrope"],
+                  "display": ["Manrope"],
+                  "body": ["Manrope"],
+                  "label": ["Manrope"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.4);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .neon-glow {
+      text-shadow: 0 0 10px rgba(37, 106, 244, 0.5);
+    }
+    .atmosphere-blur {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(37, 106, 244, 0.15) 0%, rgba(37, 106, 244, 0) 70%);
+      filter: blur(60px);
+      z-index: -1;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary/30 min-h-screen">
+<div class="flex min-h-screen relative overflow-hidden">
+<!-- Atmosphere effects -->
+<div class="atmosphere-blur -top-40 -left-40"></div>
+<div class="atmosphere-blur -bottom-40 -right-40"></div>
+<!-- SideNavBar (Shared Component) -->
+<aside class="w-72 bg-surface-dim border-r border-outline/10 flex flex-col shrink-0">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-10">
+<div class="size-10 rounded-full bg-cover bg-center ring-2 ring-primary/20" data-alt="A professional circular profile avatar showcasing a modern, sleek corporate identity with deep navy and electric blue tones. The lighting is focused and cinematic, reflecting a high-end tech executive environment. The overall mood is sophisticated and established, perfectly fitting the Midnight Glass design language." style='background-image: url("https://lh3.googleusercontent.com/aida/ADBb0ui76yRKVlXCbBVHE18gI-A_mSycucKGeoI2I7SX6Cy8fiIZMMIqXA5Gnr5SbJEahYnPM9q4AUXSmUDLW-tyxOE3Q1qQVHtyEuHQLY-xVTfnYbHqRyUY4pROigaDKOMzfJRJzjdyjqwGGs5E-mF9KKm0tScdVy8fq2iZXe2_elGrg5gthdA0v1F5WT9kZrxBO19fumVBr6AsfzHL50o-1NrTcIIDuMkzIG0WfV1rTM5enKIT13Ln7WtazPH9SJq7rS2Io2AjlzFZ2Q");'></div>
+<div>
+<h1 class="text-white text-base font-bold neon-glow">Spotify Strategy</h1>
+<p class="text-on-surface-variant text-xs uppercase tracking-widest">Digital Curator</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-on-surface-variant hover:text-white hover:bg-surface-container">
+<div data-icon="ChartPie" data-size="24px">
+<span class="material-symbols-outlined">pie_chart</span>
+</div>
+<p class="text-sm font-medium">Market Overview</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 border border-primary/20 text-white shadow-lg shadow-primary/5">
+<div data-icon="Rows" data-size="24px" data-weight="fill">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">view_headline</span>
+</div>
+<p class="text-sm font-bold">Competitor Matrix</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-on-surface-variant hover:text-white hover:bg-surface-container">
+<div data-icon="Users" data-size="24px">
+<span class="material-symbols-outlined">group</span>
+</div>
+<p class="text-sm font-medium">User Personas</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-on-surface-variant hover:text-white hover:bg-surface-container">
+<div data-icon="Lightning" data-size="24px">
+<span class="material-symbols-outlined">bolt</span>
+</div>
+<p class="text-sm font-medium">Feature Analysis</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-on-surface-variant hover:text-white hover:bg-surface-container">
+<div data-icon="TrendUp" data-size="24px">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+<p class="text-sm font-medium">Growth Strategy</p>
+</div>
+</nav>
+</div>
+<div class="mt-auto p-6">
+<div class="glass-panel rounded-2xl p-4 border-primary/20">
+<p class="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-bold mb-2">System Status</p>
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-primary shadow-[0_0_8px_rgba(37,106,244,0.8)] animate-pulse"></div>
+<span class="text-xs text-slate-300">Live Analysis Active</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Stage -->
+<main class="flex-1 overflow-y-auto px-10 py-12">
+<!-- Header -->
+<header class="mb-12">
+<div class="flex items-end justify-between gap-4">
+<div class="max-w-2xl">
+<p class="text-xs font-bold uppercase tracking-[0.3em] text-primary mb-3 neon-glow">Market Analysis v4.2</p>
+<h2 class="text-4xl font-black text-white leading-tight tracking-tight mb-4">Competitor Matrix</h2>
+<p class="text-on-surface-variant text-lg leading-relaxed">
+              A cinematic deep-dive into the technical and commercial landscape of the music streaming industry, evaluating core pillars against global rivals.
+            </p>
+</div>
+<div class="flex gap-3">
+<button class="px-5 py-2.5 rounded-xl border border-outline/20 text-slate-300 text-sm font-bold hover:bg-surface-container transition-all">
+              Export PDF
+            </button>
+<button class="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+              Share Analysis
+            </button>
+</div>
+</div>
+</header>
+<!-- Matrix Container -->
+<section class="glass-panel rounded-2xl overflow-hidden mb-10 border-white/5">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high/50 backdrop-blur-md">
+<th class="p-6 text-[11px] uppercase tracking-widest text-on-surface-variant font-bold border-b border-white/5">Performance Feature</th>
+<th class="p-6 border-b border-white/5">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-lg bg-cover bg-center border border-primary/30" data-alt="A detailed, macro-style artistic interpretation of the Spotify branding within a futuristic digital context. The shot uses shallow depth of field to focus on glowing green accents against a dark, tech-textured background. The mood is high-energy and innovative, mirroring a leading music technology platform in a dark-mode environment." style='background-image: url("https://lh3.googleusercontent.com/aida/ADBb0ujTVWkTWma7a0KkzFs5GdAnFN2gn67sAFXagdIeaMEoPJ_fm9u8vjtSvqk2SW7_swnUckOed1u3BcJtnlzPHZtTSjqvZNxKlwYn1y9OM058XIFrI9tTiuHiZwOGikkEARE8aeCDWCxRQeB7io-qW_-YiR6bMSAj9DhOq9qg9ZocXrn4OnVxR8zm6Yq9QRzjA5VgSg8N3V1KbczcPUh5kNCxxL6SxKTJrWTQCd8ArxvlKqob0D-psltndTz-MgHnHv3lnL4eomNIzA");'></div>
+<span class="text-white font-bold tracking-tight">Spotify</span>
+</div>
+</th>
+<th class="p-6 border-b border-white/5">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-lg bg-cover bg-center border border-white/10" data-alt="A clean, high-key editorial photograph of Apple Music interface elements reimagined as physical digital glass layers. The lighting is crisp and cool, featuring soft gradients of pink and white against a dark sapphire background. The aesthetic is premium, minimalist, and perfectly aligned with a high-end editorial design system." style='background-image: url("https://lh3.googleusercontent.com/aida/ADBb0uiR-wwEpPRue54PoUUHT35lRj0MKCNHmDL1jDafdS0tEueof6dRgr7sUulH3CLZz2hlbg84rRulc_HQR5oqzHBwB5xAzBsUwbvqNhPVMvfIHXvc3SahHMGr-cewBzkkxmVS9P1tduFOPIbHI1-T3z_Qse_qu923rvdBh8-yyaAF4TaOoZl1B-ua8EdqGAd49v_Hq8dfe7zLivIcQyl9KwloFNp_SA2r7A_s0f-9MLDlujlkauu4pqQEPxJvSPIongLPXiwT8rkYcQ");'></div>
+<span class="text-white font-bold tracking-tight">Apple Music</span>
+</div>
+</th>
+<th class="p-6 border-b border-white/5">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-lg bg-cover bg-center border border-white/10" data-alt="A dark-themed cinematic rendering of YouTube Music elements, featuring glowing red circular motifs that symbolize streaming and connectivity. The image has a moody, industrial feel with sharp highlights and deep shadows. The composition is dynamic and focuses on the intersection of video and audio streaming technology." style='background-image: url("https://lh3.googleusercontent.com/aida/ADBb0ujT2b7a1YveslehXUqpgbFbtgbOCgglDModrY8GH4x5RKfj6tNF-i-ftdtM-r2U6us-B8cF-0GZPkyi-w5kxfXnnI8F2VnkgDMFq2y9KDYA9VhFBQfRZhfrnsl70ipDL3CAq7TiRCwGZCPFMPvx8u72xhvfEoe4vvso5d-H5F1hRDibQV3AwN9o27hadQRf-MRcKPFhHnpRb9IJCk6EDOtTlzNSt020HqTjVpUl4XTB1rtEP_NepDdOL_ZZS49mw71JisbDxzbfcw");'></div>
+<span class="text-white font-bold tracking-tight">YT Music</span>
+</div>
+</th>
+<th class="p-6 border-b border-white/5">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-lg bg-cover bg-center border border-white/10" data-alt="A sophisticated digital visualization of Amazon Music's spatial audio capabilities. Blue and cyan atmospheric light ripples flow through a dark, structured space, creating a sense of depth and acoustic excellence. The style is technical yet artistic, utilizing a midnight glass aesthetic with neon light accents and deep space atmosphere." style='background-image: url("https://lh3.googleusercontent.com/aida/ADBb0ugvqvpCW7gnJbuwJlDb_z6Ag-mUxBMKOHftRiXREuhV3tmbwoeg_d-thxprkOBDcmxuljcExyQrGflAwU8gjc0LG0GY83NOsayCzo_EbzdajL-WqNHVYYSgxlHlx3VpwEZg84sq0IEJThNRVRoPpAt7dxi35Ma7wppf1V4N13lg5DysXXiryw5nSeojxanauFJuxH7KHCfv8N7aIhkSQqyeaDeu_1FdJ6uCGfyjxbQf4MPE0BQm2SHlIsZILTAxk2YHwLM9ijK7ig");'></div>
+<span class="text-white font-bold tracking-tight">Amazon HD</span>
+</div>
+</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<!-- Row 1: Pricing -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="p-6">
+<div class="text-slate-100 font-bold mb-1">Pricing (Premium)</div>
+<div class="text-[10px] text-on-surface-variant uppercase tracking-wider">Individual Tier</div>
+</td>
+<td class="p-6">
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/20 border border-primary/30 text-white text-sm font-bold">
+                    $10.99/mo
+                  </div>
+</td>
+<td class="p-6 text-slate-300 text-sm">$10.99/mo</td>
+<td class="p-6 text-slate-300 text-sm">$10.99/mo</td>
+<td class="p-6 text-slate-300 text-sm">$10.99/mo</td>
+</tr>
+<!-- Row 2: Free Tier -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="p-6">
+<div class="text-slate-100 font-bold mb-1">Free Tier Availability</div>
+<div class="text-[10px] text-on-surface-variant uppercase tracking-wider">Ad-Supported</div>
+</td>
+<td class="p-6">
+<div class="flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-sm">Comprehensive</span>
+</div>
+</td>
+<td class="p-6">
+<div class="flex items-center gap-2 text-on-surface-variant text-sm">
+<span class="material-symbols-outlined">cancel</span>
+<span>None</span>
+</div>
+</td>
+<td class="p-6">
+<div class="flex items-center gap-2 text-slate-300 text-sm font-medium">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Standard</span>
+</div>
+</td>
+<td class="p-6">
+<div class="flex items-center gap-2 text-slate-300 text-sm font-medium">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Prime Only</span>
+</div>
+</td>
+</tr>
+<!-- Row 3: Audio Quality -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="p-6">
+<div class="text-slate-100 font-bold mb-1">Hi-Fi / Lossless</div>
+<div class="text-[10px] text-on-surface-variant uppercase tracking-wider">Audio Resolution</div>
+</td>
+<td class="p-6">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 text-primary text-[10px] font-black uppercase tracking-widest">
+                    Roadmapped
+                  </div>
+</td>
+<td class="p-6 text-slate-300 text-sm font-bold">Included</td>
+<td class="p-6 text-on-surface-variant text-sm italic">Limited</td>
+<td class="p-6 text-slate-300 text-sm font-bold">Included</td>
+</tr>
+<!-- Row 4: Discovery -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="p-6">
+<div class="text-slate-100 font-bold mb-1">Discovery Algorithms</div>
+<div class="text-[10px] text-on-surface-variant uppercase tracking-wider">AI Integration</div>
+</td>
+<td class="p-6">
+<div class="flex items-center gap-2 text-white font-bold text-sm">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>Market Leader</span>
+</div>
+</td>
+<td class="p-6 text-slate-300 text-sm">Curated Focus</td>
+<td class="p-6 text-slate-300 text-sm">Video-led</td>
+<td class="p-6 text-slate-300 text-sm">Standard</td>
+</tr>
+<!-- Row 5: User Base -->
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="p-6">
+<div class="text-slate-100 font-bold mb-1">Active User Base</div>
+<div class="text-[10px] text-on-surface-variant uppercase tracking-wider">Global Reach</div>
+</td>
+<td class="p-6">
+<div class="text-white font-black text-lg">600M+</div>
+</td>
+<td class="p-6 text-slate-400 text-sm tracking-widest uppercase">Proprietary</td>
+<td class="p-6 text-slate-400 text-sm tracking-widest uppercase">80M+ Est.</td>
+<td class="p-6 text-slate-400 text-sm tracking-widest uppercase">55M+ Est.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Bottom Visual Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-panel rounded-2xl p-6 group cursor-pointer hover:border-primary/40 transition-all">
+<div class="h-40 rounded-xl mb-4 bg-cover bg-center overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="A wide-angle, cinematic view of a futuristic data center representing global streaming infrastructure. Glowing fiber optic lines in electric blue pulse against a dark, matte black background. The perspective creates a sense of immense scale and technical sophistication, fitting the Midnight Glass aesthetic of architectural clarity and depth." style='background-image: url("https://lh3.googleusercontent.com/aida/ADBb0uiOGhBfnlrmQzFfCKqPQniqZIfBQyCb4MZLhWrPQmVvHnuy2LOQZz2H2jDAQaF7eqAM_tzUqtIUEwp614Lnjv9laznjBV0Wk06RfumHjbnArmsP94IvYK__EvaTl7wxXD2626zMK4m914RyOA-UV2B1GZzSVf0HMINA4FA45oH1-TbeoRLiVG5rBy7-NHE_FD5zrng1ZOAtXrnXNMpqc38jyWQMync7qmgTyFxJdKlzF0pWsekpfq7mRQ5C4LzpORpJtAuXvuzYCg");'></div>
+<h3 class="text-white font-bold mb-2">Algorithm Maturity</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">Spotify's lead in personalized discovery remains the primary moat against ecosystem-locked rivals.</p>
+</div>
+<div class="glass-panel rounded-2xl p-6 group cursor-pointer hover:border-primary/40 transition-all">
+<div class="h-40 rounded-xl mb-4 bg-cover bg-center overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="An abstract vertical visualization of acoustic waves and digital signal processing. Sharp, vibrant blue light streaks interact with deep slate and charcoal textures, creating a cinematic feeling of high-fidelity audio transmission. The lighting is dramatic and moody, reflecting the core theme of audio excellence in a modern tech-driven system." style='background-image: url("https://lh3.googleusercontent.com/aida/ADBb0uh_rSkxMTUQA7VfxOSbfmVOIPg8G9lL6UsvcFcE0i85Tjn97VVzTpCevkCRuJ2UwFA6BKhEoGcc0ijrjC2BMqylGpbhr_B7jWLjMJiAGSnfTl9oI9bmYthlLGEw6-JtG01-R6E1sGxQ0q6PfHxp1TKUf8M4aSc7TNTbAv2RjP6w9-_1FgodbROVY8l_VY-SMUEfIneYH2cbwv_2bisUYTtxwUXI5iala51JX-6GpOtsfzgK7faEG9HaN9snxEX81Vbj7SIhdeP8");'></div>
+<h3 class="text-white font-bold mb-2">Ecosystem Synergy</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">Apple and Amazon leverage hardware bundles (Echo/HomePod) to drive involuntary subscriber growth.</p>
+</div>
+<div class="glass-panel rounded-2xl p-6 group cursor-pointer hover:border-primary/40 transition-all">
+<div class="h-40 rounded-xl mb-4 bg-cover bg-center overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="A futuristic editorial concept of a world map reimagined through digital networking nodes. The map is illuminated by soft, neon blue pinpoints of light against a deep midnight background, suggesting a vast global user base. The style is minimal, architectural, and highly sophisticated, reinforcing the editorial curator aesthetic of the system." style='background-image: url("https://lh3.googleusercontent.com/aida/ADBb0ugkx-k_JDKr6tkdvcK3HGkUALuqBtExaKZiuTkJIGQdYBJQ1-4q4dqFtmv_a8atyoUQeTm83a2yVelrcYtUm-6MGMP7ZlOpy6MU8Vl6-AbbB9eaIxcNu0X6xoBE5pRbYb1c0wWWkXPT6oUF7mMLqpN3SQ5FCIBXA-c9gsoAq5rnik7WuVyubXL1MQLiTgD9LKFyJx4M-FIm0Wp2RBMzTaJrbaPjAcx1uv3Lea7d2CwAoO_r-3yd_PQf5xsNAF6KTIit1Uev-h8xWQ");'></div>
+<h3 class="text-white font-bold mb-2">Global Penetration</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">Emerging markets show a strong preference for Spotify's robust free tier vs. competitor paywalls.</p>
+</div>
+</div>
+<!-- Analysis Footer -->
+<footer class="mt-12 pt-8 border-t border-white/5 flex items-center justify-between">
+<div class="flex gap-8">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">Last Updated</p>
+<p class="text-sm text-slate-100 font-medium">Oct 24, 2023</p>
+</div>
+<div>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">Data Confidence</p>
+<p class="text-sm text-primary font-bold">98.4% Verified</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-surface-container flex items-center justify-center border border-white/10">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">info</span>
+</div>
+<span class="text-xs text-on-surface-variant">Sources: IFPI Global Music Report, Statista Q3</span>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

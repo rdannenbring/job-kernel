@@ -652,7 +652,7 @@ class AIService:
             print(f"Error scoring job match: {e}")
             return {"overall_score": 0, "coaching_plan": [str(e)]}
 
-    async def generate_cover_letter(self, resume_text: str, job_description: str, user_profile: Dict[str, Any] = None, additional_context: str = "", instructions: str = "", config: dict = None) -> Dict[str, Any]:
+    async def generate_cover_letter(self, resume_text: str, job_description: str, user_profile: Dict[str, Any] = None, additional_context: str = "", example_cover_letter: str = "", instructions: str = "", config: dict = None) -> Dict[str, Any]:
         """Generate cover letter using optional per-user config."""
         current_date = datetime.now().strftime("%B %d, %Y")
         profile_context = ""
@@ -666,6 +666,10 @@ class AIService:
 
         prompt_template = self.get_prompt("generate_cover_letter", config)
         additional_context_instr = f"\n\nCONTEXT:\n{additional_context}" if additional_context else ""
+        
+        if example_cover_letter:
+            additional_context_instr += f"\n\nEXAMPLE COVER LETTER (FOR FORMATTING/TONE/STYLE REFERENCE):\n{example_cover_letter}\n\nINSTRUCTION: Emulate the formatting, structure, and professional tone of this example letter while using the candidate's actual data."
+
         prompt = prompt_template.format(
             current_date=current_date, profile_context=profile_context,
             resume_text=resume_text[:4000], job_description=job_description[:4000],

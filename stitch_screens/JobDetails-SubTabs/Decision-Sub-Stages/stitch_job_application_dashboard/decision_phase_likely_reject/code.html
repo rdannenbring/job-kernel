@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Job Tracker - Decision Phase</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #101622;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-accent {
+            text-shadow: 0 0 8px rgba(37, 106, 244, 0.4);
+        }
+        .tonal-layering-via-opacity {
+            background-color: rgba(15, 23, 42, 0.8);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-container": "#fb7185",
+                      "background": "#101622",
+                      "surface": "#101622",
+                      "on-secondary-container": "#cbd5e1",
+                      "on-primary-fixed": "#1e3a8a",
+                      "tertiary-fixed": "#ffe4e6",
+                      "on-error-container": "#fca5a5",
+                      "secondary-container": "#1e293b",
+                      "secondary-fixed-dim": "#cbd5e1",
+                      "on-tertiary-fixed-variant": "#9f1239",
+                      "on-tertiary-fixed": "#4c0519",
+                      "on-secondary": "#f8fafc",
+                      "on-primary-fixed-variant": "#1d4ed8",
+                      "inverse-on-surface": "#0f172a",
+                      "surface-container": "#1e293b80",
+                      "inverse-primary": "#60a5fa",
+                      "surface-bright": "#1e293b",
+                      "primary-fixed-dim": "#bfdbfe",
+                      "on-secondary-fixed-variant": "#334155",
+                      "on-secondary-fixed": "#0f172a",
+                      "surface-container-highest": "#2d3748",
+                      "tertiary": "#f43f5e",
+                      "secondary": "#334155",
+                      "on-surface-variant": "#94a3b8",
+                      "error-container": "#450a0a",
+                      "primary-container": "#256af433",
+                      "on-tertiary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "error": "#ef4444",
+                      "tertiary-fixed-dim": "#fecdd3",
+                      "on-background": "#f1f5f9",
+                      "tertiary-container": "#f43f5e22",
+                      "on-error": "#ffffff",
+                      "outline": "#334155",
+                      "surface-container-low": "#1e293b66",
+                      "on-surface": "#f1f5f9",
+                      "secondary-fixed": "#e2e8f0",
+                      "surface-container-high": "#1e293b99",
+                      "primary-fixed": "#dbeafe",
+                      "surface-variant": "#1e293b",
+                      "surface-dim": "#0b0f18",
+                      "primary": "#256af4",
+                      "inverse-surface": "#f8fafc",
+                      "surface-container-lowest": "#080c14",
+                      "surface-tint": "#256af4",
+                      "outline-variant": "#1e293b",
+                      "on-primary-container": "#60a5fa"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "2xl": "1rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope"],
+                      "display": ["Manrope"],
+                      "body": ["Manrope"],
+                      "label": ["Manrope"]
+              }
+            },
+          }
+        }
+      </script>
+</head>
+<body class="text-on-surface antialiased bg-surface">
+<!-- Sidebar Navigation Shell -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-slate-950/80 backdrop-blur-xl border-r border-white/10 flex flex-col py-8 px-4 z-50">
+<div class="mb-8 px-2">
+<h1 class="text-xl font-bold tracking-tighter text-white">Midnight Glass</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-medium">Career Curator</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all duration-300 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<span class="font-manrope text-sm tracking-wide">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-blue-600/20 text-blue-400 font-semibold border-r-2 border-blue-500 transition-all duration-300 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-xl">work</span>
+<span class="font-manrope text-sm tracking-wide">Applications</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all duration-300 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-xl">bookmark</span>
+<span class="font-manrope text-sm tracking-wide">Saved Jobs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all duration-300 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-xl">group</span>
+<span class="font-manrope text-sm tracking-wide">Network</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all duration-300 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-xl">analytics</span>
+<span class="font-manrope text-sm tracking-wide">Analytics</span>
+</a>
+</nav>
+<div class="pt-8 mt-8 border-t border-white/5 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all duration-300 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-xl">settings</span>
+<span class="font-manrope text-sm tracking-wide">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all duration-300 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-xl">help_outline</span>
+<span class="font-manrope text-sm tracking-wide">Support</span>
+</a>
+</div>
+</aside>
+<!-- Header Shell -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-slate-900/40 backdrop-blur-md border-b border-white/5 flex justify-between items-center px-8 z-40">
+<div class="flex items-center gap-8">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-slate-500 text-lg">search</span>
+<input class="bg-slate-900 border-slate-700 text-slate-300 text-sm rounded-lg pl-10 pr-4 py-1.5 w-64 focus:ring-primary focus:border-primary" placeholder="Search applications..." type="text"/>
+</div>
+<nav class="flex gap-6">
+<a class="text-slate-400 font-manrope text-sm font-medium hover:text-blue-300 transition-colors" href="#">Dashboard</a>
+<a class="text-blue-400 font-manrope text-sm font-bold" href="#">Applications</a>
+<a class="text-slate-400 font-manrope text-sm font-medium hover:text-blue-300 transition-colors" href="#">Active</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-400 hover:opacity-80"><span class="material-symbols-outlined">notifications</span></button>
+<button class="text-slate-400 hover:opacity-80"><span class="material-symbols-outlined">history</span></button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-white/10">
+<img class="h-full w-full object-cover" data-alt="A professional headshot of a young entrepreneur with a focused expression, set against a blurred cinematic office background with deep indigo and electric blue ambient lighting. The lighting is soft yet directional, highlighting modern professional aesthetics and a high-end digital curator persona." src="https://lh3.googleusercontent.com/aida-public/AB6AXuApEx0eq74Dcq23Aqs4FQgeCLc2J-vTGxLqbesKEXXVlRWllIskAcwmFITXd-zGAHcnl8VZ-XL5g5hYs1raZQe4H422PKyp0Q2jLdtnbMiimMYe5Dn6qSzsMrtlIXzE7UykC1rhAWcKo829NgzxQea_4DX7msYXKxnXmde7Rmt_sIjUpnVo6nve7InF3gkUPp4LZed57xA4_7G1uNDPb0idzOEQA77bMXMOQ8yv_Wy6ZW25sIJ_0QMG3FVUgDKjo_BuC-myOC5gJkc"/>
+</div>
+</div>
+</header>
+<!-- Main Content Stage -->
+<main class="ml-64 pt-24 pb-12 px-8 min-h-screen bg-surface">
+<!-- Breadcrumb & Page Title -->
+<div class="mb-12">
+<div class="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4">
+<span>Applications</span>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span>Senior Product Designer</span>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="text-primary">Decision Phase</span>
+</div>
+<h2 class="text-4xl font-extrabold text-white tracking-tight mb-2">Likely Reject Analysis</h2>
+<p class="text-slate-400 max-w-2xl">Visualizing subtle rejection signals and preparing strategic pivots for the next career move.</p>
+</div>
+<div class="flex gap-8">
+<!-- Vertical Sub-Navigation -->
+<nav class="w-56 shrink-0 space-y-3">
+<div class="text-[10px] uppercase tracking-widest text-slate-600 font-bold px-2 mb-4">Pipeline Stage</div>
+<a class="flex items-center justify-between px-3 py-3 rounded-xl text-slate-500 hover:bg-white/5 transition-all text-sm font-medium" href="#">
+                    Awaiting Decision <span class="material-symbols-outlined text-sm">schedule</span>
+</a>
+<a class="flex items-center justify-between px-3 py-3 rounded-xl text-slate-500 hover:bg-white/5 transition-all text-sm font-medium" href="#">
+                    References <span class="material-symbols-outlined text-sm">contacts</span>
+</a>
+<a class="flex items-center justify-between px-3 py-3 rounded-xl text-slate-500 hover:bg-white/5 transition-all text-sm font-medium" href="#">
+                    Verbal Offer <span class="material-symbols-outlined text-sm">forum</span>
+</a>
+<a class="flex items-center justify-between px-3 py-3 rounded-xl text-slate-500 hover:bg-white/5 transition-all text-sm font-medium" href="#">
+                    Written Offer Pending <span class="material-symbols-outlined text-sm">description</span>
+</a>
+<a class="flex items-center justify-between px-4 py-3 rounded-xl glass-panel text-tertiary border-tertiary/20 shadow-lg shadow-tertiary/5 text-sm font-bold" href="#">
+                    Likely Reject <span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+</a>
+</nav>
+<!-- Grid Layout -->
+<div class="flex-1 grid grid-cols-12 gap-8">
+<!-- Left Column: Assessment -->
+<div class="col-span-7 space-y-8">
+<!-- Risk Assessment -->
+<section class="glass-panel rounded-2xl p-6 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-6xl text-tertiary" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-slate-100">Risk Assessment</h3>
+<p class="text-xs text-slate-500 uppercase tracking-widest">Rejection Signals Identified</p>
+</div>
+</div>
+<div class="space-y-4">
+<div class="p-4 bg-slate-900/60 rounded-xl border border-white/5 flex gap-4">
+<div class="shrink-0 pt-1 text-tertiary"><span class="material-symbols-outlined">timer_off</span></div>
+<div>
+<h4 class="text-sm font-bold text-slate-200">Stale Response</h4>
+<p class="text-sm text-slate-400 mt-1">Last contact was 8 business days ago. Mean response time for this recruiter is typically 48 hours.</p>
+</div>
+</div>
+<div class="p-4 bg-slate-900/60 rounded-xl border border-white/5 flex gap-4">
+<div class="shrink-0 pt-1 text-on-tertiary-container"><span class="material-symbols-outlined">monetization_on</span></div>
+<div>
+<h4 class="text-sm font-bold text-slate-200">Budget Freeze Notes</h4>
+<p class="text-sm text-slate-400 mt-1">LinkedIn Intelligence suggests 15% workforce reduction in the Product vertical last week.</p>
+</div>
+</div>
+<div class="p-4 bg-slate-900/60 rounded-xl border border-white/5 flex gap-4">
+<div class="shrink-0 pt-1 text-slate-500"><span class="material-symbols-outlined">person_search</span></div>
+<div>
+<h4 class="text-sm font-bold text-slate-200">Job Relisting</h4>
+<p class="text-sm text-slate-400 mt-1">The position was refreshed on company portal 24 hours ago, suggesting active search continuation.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Recruiter Sentiment -->
+<section class="glass-panel rounded-2xl p-6">
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-lg font-bold text-slate-100">Recruiter Sentiment</h3>
+<div class="flex items-center gap-2">
+<span class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Negative Trend</span>
+<div class="flex gap-0.5">
+<div class="w-1.5 h-4 bg-slate-700 rounded-full"></div>
+<div class="w-1.5 h-4 bg-slate-700 rounded-full"></div>
+<div class="w-1.5 h-4 bg-tertiary rounded-full"></div>
+<div class="w-1.5 h-4 bg-tertiary rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-6">
+<div class="text-center">
+<div class="text-2xl font-extrabold text-white">42%</div>
+<div class="text-[10px] uppercase tracking-widest text-slate-500 mt-1">Match Confidence</div>
+</div>
+<div class="text-center border-x border-white/5">
+<div class="text-2xl font-extrabold text-tertiary">High</div>
+<div class="text-[10px] uppercase tracking-widest text-slate-500 mt-1">Silence Risk</div>
+</div>
+<div class="text-center">
+<div class="text-2xl font-extrabold text-slate-300">N/A</div>
+<div class="text-[10px] uppercase tracking-widest text-slate-500 mt-1">Referral Boost</div>
+</div>
+</div>
+<div class="mt-8 p-4 bg-tertiary/5 border border-tertiary/10 rounded-xl italic text-slate-300 text-sm">
+                            "Recruiter sounded distracted during the final touchpoint; mentioned internal restructuring but stayed vague about timeline."
+                        </div>
+</section>
+</div>
+<!-- Right Column: Strategy -->
+<div class="col-span-5 space-y-8">
+<!-- Contingency Plan -->
+<section class="glass-panel rounded-2xl p-6 bg-gradient-to-br from-slate-900/40 to-slate-800/40">
+<h3 class="text-lg font-bold text-slate-100 mb-6">Contingency Plan</h3>
+<div class="mb-6">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3">Alternative Roles</p>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5 hover:border-primary/30 transition-all cursor-pointer">
+<span class="text-sm font-medium text-slate-200">Staff UX Architect — FinTech Core</span>
+<span class="material-symbols-outlined text-sm text-primary">arrow_forward</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5 hover:border-primary/30 transition-all cursor-pointer">
+<span class="text-sm font-medium text-slate-200">Creative Lead — Quantum Studio</span>
+<span class="material-symbols-outlined text-sm text-primary">arrow_forward</span>
+</div>
+</div>
+</div>
+<div>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3">Networking Follow-up Wording</p>
+<div class="bg-slate-950 p-4 rounded-xl border border-white/10 relative group">
+<button class="absolute top-2 right-2 text-slate-500 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+<p class="text-xs text-slate-400 leading-relaxed pr-6">
+                                    "Thank you for the update. While I'm disappointed, I've truly enjoyed our conversations. If internal priorities shift or a similar role opens in the [Vertical Name] team, I'd love to be reconsidered."
+                                </p>
+</div>
+</div>
+</section>
+<!-- Pivot Strategy -->
+<section class="glass-panel rounded-2xl p-6 border-l-4 border-primary">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-bold text-slate-100">Pivot Strategy</h3>
+<span class="px-2 py-1 bg-primary/20 text-primary rounded-md text-[10px] font-bold tracking-tighter">AI READY</span>
+</div>
+<p class="text-sm text-slate-400 mb-6">Signals suggest a focus on **B2B Infrastructure** which wasn't fully highlighted in your portfolio.</p>
+<div class="space-y-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-primary">psychology</span>
+</div>
+<div class="flex-1">
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%] rounded-full"></div>
+</div>
+<div class="flex justify-between mt-2">
+<span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Skills Gap: Systems Design</span>
+<span class="text-[10px] text-primary font-bold">75% DEPTH</span>
+</div>
+</div>
+</div>
+<div class="p-3 bg-primary/5 rounded-lg border border-primary/10 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-lg">lightbulb</span>
+<span class="text-xs text-slate-300">Add 2 case studies focusing on scale and latency to your deck.</span>
+</div>
+</div>
+<button class="w-full mt-6 py-3 bg-primary text-white font-bold text-sm rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all">
+                            Generate Personalized Pivot Deck
+                        </button>
+</section>
+</div>
+</div>
+</div>
+<!-- Ambient Background Decoration -->
+<div class="fixed bottom-0 right-0 w-[500px] h-[500px] bg-primary/5 blur-[120px] -z-10 rounded-full"></div>
+<div class="fixed top-1/4 left-1/4 w-[300px] h-[300px] bg-tertiary/5 blur-[100px] -z-10 rounded-full"></div>
+</main>
+</body></html>

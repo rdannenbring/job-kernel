@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Application Tracking - Submitted Phase</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error-container": "#fca5a5",
+                    "error-container": "#450a0a",
+                    "primary-fixed-dim": "#bfdbfe",
+                    "on-tertiary-fixed": "#4c0519",
+                    "primary-fixed": "#dbeafe",
+                    "outline": "#334155",
+                    "on-secondary-fixed": "#0f172a",
+                    "surface-container-low": "#1e293b66",
+                    "surface-variant": "#1e293b",
+                    "tertiary": "#f43f5e",
+                    "primary": "#256af4",
+                    "surface-container-high": "#1e293b99",
+                    "background": "#101622",
+                    "on-background": "#f1f5f9",
+                    "tertiary-container": "#f43f5e22",
+                    "surface-dim": "#0b0f18",
+                    "on-primary": "#ffffff",
+                    "on-surface-variant": "#94a3b8",
+                    "outline-variant": "#1e293b",
+                    "secondary": "#334155",
+                    "inverse-surface": "#f8fafc",
+                    "inverse-primary": "#60a5fa",
+                    "surface-container-highest": "#2d3748",
+                    "secondary-container": "#1e293b",
+                    "on-surface": "#f1f5f9",
+                    "on-primary-container": "#60a5fa",
+                    "secondary-fixed": "#e2e8f0",
+                    "on-secondary": "#f8fafc",
+                    "surface-container": "#1e293b80",
+                    "on-tertiary-fixed-variant": "#9f1239",
+                    "on-tertiary-container": "#fb7185",
+                    "on-primary-fixed": "#1e3a8a",
+                    "secondary-fixed-dim": "#cbd5e1",
+                    "on-secondary-fixed-variant": "#334155",
+                    "on-primary-fixed-variant": "#1d4ed8",
+                    "surface": "#101622",
+                    "tertiary-fixed-dim": "#fecdd3",
+                    "primary-container": "#256af433",
+                    "surface-container-lowest": "#080c14",
+                    "on-error": "#ffffff",
+                    "inverse-on-surface": "#0f172a",
+                    "on-tertiary": "#ffffff",
+                    "surface-tint": "#256af4",
+                    "error": "#ef4444",
+                    "surface-bright": "#1e293b",
+                    "on-secondary-container": "#cbd5e1",
+                    "tertiary-fixed": "#ffe4e6"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "display": ["Manrope"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-glow {
+            text-shadow: 0 0 8px rgba(37, 106, 244, 0.6);
+        }
+        body {
+            background-color: #101622;
+            color: #f1f5f9;
+        }
+    </style>
+</head>
+<body class="font-body antialiased">
+<div class="flex h-screen overflow-hidden">
+<!-- Collapsed Main Navigation Sidebar -->
+<aside class="w-16 border-r border-outline flex flex-col items-center py-6 gap-8 bg-surface shrink-0">
+<div class="size-10 rounded-full bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white">lens_blur</span>
+</div>
+<nav class="flex flex-col gap-6">
+<div class="text-on-surface-variant hover:text-primary cursor-pointer transition-colors" data-icon="House">
+<span class="material-symbols-outlined">house</span>
+</div>
+<div class="text-primary" data-icon="Briefcase" data-weight="fill">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">briefcase_meal</span>
+</div>
+<div class="text-on-surface-variant hover:text-primary cursor-pointer transition-colors" data-icon="Users">
+<span class="material-symbols-outlined">user_attributes</span>
+</div>
+<div class="text-on-surface-variant hover:text-primary cursor-pointer transition-colors" data-icon="MagnifyingGlass">
+<span class="material-symbols-outlined">magnification_large</span>
+</div>
+</nav>
+<div class="mt-auto text-on-surface-variant hover:text-primary cursor-pointer transition-colors" data-icon="Gear">
+<span class="material-symbols-outlined">search_gear</span>
+</div>
+</aside>
+<!-- Sub-navigation Sidebar -->
+<aside class="w-64 border-r border-outline-variant bg-surface flex flex-col shrink-0">
+<div class="p-6">
+<h1 class="text-on-surface text-lg font-bold tracking-tight">Applied Phase</h1>
+<p class="text-on-surface-variant text-xs uppercase tracking-widest mt-1">Status: Active</p>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-container text-primary">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-sm font-semibold">Submitted</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-xl">verified</span>
+<span class="text-sm font-medium">Confirmed</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-xl">schedule</span>
+<span class="text-sm font-medium">Follow-up Due</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-xl">send</span>
+<span class="text-sm font-medium">Follow-up Sent</span>
+</div>
+</nav>
+<div class="p-6">
+<div class="flex justify-between items-end mb-2">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Phase Progress</span>
+<span class="text-xs font-bold text-primary">25%</span>
+</div>
+<div class="h-1.5 w-full bg-outline-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 25%"></div>
+</div>
+</div>
+</aside>
+<!-- Main Stage -->
+<main class="flex-1 overflow-y-auto bg-surface-dim relative">
+<!-- Background Glows -->
+<div class="absolute top-0 right-0 w-96 h-96 bg-primary/10 blur-[100px] -z-10"></div>
+<div class="absolute bottom-0 left-0 w-64 h-64 bg-tertiary/10 blur-[80px] -z-10"></div>
+<div class="max-w-6xl mx-auto p-8 lg:p-12">
+<!-- Header -->
+<header class="flex justify-between items-center mb-10">
+<div>
+<h2 class="text-3xl font-bold text-white tracking-tight leading-tight">Senior Product Designer</h2>
+<div class="flex items-center gap-2 mt-2 text-on-surface-variant">
+<span class="text-sm font-medium">Stripe, Inc.</span>
+<span class="text-xs text-outline">•</span>
+<span class="text-sm font-medium">Remote (North America)</span>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="px-5 py-2.5 rounded-full bg-surface-container-highest border border-outline-variant text-sm font-semibold hover:bg-surface-variant transition-all">Edit Details</button>
+<button class="px-5 py-2.5 rounded-full bg-primary text-white text-sm font-semibold shadow-lg shadow-primary/20 hover:brightness-110 transition-all">Next Stage</button>
+</div>
+</header>
+<!-- Two-Column Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+<!-- Left Column: Submission Record -->
+<section class="glass-panel rounded-2xl overflow-hidden">
+<div class="p-6 border-b border-outline-variant">
+<h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant">Submission Record</h3>
+</div>
+<div class="p-8 space-y-6">
+<div class="flex items-start gap-4">
+<div class="size-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">event_available</span>
+</div>
+<div>
+<p class="text-xs text-on-surface-variant uppercase tracking-wider font-bold">Applied On</p>
+<p class="text-lg text-white font-medium">Oct 24, 2023 at 2:30 PM</p>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<div class="size-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">hub</span>
+</div>
+<div>
+<p class="text-xs text-on-surface-variant uppercase tracking-wider font-bold">Application Channel</p>
+<p class="text-lg text-white font-medium">LinkedIn Easy Apply</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-8">
+<div>
+<p class="text-xs text-on-surface-variant uppercase tracking-wider font-bold">Portal Used</p>
+<p class="text-white font-medium mt-1">External Portal (ATS)</p>
+</div>
+<div>
+<p class="text-xs text-on-surface-variant uppercase tracking-wider font-bold">Referral Status</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="size-2 rounded-full bg-on-surface-variant/30"></span>
+<p class="text-white font-medium">None</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Snapshot -->
+<section class="glass-panel rounded-2xl overflow-hidden relative">
+<div class="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 bg-surface-container-highest rounded-full border border-outline-variant">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">lock</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter text-on-surface-variant">Historical Lock</span>
+</div>
+<div class="p-6 border-b border-outline-variant">
+<h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant">Snapshot: What you submitted</h3>
+</div>
+<div class="p-8 space-y-4">
+<!-- Resume Item -->
+<div class="group p-4 rounded-xl border border-outline-variant hover:border-primary/40 bg-surface-container-low transition-all">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-3xl">picture_as_pdf</span>
+<div>
+<p class="text-white font-semibold">Resume_v4_ProductDesigner.pdf</p>
+<p class="text-xs text-on-surface-variant">Updated Oct 2023 • 2.4 MB</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary cursor-pointer transition-colors">download</span>
+</div>
+</div>
+<!-- Cover Letter Item -->
+<div class="group p-4 rounded-xl border border-outline-variant hover:border-primary/40 bg-surface-container-low transition-all">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant text-3xl">description</span>
+<div>
+<p class="text-white font-semibold">CoverLetter_Stripe_Oct24.docx</p>
+<p class="text-xs text-on-surface-variant">Specific to: Stripe FinTech Role</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary cursor-pointer transition-colors">visibility</span>
+</div>
+</div>
+<p class="text-[11px] text-on-surface-variant italic leading-relaxed pt-2">
+                                Note: Documents are archived in the state they were sent. Updating your global profile will not affect this historical snapshot.
+                            </p>
+</div>
+</section>
+</div>
+<!-- Bottom Section: Submission Friction -->
+<section class="glass-panel rounded-2xl overflow-hidden">
+<div class="p-6 border-b border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary">warning</span>
+<h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant">Submission Friction Notes</h3>
+</div>
+<button class="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm">add</span>
+                            Log Friction Point
+                        </button>
+</div>
+<div class="p-8">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="space-y-2">
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Issue Type</p>
+<div class="inline-flex items-center px-3 py-1 rounded bg-tertiary-container border border-tertiary/20 text-tertiary text-[10px] font-bold uppercase tracking-widest">UX Dark Pattern</div>
+</div>
+<div class="col-span-2 space-y-2">
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">The Experience</p>
+<p class="text-slate-300 leading-relaxed">
+                                    The application portal forced a re-entry of all work history despite successful PDF parsing. LinkedIn Easy Apply link redirected to a secondary Greenhouse portal requiring a new account creation. This adds approximately 15 minutes of overhead per submission.
+                                </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Atmospheric Detail -->
+<div class="mt-12 flex items-center justify-center gap-8 opacity-40 grayscale">
+<img alt="Stripe Logo" class="h-6" data-alt="A clean, minimalist monochrome company logo for Stripe, presented as a white SVG silhouette against a deep midnight blue professional background. The style is sleek, corporate, and modern, fitting into a high-end SaaS environment with subtle cinematic lighting and a focus on geometric precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBE2U--w7NZGj20gMfMLjKf-uiBoD_6adjYtI-_r8g1Y4ok7X16PDESvoTTTnlfupYIPdG73e3BwHrM1uVeR_89CjQBWkTXMaM4l-Pyd7RBVPwBnrCRtXP1EoW_XUP3rNiGt62Ut11-cY4ZZDGZ6fkun75kog_iO3Aokc3pvJpL7TQQ-YNaF9-z4L0WfrvZhkpVecrCFs7WObtjCs2wb5wt-IEUwPrVelKXQxcjILWPDjVX4PyqRemkZzu4IfcqFRaLRh81lMHAg8k"/>
+<div class="h-4 w-px bg-outline"></div>
+<img alt="Greenhouse Logo" class="h-6" data-alt="A minimalist logo for the applicant tracking system Greenhouse, rendered in pure white on a dark slate surface. The visual language is editorial and understated, emphasizing professional clarity and high-end digital aesthetics. The lighting is soft and ambient, avoiding harsh shadows or bright reflections." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCimANrS4ZUEx8yiBpFXW0OrBzbUw8I0WVf0n4YLZTalFlLFbiX449Wm3YE-Q88YW3xsXcIrPH5FymcEz49ZTwwpzoUGK63JQ_39hqpp4P7VrQL286F7OOANGIfl8o02wnCZ0imI_BWnp-f9LAt08jcjUjaTa6Eeg5iSTi1pEJ8yrVPDsLzCdpiO1hXTXOs7ac5AYwhc_boWye5qzp5n-NWYQvOOuXzcXct9PFtFWGSdNqXOLMjTfw-KsZgoE1FxhfYPfBQKyFDF4A"/>
+</div>
+</div>
+</main>
+</div>
+</body></html>

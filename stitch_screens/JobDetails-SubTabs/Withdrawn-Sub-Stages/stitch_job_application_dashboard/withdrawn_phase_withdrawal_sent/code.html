@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Withdrawal Status | Midnight Glass</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#0b0f18",
+                    "secondary-container": "#1e293b",
+                    "primary-fixed-dim": "#bfdbfe",
+                    "primary-container": "#256af433",
+                    "secondary-fixed": "#e2e8f0",
+                    "on-primary-fixed": "#1e3a8a",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed-dim": "#fecdd3",
+                    "tertiary-container": "#f43f5e22",
+                    "inverse-on-surface": "#0f172a",
+                    "surface-bright": "#1e293b",
+                    "secondary": "#334155",
+                    "secondary-fixed-dim": "#cbd5e1",
+                    "on-primary-fixed-variant": "#1d4ed8",
+                    "surface": "#101622",
+                    "on-secondary": "#f8fafc",
+                    "inverse-primary": "#60a5fa",
+                    "surface-tint": "#256af4",
+                    "on-primary-container": "#60a5fa",
+                    "on-tertiary-container": "#fb7185",
+                    "on-background": "#f1f5f9",
+                    "on-secondary-fixed-variant": "#334155",
+                    "surface-container-high": "#1e293b99",
+                    "on-tertiary-fixed": "#4c0519",
+                    "error": "#ef4444",
+                    "outline-variant": "#1e293b",
+                    "tertiary-fixed": "#ffe4e6",
+                    "on-tertiary-fixed-variant": "#9f1239",
+                    "surface-variant": "#1e293b",
+                    "on-surface-variant": "#94a3b8",
+                    "on-secondary-container": "#cbd5e1",
+                    "surface-container": "#1e293b80",
+                    "surface-container-lowest": "#080c14",
+                    "on-error-container": "#fca5a5",
+                    "inverse-surface": "#f8fafc",
+                    "primary": "#256af4",
+                    "on-tertiary": "#ffffff",
+                    "on-surface": "#f1f5f9",
+                    "error-container": "#450a0a",
+                    "primary-fixed": "#dbeafe",
+                    "outline": "#334155",
+                    "on-secondary-fixed": "#0f172a",
+                    "surface-container-low": "#1e293b66",
+                    "surface-container-highest": "#2d3748",
+                    "background": "#101622",
+                    "tertiary": "#f43f5e",
+                    "on-primary": "#ffffff"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "display": ["Manrope"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .neon-accent {
+            text-shadow: 0 0 12px rgba(37, 106, 244, 0.4);
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface-dim text-on-background selection:bg-primary/30">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 bottom-0 flex flex-col items-center py-6 z-50 bg-slate-950 docked h-full w-20 border-r border-white/5 transition-all duration-300 ease-in-out">
+<div class="mb-10 text-blue-500 font-black text-2xl">MG</div>
+<div class="flex flex-col gap-8 flex-1">
+<button class="group flex flex-col items-center gap-1 transition-all duration-300 ease-in-out text-slate-500 hover:text-slate-200 hover:bg-white/5 p-2 rounded-xl">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-manrope tracking-widest text-[10px] font-bold uppercase">Dashboard</span>
+</button>
+<button class="group flex flex-col items-center gap-1 transition-all duration-300 ease-in-out text-blue-500 bg-blue-500/10 border-r-2 border-blue-500 p-2 rounded-l-xl">
+<span class="material-symbols-outlined" data-icon="work" style="font-variation-settings: 'FILL' 1;">work</span>
+<span class="font-manrope tracking-widest text-[10px] font-bold uppercase">Applications</span>
+</button>
+<button class="group flex flex-col items-center gap-1 transition-all duration-300 ease-in-out text-slate-500 hover:text-slate-200 hover:bg-white/5 p-2 rounded-xl">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-manrope tracking-widest text-[10px] font-bold uppercase">Talent</span>
+</button>
+<button class="group flex flex-col items-center gap-1 transition-all duration-300 ease-in-out text-slate-500 hover:text-slate-200 hover:bg-white/5 p-2 rounded-xl">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-manrope tracking-widest text-[10px] font-bold uppercase">Analytics</span>
+</button>
+<button class="group flex flex-col items-center gap-1 transition-all duration-300 ease-in-out text-slate-500 hover:text-slate-200 hover:bg-white/5 p-2 rounded-xl">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-manrope tracking-widest text-[10px] font-bold uppercase">Settings</span>
+</button>
+</div>
+<button class="mt-auto bg-primary text-white p-3 rounded-full shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
+<span class="material-symbols-outlined" data-icon="add_task">add_task</span>
+</button>
+</nav>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-20 h-20 flex items-center px-12 justify-between z-40 bg-slate-900/40 backdrop-blur-xl glass-panel shadow-lg shadow-white/5 transition-all duration-500">
+<div class="flex items-center gap-8">
+<h1 class="text-slate-100 text-xl font-bold tracking-tight">Applications</h1>
+<nav class="hidden md:flex gap-6 items-end h-full">
+<a class="text-slate-400 pb-4 font-manrope text-sm font-semibold tracking-tight hover:text-blue-300 transition-colors" href="#">Applied</a>
+<a class="text-slate-400 pb-4 font-manrope text-sm font-semibold tracking-tight hover:text-blue-300 transition-colors" href="#">In Review</a>
+<a class="text-slate-400 pb-4 font-manrope text-sm font-semibold tracking-tight hover:text-blue-300 transition-colors" href="#">Interview</a>
+<a class="text-slate-400 pb-4 font-manrope text-sm font-semibold tracking-tight hover:text-blue-300 transition-colors" href="#">Offer</a>
+<a class="text-blue-400 border-b-2 border-blue-500 pb-4 font-manrope text-sm font-semibold tracking-tight" href="#">Archived</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative hidden lg:block">
+<input class="bg-slate-900 border-slate-700 text-slate-300 rounded-full pl-10 pr-4 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary w-64 outline-none" placeholder="Search applications..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-2 text-slate-500 text-lg" data-icon="search">search</span>
+</div>
+<div class="flex items-center gap-4 text-slate-400">
+<button class="hover:text-blue-500 transition-colors"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="hover:text-blue-500 transition-colors"><span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span></button>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-primary font-bold text-xs">MG</div>
+</div>
+</div>
+</header>
+<!-- Main Stage -->
+<main class="ml-20 mt-20 p-12 min-h-screen">
+<!-- Background Atmosphere Glow -->
+<div class="fixed top-0 right-0 w-[500px] h-[500px] bg-primary/5 blur-[120px] -z-10 rounded-full"></div>
+<div class="fixed bottom-0 left-20 w-[300px] h-[300px] bg-tertiary/5 blur-[100px] -z-10 rounded-full"></div>
+<!-- Layout Grid -->
+<div class="grid grid-cols-12 gap-8 max-w-7xl mx-auto">
+<!-- Left Header Section -->
+<div class="col-span-12 lg:col-span-8 space-y-2">
+<div class="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+<span class="text-primary">Status</span>
+<span class="material-symbols-outlined text-[12px]" data-icon="chevron_right">chevron_right</span>
+<span>Withdrawn</span>
+</div>
+<h2 class="text-4xl font-bold text-slate-100 tracking-tight neon-accent">Notification Sent</h2>
+<p class="text-slate-400 max-w-xl text-lg leading-relaxed pt-2">
+                    Your withdrawal request has been initiated. Use the communication toolkit below to finalize your message and maintain a professional network connection.
+                </p>
+</div>
+<!-- Dashboard Bento Grid -->
+<div class="col-span-12 lg:col-span-8 space-y-8">
+<!-- Communication Toolkit / Editor Section -->
+<section class="glass-panel rounded-2xl p-8 relative overflow-hidden group">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-slate-100">Communication Toolkit</h3>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">AI-Suggested Withdrawal Message</p>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 rounded-full bg-slate-800 text-[10px] font-bold text-slate-300 uppercase tracking-tighter">Draft</span>
+<span class="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary uppercase tracking-tighter">Professional Tone</span>
+</div>
+</div>
+<!-- Editor Mockup -->
+<div class="bg-slate-900/60 rounded-xl border border-white/5 p-6 min-h-[320px] flex flex-col">
+<div class="flex gap-4 border-b border-white/5 pb-4 mb-4">
+<button class="text-slate-500 hover:text-slate-200 transition-colors"><span class="material-symbols-outlined text-sm" data-icon="format_bold">format_bold</span></button>
+<button class="text-slate-500 hover:text-slate-200 transition-colors"><span class="material-symbols-outlined text-sm" data-icon="format_italic">format_italic</span></button>
+<button class="text-slate-500 hover:text-slate-200 transition-colors"><span class="material-symbols-outlined text-sm" data-icon="format_list_bulleted">format_list_bulleted</span></button>
+<div class="w-[1px] h-4 bg-white/10 mx-2"></div>
+<button class="text-slate-500 hover:text-slate-200 transition-colors"><span class="material-symbols-outlined text-sm" data-icon="link">link</span></button>
+</div>
+<div class="flex-1 text-slate-300 font-medium leading-relaxed outline-none" contenteditable="true">
+                            Subject: Update on my application for the Senior Product Designer role<br/><br/>
+                            Dear Hiring Team,<br/><br/>
+                            Thank you very much for the opportunity to interview for the Senior Product Designer position. I enjoyed learning more about the innovative work being done at the company.<br/><br/>
+                            However, I would like to formally withdraw my application for the role at this time due to a change in my current professional circumstances. I truly appreciate your time and consideration during the process.<br/><br/>
+                            I hope we might have the chance to cross paths again in the future. I wish you and the team continued success in finding the right fit for this position.<br/><br/>
+                            Best regards,<br/>
+                            Alex Rivera
+                        </div>
+</div>
+<!-- Actions -->
+<div class="mt-8 flex items-center justify-between">
+<div class="flex items-center gap-4 text-slate-500">
+<span class="material-symbols-outlined text-sm" data-icon="info">info</span>
+<span class="text-xs italic">Changes are saved automatically to your profile draft.</span>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-3 rounded-xl bg-slate-800 text-slate-100 font-bold text-sm hover:bg-slate-700 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="content_copy">content_copy</span>
+                                Copy to Clipboard
+                            </button>
+<button class="px-8 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="send">send</span>
+                                Send Withdrawal
+                            </button>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Side Rail -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<!-- Status Card -->
+<div class="glass-panel rounded-2xl p-6">
+<h4 class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-6">Timeline Activity</h4>
+<div class="space-y-6 relative">
+<div class="absolute left-[11px] top-2 bottom-2 w-px bg-slate-800"></div>
+<div class="relative pl-8">
+<div class="absolute left-0 top-1 w-6 h-6 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-[10px]" data-icon="circle" style="font-variation-settings: 'FILL' 1;">circle</span>
+</div>
+<p class="text-xs font-bold text-slate-200">Withdrawal Initiated</p>
+<p class="text-[10px] text-slate-500">Today, 2:14 PM</p>
+</div>
+<div class="relative pl-8">
+<div class="absolute left-0 top-1 w-6 h-6 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-[10px]" data-icon="radio_button_unchecked">radio_button_unchecked</span>
+</div>
+<p class="text-xs font-bold text-slate-500">Notification Sent</p>
+<p class="text-[10px] text-slate-600">Pending send command...</p>
+</div>
+<div class="relative pl-8 opacity-40">
+<div class="absolute left-0 top-1 w-6 h-6 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-[10px]" data-icon="radio_button_unchecked">radio_button_unchecked</span>
+</div>
+<p class="text-xs font-bold text-slate-500">Archive Finalized</p>
+<p class="text-[10px] text-slate-600">Locked until notification</p>
+</div>
+</div>
+</div>
+<!-- Recruitment Insight Card -->
+<div class="glass-panel rounded-2xl overflow-hidden relative group">
+<img class="w-full h-48 object-cover opacity-60 group-hover:scale-110 transition-transform duration-700" data-alt="A cinematic, high-contrast shot of a sleek, dark office interior at night. Cool blue ambient lighting reflects off large glass windows overlooking a blurred city skyline. A single minimalist designer chair sits near a glowing digital interface projected onto a transparent screen. The atmosphere is sophisticated, quiet, and professional, echoing a high-end corporate recruiting environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5cmkYo9LOVOkaF9l-J-Kc9YEMZJAtsf3142TZFZg9_6mPEvl-SW9I_yWmwgpWMB2NH4FliLVFp6vqTEj556OtacfFcr6M8utjbnTTCnvuAJKSKYEtgtlVrwWiTyyro5r_FhqErHzPBJMJGJ9E0aFI7QEMyuyuQeMW2tD0lWxGu4cWkq1-bi3tis2mVcQDi2rZdgvLyxv6YE6NVen9sy-Je94qsGPnKbtFcpUWwSD795kTKpbA3OFn2FhdI7QYa-uL_a30ogO_Smc"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent p-6 flex flex-col justify-end">
+<h4 class="text-sm font-bold text-slate-100">Maintain Your Bridge</h4>
+<p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                            Withdrawing professionally keeps you in the active talent pool for future opportunities that may be a better fit.
+                        </p>
+</div>
+</div>
+<!-- Quick Help -->
+<div class="p-6 bg-primary-container rounded-2xl border border-primary/10">
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-primary" data-icon="contact_support">contact_support</span>
+<div>
+<h5 class="text-xs font-bold text-primary-fixed-dim uppercase tracking-wider">Need assistance?</h5>
+<p class="text-xs text-on-primary-container mt-1">Our talent advisors can help phrase your withdrawal. <a class="underline font-semibold" href="#">Contact Concierge</a></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

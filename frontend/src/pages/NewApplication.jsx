@@ -545,6 +545,7 @@ function NewApplication({ onComplete }) {
                 indeed_url: metadata.indeed_url || null,
                 linkedin_rating: metadata.linkedin_rating || null,
                 linkedin_url: metadata.linkedin_url || null,
+                excluded_profile_docs: contextDocs.filter(d => d.isProfile && !d.selected).map(d => d.path),
                 profile_snapshot: {
                     profile: userProfile,
                     context_docs: contextDocs.filter(d => d.selected).map(d => ({
@@ -559,11 +560,31 @@ function NewApplication({ onComplete }) {
 
             console.log("DEBUG PAYLOAD:", payload) // Debugging
 
-            await fetchWithAuth(`${API_URL}/api/save-application`, {
+            const saveRes = await fetchWithAuth(`${API_URL}/api/save-application`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             })
+
+            if (saveRes.ok) {
+                const savedApp = await saveRes.json();
+                const appId = savedApp.id;
+
+                // Upload any newly attached (non-profile) documents
+                const newDocs = contextDocs.filter(d => !d.isProfile && d.selected && d.file);
+                for (const doc of newDocs) {
+                    const docFormData = new FormData();
+                    docFormData.append('document', doc.file);
+                    try {
+                        await fetchWithAuth(`${API_URL}/api/applications/${appId}/upload-additional-doc`, {
+                            method: 'POST',
+                            body: docFormData
+                        });
+                    } catch (err) {
+                        console.error("Failed to upload additional doc during save", err);
+                    }
+                }
+            }
 
             // Notify parent that we are done
             onComplete()

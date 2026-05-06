@@ -321,18 +321,24 @@ class RefineRequest(BaseModel):
     original_text_content: Optional[str] = None # To preserve original diff context
     additional_context: Optional[str] = None
 
+class ApproveRefinementRequest(BaseModel):
+    application_id: int
+    pending_refinement: dict
+
 class CoverLetterRequest(BaseModel):
     resume_text: str
     job_description: str
     base_filename: str
-    additional_context: Optional[str] = None
+    additional_context: Optional[str] = ""
+    additional_context_paths: Optional[List[str]] = []
     instructions: Optional[str] = ""
 
 class RefineCoverLetterRequest(BaseModel):
     content: str
     instructions: str
     base_filename: str
-    additional_context: Optional[str] = None
+    additional_context: Optional[str] = ""
+    additional_context_paths: Optional[List[str]] = []
 
 
 class ApplicationSaveRequest(BaseModel):
@@ -388,7 +394,10 @@ class ApplicationSaveRequest(BaseModel):
     match_details: Optional[Any] = None
     commute_details: Optional[Any] = {}
     diff_data: Optional[Any] = {}
+    substage_progress: Optional[Any] = {}
     files: Optional[dict] = {}
+    additional_docs: Optional[List[dict]] = []
+    excluded_profile_docs: Optional[List[str]] = []
 
 
 
@@ -435,6 +444,7 @@ class ProfileModel(BaseModel):
     other: List[dict] = []
     base_resume_path: Optional[str] = None
     long_form_resume_path: Optional[str] = None
+    example_cover_letter_path: Optional[str] = None
     additional_docs: List[dict] = []
     preferences: Optional[dict] = {}
     social_links: List[dict] = []
@@ -638,6 +648,48 @@ async def update_app_config(config: dict, user_id: int = Depends(get_current_use
         database_service.save_config(existing, user_id)
         return {"message": "User settings updated"}
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/applications/{application_id}/upload-additional-doc")
+async def upload_app_additional_doc(
+    application_id: int,
+    document: UploadFile = File(...),
+    user_id: int = Depends(get_current_user_id)
+):
+    """Upload an additional supplemental document to a specific application."""
+    try:
+        app = database_service.get_application_by_id(application_id)
+        if not app or app.get('user_id') != user_id:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        os.makedirs(f"{UPLOADS_DIR}/app_docs", exist_ok=True)
+        filename = document.filename
+        # Make filename unique
+        safe_name = f"{int(time.time())}_{filename}"
+        save_path = f"{UPLOADS_DIR}/app_docs/{safe_name}"
+        
+        with open(save_path, "wb") as buffer:
+            shutil.copyfileobj(document.file, buffer)
+            
+        # Update application's additional_docs
+        # We need to handle potential JSON parsing
+        docs_str = app.get("additional_docs", "[]") or "[]"
+        if isinstance(docs_str, str):
+            docs = json.loads(docs_str)
+        else:
+            docs = docs_str or []
+            
+        docs.append({
+            "filename": filename,
+            "path": save_path,
+            "label": "Job Document"
+        })
+        
+        database_service.update_application(application_id, {"additional_docs": docs})
+        
+        return {"message": "Document uploaded", "path": save_path, "docs": docs}
+    except Exception as e:
+        logger.error(f"Error uploading app document: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/user/api-keys")
@@ -1101,6 +1153,48 @@ async def upload_profile_resume(
         return {"path": save_path, "filename": resume.filename, "type": resume_type}
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/profile/upload-example-cover-letter")
+async def upload_example_cover_letter(
+    document: UploadFile = File(...),
+    user_id: int = Depends(get_current_user_id)
+):
+    """Upload and save an example cover letter to the user profile."""
+    try:
+        os.makedirs(f"{UPLOADS_DIR}/profile_cover_letters", exist_ok=True)
+        filename = f"example_cover_letter_{document.filename}"
+        save_path = f"{UPLOADS_DIR}/profile_cover_letters/{filename}"
+        
+        content = await document.read()
+        with open(save_path, "wb") as f:
+            f.write(content)
+        
+        # Update profile in DB with new path
+        profile = database_service.get_profile(user_id)
+        profile["example_cover_letter_path"] = save_path
+        database_service.save_profile(profile, user_id)
+        
+        return {"path": save_path, "filename": document.filename}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/profile/example-cover-letter")
+async def delete_example_cover_letter(user_id: int = Depends(get_current_user_id)):
+    """Remove the example cover letter from the user profile."""
+    try:
+        profile = database_service.get_profile(user_id)
+        path = profile.get("example_cover_letter_path")
+        if path and os.path.exists(path):
+            try:
+                os.remove(path)
+            except:
+                pass
+        
+        profile["example_cover_letter_path"] = None
+        database_service.save_profile(profile, user_id)
+        return {"message": "Example cover letter removed"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1611,6 +1705,32 @@ async def refine_resume(request: RefineRequest, user_id: int = Depends(get_curre
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/approve-refinement")
+async def approve_refinement(request: ApproveRefinementRequest, user_id: int = Depends(get_current_user_id)):
+    try:
+        app_obj = database_service.get_application_by_id(request.application_id)
+        if not app_obj:
+            raise HTTPException(status_code=404, detail="Application not found")
+            
+        pending = request.pending_refinement
+        files = pending.get("files", {})
+        
+        # Extract filename from URL (e.g., /api/download/base_resume_..._tailored.docx)
+        resume_path = files.get("docx", "").split("/")[-1]
+        
+        updates = {
+            "resume_data": pending.get("resume_data"),
+            "resume_changes_summary": pending.get("change_summary"),
+            "diff_data": pending.get("diff_data"),
+            "tailored_resume_path": resume_path
+        }
+        
+        database_service.update_application(request.application_id, updates)
+        return {"message": "Refinement approved and saved"}
+    except Exception as e:
+        print(f"Error approving refinement: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/generate-cover-letter")
 async def generate_cover_letter_endpoint(request: CoverLetterRequest, user_id: int = Depends(get_current_user_id)):
@@ -1619,11 +1739,53 @@ async def generate_cover_letter_endpoint(request: CoverLetterRequest, user_id: i
         user_profile = database_service.get_profile(user_id)
         config = await get_merged_config(user_id)
         
+        # --- Handle Additional Context Documents from Paths ---
+        combined_additional_context = request.additional_context or ""
+        if request.additional_context_paths:
+            additional_context_chunks = []
+            for path in request.additional_context_paths:
+                if path and os.path.exists(str(path)):
+                    path_str = str(path)
+                    try:
+                        if path_str.endswith('.docx'):
+                            doc_data = document_service.parse_docx(path_str)
+                            text = "\n".join(doc_data.get("full_text", []))
+                            additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path_str)} ---\n{text}\n")
+                        elif path_str.endswith('.pdf'):
+                            text = document_service.extract_text_from_pdf(path_str)
+                            if text:
+                                additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path_str)} ---\n{text}\n")
+                        elif path_str.endswith('.txt'):
+                            text = document_service.extract_text_from_txt(path_str)
+                            if text:
+                                additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path_str)} ---\n{text}\n")
+                    except Exception as e:
+                        print(f"Warning: Failed to parse context path {path_str}: {e}")
+            
+            if additional_context_chunks:
+                combined_additional_context += "\n" + "\n".join(additional_context_chunks)
+
+        # --- Handle Example Cover Letter for Formatting/Tone ---
+        example_cl_text = ""
+        example_cl_path = user_profile.get("example_cover_letter_path")
+        if example_cl_path and os.path.exists(example_cl_path):
+            try:
+                if example_cl_path.endswith('.docx'):
+                    doc_data = document_service.parse_docx(example_cl_path)
+                    example_cl_text = "\n".join(doc_data.get("full_text", []))
+                elif example_cl_path.endswith('.pdf'):
+                    example_cl_text = document_service.extract_text_from_pdf(example_cl_path)
+                elif example_cl_path.endswith('.txt'):
+                    example_cl_text = document_service.extract_text_from_txt(example_cl_path)
+            except Exception as e:
+                print(f"Warning: Failed to parse example cover letter {example_cl_path}: {e}")
+
         result = await ai_service.generate_cover_letter(
             resume_text=request.resume_text, 
             job_description=request.job_description, 
             user_profile=user_profile,
-            additional_context=request.additional_context,
+            additional_context=combined_additional_context,
+            example_cover_letter=example_cl_text,
             instructions=request.instructions,
             config=config
         )
@@ -1659,10 +1821,36 @@ async def generate_cover_letter_endpoint(request: CoverLetterRequest, user_id: i
 async def refine_cover_letter_endpoint(request: RefineCoverLetterRequest, user_id: int = Depends(get_current_user_id)):
     try:
         config = await get_merged_config(user_id)
+        # --- Handle Additional Context Documents from Paths ---
+        combined_additional_context = request.additional_context or ""
+        if request.additional_context_paths:
+            additional_context_chunks = []
+            for path in request.additional_context_paths:
+                if path and os.path.exists(str(path)):
+                    path_str = str(path)
+                    try:
+                        if path_str.endswith('.docx'):
+                            doc_data = document_service.parse_docx(path_str)
+                            text = "\n".join(doc_data.get("full_text", []))
+                            additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path_str)} ---\n{text}\n")
+                        elif path_str.endswith('.pdf'):
+                            text = document_service.extract_text_from_pdf(path_str)
+                            if text:
+                                additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path_str)} ---\n{text}\n")
+                        elif path_str.endswith('.txt'):
+                            text = document_service.extract_text_from_txt(path_str)
+                            if text:
+                                additional_context_chunks.append(f"\n--- Context Document: {os.path.basename(path_str)} ---\n{text}\n")
+                    except Exception as e:
+                        print(f"Warning: Failed to parse context path {path_str}: {e}")
+            
+            if additional_context_chunks:
+                combined_additional_context += "\n" + "\n".join(additional_context_chunks)
+
         result = await ai_service.refine_cover_letter(
             content=request.content, 
             instructions=request.instructions, 
-            additional_context=request.additional_context,
+            additional_context=combined_additional_context,
             config=config
         )
         content = result.get("content", "")
@@ -1940,10 +2128,10 @@ async def update_application_status(app_id: int, request: StatusUpdateRequest, u
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/applications/{app_id}/enrich")
-async def enrich_application(app_id: int, user_id: int = Depends(get_current_user_id)):
+async def enrich_application(app_id: int, force: bool = False, user_id: int = Depends(get_current_user_id)):
     """AI-generate enrichment fields (job_summary, core_purpose, etc.) from the job description.
     
-    Only calls the AI if any field is missing. Returns the enriched fields and saves them.
+    Only calls the AI if any field is missing, unless force is True. Returns the enriched fields and saves them.
     """
     try:
         app_data = database_service.get_application_by_id(app_id, user_id)
@@ -1951,7 +2139,7 @@ async def enrich_application(app_id: int, user_id: int = Depends(get_current_use
             raise HTTPException(status_code=404, detail="Application not found")
 
         # Check if enrichment has already been done (at least the summary)
-        if app_data.get("job_summary"):
+        if not force and app_data.get("job_summary"):
             fields = ["job_summary", "core_purpose", "function_dept", "reporting_line", "team_context"]
             return {k: app_data.get(k) for k in fields}
 
@@ -1982,10 +2170,18 @@ Return a JSON object with EXACTLY these fields:
     "core_purpose": "1-2 sentences describing the core purpose of this specific role — what problem it solves or what it is accountable for.",
     "function_dept": "The functional area or department (e.g., 'Engineering — Platform', 'Product Management', 'Data Science — Analytics'). Be specific.",
     "reporting_line": "Who this role reports to, if stated or strongly implied. Use null if not determinable.",
-    "team_context": "Context about the team — size, composition, stage, or mission if available. Use null if not mentioned."
+    "team_context": "Context about the team — size, composition, stage, or mission if available. Use null if not mentioned.",
+    "requirements": ["Concise requirement 1", "Concise requirement 2"],
+    "preferences": ["Concise preference 1", "Concise preference 2"],
+    "skills": ["Skill 1", "Skill 2"],
+    "bonus_equity": "1-2 sentence summary of Bonus and Equity compensation. If none stated, return 'Not specified.'",
+    "travel_requirements": "1-2 sentence summary of Travel Requirements. If none stated, return 'None specified.'"
 }}
 
-Be concise and grounded in the text. Do not fabricate details not present or inferable from the description."""
+CRITICAL INSTRUCTIONS:
+- For "requirements" and "preferences": Summarize the original bullets so they boil down to just the essence (not wordy).
+- For "skills": Be even briefer. Limit these to 3 words or less whenever possible (but if it can't be done, it's ok to have more).
+- Be concise and grounded in the text. Do not fabricate details not present or inferable from the description."""
 
         content = await ai_service.execute_ai_request(
             system_prompt="You are a precise job description analyst.",
@@ -2002,6 +2198,11 @@ Be concise and grounded in the text. Do not fabricate details not present or inf
             "function_dept": result.get("function_dept"),
             "reporting_line": result.get("reporting_line"),
             "team_context": result.get("team_context"),
+            "parsed_requirements": json.dumps(result.get("requirements", [])),
+            "parsed_preferences": json.dumps(result.get("preferences", [])),
+            "parsed_skills": json.dumps(result.get("skills", [])),
+            "bonus_equity": result.get("bonus_equity"),
+            "travel_requirements": result.get("travel_requirements"),
         }
 
         # Persist — use a direct SQL update to avoid touching other fields
@@ -2023,25 +2224,38 @@ async def score_application_endpoint(app_id: int, user_id: int = Depends(get_cur
         config = await get_merged_config(user_id)
         profile = database_service.get_profile(user_id)
         
-        # Determine which resume to use
-        # 1. Stored resume_data (if already tailored/parsed)
-        # 2. Tailored resume file
-        # 3. Original resume file
-        # 4. Profile base resume
-        resume_text = ""
-        if app_data.get("resume_data"):
-            # Re-construct text from structured data or just use it if possible
-            # For now, let's look for files first as they are more reliable sources of truth
-            pass
-
-        file_to_score = None
-        if app_data.get("tailored_resume_path") and os.path.exists(app_data["tailored_resume_path"]):
-            file_to_score = app_data["tailored_resume_path"]
-        elif app_data.get("original_resume_path") and os.path.exists(app_data["original_resume_path"]):
-            file_to_score = app_data["original_resume_path"]
-        elif profile.get("base_resume_path") and os.path.exists(profile["base_resume_path"]):
-            file_to_score = profile["base_resume_path"]
+        # Determine which resume to use based on active type and available files
+        active_type = app_data.get("active_resume_type", "generated")
+        override_path = app_data.get("override_resume_path")
+        tailored_path = app_data.get("tailored_resume_path")
+        original_path = app_data.get("original_resume_path")
+        base_path = profile.get("base_resume_path")
         
+        file_to_score = None
+        
+        def resolve_path(filename):
+            if not filename: return None
+            if filename.startswith("/"):
+                return filename if os.path.exists(filename) else None
+            out_p = f"{OUTPUTS_DIR}/{filename}"
+            if os.path.exists(out_p): return out_p
+            up_p = f"{UPLOADS_DIR}/{filename}"
+            if os.path.exists(up_p): return up_p
+            return None
+
+        # If override is explicitly selected and available
+        if active_type == "override" and override_path:
+            file_to_score = resolve_path(override_path)
+            
+        # Otherwise, fall back to generated/tailored, then original uploaded, then profile default
+        if not file_to_score and tailored_path:
+            file_to_score = resolve_path(tailored_path)
+        if not file_to_score and original_path:
+            file_to_score = resolve_path(original_path)
+        if not file_to_score and base_path:
+            file_to_score = resolve_path(base_path)
+        
+        resume_text = ""
         if file_to_score:
             resume_text = document_service.extract_text(file_to_score)
         else:
@@ -2261,6 +2475,14 @@ async def download_file(filename: str):
         file_path = f"{UPLOADS_DIR}/{filename}"
         
     if not os.path.exists(file_path):
+        # Fallback: Check profile docs
+        file_path = f"{UPLOADS_DIR}/profile_docs/{filename}"
+        
+    if not os.path.exists(file_path):
+        # Fallback: Check app-specific docs
+        file_path = f"{UPLOADS_DIR}/app_docs/{filename}"
+        
+    if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found in outputs or uploads")
     
     # Determine media type and disposition based on file extension
@@ -2291,7 +2513,7 @@ ONLYOFFICE_INTERNAL_URL = os.getenv("ONLYOFFICE_INTERNAL_URL", "onlyoffice:80")
 BACKEND_EXTERNAL_URL = os.getenv("BACKEND_EXTERNAL_URL", "http://localhost:8000")
 
 @app.get("/api/onlyoffice/config/{filename:path}")
-async def get_onlyoffice_config(filename: str, application_id: Optional[str] = None):
+async def get_onlyoffice_config(filename: str, application_id: Optional[str] = None, user_id: int = Depends(get_current_user_id)):
     """
     Returns OnlyOffice editor configuration for a given DOCX file.
     The file must exist in outputs/ or uploads/.
@@ -2305,9 +2527,11 @@ async def get_onlyoffice_config(filename: str, application_id: Optional[str] = N
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail=f"File not found: {filename}")
     
-    # Generate a unique key based on filename + modification time + random salt
+    # Generate a unique key based on filename + modification time
+    import hashlib
     mtime = os.path.getmtime(file_path)
-    doc_key = hashlib.md5(f"{filename}_{mtime}_{time.time_ns()}".encode()).hexdigest()
+    # Use a stable hash for session consistency
+    doc_key = hashlib.md5(f"{filename}_{int(mtime)}".encode()).hexdigest()[:20]
     
     # Add application_id to callback if provided
     callback_query = f"filename={filename}"
@@ -2315,9 +2539,8 @@ async def get_onlyoffice_config(filename: str, application_id: Optional[str] = N
         callback_query += f"&application_id={application_id}"
     
     # Document URL that OnlyOffice server can access (internal Docker network)
-    document_url = f"{BACKEND_INTERNAL_URL}/api/download/{filename}?v={int(mtime)}"
+    document_url = f"{BACKEND_INTERNAL_URL}/api/download/{filename}"
 
-    
     config = {
         "document": {
             "fileType": "docx",
@@ -2332,11 +2555,13 @@ async def get_onlyoffice_config(filename: str, application_id: Optional[str] = N
                 "comment": False,
             }
         },
+        "documentType": "word",
         "editorConfig": {
             "callbackUrl": f"{BACKEND_INTERNAL_URL}/api/onlyoffice/callback?{callback_query}",
             "mode": "edit",
             "lang": "en",
             "customization": {
+                "uiTheme": "theme-dark",
                 "autosave": True,
                 "forcesave": True,
                 "compactHeader": False,
@@ -2349,15 +2574,14 @@ async def get_onlyoffice_config(filename: str, application_id: Optional[str] = N
                 "plugins": False,
             },
             "user": {
-                "id": "user-1",
+                "id": f"user-{user_id}",
                 "name": "Resume Editor"
             }
         },
         "type": "desktop",
         "width": "100%",
-        "height": "100%",
+        "height": "100%"
     }
-    
     return config
 
 @app.post("/api/onlyoffice/callback")

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline-variant": "#1e293b",
+            "surface-container-lowest": "#080c14",
+            "primary": "#256af4",
+            "on-secondary": "#f8fafc",
+            "surface": "#101622",
+            "secondary-container": "#1e293b",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-fixed-variant": "#9f1239",
+            "inverse-surface": "#f8fafc",
+            "secondary-fixed": "#e2e8f0",
+            "tertiary-fixed-dim": "#fecdd3",
+            "tertiary-fixed": "#ffe4e6",
+            "on-surface-variant": "#94a3b8",
+            "on-error": "#ffffff",
+            "on-primary": "#ffffff",
+            "inverse-primary": "#60a5fa",
+            "surface-bright": "#1e293b",
+            "on-secondary-fixed-variant": "#334155",
+            "on-secondary-fixed": "#0f172a",
+            "background": "#101622",
+            "error": "#ef4444",
+            "primary-fixed": "#dbeafe",
+            "on-background": "#f1f5f9",
+            "surface-variant": "#1e293b",
+            "surface-tint": "#256af4",
+            "surface-container-low": "#1e293b66",
+            "on-surface": "#f1f5f9",
+            "outline": "#334155",
+            "error-container": "#450a0a",
+            "surface-container-highest": "#2d3748",
+            "secondary": "#334155",
+            "on-tertiary-fixed": "#4c0519",
+            "surface-dim": "#0b0f18",
+            "primary-fixed-dim": "#bfdbfe",
+            "primary-container": "#256af433",
+            "on-error-container": "#fca5a5",
+            "surface-container-high": "#1e293b99",
+            "surface-container": "#1e293b80",
+            "on-tertiary-container": "#fb7185",
+            "inverse-on-surface": "#0f172a",
+            "on-primary-fixed": "#1e3a8a",
+            "secondary-fixed-dim": "#cbd5e1",
+            "tertiary": "#f43f5e",
+            "tertiary-container": "#f43f5e22",
+            "on-secondary-container": "#cbd5e1",
+            "on-primary-fixed-variant": "#1d4ed8",
+            "on-primary-container": "#60a5fa"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            "headline": ["Manrope"],
+            "display": ["Manrope"],
+            "body": ["Manrope"],
+            "label": ["Manrope"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.4);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .neon-text {
+      text-shadow: 0 0 8px rgba(37, 106, 244, 0.4);
+    }
+    body {
+      background-color: #101622;
+      color: #f1f5f9;
+      font-family: 'Manrope', sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f18;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body class="overflow-hidden">
+<!-- SideNavBar Component -->
+<aside class="fixed h-screen left-0 w-64 bg-slate-950 border-r border-white/5 flex flex-col h-full py-8 gap-4 z-50">
+<div class="px-6 mb-8">
+<div class="text-lg font-black text-blue-500 uppercase tracking-widest">TrackPad</div>
+<div class="font-manrope text-sm font-medium tracking-wide text-slate-400">Application Pipeline</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Active: Saved -->
+<a class="flex items-center px-6 py-3 text-slate-100 bg-blue-600/10 border-r-4 border-blue-500 hover:bg-slate-800/50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-3">bookmark</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Saved</span>
+</a>
+<a class="flex items-center px-6 py-3 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-3">auto_awesome</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Generated</span>
+</a>
+<a class="flex items-center px-6 py-3 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-3">send</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Applied</span>
+</a>
+<a class="flex items-center px-6 py-3 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-3">forum</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Interviewing</span>
+</a>
+<a class="flex items-center px-6 py-3 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined mr-3">workspace_premium</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Offers</span>
+</a>
+</nav>
+<div class="px-6 mt-auto space-y-4">
+<button class="w-full py-3 bg-primary text-on-primary rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">add</span>
+        New Application
+      </button>
+<div class="pt-6 border-t border-white/5 space-y-1">
+<a class="flex items-center py-2 text-slate-400 hover:text-slate-200 transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">help_outline</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Help</span>
+</a>
+<a class="flex items-center py-2 text-slate-400 hover:text-slate-200 transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">logout</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Logout</span>
+</a>
+</div>
+</div>
+</aside>
+<main class="ml-64 min-h-screen flex flex-col bg-surface overflow-y-auto">
+<!-- TopAppBar Component -->
+<header class="sticky top-0 z-40 bg-slate-950/40 backdrop-blur-md border-b border-white/10 flex justify-between items-center w-full px-8 py-3 shadow-lg shadow-blue-500/5">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-blue-400 transition-colors">arrow_back</span>
+<h1 class="text-xl font-bold tracking-tighter text-slate-100">Midnight Glass</h1>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex items-center gap-4">
+<span class="text-blue-500 font-bold border-b-2 border-blue-500 py-1 px-2 text-sm cursor-pointer">Explore</span>
+<span class="text-slate-400 font-medium hover:text-blue-400 transition-colors py-1 px-2 text-sm cursor-pointer">Resources</span>
+<span class="text-slate-400 font-medium hover:text-blue-400 transition-colors py-1 px-2 text-sm cursor-pointer">Pipeline</span>
+</div>
+<div class="flex items-center gap-4 text-slate-400">
+<span class="material-symbols-outlined hover:text-blue-400 cursor-pointer transition-colors">notifications</span>
+<span class="material-symbols-outlined hover:text-blue-400 cursor-pointer transition-colors">settings</span>
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-white/20" data-alt="Close up portrait of a professional man with friendly expression against a soft dark studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuHjwdbSI15aWQoq4aDj3uAuOrpVzN_FuZPyPi2IOZ0jsGsIetUyyhJiIpZiF_mqmaYP6z3lzZyUNDMsXy-nXxlHxggWonnQpUvy6NDE69h9__xIbSz6EeWyXtcWRQ-1wVjWMJp70V6fQalxHoFIHQ5pTTv280tf74P_p_aoVlQaD7ZesAhzT8rTE_dL8ul8BvT-WrLhOeuqDvSsCNRs2OFZQ4DdOINwPu9FEFFP9s0IRNKu-QbzcuKJnVHisDxZLceHJjez-ta8g"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-8 max-w-7xl mx-auto w-full">
+<!-- Atmosphere Blurs -->
+<div class="fixed top-20 right-0 w-96 h-96 bg-primary/10 blur-[120px] rounded-full -z-10"></div>
+<div class="fixed bottom-0 left-64 w-64 h-64 bg-primary/5 blur-[100px] rounded-full -z-10"></div>
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+<div class="flex items-center gap-6">
+<div class="w-20 h-20 rounded-2xl bg-[#1db954] flex items-center justify-center shadow-lg shadow-green-500/20">
+<img alt="Spotify Logo" class="w-12 h-12" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-8mnjBup-rRSCIAtwiKebPEfQz4oQ8j4IGLwgzgaOf2fqu6Rtf6ZmGS5E1aVRmR90JpvS_jOBsWxGxZXsoQHxSR1F5-Zj5L1FLM2p5Kw5dg5RonZUIjnzvy442wqno3qX9tBrQCj67tf7iEktLJIVnchbkAWDctHj2oABclHCQmSYUT5TRKx55OsGO-U9JP-0rRAfOEJMgcNeqx6w74YQ6brJ8gWOZ267w2d8P0BA0dGKIcbcpawNTxU5CnZ8AlUnKUXI0dT-Cs8"/>
+</div>
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h2 class="text-3xl font-extrabold text-slate-100 tracking-tight">Senior Product Designer</h2>
+<span class="px-2 py-0.5 bg-primary/10 border border-primary/20 text-[10px] font-bold uppercase tracking-widest text-primary rounded">Saved</span>
+</div>
+<p class="text-slate-400 font-medium">Spotify • Stockholm, Sweden • Remote Friendly</p>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-2.5 rounded-xl bg-slate-800 text-slate-100 font-semibold text-sm hover:bg-slate-700 transition-colors">Archive</button>
+<button class="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-semibold text-sm shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">Move to Applied</button>
+</div>
+</div>
+<!-- Pipeline Progress -->
+<div class="glass-panel rounded-2xl p-6 mb-8 overflow-hidden relative">
+<div class="flex flex-col md:flex-row items-center gap-8">
+<div class="flex-1 w-full">
+<div class="flex justify-between items-end mb-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Application Progress</h3>
+<span class="text-xl font-black text-blue-500 neon-text">80%</span>
+</div>
+<div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden">
+<div class="h-full bg-primary shadow-[0_0_12px_rgba(37,106,244,0.6)]" style="width: 80%;"></div>
+</div>
+</div>
+<div class="flex gap-4 overflow-x-auto pb-2 w-full md:w-auto scrollbar-hide">
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-300">Parsed</span>
+</div>
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-300">Reviewed</span>
+</div>
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-300">Network</span>
+</div>
+<div class="flex flex-col items-center gap-2 min-w-[100px]">
+<div class="w-8 h-8 rounded-full border-2 border-blue-500 flex items-center justify-center text-blue-500">
+<span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-wider text-blue-500">Research</span>
+</div>
+<div class="flex flex-col items-center gap-2 min-w-[80px] opacity-40">
+<div class="w-8 h-8 rounded-full border-2 border-slate-700 flex items-center justify-center text-slate-700">
+</div>
+<span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Prioritize</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bento Layout for Company Research -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Sidebar: Research Sub-Nav -->
+<div class="lg:col-span-1 space-y-6">
+<div class="glass-panel rounded-2xl p-4">
+<nav class="space-y-1">
+<a class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-colors" href="#">
+<span class="text-sm font-medium">Company Overview</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</a>
+<a class="flex items-center justify-between px-4 py-3 rounded-xl bg-primary/10 text-blue-400 border border-primary/20" href="#">
+<span class="text-sm font-bold">Company Research</span>
+<div class="w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(37,106,244,0.8)]"></div>
+</a>
+<a class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-colors" href="#">
+<span class="text-sm font-medium">Financials &amp; Market</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</a>
+<a class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-colors" href="#">
+<span class="text-sm font-medium">Competitor Matrix</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</a>
+</nav>
+</div>
+<!-- Mission Card -->
+<div class="glass-panel rounded-2xl p-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl">format_quote</span>
+</div>
+<h3 class="text-xs font-bold uppercase tracking-widest text-blue-500 mb-4">Mission Statement</h3>
+<p class="text-slate-200 text-lg font-semibold leading-relaxed">
+                    "Our mission is to unlock the potential of human creativity by giving a million creative artists the opportunity to live off their art and billions of fans the opportunity to enjoy and be inspired by it."
+                </p>
+</div>
+</div>
+<!-- Main Research Canvas -->
+<div class="lg:col-span-2 space-y-8">
+<!-- News Section -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Recent Company News</h3>
+<button class="text-xs font-bold text-blue-500 hover:underline">See all 24 sources</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="glass-panel rounded-2xl p-5 hover:bg-white/10 transition-colors cursor-pointer border-l-4 border-l-green-500">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-tight mb-2 block">TechCrunch • 2 days ago</span>
+<h4 class="text-slate-100 font-bold mb-2">Spotify expands AI DJ feature to Spanish-speaking markets globally</h4>
+<p class="text-slate-400 text-xs line-clamp-2">The expansion follows a successful pilot in English-speaking markets, aiming to leverage localized cultural insights...</p>
+</div>
+<div class="glass-panel rounded-2xl p-5 hover:bg-white/10 transition-colors cursor-pointer border-l-4 border-l-primary">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-tight mb-2 block">Reuters • 1 week ago</span>
+<h4 class="text-slate-100 font-bold mb-2">Spotify reports Q3 subscriber growth exceeding Wall Street estimates</h4>
+<p class="text-slate-400 text-xs line-clamp-2">The streaming giant continues to diversify revenue through podcasting and audiobooks despite global economic headwinds...</p>
+</div>
+</div>
+</section>
+<!-- Cultural Insights Section -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Cultural &amp; Engineering Insights</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="glass-panel rounded-2xl p-6 flex flex-col gap-4 col-span-2">
+<div class="flex items-start gap-4">
+<div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
+<span class="material-symbols-outlined">hub</span>
+</div>
+<div>
+<h4 class="text-slate-100 font-bold">Squad Model 2.0</h4>
+<p class="text-slate-400 text-sm mt-1">Autonomous teams with high alignment and loose coupling. Designers are embedded within cross-functional squads.</p>
+</div>
+</div>
+<div class="pt-4 border-t border-white/5 flex gap-2">
+<span class="px-2 py-1 bg-white/5 rounded-md text-[10px] font-medium text-slate-300">Autonomy</span>
+<span class="px-2 py-1 bg-white/5 rounded-md text-[10px] font-medium text-slate-300">Ownership</span>
+<span class="px-2 py-1 bg-white/5 rounded-md text-[10px] font-medium text-slate-300">User-Centric</span>
+</div>
+</div>
+<div class="glass-panel rounded-2xl overflow-hidden relative">
+<img alt="Modern office collaborative space" class="w-full h-full object-cover opacity-40" data-alt="Modern collaborative office interior with neon accents, soft lighting, and ergonomic furniture in a futuristic tech company setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxoyghDZv7ydchRv08fDkaZARI9BoaRXiYK1CSq6B0M45fULbeq5yESW9rmYpxA8NxWFllTUlHQCXr06GACyCUA7MPPMC57UFDEw8IVyL1KWgR9X96IQDKTqV0idB-dPs5cCD_ayV193zwC3Vwe75_TwPW_U0nfGf3Ns7H7DfMVdJKVqMeudmHS_BeVdGN2dlzVbNq0sK2zTqNY7PK0IFJDRUtEQcplbx6Bk-MZezEmQUmw_cfHrNxic9af0v9KXjHeW2-DFGWLpg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent p-6 flex flex-col justify-end">
+<h4 class="text-slate-100 font-bold">Internal Tools</h4>
+<p class="text-slate-400 text-xs">Proprietary design systems and frameworks used globally.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Actionable Research Notes -->
+<section class="glass-panel rounded-2xl p-8 border-dashed border-white/20">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-blue-500">edit_note</span>
+<h3 class="text-lg font-bold text-slate-100">Research Notes</h3>
+</div>
+<div class="space-y-4">
+<div class="flex gap-4">
+<div class="w-1 h-12 bg-slate-700 rounded-full"></div>
+<p class="text-slate-300 text-sm italic">"Focus on the recent shift toward AI personalization in interviews. They value data-driven design decisions paired with emotional resonance."</p>
+</div>
+<div class="flex gap-4">
+<div class="w-1 h-12 bg-slate-700 rounded-full"></div>
+<p class="text-slate-300 text-sm italic">"Mention familiarity with the Encore Design System if possible. They are currently hiring for a major mobile redesign phase."</p>
+</div>
+<button class="w-full py-4 rounded-xl border border-dashed border-white/10 text-slate-500 font-medium hover:text-slate-300 hover:border-white/30 transition-all text-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                        Add Research Entry
+                    </button>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+</body></html>

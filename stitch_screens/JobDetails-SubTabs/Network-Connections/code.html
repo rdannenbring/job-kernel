@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Job Details - Midnight Glass</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline-variant": "#1e293b",
+            "surface-container-lowest": "#080c14",
+            "primary": "#256af4",
+            "on-secondary": "#f8fafc",
+            "surface": "#101622",
+            "secondary-container": "#1e293b",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-fixed-variant": "#9f1239",
+            "inverse-surface": "#f8fafc",
+            "secondary-fixed": "#e2e8f0",
+            "tertiary-fixed-dim": "#fecdd3",
+            "tertiary-fixed": "#ffe4e6",
+            "on-surface-variant": "#94a3b8",
+            "on-error": "#ffffff",
+            "on-primary": "#ffffff",
+            "inverse-primary": "#60a5fa",
+            "surface-bright": "#1e293b",
+            "on-secondary-fixed-variant": "#334155",
+            "on-secondary-fixed": "#0f172a",
+            "background": "#101622",
+            "error": "#ef4444",
+            "primary-fixed": "#dbeafe",
+            "on-background": "#f1f5f9",
+            "surface-variant": "#1e293b",
+            "surface-tint": "#256af4",
+            "surface-container-low": "#1e293b66",
+            "on-surface": "#f1f5f9",
+            "outline": "#334155",
+            "error-container": "#450a0a",
+            "surface-container-highest": "#2d3748",
+            "secondary": "#334155",
+            "on-tertiary-fixed": "#4c0519",
+            "surface-dim": "#0b0f18",
+            "primary-fixed-dim": "#bfdbfe",
+            "primary-container": "#256af433",
+            "on-error-container": "#fca5a5",
+            "surface-container-high": "#1e293b99",
+            "surface-container": "#1e293b80",
+            "on-tertiary-container": "#fb7185",
+            "inverse-on-surface": "#0f172a",
+            "on-primary-fixed": "#1e3a8a",
+            "secondary-fixed-dim": "#cbd5e1",
+            "tertiary": "#f43f5e",
+            "tertiary-container": "#f43f5e22",
+            "on-secondary-container": "#cbd5e1",
+            "on-primary-fixed-variant": "#1d4ed8",
+            "on-primary-container": "#60a5fa"
+          },
+          fontFamily: {
+            sans: ['Manrope', 'sans-serif'],
+            headline: ['Manrope', 'sans-serif'],
+            display: ['Manrope', 'sans-serif'],
+            body: ['Manrope', 'sans-serif'],
+            label: ['Manrope', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .neon-text {
+      text-shadow: 0 0 10px rgba(37, 106, 244, 0.4);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary/30">
+<!-- SideNavBar Anchor -->
+<aside class="fixed h-screen left-0 w-64 bg-slate-950 border-r border-white/5 flex flex-col py-8 gap-4 z-50">
+<div class="px-6 mb-8">
+<div class="text-lg font-black text-blue-500 uppercase tracking-widest">TrackPad</div>
+<div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Application Pipeline</div>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-100 bg-blue-600/10 border-r-4 border-blue-500 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Saved</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Generated</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">send</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Applied</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">forum</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Interviewing</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">workspace_premium</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Offers</span>
+</a>
+</nav>
+<div class="mt-auto px-3 space-y-1">
+<button class="w-full mb-6 flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+        New Application
+      </button>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-200 transition-colors" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Help</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-200 transition-colors" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-manrope text-sm font-medium tracking-wide">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Stage -->
+<main class="ml-64 min-h-screen relative overflow-hidden">
+<!-- Atmospheric Ambient Glow -->
+<div class="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 rounded-full blur-[120px]"></div>
+<div class="absolute -bottom-40 -left-40 w-96 h-96 bg-tertiary/5 rounded-full blur-[120px]"></div>
+<!-- TopAppBar Anchor -->
+<header class="sticky top-0 z-40 bg-slate-950/40 backdrop-blur-md border-b border-white/10 flex justify-between items-center w-full px-8 py-4">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-white transition-colors">arrow_back</span>
+<div>
+<h1 class="text-xl font-bold tracking-tighter text-slate-100">Senior Product Designer</h1>
+<p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Spotify • Stockholm, SE</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-slate-300 hover:text-blue-400 transition-colors cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-slate-300 hover:text-blue-400 transition-colors cursor-pointer">settings</span>
+</div>
+<div class="h-8 w-8 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
+<img alt="User Profile" data-alt="portrait of a professional man with a friendly expression in a modern office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuADn_6PUQwxJ-YY1JKH3QROl5W0p_8ska_xZLBk624VK-aW6NGL4kP4dAzQnxv_d-bHIWCJqPzPYCjISzeq0-HzOsUBQgFkFor6KvRvlbS_H3Wv8r_a7csS8YN71bFRkvKDmrsR6frJfYQeosEJCKj35wIc3M6a2jQsDUM2pYzspq7MQ0GCmtGGhROjqtbu8roHX6Kz-cO8YhaLL6O8Gt_LUffwiygptSCdn5V97BOZjMPEy3e8OOekI2Pot-ThCW3jonljcODgpy8"/>
+</div>
+</div>
+</header>
+<div class="p-8 max-w-7xl mx-auto">
+<!-- Progress Section -->
+<section class="mb-10">
+<div class="flex justify-between items-end mb-4">
+<div>
+<h2 class="text-2xl font-bold text-slate-100 mb-1">Application Health</h2>
+<p class="text-slate-400 text-sm">60% of preparation phases completed</p>
+</div>
+<div class="text-right">
+<span class="text-primary font-black text-3xl">60%</span>
+</div>
+</div>
+<div class="h-1.5 w-full bg-slate-800/50 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[60%] shadow-[0_0_12px_rgba(37,106,244,0.6)]"></div>
+</div>
+<!-- Status Indicators -->
+<div class="grid grid-cols-5 gap-4 mt-8">
+<div class="flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-300">Parsed</span>
+</div>
+<div class="flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-300">Reviewed</span>
+</div>
+<div class="flex flex-col items-center gap-2 group">
+<div class="w-12 h-12 -mt-1 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center text-white ring-4 ring-primary/20">
+<span class="material-symbols-outlined">group</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary neon-text">Networking</span>
+</div>
+<div class="flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-slate-800/50 border border-white/5 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined">radio_button_unchecked</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Drafting</span>
+</div>
+<div class="flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-slate-800/50 border border-white/5 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined">send</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Applied</span>
+</div>
+</div>
+</section>
+<!-- Content Layout: Asymmetric Bento Grid -->
+<div class="grid grid-cols-12 gap-8 items-start">
+<!-- Left Column: Context & Sub-Nav -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<div class="glass-panel rounded-2xl p-6">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center border border-green-500/20">
+<span class="material-symbols-outlined text-green-500">music_note</span>
+</div>
+<div>
+<h3 class="font-bold text-slate-100">Spotify</h3>
+<p class="text-xs text-slate-400">Stockholm HQ • Design Team</p>
+</div>
+</div>
+<nav class="space-y-2">
+<a class="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-all text-slate-400 group" href="#">
+<span class="text-sm font-medium">Job Description</span>
+<span class="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-3 rounded-xl bg-primary-container text-primary transition-all" href="#">
+<span class="text-sm font-bold">Network Contacts</span>
+<span class="material-symbols-outlined text-sm">hub</span>
+</a>
+<a class="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-all text-slate-400 group" href="#">
+<span class="text-sm font-medium">Company Intel</span>
+<span class="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-all text-slate-400 group" href="#">
+<span class="text-sm font-medium">Portfolio Fit</span>
+<span class="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100">chevron_right</span>
+</a>
+</nav>
+</div>
+<div class="glass-panel rounded-2xl p-6 border-l-4 border-primary">
+<h4 class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Next Step</h4>
+<p class="text-sm text-slate-200 leading-relaxed mb-4">You have 3 high-probability contacts found at Spotify. Send your first outreach message today.</p>
+<button class="text-xs font-bold text-primary hover:underline flex items-center gap-1">
+              View Templates <span class="material-symbols-outlined text-xs">open_in_new</span>
+</button>
+</div>
+</div>
+<!-- Right Column: Main Content (Connections) -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<div class="flex justify-between items-center">
+<h3 class="text-xl font-bold text-slate-100">Potential Connections</h3>
+<div class="flex gap-2">
+<button class="bg-slate-800 text-slate-200 p-2 rounded-lg hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+<button class="bg-slate-800 text-slate-200 p-2 rounded-lg hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</div>
+<!-- Contact Cards List -->
+<div class="space-y-4">
+<!-- Contact 1 -->
+<div class="glass-panel rounded-2xl p-5 group hover:border-primary/30 transition-all duration-500">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<div class="relative">
+<img alt="Sarah Chen" class="w-14 h-14 rounded-xl object-cover border border-white/10" data-alt="professional portrait of a creative woman with glasses and a warm smile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSs7u2j6D7kIf-7HyU1OgauvyQXNOuODvGNf6C_x3eGmKlohGjbcJECscP5aLX-sQZs8M3GWGe3kHKQRnlRmBSsm0TDGd5q-NQQ27ViQK_OtpG2zQ1N_5oaUpXVoSab6ObWO7AuhFdEWZOVJWFntoVck-P2wYiXEDBjilzCe75dAzyBYaqwuXJtofQKgjyqefDKMENAIy6au_HNhK4tBaZUe-0fbR1kF9tJYkfPEKEYXcYXqW3EvroDVZlODUmJpJn5LPHxZRXAb8"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900"></div>
+</div>
+<div>
+<h4 class="text-lg font-bold text-slate-100 group-hover:text-primary transition-colors">Sarah Chen</h4>
+<p class="text-sm text-slate-400">Principal Product Designer • Spotify Design</p>
+<div class="flex gap-3 mt-3">
+<span class="bg-primary/10 border border-primary/20 text-primary text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">2nd Connection</span>
+<span class="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">Decision Maker</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-3">
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">Drafting Message</span>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg bg-slate-800/50 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">mail</span>
+</button>
+<button class="p-2 rounded-lg bg-primary text-white hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Contact 2 -->
+<div class="glass-panel rounded-2xl p-5 group hover:border-primary/30 transition-all duration-500">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<div class="relative">
+<img alt="Marcus Lindgren" class="w-14 h-14 rounded-xl object-cover border border-white/10" data-alt="portrait of a bearded man in a professional grey t-shirt against a minimal background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMox8ZnhRJAY1XVFOOxK24RLQktvLyAq_2cyXjG8Bt-uhWKgwJYT-K3pwMEab6d5P9kyM36_-oznh7MuaZfIa1ndnPSVxZQygqM0nV9qT6sJpkUgCsl-AiTKJRZfYevldEdLG1XpNzfGQ0h6vHNyvNiPpYWoGQpNsBjfvI505T9fo2EUtubwYlI1WQfO2Y-PvaMIwxkjCTA3pW1hqOCP-Y-XErlW6NZ-duY2oXIPTIO-PhXbZHiqyf0s_rVCw18zC0_9dBeP7dCtQ"/>
+</div>
+<div>
+<h4 class="text-lg font-bold text-slate-100 group-hover:text-primary transition-colors">Marcus Lindgren</h4>
+<p class="text-sm text-slate-400">Design Manager • Personalization Platform</p>
+<div class="flex gap-3 mt-3">
+<span class="bg-primary/10 border border-primary/20 text-primary text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">1st Connection</span>
+<span class="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">Hiring Manager?</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-3">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-slate-800/50 px-3 py-1 rounded-full border border-white/5">Todo</span>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg bg-slate-800/50 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">mail</span>
+</button>
+<button class="p-2 rounded-lg bg-slate-800/50 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">hub</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Contact 3 -->
+<div class="glass-panel rounded-2xl p-5 group hover:border-primary/30 transition-all duration-500">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<div class="relative">
+<img alt="Ingrid Nilsson" class="w-14 h-14 rounded-xl object-cover border border-white/10" data-alt="modern professional headshot of a woman with a confident stance in a tech office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPvm57lzFa0GOnHD9BZBcktOnSMPI96QkhYnLb_wrAPepeEfnaxrF4O7a5IJClqKvazMThvpApP-Shn600WTaX0Tl5m_Fd4HXSgp8QQ06VipN5OHdFRZnt2vYRaxHr91wHzmRNhObG_dbO31D_sdgl6g1xIMHNJvTtzD37JvD2cuSMGy9Fgkc2kjZ2k5BWS1BaFsKimgUc8TAU9LvbS_9b1DpfzrYgyeL8aCHL1MB41lvTpdTKjRTUQoTj5ppFg-6zdssOUkx1l9U"/>
+</div>
+<div>
+<h4 class="text-lg font-bold text-slate-100 group-hover:text-primary transition-colors">Ingrid Nilsson</h4>
+<p class="text-sm text-slate-400">Senior UX Researcher • Ads Ecosystem</p>
+<div class="flex gap-3 mt-3">
+<span class="bg-tertiary/10 border border-tertiary/20 text-tertiary text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">Cold Outreach</span>
+<span class="bg-slate-800 text-slate-400 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">Alumni</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-3">
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-slate-800/50 px-3 py-1 rounded-full border border-white/5">Todo</span>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg bg-slate-800/50 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">mail</span>
+</button>
+<button class="p-2 rounded-lg bg-slate-800/50 text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- AI Insight Card -->
+<div class="bg-gradient-to-br from-primary/20 to-surface-container-highest rounded-2xl p-6 border border-primary/20 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
+<span class="material-symbols-outlined text-6xl">auto_awesome</span>
+</div>
+<div class="relative z-10">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary text-sm">psychology</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary">Curator Insight</span>
+</div>
+<h4 class="text-lg font-bold text-slate-100 mb-2">Network Strength: High</h4>
+<p class="text-sm text-slate-300 max-w-md leading-relaxed">
+                  You share 14 mutual connections with the design team at Spotify. Focusing on Marcus Lindgren first is recommended as he previously worked at Apple, same as your current role.
+                </p>
+<button class="mt-6 bg-white/5 border border-white/10 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-white/10 transition-all">
+                  Generate Personalized Intro
+                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

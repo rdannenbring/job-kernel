@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Rejected Phase - Optional Response</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-accent {
+            text-shadow: 0 0 12px rgba(37, 106, 244, 0.4);
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #101622;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#256af4",
+                        "surface": "#101622",
+                        "surface-container": "#1e293b80",
+                        "surface-container-high": "#1e293b99",
+                        "surface-container-highest": "#2d3748",
+                        "on-surface": "#f1f5f9",
+                        "on-surface-variant": "#94a3b8",
+                        "outline": "#334155",
+                    },
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        display: ["Manrope"],
+                        body: ["Manrope"],
+                        label: ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface min-h-screen overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-900/40 backdrop-blur-xl bg-gradient-to-b from-white/5 to-transparent shadow-xl shadow-blue-500/5 duration-300 ease-in-out">
+<div class="flex justify-between items-center h-16 px-8 w-full">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black text-slate-100 tracking-tighter">CareerFlow</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="font-manrope text-sm tracking-widest uppercase text-slate-400 hover:text-slate-200 transition-colors" href="#">Dashboard</a>
+<a class="font-manrope text-sm tracking-widest uppercase text-blue-500 border-b-2 border-blue-500 pb-1" href="#">Job Tracker</a>
+<a class="font-manrope text-sm tracking-widest uppercase text-slate-400 hover:text-slate-200 transition-colors" href="#">Resume Lab</a>
+<a class="font-manrope text-sm tracking-widest uppercase text-slate-400 hover:text-slate-200 transition-colors" href="#">Analytics</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:bg-white/5 p-2 rounded-full cursor-pointer transition-colors">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:bg-white/5 p-2 rounded-full cursor-pointer transition-colors">settings</span>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline/20">
+<img alt="User Profile" data-alt="A professional close-up portrait of a tech professional in a modern office environment. The lighting is moody and cinematic, with soft blue and deep navy ambient highlights that match a midnight-glass aesthetic. The individual has a confident yet approachable expression, symbolizing expertise in career navigation and digital systems." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8RzHkzpUSUIXB1oQbTykOEOYNQM9KKk19Odyx0AnxnRZ4oS-2haorkMM_RsVFo-0jd5tykMT76dXXdwi-S6cR-dvshf1D2pO-4Xd10quAvuknaNEpsVUGIPx6QZ6F9ddQTfwksdwWCQVBNC6Iv0BN77ltSdynjXDZ0lbe_QrOSTvVgWzBPaIb2HrVAbpArQ0a623bolJEcqRckGdxdLkxjYLvXJsNAuuU-v1cOa8l_s0zL6GCFPJ1xvGwQpJ81mPgPI69nQQ2f1Q"/>
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="h-full w-64 fixed left-0 top-0 bg-[#101622] flex flex-col pt-20 z-40 border-r border-slate-800/40">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3 p-3 glass-panel rounded-xl">
+<div class="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">account_circle</span>
+</div>
+<div>
+<p class="text-slate-100 font-bold text-sm">Alex Rivera</p>
+<p class="text-[10px] text-slate-400 tracking-widest uppercase">Premium Member</p>
+</div>
+</div>
+</div>
+<nav class="flex-1">
+<div class="space-y-1">
+<a class="flex items-center gap-3 text-slate-400 py-3 px-6 font-manrope font-medium text-[12px] tracking-widest uppercase hover:bg-slate-800/50 hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span> Overview
+                </a>
+<a class="flex items-center gap-3 text-blue-400 bg-blue-500/10 border-r-4 border-blue-500 py-3 px-6 font-manrope font-medium text-[12px] tracking-widest uppercase transition-all" href="#">
+<span class="material-symbols-outlined">work</span> My Applications
+                </a>
+<a class="flex items-center gap-3 text-slate-400 py-3 px-6 font-manrope font-medium text-[12px] tracking-widest uppercase hover:bg-slate-800/50 hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">description</span> Resume Builder
+                </a>
+<a class="flex items-center gap-3 text-slate-400 py-3 px-6 font-manrope font-medium text-[12px] tracking-widest uppercase hover:bg-slate-800/50 hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">psychology</span> Interview Prep
+                </a>
+<a class="flex items-center gap-3 text-slate-400 py-3 px-6 font-manrope font-medium text-[12px] tracking-widest uppercase hover:bg-slate-800/50 hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">group</span> Network
+                </a>
+</div>
+</nav>
+<div class="p-6 mt-auto">
+<button class="w-full py-3 px-4 bg-primary text-white font-bold text-xs tracking-widest uppercase rounded-lg shadow-lg shadow-primary/20 active:scale-95 transition-all">
+                Upgrade to Pro
+            </button>
+<a class="flex items-center gap-3 text-slate-400 py-6 font-manrope font-medium text-[12px] tracking-widest uppercase hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined">help</span> Help Center
+            </a>
+</div>
+</aside>
+<!-- Main Stage Content Area -->
+<main class="ml-64 pt-24 px-10 pb-10 min-h-screen relative overflow-hidden">
+<!-- Atmosphere Texture -->
+<div class="absolute -top-48 -right-48 w-96 h-96 bg-primary/10 blur-[100px] rounded-full"></div>
+<div class="absolute -bottom-48 -left-48 w-96 h-96 bg-primary/5 blur-[100px] rounded-full"></div>
+<!-- Header Section -->
+<div class="mb-10 max-w-5xl">
+<div class="flex items-center gap-2 text-primary text-xs font-bold tracking-widest uppercase mb-4">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+<span>Back to Job Details</span>
+</div>
+<h1 class="text-4xl font-extrabold text-slate-100 tracking-tight neon-accent mb-2">Rejected Phase - Optional Response</h1>
+<p class="text-slate-400 text-lg max-w-2xl">Refining the professional loop. Sending a final response is not required, but it preserves your network and leaves the door open for future roles.</p>
+</div>
+<div class="grid grid-cols-12 gap-8 max-w-7xl relative z-10">
+<!-- Bento Grid Left: Sub-Navigation -->
+<div class="col-span-12 lg:col-span-3">
+<div class="glass-panel rounded-2xl p-4 sticky top-24">
+<p class="text-[10px] text-slate-500 font-bold tracking-widest uppercase px-4 mb-4">Application Sub-Stages</p>
+<nav class="space-y-2">
+<button class="w-full flex items-center justify-between p-4 rounded-xl text-slate-400 bg-transparent hover:bg-white/5 transition-all">
+<span class="flex items-center gap-3"><span class="material-symbols-outlined text-xl">update</span> Timeline</span>
+<span class="material-symbols-outlined text-sm">check_circle</span>
+</button>
+<button class="w-full flex items-center justify-between p-4 rounded-xl text-slate-400 bg-transparent hover:bg-white/5 transition-all">
+<span class="flex items-center gap-3"><span class="material-symbols-outlined text-xl">analytics</span> Feedback Summary</span>
+<span class="material-symbols-outlined text-sm text-primary">circle</span>
+</button>
+<button class="w-full flex items-center justify-between p-4 rounded-xl text-primary bg-primary/10 border border-primary/20 shadow-lg shadow-primary/5">
+<span class="flex items-center gap-3"><span class="material-symbols-outlined text-xl">reply</span> Optional Response</span>
+<span class="material-symbols-outlined text-sm">arrow_right</span>
+</button>
+<button class="w-full flex items-center justify-between p-4 rounded-xl text-slate-500 bg-transparent cursor-not-allowed">
+<span class="flex items-center gap-3"><span class="material-symbols-outlined text-xl">archive</span> Archive Case</span>
+</button>
+</nav>
+</div>
+</div>
+<!-- Bento Grid Right: Response Toolkit -->
+<div class="col-span-12 lg:col-span-9 space-y-6">
+<!-- Main Response Panel -->
+<section class="glass-panel rounded-2xl p-8 relative overflow-hidden">
+<div class="flex items-start justify-between mb-8">
+<div>
+<h2 class="text-xl font-bold text-slate-100">Response Toolkit</h2>
+<p class="text-sm text-slate-400 mt-1">Select a curated template to maintain a high-value connection.</p>
+</div>
+<div class="bg-primary/10 border border-primary/20 px-3 py-1 rounded-full">
+<span class="text-[10px] text-primary font-bold tracking-widest uppercase">AI-Suggested</span>
+</div>
+</div>
+<!-- Template Selection -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+<label class="relative cursor-pointer group">
+<input checked="" class="peer sr-only" name="template" type="radio"/>
+<div class="h-full p-5 rounded-xl border border-outline/30 bg-surface-container/30 group-hover:bg-surface-container-high transition-all peer-checked:border-primary peer-checked:bg-primary/5">
+<div class="flex items-center justify-between mb-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">volunteer_activism</span>
+<span class="w-4 h-4 rounded-full border-2 border-outline/50 peer-checked:bg-primary"></span>
+</div>
+<h3 class="text-slate-200 font-bold text-sm mb-1">Respectful Thank-You</h3>
+<p class="text-xs text-slate-400 leading-relaxed">Focuses on gratitude for the time and opportunity. Perfect for maintaining rapport with recruiters.</p>
+</div>
+</label>
+<label class="relative cursor-pointer group">
+<input class="peer sr-only" name="template" type="radio"/>
+<div class="h-full p-5 rounded-xl border border-outline/30 bg-surface-container/30 group-hover:bg-surface-container-high transition-all peer-checked:border-primary peer-checked:bg-primary/5">
+<div class="flex items-center justify-between mb-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">query_stats</span>
+<span class="w-4 h-4 rounded-full border-2 border-outline/50"></span>
+</div>
+<h3 class="text-slate-200 font-bold text-sm mb-1">Feedback Request</h3>
+<p class="text-xs text-slate-400 leading-relaxed">Politely asks for specific areas of improvement for future growth while thanking the team.</p>
+</div>
+</label>
+</div>
+<!-- Editor Area -->
+<div class="bg-surface-container-lowest/60 rounded-xl border border-outline/20 p-6 mb-8">
+<div class="flex items-center justify-between mb-4 pb-4 border-b border-outline/10">
+<div class="flex gap-4">
+<button class="text-slate-400 hover:text-slate-100 transition-colors"><span class="material-symbols-outlined text-lg">format_bold</span></button>
+<button class="text-slate-400 hover:text-slate-100 transition-colors"><span class="material-symbols-outlined text-lg">format_italic</span></button>
+<button class="text-slate-400 hover:text-slate-100 transition-colors"><span class="material-symbols-outlined text-lg">list</span></button>
+</div>
+<span class="text-[10px] text-slate-500 font-bold tracking-widest uppercase">To: Hiring Team at TechSymphony</span>
+</div>
+<textarea class="w-full bg-transparent border-none focus:ring-0 text-slate-300 text-sm leading-relaxed min-h-[200px] resize-none" placeholder="Draft your response here...">Dear [Hiring Manager Name],
+
+Thank you very much for reaching out and sharing the decision regarding the [Position Name] role. While I am disappointed not to be moving forward, I truly appreciated the opportunity to meet the team and learn more about the innovative work happening at TechSymphony.
+
+I’m particularly impressed by the team’s approach to [Specific Topic Discussed] and would love to stay in touch for future opportunities.
+
+Best regards,
+Alex Rivera</textarea>
+</div>
+<!-- Action Bar -->
+<div class="flex items-center justify-between">
+<button class="text-slate-400 hover:text-white text-xs font-bold tracking-widest uppercase flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-lg">close</span> Skip this Step
+                        </button>
+<div class="flex items-center gap-4">
+<button class="bg-slate-800 text-slate-200 px-6 py-3 rounded-lg text-xs font-bold tracking-widest uppercase hover:bg-slate-700 transition-all">
+                                Save Draft
+                            </button>
+<button class="bg-primary text-white px-10 py-3 rounded-lg text-xs font-bold tracking-widest uppercase shadow-lg shadow-primary/25 hover:brightness-110 active:scale-95 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">send</span> Send Response
+                            </button>
+</div>
+</div>
+</section>
+<!-- Context Card: Networking Wisdom -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-panel p-6 rounded-2xl flex flex-col gap-4">
+<div class="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+<span class="material-symbols-outlined text-primary text-xl">psychology</span>
+</div>
+<h4 class="text-sm font-bold text-slate-100">Why Respond?</h4>
+<p class="text-xs text-slate-400 leading-relaxed">80% of recruiters reconsider rejected candidates for future roles if they handled the initial rejection with professional grace.</p>
+</div>
+<div class="glass-panel p-6 rounded-2xl flex flex-col gap-4">
+<div class="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+<span class="material-symbols-outlined text-primary text-xl">schedule</span>
+</div>
+<h4 class="text-sm font-bold text-slate-100">Optimal Timing</h4>
+<p class="text-xs text-slate-400 leading-relaxed">Wait 24 hours to process, but send within 48 hours to ensure the recruiter still has your application fresh in mind.</p>
+</div>
+<div class="glass-panel p-6 rounded-2xl flex flex-col gap-4 overflow-hidden relative">
+<img alt="Team Meeting" class="absolute inset-0 w-full h-full object-cover opacity-20 filter grayscale" data-alt="A blurred, high-contrast black and white photograph of a professional team in a modern glass-walled conference room. The atmosphere is collaborative and high-stakes, with dramatic shadows and sharp lines that echo a sophisticated corporate architecture. The visual emphasizes the concept of networking and professional circles that continue beyond a single interview process." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx-pIwxFrQisUoDuhYVcBEQyKA2bN8FVBWjwTpaqtkRJq02KEZTlqqm1sMkTGyCJKpJ-78Dxkza8SustfQ1GPELS3mwDz6XU3iThrD5S_kOjik6gd7NY-1Bnmcl8bQwG6MHOwDVdwVSUEGZAYt9Hq5hm8z4mz1DH89sAmQgxlVaPVcRzLxVy3pZA5bnSwW2O1WRWOOFFKxh1Jx1nXlYOinBfJVrTcrAJQZXLZmlsnc_QVOyYwa4K93KEM84PMCPhTyilLLLBrPxOY"/>
+<div class="relative z-10 flex flex-col h-full justify-end">
+<h4 class="text-sm font-bold text-slate-100">Next Steps</h4>
+<p class="text-xs text-slate-400 leading-relaxed">After sending, we'll suggest 3 new roles based on this experience.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile Bottom NavBar -->
+<nav class="md:hidden fixed bottom-0 w-full bg-slate-900/80 backdrop-blur-xl border-t border-white/5 flex justify-around items-center h-16 px-4 z-50">
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-bold tracking-widest uppercase">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined">work</span>
+<span class="text-[10px] font-bold tracking-widest uppercase">Jobs</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">add_box</span>
+<span class="text-[10px] font-bold tracking-widest uppercase">Apply</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-bold tracking-widest uppercase">Data</span>
+</button>
+</nav>
+</body></html>

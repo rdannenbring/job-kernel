@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#256af4",
+            "on-surface": "#f1f5f9",
+            "inverse-on-surface": "#0f172a",
+            "primary-container": "#256af433",
+            "background": "#101622",
+            "surface-container-low": "#1e293b66",
+            "surface-container": "#1e293b80",
+            "on-primary-fixed-variant": "#1d4ed8",
+            "inverse-primary": "#60a5fa",
+            "surface-dim": "#0b0f18",
+            "on-secondary-fixed-variant": "#334155",
+            "on-secondary-fixed": "#0f172a",
+            "tertiary-fixed": "#ffe4e6",
+            "on-secondary-container": "#cbd5e1",
+            "error": "#ef4444",
+            "surface": "#101622",
+            "error-container": "#450a0a",
+            "on-error-container": "#fca5a5",
+            "surface-bright": "#1e293b",
+            "on-background": "#f1f5f9",
+            "secondary": "#334155",
+            "secondary-fixed": "#e2e8f0",
+            "primary-fixed": "#dbeafe",
+            "on-tertiary-container": "#fb7185",
+            "surface-container-highest": "#2d3748",
+            "on-tertiary-fixed-variant": "#9f1239",
+            "on-secondary": "#f8fafc",
+            "surface-container-lowest": "#080c14",
+            "secondary-container": "#1e293b",
+            "on-tertiary-fixed": "#4c0519",
+            "on-primary-container": "#60a5fa",
+            "on-error": "#ffffff",
+            "outline": "#334155",
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#256af4",
+            "tertiary-container": "#f43f5e22",
+            "tertiary": "#f43f5e",
+            "primary-fixed-dim": "#bfdbfe",
+            "on-surface-variant": "#94a3b8",
+            "tertiary-fixed-dim": "#fecdd3",
+            "surface-container-high": "#1e293b99",
+            "surface-variant": "#1e293b",
+            "outline-variant": "#1e293b",
+            "inverse-surface": "#f8fafc",
+            "on-primary": "#ffffff",
+            "secondary-fixed-dim": "#cbd5e1",
+            "on-primary-fixed": "#1e3a8a"
+          },
+          fontFamily: {
+            headline: ["Manrope"],
+            display: ["Manrope"],
+            body: ["Manrope"],
+            label: ["Manrope"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body { font-family: 'Manrope', sans-serif; }
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.4);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .neon-text { text-shadow: 0 0 15px rgba(37, 106, 244, 0.4); }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.5); border-radius: 10px; }
+  </style>
+</head>
+<body class="bg-surface-dim text-on-surface overflow-hidden">
+<!-- Ambient Glow Effects -->
+<div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="fixed bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-tertiary/5 blur-[100px] rounded-full pointer-events-none"></div>
+<!-- Main Shell Layout -->
+<div class="flex h-screen w-full relative overflow-hidden">
+<!-- SideNavBar (Collapsed State per prompt requirement for "Technical sub-stage") -->
+<!-- Applying style_component_shape, style_bg_color, style_shell_layout from JSON but adjusting width for collapsed feel -->
+<nav class="bg-slate-950/80 backdrop-blur-xl fixed left-0 top-0 h-full w-20 border-r border-white/10 flex flex-col py-8 px-2 z-50 transition-all duration-300">
+<div class="flex flex-col items-center gap-8 h-full">
+<div class="text-xl font-bold tracking-tighter text-white mb-4">
+<span class="material-symbols-outlined text-primary text-3xl">blur_on</span>
+</div>
+<div class="flex flex-col gap-6 items-center flex-1">
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined">dashboard</span>
+</button>
+<!-- Active Tab: Applications (Matches context of Interviewing) -->
+<button class="w-12 h-12 flex items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 font-semibold border-r-2 border-blue-500 scale-[0.98]">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">work</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined">bookmark</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined">group</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+</div>
+<div class="flex flex-col gap-4 items-center">
+<button class="text-slate-400 hover:text-slate-100 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/10">
+<img alt="Premium User Avatar" data-alt="A professional portrait of a tech executive in a high-tech environment. The lighting is dramatic and moody, utilizing deep shadows and sharp blue highlights from nearby screens. The person has a focused expression, wearing modern minimal attire that fits the sleek Midnight Glass aesthetic. The background features blurred digital data visualizations in shades of electric blue and slate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvFxECdwjK4XWWugt9FVv_8UlJaLdHIKdkXF_fUrltNjVs1osGZ9sITHBcDdq6ZstL3C2V7NYQXW_ZsOtEISU_U9fK4zSUvi95bvCXCBhMhCwgo3ChZC7_1Mr4hvmF4hMKzUv4Mv-u0h4jogL8bt-nir3zo4rHCwwA8vykSlIpBGOSdewaiFSc094llGQ9ZSI1KrKglboBVqePw3o9IXK3XVzGe7KM6Gwd82-2PY6DWOKlbrrC8xDzqYZ4hhuZuCMnQd9RHrCjIIo"/>
+</div>
+</div>
+</div>
+</nav>
+<!-- Content Canvas -->
+<div class="ml-20 flex flex-col flex-1 w-full relative">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-5rem)] h-16 bg-slate-900/40 backdrop-blur-md border-b border-white/5 flex justify-between items-center px-8 z-40">
+<div class="flex items-center gap-6">
+<span class="text-slate-100 font-bold text-lg tracking-tight">Interviewing: <span class="text-primary">Staff Engineer</span></span>
+<nav class="flex gap-6">
+<a class="text-slate-400 text-sm font-medium hover:text-blue-300" href="#">Overview</a>
+<a class="text-blue-400 text-sm font-bold border-b-2 border-primary" href="#">Technical Stage</a>
+<a class="text-slate-400 text-sm font-medium hover:text-blue-300" href="#">Culture Fit</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400 hover:opacity-80 cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-slate-400 hover:opacity-80 cursor-pointer">history</span>
+<button class="bg-primary px-4 py-1.5 rounded-lg text-xs font-bold text-white uppercase tracking-widest shadow-lg shadow-primary/20">End Session</button>
+</div>
+</header>
+<!-- Main Layout: Sub-stage side menu + 2-column content -->
+<main class="mt-16 flex flex-1 overflow-hidden">
+<!-- Sub-stage Side Menu -->
+<aside class="w-64 bg-surface-container-low/30 border-r border-white/5 flex flex-col p-6 gap-6">
+<div class="space-y-4">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Technical Tracks</p>
+<div class="flex flex-col gap-1">
+<button class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 transition-all">
+<span class="material-symbols-outlined text-lg">code</span>
+<span class="text-sm font-semibold">System Architecture</span>
+</button>
+<button class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined text-lg">database</span>
+<span class="text-sm font-medium">Domain Depth</span>
+</button>
+<button class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined text-lg">terminal</span>
+<span class="text-sm font-medium">Live Coding</span>
+</button>
+<button class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined text-lg">psychology</span>
+<span class="text-sm font-medium">Problem Solving</span>
+</button>
+</div>
+</div>
+<div class="mt-auto glass-panel p-4 rounded-2xl bg-primary/5">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="text-[10px] font-bold text-primary uppercase tracking-widest">Live Progress</span>
+</div>
+<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-2/3 shadow-[0_0_8px_rgba(37,106,244,0.6)]"></div>
+</div>
+<p class="mt-2 text-[11px] text-slate-400">45 of 60 minutes elapsed</p>
+</div>
+</aside>
+<!-- Two-Column Workspace -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Column 1: Technical Briefing -->
+<section class="flex-1 border-r border-white/5 p-8 overflow-y-auto custom-scrollbar flex flex-col gap-8">
+<header>
+<div class="flex items-center gap-2 mb-1">
+<span class="h-px w-8 bg-primary"></span>
+<span class="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">Technical Briefing</span>
+</div>
+<h1 class="text-3xl font-extrabold text-slate-100 tracking-tight leading-none mb-4">Scalable Microservices Architecture</h1>
+<p class="text-slate-400 leading-relaxed text-sm max-w-xl">
+                Evaluate the candidate's ability to design a resilient distributed system. Focus on event-driven patterns, data consistency, and high-availability trade-offs.
+              </p>
+</header>
+<div class="grid grid-cols-1 gap-4">
+<!-- Requirement Card -->
+<div class="glass-panel p-6 rounded-2xl">
+<h3 class="text-sm font-bold text-slate-100 mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">analytics</span> Core Requirements
+                </h3>
+<ul class="space-y-3">
+<li class="flex items-start gap-3 text-sm text-slate-300">
+<span class="material-symbols-outlined text-primary text-sm mt-0.5">check_circle</span>
+                    Demonstrate understanding of CAP theorem in relation to current stack.
+                  </li>
+<li class="flex items-start gap-3 text-sm text-slate-300">
+<span class="material-symbols-outlined text-primary text-sm mt-0.5">check_circle</span>
+                    Explain CQRS and Event Sourcing implementation challenges.
+                  </li>
+<li class="flex items-start gap-3 text-sm text-slate-300">
+<span class="material-symbols-outlined text-primary text-sm mt-0.5">check_circle</span>
+                    Discuss observability strategy (OpenTelemetry, Tracing, Metrics).
+                  </li>
+</ul>
+</div>
+<!-- Domain Depth Visual -->
+<div class="relative rounded-2xl overflow-hidden h-48 border border-white/10 group">
+<img alt="System Architecture Diagram" class="w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-700" data-alt="A complex network diagram visualized in a futuristic 3D interface. Floating nodes and glowing data pathways pulse with blue and white light against a deep slate background. The style is abstract and architectural, representing high-level system design and server infrastructure. The lighting is cinematic, highlighting the depth and complexity of a microservices mesh." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmiU_yuU1KPIjI1V5iKCuakKDGnfDocfgPLDIglO2VjfwfCJOXwHifxVu1pDj4lP6Ps1sy08uIr93QYCPmSeK0G2qGAP8nePIwAKxJIwSJ1S0CcfWasq9-OIQuuOEy9YyjTnlWfPluSu60W0GklAtNY6aYsxo6qH1o0B9ZfStbZoQP_rFBzV0wNhGgX2H3GzLHQLkz9vE-zL1yz0wWJ2aw1ckjb4kT2OmCypu9nENg_sGGmGrtvuswPa_UBqfmbSLtubhfokPF4jA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent flex items-end p-6">
+<span class="text-xs font-bold text-white uppercase tracking-widest bg-blue-600 px-2 py-1 rounded">Visual Reference: Mesh Topology</span>
+</div>
+</div>
+</div>
+<!-- Debrief Form (In-situ) -->
+<div class="mt-4 pt-8 border-t border-white/5">
+<h3 class="text-lg font-bold text-slate-100 mb-6">Quick Debrief</h3>
+<div class="space-y-6">
+<div>
+<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">What went well?</label>
+<textarea class="w-full bg-slate-900/50 border-slate-700 rounded-xl text-sm text-slate-200 placeholder-slate-600 focus:ring-primary focus:border-primary min-h-[100px]" placeholder="Strong grasp of asynchronous processing..."></textarea>
+</div>
+<div>
+<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">What missed?</label>
+<textarea class="w-full bg-slate-900/50 border-slate-700 rounded-xl text-sm text-slate-200 placeholder-slate-600 focus:ring-error/50 focus:border-error/50 min-h-[100px]" placeholder="Struggled with multi-region database latency..."></textarea>
+</div>
+</div>
+</div>
+</section>
+<!-- Column 2: Question Bank & Rehearsal -->
+<section class="w-[450px] bg-slate-900/20 p-8 overflow-y-auto custom-scrollbar">
+<div class="flex items-center justify-between mb-8">
+<div>
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1">Live Feed</p>
+<h2 class="text-xl font-bold text-slate-100">Question Bank</h2>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full border border-white/10 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+<div class="space-y-6">
+<!-- Question Item 1 -->
+<div class="glass-panel p-5 rounded-2xl border-l-4 border-l-primary/60">
+<div class="flex justify-between items-start mb-3">
+<span class="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded">High Priority</span>
+<span class="text-xs text-slate-500">Q1</span>
+</div>
+<p class="text-sm font-semibold text-slate-200 mb-4">"How would you handle a sudden 10x spike in traffic for a write-heavy microservice?"</p>
+<div class="space-y-3">
+<label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Candidate Response Notes</label>
+<div class="min-h-[80px] w-full bg-surface-container rounded-xl p-3 border border-white/5 text-xs text-slate-400 italic">
+                    Type or speak notes here...
+                  </div>
+<div class="flex gap-2">
+<button class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold uppercase tracking-widest text-slate-300">Pass</button>
+<button class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold uppercase tracking-widest text-slate-300">Mixed</button>
+<button class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold uppercase tracking-widest text-slate-300 text-error">Fail</button>
+</div>
+</div>
+</div>
+<!-- Question Item 2 -->
+<div class="glass-panel p-5 rounded-2xl border-l-4 border-l-slate-700">
+<div class="flex justify-between items-start mb-3">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-800 px-2 py-0.5 rounded">Conceptual</span>
+<span class="text-xs text-slate-500">Q2</span>
+</div>
+<p class="text-sm font-semibold text-slate-200 mb-4">"Describe your approach to implementing distributed transactions across disparate data stores."</p>
+<div class="min-h-[80px] w-full bg-surface-container rounded-xl p-3 border border-white/5 text-xs text-slate-400 italic">
+                  Candidate mentioned Saga pattern, specifically orchestration over choreography. Needs more detail on compensating actions.
+                </div>
+</div>
+<!-- Question Item 3 -->
+<div class="glass-panel p-5 rounded-2xl border-l-4 border-l-slate-700 opacity-60">
+<div class="flex justify-between items-start mb-3">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-800 px-2 py-0.5 rounded">Deep Dive</span>
+<span class="text-xs text-slate-500">Q3</span>
+</div>
+<p class="text-sm font-semibold text-slate-200">"What are the operational implications of switching from a RESTful API to gRPC for internal services?"</p>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Job Tracker | Decision Phase</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-container": "#fb7185",
+                    "background": "#101622",
+                    "surface": "#101622",
+                    "on-secondary-container": "#cbd5e1",
+                    "on-primary-fixed": "#1e3a8a",
+                    "tertiary-fixed": "#ffe4e6",
+                    "on-error-container": "#fca5a5",
+                    "secondary-container": "#1e293b",
+                    "secondary-fixed-dim": "#cbd5e1",
+                    "on-tertiary-fixed-variant": "#9f1239",
+                    "on-tertiary-fixed": "#4c0519",
+                    "on-secondary": "#f8fafc",
+                    "on-primary-fixed-variant": "#1d4ed8",
+                    "inverse-on-surface": "#0f172a",
+                    "surface-container": "#1e293b80",
+                    "inverse-primary": "#60a5fa",
+                    "surface-bright": "#1e293b",
+                    "primary-fixed-dim": "#bfdbfe",
+                    "on-secondary-fixed-variant": "#334155",
+                    "on-secondary-fixed": "#0f172a",
+                    "surface-container-highest": "#2d3748",
+                    "tertiary": "#f43f5e",
+                    "secondary": "#334155",
+                    "on-surface-variant": "#94a3b8",
+                    "error-container": "#450a0a",
+                    "primary-container": "#256af433",
+                    "on-tertiary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "error": "#ef4444",
+                    "tertiary-fixed-dim": "#fecdd3",
+                    "on-background": "#f1f5f9",
+                    "tertiary-container": "#f43f5e22",
+                    "on-error": "#ffffff",
+                    "outline": "#334155",
+                    "surface-container-low": "#1e293b66",
+                    "on-surface": "#f1f5f9",
+                    "secondary-fixed": "#e2e8f0",
+                    "surface-container-high": "#1e293b99",
+                    "primary-fixed": "#dbeafe",
+                    "surface-variant": "#1e293b",
+                    "surface-dim": "#0b0f18",
+                    "primary": "#256af4",
+                    "inverse-surface": "#f8fafc",
+                    "surface-container-lowest": "#080c14",
+                    "surface-tint": "#256af4",
+                    "outline-variant": "#1e293b",
+                    "on-primary-container": "#60a5fa"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "display": ["Manrope"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .neon-glow { text-shadow: 0 0 10px rgba(37, 106, 244, 0.5); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-background overflow-hidden">
+<!-- Atmospheric Glow Background Elements -->
+<div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[120px] -z-10"></div>
+<div class="fixed bottom-[-10%] right-[-10%] w-[30%] h-[30%] rounded-full bg-tertiary/5 blur-[100px] -z-10"></div>
+<!-- SideNavBar (Shared Component) -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-slate-950/80 backdrop-blur-xl border-r border-white/10 flex flex-col py-8 px-4 z-50">
+<div class="mb-10 px-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-white">moon_stars</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tighter text-white leading-none">Midnight Glass</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-400 mt-1">Career Curator</p>
+</div>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-slate-400 hover:text-slate-100 hover:bg-white/5" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-manrope text-sm tracking-wide">Dashboard</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 bg-blue-600/20 text-blue-400 font-semibold border-r-2 border-blue-500" href="#">
+<span class="material-symbols-outlined">work</span>
+<span class="font-manrope text-sm tracking-wide">Applications</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-slate-400 hover:text-slate-100 hover:bg-white/5" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="font-manrope text-sm tracking-wide">Saved Jobs</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-slate-400 hover:text-slate-100 hover:bg-white/5" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-manrope text-sm tracking-wide">Network</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-slate-400 hover:text-slate-100 hover:bg-white/5" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-manrope text-sm tracking-wide">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-white/5 space-y-2">
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-slate-400 hover:text-slate-100 hover:bg-white/5" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-manrope text-sm tracking-wide">Settings</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 text-slate-400 hover:text-slate-100 hover:bg-white/5" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="font-manrope text-sm tracking-wide">Support</span>
+</a>
+<div class="mt-4 flex items-center gap-3 px-4 py-3 bg-white/5 rounded-2xl border border-white/10">
+<img alt="Premium User Avatar" class="w-8 h-8 rounded-full border border-primary/30 object-cover" data-alt="A professional studio portrait of a woman with a confident expression, set against a dark cinematic background with soft cyan rim lighting. The style is editorial and high-end, perfectly matching the sleek midnight glass UI. The lighting highlights the contours of her face and professional attire, creating a sense of authority and career success." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbkYYW73qjEa14fIIpcAXRudKD7L83tZfSgJNB8ie4IUxdZHFzEr2atRuVaULXrbKgjYWaYLkRiyXW7lzzQHkkiVQBomM1hzO0jTpNj_krDIs8P8aouexDdtXSVWm9lUsZkGSOI-aM14J-ubi1FyTAoa9xlAv9xBR_cn0wDbtUZFC-K3T6HO77S6MTltCUYjFST0JCNqgFGosS3_HxDWoyRuoUMLG_tQtEdi0C5KFMNbmUod4CEfz4g2fxXu3Ij-EWQAQAKX_7-qI"/>
+<div class="overflow-hidden">
+<p class="text-xs font-bold text-slate-100 truncate">Alex Sterling</p>
+<p class="text-[10px] text-slate-500 truncate">Enterprise Plan</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar (Shared Component) -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-slate-900/40 backdrop-blur-md flex justify-between items-center px-8 z-40 border-b border-white/5">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 bg-surface-container-highest/30 px-3 py-1.5 rounded-lg border border-white/5">
+<span class="material-symbols-outlined text-slate-400 text-lg">search</span>
+<input class="bg-transparent border-none outline-none text-sm text-slate-300 w-64 placeholder:text-slate-500" placeholder="Search applications..." type="text"/>
+</div>
+<nav class="flex gap-6">
+<a class="font-manrope text-sm font-medium text-slate-400 hover:text-blue-300 transition-colors" href="#">Dashboard</a>
+<a class="font-manrope text-sm font-medium text-slate-400 hover:text-blue-300 transition-colors" href="#">Applications</a>
+<a class="font-manrope text-sm font-medium text-blue-400 font-bold" href="#">Active</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 rounded-full transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 rounded-full transition-all">
+<span class="material-symbols-outlined">history</span>
+</button>
+<div class="h-6 w-px bg-white/10 mx-2"></div>
+<div class="flex items-center gap-3">
+<p class="text-xs font-bold text-slate-300 hidden xl:block">Decision Phase</p>
+<div class="w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary text-xs font-bold">JD</div>
+</div>
+</div>
+</header>
+<!-- Main Content Stage -->
+<main class="ml-64 mt-16 h-[calc(100vh-4rem)] p-8 overflow-y-auto flex gap-8">
+<!-- Vertical Sub-Navigation (Task Specific) -->
+<aside class="w-64 flex-shrink-0 space-y-4">
+<div class="glass-panel rounded-2xl p-4 flex flex-col gap-1">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-4 px-2">Decision Pipeline</p>
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined text-lg">hourglass_empty</span>
+<span class="text-sm font-medium">Awaiting Decision</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined text-lg">quick_reference_all</span>
+<span class="text-sm font-medium">References</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined text-lg">chat_bubble</span>
+<span class="text-sm font-medium">Verbal Offer</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 neon-glow">
+<span class="material-symbols-outlined text-lg">pending_actions</span>
+<span class="text-sm font-bold">Written Offer Pending</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined text-lg">cancel</span>
+<span class="text-sm font-medium">Likely Reject</span>
+</div>
+</div>
+<!-- Context Card -->
+<div class="glass-panel rounded-2xl p-6 relative overflow-hidden group">
+<div class="absolute -top-12 -right-12 w-24 h-24 bg-primary/20 blur-2xl rounded-full group-hover:scale-150 transition-transform duration-700"></div>
+<h3 class="text-slate-100 font-bold mb-1">Stripe, Inc.</h3>
+<p class="text-xs text-slate-400 mb-4">Senior Product Designer</p>
+<div class="flex items-center justify-between text-[10px] uppercase tracking-tighter text-slate-500 font-bold">
+<span>Probability</span>
+<span class="text-primary">88% Match</span>
+</div>
+<div class="mt-2 w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[88%] shadow-[0_0_8px_rgba(37,106,244,0.6)]"></div>
+</div>
+</div>
+</aside>
+<!-- Dynamic Two-Column Grid -->
+<section class="flex-1 grid grid-cols-12 gap-8">
+<!-- Left Column: Tracking & Modeling -->
+<div class="col-span-7 space-y-8">
+<!-- Pending Document Tracker -->
+<div class="glass-panel rounded-2xl p-8">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-xl font-bold text-slate-100 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">description</span>
+                            Pending Document Tracker
+                        </h2>
+<span class="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary uppercase tracking-widest">Awaiting Legal</span>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-all">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center text-yellow-500">
+<span class="material-symbols-outlined">gavel</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-200">Executive Compensation Clause</p>
+<p class="text-xs text-slate-500">Under Legal Review • Est. 48h</p>
+</div>
+</div>
+<span class="text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded uppercase tracking-widest">Reviewing</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-all">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+<span class="material-symbols-outlined">person_check</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-200">HR Benefits Package</p>
+<p class="text-xs text-slate-500">HR Approval Complete</p>
+</div>
+</div>
+<span class="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded uppercase tracking-widest">Approved</span>
+</div>
+</div>
+</div>
+<!-- Compensation Modeling -->
+<div class="glass-panel rounded-2xl p-8">
+<h2 class="text-xl font-bold text-slate-100 flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary">calculate</span>
+                        Compensation Modeling
+                    </h2>
+<div class="grid grid-cols-3 gap-4 mb-8">
+<div class="bg-surface-container-highest/20 p-4 rounded-2xl border border-white/5">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Base Salary</p>
+<p class="text-2xl font-bold text-slate-100">$210,000</p>
+</div>
+<div class="bg-surface-container-highest/20 p-4 rounded-2xl border border-white/5">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Equity (RSUs)</p>
+<p class="text-2xl font-bold text-slate-100">$450,000</p>
+</div>
+<div class="bg-surface-container-highest/20 p-4 rounded-2xl border border-white/5">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Bonus Target</p>
+<p class="text-2xl font-bold text-slate-100">15%</p>
+</div>
+</div>
+<div class="space-y-6">
+<div class="relative h-24 w-full bg-white/5 rounded-2xl border border-white/5 flex items-end p-4 gap-2">
+<div class="flex-1 bg-primary/20 h-[40%] rounded-t-md hover:bg-primary/40 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-primary/30 h-[65%] rounded-t-md hover:bg-primary/50 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-primary/40 h-[55%] rounded-t-md hover:bg-primary/60 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-primary/60 h-[90%] rounded-t-md hover:bg-primary/80 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-primary/25 h-[50%] rounded-t-md hover:bg-primary/45 transition-all cursor-pointer"></div>
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">4-Year Projection Map</span>
+</div>
+</div>
+<div class="flex justify-between text-xs text-slate-400 font-medium">
+<p>Current Target: <span class="text-slate-100">$845k Total Comp Value</span></p>
+<button class="text-primary hover:underline">Adjust Model Variables</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Logistics & Packets -->
+<div class="col-span-5 space-y-8">
+<!-- Timeline & Logistics -->
+<div class="glass-panel rounded-2xl p-8 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4">
+<span class="material-symbols-outlined text-slate-700 text-6xl opacity-20">event_repeat</span>
+</div>
+<h2 class="text-xl font-bold text-slate-100 mb-6">Timeline &amp; Logistics</h2>
+<div class="space-y-6">
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_#256af4]"></div>
+<div class="w-0.5 flex-1 bg-slate-800"></div>
+</div>
+<div class="pb-6">
+<p class="text-xs font-bold text-primary uppercase tracking-widest mb-1">Estimated Arrival</p>
+<p class="text-sm text-slate-200 font-semibold">Thursday, Oct 24th</p>
+<p class="text-xs text-slate-500 mt-1">Confirmed by Talent Partner via Verbal</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-2 h-2 rounded-full bg-slate-700"></div>
+<div class="w-0.5 flex-1 bg-slate-800"></div>
+</div>
+<div class="pb-6">
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Target Start Date</p>
+<p class="text-sm text-slate-200 font-semibold">Monday, Nov 18th</p>
+<p class="text-xs text-slate-500 mt-1">Dependent on 2-week notice period</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-2 h-2 rounded-full bg-slate-700"></div>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Onboarding Location</p>
+<p class="text-sm text-slate-200 font-semibold">Stripe HQ, San Francisco</p>
+<p class="text-xs text-slate-500 mt-1">Travel arrangements pending offer</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Negotiation Packet Preview -->
+<div class="glass-panel rounded-2xl p-0 overflow-hidden flex flex-col group">
+<div class="p-8 pb-4">
+<h2 class="text-xl font-bold text-slate-100 mb-1">Negotiation Packet</h2>
+<p class="text-xs text-slate-500">Last updated today at 09:12 AM</p>
+</div>
+<div class="relative h-48 bg-slate-900 mx-8 rounded-xl border border-white/5 overflow-hidden">
+<img alt="Negotiation Packet Preview Image" class="w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-1000" data-alt="A clean, minimalist document layout displaying stylized typography and data charts. The aesthetic is sophisticated and professional, using a deep slate and electric blue color palette. Soft light highlights specific lines of text and graphical elements, suggesting a high-stakes, well-prepared negotiation document in a modern tech-focused environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-a-eUBPfbWaUQrMLDfiAv3-ZG6tAazep_InolMKWBoUCYzng9MQBWdQ1BstFcjDq_vNJZnJc6RMhH-b4Gia_cHEi9wWIUDtFjI4wMtpAmRO2yj68WWzEq1OA1V0b4dUmD3LDhruV8Kb4UmHS1Lg12bUoSc-U3OX1qn_-hfrg9y2ATpxNxmbFsThZnKj9erCQoWyk9KZR3PqnbWTU8UW658UVSaHD7mWCiOo6aGJveFKj-4haeuPOJxV07A3bc6lG6j8SL_LaXm18"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4 flex justify-between items-center">
+<div class="flex gap-2">
+<div class="px-2 py-1 bg-white/10 backdrop-blur-md rounded text-[10px] font-bold text-slate-300 uppercase tracking-widest border border-white/5">Research.pdf</div>
+<div class="px-2 py-1 bg-white/10 backdrop-blur-md rounded text-[10px] font-bold text-slate-300 uppercase tracking-widest border border-white/5">Market_Data</div>
+</div>
+<span class="material-symbols-outlined text-white">open_in_new</span>
+</div>
+</div>
+<div class="p-8">
+<div class="flex items-center justify-between gap-4">
+<button class="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:bg-blue-600 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">edit</span>
+                                Finalize Packet
+                            </button>
+<button class="w-12 h-12 bg-slate-800 text-slate-300 rounded-xl flex items-center justify-center hover:bg-slate-700 transition-all">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</body></html>

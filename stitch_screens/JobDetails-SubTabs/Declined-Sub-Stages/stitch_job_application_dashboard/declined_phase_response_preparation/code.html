@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Midnight Glass - Decline Response Prepared</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed": "#e2e8f0",
+                        "tertiary-fixed": "#ffe4e6",
+                        "outline-variant": "#1e293b",
+                        "inverse-on-surface": "#0f172a",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "surface-dim": "#0b0f18",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-container": "#fb7185",
+                        "on-primary-container": "#60a5fa",
+                        "on-tertiary-fixed": "#4c0519",
+                        "on-surface-variant": "#94a3b8",
+                        "outline": "#334155",
+                        "primary-fixed": "#dbeafe",
+                        "surface-container": "#1e293b80",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "on-secondary-fixed-variant": "#334155",
+                        "on-secondary-container": "#cbd5e1",
+                        "primary-container": "#256af433",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#f8fafc",
+                        "on-primary-fixed": "#1e3a8a",
+                        "tertiary": "#f43f5e",
+                        "secondary": "#334155",
+                        "surface": "#101622",
+                        "surface-variant": "#1e293b",
+                        "surface-container-highest": "#2d3748",
+                        "surface-bright": "#1e293b",
+                        "background": "#101622",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "surface-tint": "#256af4",
+                        "on-background": "#f1f5f9",
+                        "on-secondary-fixed": "#0f172a",
+                        "on-error-container": "#fca5a5",
+                        "tertiary-container": "#f43f5e22",
+                        "on-secondary": "#f8fafc",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#080c14",
+                        "error-container": "#450a0a",
+                        "surface-container-high": "#1e293b99",
+                        "inverse-primary": "#60a5fa",
+                        "primary": "#256af4",
+                        "on-surface": "#f1f5f9",
+                        "surface-container-low": "#1e293b66",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "error": "#ef4444",
+                        "secondary-container": "#1e293b"
+                    },
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        display: ["Manrope"],
+                        body: ["Manrope"],
+                        label: ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-glow {
+            text-shadow: 0 0 10px rgba(37, 106, 244, 0.4);
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary/30 min-h-screen">
+<!-- Global Layout Shell -->
+<div class="flex h-screen overflow-hidden">
+<!-- Shared SideNavBar -->
+<aside class="docked left-0 h-full w-20 border-r border-white/10 bg-[#101622] contrast-125 flex flex-col items-center py-8 gap-8 shadow-xl shadow-black/50 font-manrope antialiased tracking-tight">
+<div class="text-blue-500 font-bold text-lg">MG</div>
+<nav class="flex flex-col gap-6">
+<button class="flex flex-col items-center gap-1 group transition-all scale-95 active:scale-90 text-slate-500 hover:text-blue-400 hover:bg-white/5 p-2 rounded-lg">
+<span class="material-symbols-outlined">grid_view</span>
+</button>
+<button class="flex flex-col items-center gap-1 group transition-all scale-95 active:scale-90 text-white bg-white/5 rounded-lg p-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">work_history</span>
+</button>
+<button class="flex flex-col items-center gap-1 group transition-all scale-95 active:scale-90 text-slate-500 hover:text-blue-400 hover:bg-white/5 p-2 rounded-lg">
+<span class="material-symbols-outlined">auto_awesome</span>
+</button>
+<button class="flex flex-col items-center gap-1 group transition-all scale-95 active:scale-90 text-slate-500 hover:text-blue-400 hover:bg-white/5 p-2 rounded-lg">
+<span class="material-symbols-outlined">description</span>
+</button>
+</nav>
+<div class="mt-auto flex flex-col gap-6">
+<button class="flex flex-col items-center gap-1 group transition-all scale-95 active:scale-90 text-slate-500 hover:text-blue-400 hover:bg-white/5 p-2 rounded-lg">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest border border-white/10 flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a modern creative professional with a clean, cinematic lighting setup against a dark, moody background. The lighting highlights the subject's face with a soft edge, emphasizing a sophisticated and focused demeanor suitable for a high-end SaaS environment. The overall tone is cool-toned and professional." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBP8xpGt_9CA60DX1ooY-Hgo6SAGAMUczgNMQitj_AgosrjIyB85ZlATRm1N3GE16gC3yPfwo9p5frsVi5bmfNdXLRFKPQWsyuAwwy08GVoyYJYVsMLB0qYgfoimfuaqOBYefmwzzXVLnOLUKQb6UW0BMC8NugLhDKfapBVSXSt4MB67_ESifXHVfWcLu5ZWCVPBZ348hpVT_kLBEg4F08bclZmDloiu80FTlRNUkHNeQublwfJsFveI0ANqs-7Kh71vGUEyg9PM-0"/>
+</div>
+</div>
+</aside>
+<!-- Main Workspace Shell -->
+<main class="flex-1 flex flex-col relative">
+<!-- Shared TopNavBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-5rem)] h-16 border-b border-white/5 bg-slate-900/40 backdrop-blur-xl backdrop-filter flex justify-between items-center px-8 z-50">
+<div class="flex items-center gap-8">
+<h1 class="text-slate-100 font-black tracking-tighter text-xl uppercase">Midnight Glass</h1>
+<nav class="hidden lg:flex gap-6 items-center h-full">
+<a class="text-slate-400 font-medium tracking-wide uppercase text-xs hover:text-slate-100 transition-colors" href="#">Saved</a>
+<a class="text-slate-400 font-medium tracking-wide uppercase text-xs hover:text-slate-100 transition-colors" href="#">Applied</a>
+<a class="text-slate-400 font-medium tracking-wide uppercase text-xs hover:text-slate-100 transition-colors" href="#">Interviews</a>
+<a class="text-[#256af4] border-b-2 border-[#256af4] font-medium tracking-wide uppercase text-xs h-16 flex items-center" href="#">Rejected</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors cursor-pointer">search</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 hover:text-primary cursor-pointer transition-colors">notifications</span>
+<span class="material-symbols-outlined text-slate-400 hover:text-primary cursor-pointer transition-colors">bolt</span>
+</div>
+</header>
+<!-- Page Content (Asymmetric Layout) -->
+<div class="pt-24 pb-12 px-8 flex gap-8 h-full overflow-hidden">
+<!-- Sub-Navigation (Vertical) -->
+<nav class="w-64 flex-shrink-0 flex flex-col gap-2">
+<div class="text-[10px] font-bold text-slate-500 tracking-[0.2em] mb-4 uppercase">Status Workflow</div>
+<div class="p-3 rounded-xl flex items-center gap-3 text-slate-400 hover:bg-white/5 transition-all cursor-pointer">
+<span class="material-symbols-outlined text-sm">block</span>
+<span class="text-sm font-medium">Decline Received</span>
+</div>
+<div class="p-3 rounded-xl flex items-center gap-3 bg-primary/10 text-primary border border-primary/20 shadow-lg shadow-primary/5 transition-all">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">mark_email_read</span>
+<span class="text-sm font-bold">Response Prepared</span>
+</div>
+<div class="p-3 rounded-xl flex items-center gap-3 text-slate-500 opacity-50 cursor-not-allowed">
+<span class="material-symbols-outlined text-sm">send</span>
+<span class="text-sm font-medium">Sent &amp; Closed</span>
+</div>
+<div class="mt-8 pt-8 border-t border-white/5">
+<div class="text-[10px] font-bold text-slate-500 tracking-[0.2em] mb-4 uppercase">Company Info</div>
+<div class="glass-panel p-4 rounded-2xl flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center border border-white/10 text-primary font-bold">
+                                    A
+                                </div>
+<div>
+<div class="text-sm font-bold text-slate-100">Aetheric AI</div>
+<div class="text-xs text-slate-500">Sr. Product Designer</div>
+</div>
+</div>
+</div>
+</div>
+</nav>
+<!-- Content Area: Response Toolkit & Editor -->
+<div class="flex-1 flex flex-col gap-8 overflow-y-auto pr-4">
+<header>
+<h2 class="text-3xl font-extrabold text-slate-100 tracking-tight neon-glow">Response Prepared</h2>
+<p class="text-slate-400 text-sm mt-2">Manage your exit with elegance. Use our AI-suggested templates to maintain a professional connection.</p>
+</header>
+<!-- Response Toolkit: Bento Style -->
+<section class="grid grid-cols-3 gap-4">
+<div class="glass-panel p-4 rounded-2xl border-primary/30 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-primary text-sm">auto_awesome</span>
+</div>
+<div class="text-sm font-bold text-slate-100 mb-1">Pure Professional</div>
+<div class="text-[10px] text-slate-500 leading-relaxed uppercase tracking-widest">Recommended</div>
+</div>
+<div class="glass-panel p-4 rounded-2xl hover:bg-white/5 transition-colors cursor-pointer">
+<div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-slate-400 text-sm">chat_bubble</span>
+</div>
+<div class="text-sm font-bold text-slate-300 mb-1">Network Focus</div>
+<div class="text-[10px] text-slate-500 leading-relaxed uppercase tracking-widest">Keep contact</div>
+</div>
+<div class="glass-panel p-4 rounded-2xl hover:bg-white/5 transition-colors cursor-pointer">
+<div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-slate-400 text-sm">history_edu</span>
+</div>
+<div class="text-sm font-bold text-slate-300 mb-1">Feedback Request</div>
+<div class="text-[10px] text-slate-500 leading-relaxed uppercase tracking-widest">Growth oriented</div>
+</div>
+</section>
+<!-- Rich Text Editor -->
+<div class="glass-panel rounded-2xl flex flex-col flex-1 overflow-hidden min-h-[400px]">
+<div class="h-12 border-b border-white/10 flex items-center px-4 gap-4 bg-white/5">
+<span class="material-symbols-outlined text-slate-400 hover:text-slate-100 cursor-pointer text-lg">format_bold</span>
+<span class="material-symbols-outlined text-slate-400 hover:text-slate-100 cursor-pointer text-lg">format_italic</span>
+<span class="material-symbols-outlined text-slate-400 hover:text-slate-100 cursor-pointer text-lg">format_list_bulleted</span>
+<div class="w-px h-6 bg-white/10 mx-1"></div>
+<span class="material-symbols-outlined text-slate-400 hover:text-slate-100 cursor-pointer text-lg">link</span>
+<div class="ml-auto flex items-center gap-2">
+<span class="text-[10px] font-bold text-slate-500 tracking-widest uppercase">Draft Saved</span>
+<div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+</div>
+</div>
+<div class="p-8 flex-1 text-slate-300 font-medium leading-relaxed overflow-y-auto">
+<p class="mb-4 text-slate-400 italic">Subject: Re: Update regarding your application at Aetheric AI</p>
+<p class="mb-4">Dear Sarah,</p>
+<p class="mb-4">Thank you very much for getting back to me regarding my application for the Senior Product Designer role. While I am disappointed not to be moving forward at this time, I truly appreciate the transparency and the opportunity to interview with the team.</p>
+<p class="mb-4">I was particularly impressed by Aetheric's approach to human-centric AI design, and I enjoyed our conversation about the upcoming modular workspace launch. I would love to stay in touch as you continue to scale the design team.</p>
+<p class="mb-4">Wishing you and the Aetheric team a successful quarter.</p>
+<p>Best regards,<br/>Marcus G.</p>
+</div>
+<div class="p-6 border-t border-white/5 bg-slate-900/40 flex justify-end gap-4">
+<button class="px-6 py-2.5 rounded-xl text-slate-400 font-bold text-sm hover:text-slate-100 transition-colors uppercase tracking-widest">Discard</button>
+<button class="px-8 py-2.5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 transition-all uppercase tracking-widest">Send Polite Decline</button>
+</div>
+</div>
+</div>
+<!-- Right Sidebar: Recruiter Perspective -->
+<aside class="w-80 flex-shrink-0 flex flex-col gap-6">
+<div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+<!-- Background Glow Decoration -->
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 blur-3xl group-hover:bg-primary/20 transition-all"></div>
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+<h3 class="text-xs font-bold text-slate-100 uppercase tracking-widest">Recruiter Perspective</h3>
+</div>
+<div class="space-y-6 relative">
+<div class="space-y-2">
+<div class="text-xs font-bold text-slate-300">The "Long Game" Advantage</div>
+<p class="text-xs text-slate-500 leading-relaxed">
+                                    Recruiters keep active pipelines. A gracious decline often leads to being the first person called when a new, more suitable role opens up in 3–6 months.
+                                </p>
+</div>
+<div class="space-y-2">
+<div class="text-xs font-bold text-slate-300">Highlight Specifics</div>
+<p class="text-xs text-slate-500 leading-relaxed">
+                                    Referencing a specific detail from your interview shows genuine interest and makes you memorable beyond just another candidate record.
+                                </p>
+</div>
+<div class="p-4 bg-white/5 rounded-xl border border-white/5">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-bold text-primary uppercase tracking-widest">Pro Tip</span>
+<span class="material-symbols-outlined text-primary text-xs">verified</span>
+</div>
+<p class="text-xs text-slate-400 leading-tight">
+                                    Don't ask for feedback immediately in the first response. It increases the likelihood of a reply if you prioritize goodwill first.
+                                </p>
+</div>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-2xl flex flex-col gap-4">
+<h4 class="text-xs font-bold text-slate-100 uppercase tracking-widest">Recent Context</h4>
+<div class="space-y-3">
+<div class="flex items-start gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-primary mt-1.5"></div>
+<div class="text-[11px] text-slate-400">Interviewed with Sarah (Head of Design) on Oct 12</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-slate-700 mt-1.5"></div>
+<div class="text-[11px] text-slate-500">Decline received Oct 14 via automated portal</div>
+</div>
+</div>
+</div>
+<div class="mt-auto">
+<div class="glass-panel p-1 rounded-2xl overflow-hidden aspect-[4/3] relative">
+<img class="w-full h-full object-cover rounded-xl opacity-60" data-alt="A cinematic, wide-angle interior view of a modern, high-tech architectural office at night. The space is filled with sleek glass furniture, soft ambient blue lighting, and subtle neon accents. The atmosphere is quiet and professional, conveying a sense of corporate prestige and future-focused design, perfectly aligning with the Midnight Glass aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvpp5bSUqH5lL0tkVlHbdyiYz3C_QD22HyFbrIgwf5oZKQk9YUxVJ3NctTpTXdl9MgQaN1PnxxMdYTiR9jOIVL0hUlwl_OtvePmryZvT1dxEpbMNA4z_E9oRzlHpS3msjdpYXm7zCTtHFp1Nqc5m9hoz6nastY_Ts2HAduhyVqpU3IZ9xBTriFkeFfCi25FkmiSLrTpBeOzUcCmqOrA4yyuTpLm2PW4RA-g4f6pIk8DXpjlk6KtRlvW0q2f6vGuvoo0-7K-mRmghc"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background to-transparent flex items-end p-4">
+<span class="text-[10px] font-bold text-slate-100 uppercase tracking-[0.3em]">Network Maintenance</span>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</div>
+</body></html>

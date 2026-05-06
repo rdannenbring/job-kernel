@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Midnight Glass | Resume Generation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface": "#101622",
+                        "on-surface-variant": "#94a3b8",
+                        "surface-tint": "#256af4",
+                        "primary-container": "#256af433",
+                        "surface-variant": "#1e293b",
+                        "surface-container-lowest": "#080c14",
+                        "secondary-container": "#1e293b",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#f1f5f9",
+                        "on-error": "#ffffff",
+                        "surface-container": "#1e293b80",
+                        "tertiary-container": "#f43f5e22",
+                        "primary-fixed": "#dbeafe",
+                        "on-error-container": "#fca5a5",
+                        "surface-container-high": "#1e293b99",
+                        "on-background": "#f1f5f9",
+                        "outline-variant": "#1e293b",
+                        "secondary": "#334155",
+                        "on-secondary-fixed-variant": "#334155",
+                        "error-container": "#450a0a",
+                        "on-secondary-container": "#cbd5e1",
+                        "surface-bright": "#1e293b",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "on-primary-fixed": "#1e3a8a",
+                        "inverse-surface": "#f8fafc",
+                        "secondary-fixed": "#e2e8f0",
+                        "on-secondary-fixed": "#0f172a",
+                        "background": "#101622",
+                        "tertiary-fixed": "#ffe4e6",
+                        "on-secondary": "#f8fafc",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "inverse-on-surface": "#0f172a",
+                        "error": "#ef4444",
+                        "surface-dim": "#0b0f18",
+                        "inverse-primary": "#60a5fa",
+                        "surface-container-highest": "#2d3748",
+                        "on-tertiary-fixed": "#4c0519",
+                        "surface-container-low": "#1e293b66",
+                        "on-primary-container": "#60a5fa",
+                        "on-primary": "#ffffff",
+                        "outline": "#334155",
+                        "tertiary": "#f43f5e",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "primary": "#256af4",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-tertiary-container": "#fb7185"
+                    },
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        display: ["Manrope"],
+                        body: ["Manrope"],
+                        label: ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-glow {
+            text-shadow: 0 0 10px rgba(37, 106, 244, 0.5);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(37, 106, 244, 0.3);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(37, 106, 244, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body overflow-hidden">
+<!-- Sidebar Navigation Shell -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-slate-950/80 backdrop-blur-xl border-r border-white/10 flex flex-col py-8 px-4 z-50">
+<div class="mb-10 px-4">
+<h1 class="text-xl font-bold tracking-tighter text-white">Midnight Glass</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Career Curator</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-manrope text-sm tracking-wide">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600/20 text-blue-400 font-semibold border-r-2 border-blue-500 transition-all scale-[0.98]" href="#">
+<span class="material-symbols-outlined">work</span>
+<span class="font-manrope text-sm tracking-wide">Applications</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="font-manrope text-sm tracking-wide">Saved Jobs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-manrope text-sm tracking-wide">Network</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-manrope text-sm tracking-wide">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto space-y-2 border-t border-white/5 pt-6">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-manrope text-sm tracking-wide">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="font-manrope text-sm tracking-wide">Support</span>
+</a>
+</div>
+</aside>
+<!-- Top AppBar Shell -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-slate-900/40 backdrop-blur-md border-b border-white/5 flex justify-between items-center px-8 z-40">
+<div class="flex items-center gap-8">
+<div class="flex gap-6">
+<a class="text-slate-400 font-manrope text-sm font-medium hover:text-blue-300 transition-colors" href="#">Saved</a>
+<a class="text-blue-400 font-manrope text-sm font-bold border-b-2 border-blue-500 pb-5 translate-y-0.5" href="#">Generated</a>
+<a class="text-slate-400 font-manrope text-sm font-medium hover:text-blue-300 transition-colors" href="#">Applied</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="material-symbols-outlined text-slate-400 hover:opacity-80">notifications</button>
+<button class="material-symbols-outlined text-slate-400 hover:opacity-80">history</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-white/20">
+<img alt="User Profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWbHAwOOE1xDU4pQei70C9y6S5Xysv44KUOk71LlXoeMORRZi8iNAer3Gt7Acl7FavRrouhH0ITQtvV7aG0UEjfMt51H_wnU6ZFl4FJqWImLP8oCye9_871E1VEbJOHTO0Uqd4j5Dm47iddCMoDoyPce0dk6Q6VPpTgXDCDZ0mJjqwfpm-zCjRQ2-4aYRVnwo8PN9JbWdMpOdV2XRhPq2Dh9I-MI30n5EWU3fasW8xnuntLQhBjxqdQbwYrZZX1kM8IeQyvpnA1Dw"/>
+</div>
+</div>
+</header>
+<!-- Main Stage Content -->
+<main class="pl-64 pt-16 h-screen w-full flex flex-col">
+<!-- Main Header Area -->
+<section class="px-8 py-6 flex flex-col gap-6 bg-surface-dim">
+<div class="flex justify-between items-center">
+<div class="flex flex-col gap-1">
+<h2 class="text-2xl font-bold tracking-tight text-white neon-glow">Product Design Lead @ Veridian Tech</h2>
+<div class="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-slate-400">
+<span>Stage: Resume Tailoring</span>
+<div class="w-32 h-1 bg-slate-800 rounded-full overflow-hidden">
+<div class="w-1/4 h-full bg-blue-500 shadow-[0_0_8px_rgba(37,106,244,0.6)]"></div>
+</div>
+<span class="text-blue-400">25% Complete</span>
+</div>
+</div>
+<button class="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:scale-[0.98] transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 20px;">auto_awesome</span>
+                    Generate All
+                </button>
+</div>
+</section>
+<!-- Dynamic Content Canvas -->
+<div class="flex-1 overflow-hidden flex bg-surface">
+<!-- Phase Sidebar (Sub-navigation) -->
+<aside class="w-64 border-r border-white/5 flex flex-col p-6 gap-2">
+<h3 class="text-[10px] uppercase tracking-widest font-bold text-slate-500 mb-2 px-4">Artifacts</h3>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600/10 text-blue-400 font-semibold border-l-2 border-blue-500 transition-all" href="#">
+<span class="material-symbols-outlined text-xl">description</span>
+<span class="font-manrope text-sm tracking-wide">Resume</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined text-xl">mail</span>
+<span class="font-manrope text-sm tracking-wide">Cover Letter</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined text-xl">question_answer</span>
+<span class="font-manrope text-sm tracking-wide">Answers</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined text-xl">inventory_2</span>
+<span class="font-manrope text-sm tracking-wide">Prep Artifacts</span>
+</a>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 p-8 grid grid-cols-12 gap-8 overflow-hidden">
+<!-- Left Column: Strategy & Analysis -->
+<div class="col-span-5 flex flex-col gap-8 overflow-y-auto pr-4 custom-scrollbar">
+<!-- Requirement-to-Experience Mapping Table -->
+<div class="glass-panel rounded-2xl p-6">
+<h3 class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mb-4">Job Requirements Alignment</h3>
+<div class="space-y-4">
+<div class="grid grid-cols-2 gap-4 pb-4 border-b border-white/5 items-center">
+<span class="text-xs text-slate-400">Target Skill</span>
+<span class="text-xs text-slate-400">Matching Experience</span>
+</div>
+<div class="grid grid-cols-2 gap-4 items-start">
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-green-400 text-sm mt-1">check_circle</span>
+<p class="text-sm font-medium text-slate-200">User Research Leadership</p>
+</div>
+<p class="text-xs text-slate-400 leading-relaxed italic">"Led 15+ complex usability studies for enterprise SaaS clients at Nexa..."</p>
+</div>
+<div class="grid grid-cols-2 gap-4 items-start">
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-blue-400 text-sm mt-1">sync</span>
+<p class="text-sm font-medium text-slate-200">Design System Scaling</p>
+</div>
+<p class="text-xs text-slate-400 leading-relaxed italic">"Developed Carbon-UI framework, but need more emphasis on 'Scaling' language..."</p>
+</div>
+<div class="grid grid-cols-2 gap-4 items-start">
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-orange-400 text-sm mt-1">warning</span>
+<p class="text-sm font-medium text-slate-200">FinTech Compliance</p>
+</div>
+<p class="text-xs text-slate-400 leading-relaxed italic">No direct match found. Recommend highlighting 'Data Privacy' experience.</p>
+</div>
+</div>
+</div>
+<!-- Keyword Alignment Map (Bento style) -->
+<div class="glass-panel rounded-2xl p-6 bg-gradient-to-br from-blue-500/5 to-transparent">
+<h3 class="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mb-6">Keyword Density Map</h3>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/40 rounded-full text-[10px] font-bold text-blue-300">UX STRATEGY (85%)</span>
+<span class="px-3 py-1.5 bg-blue-500/10 border border-white/10 rounded-full text-[10px] font-bold text-slate-300">FIGMA (100%)</span>
+<span class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/40 rounded-full text-[10px] font-bold text-blue-300">ACCESSIBILITY (92%)</span>
+<span class="px-3 py-1.5 bg-blue-500/10 border border-white/10 rounded-full text-[10px] font-bold text-slate-300">STAKEHOLDER MGMT (60%)</span>
+<span class="px-3 py-1.5 bg-blue-500/10 border border-white/10 rounded-full text-[10px] font-bold text-slate-300">AGILE (75%)</span>
+<span class="px-3 py-1.5 border border-red-500/30 bg-red-500/10 rounded-full text-[10px] font-bold text-red-400">FINTECH REGULATION (0%)</span>
+<span class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/40 rounded-full text-[10px] font-bold text-blue-300">A/B TESTING (88%)</span>
+</div>
+<div class="mt-8 relative h-40 w-full overflow-hidden rounded-xl">
+<img class="object-cover w-full h-full opacity-40" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8HUtVpZ3EvzB4dSOWEfL5Gas5CbHdw_5vSW9FC44iaUc9YZsJreHj6dNn8r_J5kagZVeHKqrSwmrPm4dJwZhkf7lLKA5LsLMeGVVwFph0DdizqeRVOkxuwEmxhTgaePxeM0mCjE8c0GJ-mWQC9NGNBC9PKxl4CGXDfysPf_d3eDfY359L39xVf5K8vpohfDeWdA44QaBLnR-e6FuGjJKQYJovQhnPXpR35-mijDITKjM3Po8ETvcgLqJNdo0SS1FLd1nxnQ2iubs"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="text-xs font-bold text-blue-400 uppercase tracking-widest bg-slate-900/80 px-4 py-2 rounded-full backdrop-blur-sm">Semantic Match: 92.4%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Asset Manager & Resume Preview -->
+<div class="col-span-7 flex flex-col gap-6 relative">
+<div class="flex-1 glass-panel rounded-2xl overflow-hidden flex flex-col border border-blue-500/20">
+<!-- Resume Header/Controls -->
+<div class="p-4 border-b border-white/10 flex justify-between items-center bg-slate-900/60">
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold text-white">Tailored_Resume_v4.pdf</span>
+<span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30">LATEST</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-white/5 rounded-lg text-slate-400 transition-all">
+<span class="material-symbols-outlined text-sm">download</span>
+</button>
+<button class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 transition-all">
+<span class="material-symbols-outlined text-sm">difference</span>
+                                    View Diff
+                                </button>
+</div>
+</div>
+<!-- PDF Mockup Canvas -->
+<div class="flex-1 bg-slate-800/50 p-12 overflow-y-auto custom-scrollbar">
+<div class="bg-white shadow-2xl mx-auto w-full max-w-2xl aspect-[1/1.414] p-12 text-slate-900 font-sans">
+<div class="border-b-2 border-slate-900 pb-6 mb-8">
+<h1 class="text-3xl font-bold tracking-tight">ALEX RIVERA</h1>
+<p class="text-sm font-semibold text-slate-500 tracking-widest mt-1">PRODUCT DESIGN LEAD</p>
+</div>
+<div class="space-y-6">
+<section>
+<h2 class="text-xs font-black uppercase tracking-widest border-b border-slate-200 pb-1 mb-3">Professional Summary</h2>
+<p class="text-sm leading-relaxed">Strategic Product Designer with over 8 years of experience building scalable enterprise SaaS solutions. <span class="bg-blue-100 text-blue-800 px-1 font-semibold">Expertise in UX leadership and user research integration</span>, proven to increase core conversion metrics by 40% through data-driven design iterations.</p>
+</section>
+<section>
+<h2 class="text-xs font-black uppercase tracking-widest border-b border-slate-200 pb-1 mb-3">Experience</h2>
+<div class="mb-4">
+<div class="flex justify-between items-start">
+<h3 class="text-sm font-bold">Nexa Dynamic Systems</h3>
+<span class="text-[10px] font-bold text-slate-400">2020 — PRESENT</span>
+</div>
+<p class="text-[11px] font-bold text-slate-500 italic mb-2">Senior Product Designer (Lead)</p>
+<ul class="text-[12px] space-y-1.5 list-disc pl-4 text-slate-700">
+<li><span class="bg-blue-100 text-blue-800 px-1 font-semibold">Led a cross-functional team of 15 researchers</span> and designers to re-architect the platform's core dashboard...</li>
+<li>Standardized the global design system across 4 business units, ensuring brand consistency.</li>
+</ul>
+</div>
+</section>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Floating Controls: History & Checklist -->
+<div class="grid grid-cols-2 gap-4 h-48">
+<!-- Version History -->
+<div class="glass-panel rounded-2xl p-4 overflow-hidden flex flex-col">
+<h3 class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-3">Version History</h3>
+<div class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+<div class="flex items-center justify-between p-2 rounded-lg bg-blue-600/10 border border-blue-500/20">
+<span class="text-xs font-medium text-slate-200">v4 - Keyword Optimized</span>
+<span class="text-[10px] text-slate-500">2m ago</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+<span class="text-xs font-medium text-slate-400">v3 - Initial Tailoring</span>
+<span class="text-[10px] text-slate-500">1h ago</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+<span class="text-xs font-medium text-slate-400">v2 - Skills Refinement</span>
+<span class="text-[10px] text-slate-500">3h ago</span>
+</div>
+</div>
+</div>
+<!-- Readiness Checklist -->
+<div class="bg-blue-600 rounded-2xl p-5 shadow-2xl shadow-blue-500/20 flex flex-col justify-between">
+<h3 class="text-white font-bold text-sm">Ready to Apply?</h3>
+<div class="space-y-2 mt-2">
+<div class="flex items-center gap-2 text-xs font-medium text-blue-100">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                                    Resume Optimized
+                                </div>
+<div class="flex items-center gap-2 text-xs font-medium text-blue-200/60">
+<span class="material-symbols-outlined text-[16px]">radio_button_unchecked</span>
+                                    Cover Letter Drafted
+                                </div>
+</div>
+<button class="mt-4 w-full bg-white text-blue-600 font-bold py-2 rounded-xl text-xs uppercase tracking-widest hover:bg-blue-50 transition-colors">
+                                Move to Applied
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

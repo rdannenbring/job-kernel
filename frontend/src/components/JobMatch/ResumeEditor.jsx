@@ -166,7 +166,10 @@ const ResumeEditor = ({
             const placeholder = document.createElement('div');
             placeholder.id = placeholderId;
             placeholder.style.width = '100%';
-            placeholder.style.height = '100%';
+            // Use explicit pixel height so OnlyOffice can compute canvas dimensions correctly.
+            // height:'100%' inside a flex container often resolves to 0, causing blank canvas.
+            const editorHeight = editorRef.current.offsetHeight || 800;
+            placeholder.style.height = editorHeight + 'px';
             editorRef.current.appendChild(placeholder);
 
             config.events = {
@@ -336,7 +339,7 @@ const ResumeEditor = ({
     };
 
     return (
-        <div className="midnight-editor flex flex-col" style={{ height: '100%', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+        <div className="midnight-editor flex flex-col" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
             {/* Header Bar */}
             <header style={{
                 position: 'relative', zIndex: 10,
@@ -374,7 +377,7 @@ const ResumeEditor = ({
             </header>
 
             {/* Main Content */}
-            <div style={{ position: 'relative', zIndex: 5, flex: 1, padding: '1.5rem 2rem', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ position: 'relative', zIndex: 5, flex: 1, padding: '1.5rem 2rem', overflow: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem', minHeight: 0 }}>
                 {/* Tab Switcher */}
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: '0.25rem',
@@ -413,7 +416,7 @@ const ResumeEditor = ({
 
                 {/* ===== MANUAL EDIT TAB ===== */}
                 {activeTab === 'manual' && (
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'visible', minHeight: '900px' }}>
                         <div style={{
                             flex: 1, borderRadius: '1rem', overflow: 'hidden',
                             display: 'flex', flexDirection: 'column', minHeight: '500px',
@@ -452,7 +455,7 @@ const ResumeEditor = ({
                             <div 
                                 ref={editorRef} 
                                 className="onlyoffice-container"
-                                style={{ flex: 1, display: editorError ? 'none' : 'block', minHeight: '500px' }}
+                                style={{ display: editorError ? 'none' : 'block', height: '800px', minHeight: '800px' }}
                             />
                         </div>
 

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "secondary-fixed": "#e2e8f0",
+                  "tertiary-fixed": "#ffe4e6",
+                  "outline-variant": "#1e293b",
+                  "inverse-on-surface": "#0f172a",
+                  "on-tertiary-fixed-variant": "#9f1239",
+                  "on-primary-fixed-variant": "#1d4ed8",
+                  "surface-dim": "#0b0f18",
+                  "on-tertiary": "#ffffff",
+                  "on-tertiary-container": "#fb7185",
+                  "on-primary-container": "#60a5fa",
+                  "on-tertiary-fixed": "#4c0519",
+                  "on-surface-variant": "#94a3b8",
+                  "outline": "#334155",
+                  "primary-fixed": "#dbeafe",
+                  "surface-container": "#1e293b80",
+                  "primary-fixed-dim": "#bfdbfe",
+                  "on-secondary-fixed-variant": "#334155",
+                  "on-secondary-container": "#cbd5e1",
+                  "primary-container": "#256af433",
+                  "on-primary": "#ffffff",
+                  "inverse-surface": "#f8fafc",
+                  "on-primary-fixed": "#1e3a8a",
+                  "tertiary": "#f43f5e",
+                  "secondary": "#334155",
+                  "surface": "#101622",
+                  "surface-variant": "#1e293b",
+                  "surface-container-highest": "#2d3748",
+                  "surface-bright": "#1e293b",
+                  "background": "#101622",
+                  "tertiary-fixed-dim": "#fecdd3",
+                  "surface-tint": "#256af4",
+                  "on-background": "#f1f5f9",
+                  "on-secondary-fixed": "#0f172a",
+                  "on-error-container": "#fca5a5",
+                  "tertiary-container": "#f43f5e22",
+                  "on-secondary": "#f8fafc",
+                  "on-error": "#ffffff",
+                  "surface-container-lowest": "#080c14",
+                  "error-container": "#450a0a",
+                  "surface-container-high": "#1e293b99",
+                  "inverse-primary": "#60a5fa",
+                  "primary": "#256af4",
+                  "on-surface": "#f1f5f9",
+                  "surface-container-low": "#1e293b66",
+                  "secondary-fixed-dim": "#cbd5e1",
+                  "error": "#ef4444",
+                  "secondary-container": "#1e293b"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "2xl": "1rem",
+                  "full": "9999px"
+          },
+          "fontFamily": {
+                  "headline": ["Manrope"],
+                  "display": ["Manrope"],
+                  "body": ["Manrope"],
+                  "label": ["Manrope"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body { font-family: 'Manrope', sans-serif; background-color: #101622; }
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.4);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .neon-text {
+      text-shadow: 0 0 8px rgba(37, 106, 244, 0.4);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="text-on-surface antialiased overflow-hidden">
+<!-- Background Decorative Blurs -->
+<div class="fixed top-[-10%] right-[-5%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full z-0"></div>
+<div class="fixed bottom-[-10%] left-[-5%] w-[30%] h-[30%] bg-tertiary/5 blur-[100px] rounded-full z-0"></div>
+<!-- Collapsed Global Sidebar (Anchored from JSON, modified to collapsed icons for this specific view) -->
+<aside class="fixed left-0 top-0 h-screen w-20 bg-surface-container-lowest flex flex-col items-center py-6 border-r border-white/5 z-50">
+<div class="mb-10">
+<div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-white">dashboard</span>
+</div>
+</div>
+<nav class="flex flex-col gap-8 flex-1">
+<button class="text-slate-400 hover:text-white transition-colors group relative">
+<span class="material-symbols-outlined text-2xl">work</span>
+<span class="absolute left-16 bg-slate-800 text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest pointer-events-none">Jobs</span>
+</button>
+<button class="text-primary bg-primary/10 p-2 rounded-lg relative group">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="absolute left-16 bg-slate-800 text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest pointer-events-none">Talent</span>
+</button>
+<button class="text-slate-400 hover:text-white transition-colors group relative">
+<span class="material-symbols-outlined text-2xl">leaderboard</span>
+<span class="absolute left-16 bg-slate-800 text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest pointer-events-none">Analytics</span>
+</button>
+<button class="text-slate-400 hover:text-white transition-colors group relative">
+<span class="material-symbols-outlined text-2xl">settings</span>
+<span class="absolute left-16 bg-slate-800 text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest pointer-events-none">Settings</span>
+</button>
+</nav>
+<div class="mt-auto">
+<img alt="User" class="w-10 h-10 rounded-full border border-white/10" data-alt="A professional headshot of a high-end recruitment executive. The lighting is dramatic and moody, characteristic of a cinematic portrait with cool blue rim lighting. The subject is wearing a modern charcoal suit, looking confident and composed against a dark, out-of-focus tech-focused architectural background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDK4Z4UeWI4Cfl2XA3hyopTn3w2A5Kxil6izHaO3Eh4AnK42PQoFARo3Nk_ahjor2oy5F1GsFU5h5a6kk2KxwB8AJJtBmeuLqGvXYbYoMHNaqy6RfLlMhbnpxFoyG72GeTGPiesHXV8mWrgKYy1PyDJzV5e7SWPkLf9lk_3ZOLANIZpYRBvGzlLxCTTGMi09KVsQ3imDCUuig2AMsNxk4f9cdrEg2p8rHRpfuMi8YiABSHFBmimwjGXeLZb6yTwN7pKeISWCvkHmQ"/>
+</div>
+</aside>
+<!-- Horizontal Phase Stepper Header -->
+<header class="fixed top-0 right-0 w-[calc(100%-5rem)] h-20 bg-surface/80 backdrop-blur-xl border-b border-white/5 flex items-center px-12 z-40">
+<div class="flex items-center gap-4 mr-12">
+<span class="text-[10px] uppercase tracking-[0.2em] font-bold text-on-surface-variant">Candidate Journey</span>
+<span class="material-symbols-outlined text-slate-600 text-sm">chevron_right</span>
+</div>
+<div class="flex-1 flex items-center justify-center gap-8">
+<!-- Step 1: Sourcing -->
+<div class="flex items-center gap-3 opacity-40">
+<div class="w-6 h-6 rounded-full border border-slate-500 flex items-center justify-center text-[10px]">1</div>
+<span class="text-[10px] font-bold uppercase tracking-widest">Sourcing</span>
+</div>
+<div class="w-8 h-px bg-white/10"></div>
+<!-- Step 2: Active -->
+<div class="flex items-center gap-3 opacity-40">
+<div class="w-6 h-6 rounded-full border border-slate-500 flex items-center justify-center text-[10px]">2</div>
+<span class="text-[10px] font-bold uppercase tracking-widest">Interviewing</span>
+</div>
+<div class="w-8 h-px bg-white/10"></div>
+<!-- Step 3: Offer -->
+<div class="flex items-center gap-3 opacity-40">
+<div class="w-6 h-6 rounded-full border border-slate-500 flex items-center justify-center text-[10px]">3</div>
+<span class="text-[10px] font-bold uppercase tracking-widest">Offer</span>
+</div>
+<div class="w-8 h-px bg-white/10"></div>
+<!-- Step 4: Declined (ACTIVE) -->
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] text-white">4</div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary neon-text">Declined</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="material-symbols-outlined text-slate-400 cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer">help</span>
+</div>
+</header>
+<!-- Main Content Layout -->
+<main class="pt-20 ml-20 h-screen flex">
+<!-- Vertical Sub-Navigation -->
+<aside class="w-72 h-full bg-surface-container-low/30 backdrop-blur-md border-r border-white/5 py-10 px-6 overflow-y-auto">
+<h3 class="text-[10px] font-extrabold uppercase tracking-[0.25em] text-on-surface-variant mb-8 px-4">Decline Workflow</h3>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-white font-semibold border-r-2 border-primary" href="#">
+<span class="material-symbols-outlined text-primary text-xl">cancel_presentation</span>
+<span class="text-sm">Offer to Decline</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-slate-200 transition-colors">list_alt</span>
+<span class="text-sm">Reason Selected</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-slate-200 transition-colors">drafts</span>
+<span class="text-sm">Response Prepared</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group opacity-50 cursor-not-allowed" href="#">
+<span class="material-symbols-outlined text-xl">send</span>
+<span class="text-sm">Decline Sent</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group opacity-50 cursor-not-allowed" href="#">
+<span class="material-symbols-outlined text-xl">handshake</span>
+<span class="text-sm">Relationship Follow-up</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-slate-200 transition-colors">psychology</span>
+<span class="text-sm">Preference Learning</span>
+</a>
+<div class="h-px bg-white/5 my-4"></div>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-slate-200 transition-colors">archive</span>
+<span class="text-sm">Archived</span>
+</a>
+</nav>
+</aside>
+<!-- Content Canvas -->
+<section class="flex-1 overflow-y-auto p-12 bg-surface-dim">
+<div class="max-w-5xl mx-auto space-y-8">
+<!-- Header & Breadcrumb -->
+<header>
+<h1 class="text-3xl font-extrabold tracking-tight text-white mb-2">Finalize Rejection</h1>
+<p class="text-slate-400 max-w-xl">You are about to move this candidate to the declined phase. Review the offer details and capture the primary reasons for data-driven optimization.</p>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Summary Card -->
+<div class="col-span-12 lg:col-span-7 glass-panel rounded-2xl p-8 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+<div class="flex justify-between items-start mb-8 relative z-10">
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center p-3">
+<img alt="Company Logo" class="w-full h-full object-contain" data-alt="A sleek, minimalist vector logo of a futuristic technology company. The logo is displayed on a clean, dark surface with soft ambient blue lighting. The style is ultra-modern, using thin glowing lines and geometric abstraction to convey a high-speed, innovative corporate identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCad7j5KMfvRuQhlvbaTHJ5M-LA8EUMCJhGyFmyrlpq9Suqgf8-bL3N-AVKNcfBPOEktpXJUW5z22zOWYUcUBheONnz-efMq1M4l9kcAhtyEq9pOZj8epHdvU9fObaAKzbwFfWD6x2zi9UfMS2_MyJUg47BHUYcBkewCMOPdkUcPWbzN2JWF857VlR0D8VBxzpnZUovQrb8hk8FFYOB_GQYFqLYUFZG42ybsArjxqa36TMvq5HsJevnOW2acd8Vry7pSxXW_vGcKDM"/>
+</div>
+<div>
+<div class="text-[10px] font-bold uppercase tracking-widest text-primary mb-1">Target Organization</div>
+<h2 class="text-xl font-bold text-white">Quantum Leap Dynamics</h2>
+</div>
+</div>
+<div class="text-right">
+<div class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Annual Package</div>
+<div class="text-xl font-medium text-on-surface">$185,000 + Equity</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6 relative z-10">
+<div class="p-4 rounded-xl bg-surface-container/50 border border-white/5">
+<div class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Role Title</div>
+<div class="text-sm font-semibold text-slate-200">Principal Design Engineer</div>
+</div>
+<div class="p-4 rounded-xl bg-surface-container/50 border border-white/5">
+<div class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Reports To</div>
+<div class="text-sm font-semibold text-slate-200">Chief Technology Officer</div>
+</div>
+</div>
+<div class="mt-8 pt-8 border-t border-white/5 flex gap-4">
+<button class="px-5 py-2 rounded-lg bg-white/5 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors">
+                View Full Offer PDF
+               </button>
+<button class="px-5 py-2 rounded-lg bg-white/5 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors">
+                Candidate Profile
+               </button>
+</div>
+</div>
+<!-- Quick Stats / Secondary Panel -->
+<div class="col-span-12 lg:col-span-5 glass-panel rounded-2xl p-8 flex flex-col justify-between border-l-4 border-tertiary">
+<div>
+<div class="text-[10px] font-extrabold uppercase tracking-widest text-tertiary mb-4">Urgency Status</div>
+<p class="text-slate-300 text-sm leading-relaxed mb-6">
+                The candidate has an expiring counter-offer. Rejection must be handled within <span class="text-white font-bold">24 hours</span> to maintain professional rapport and potential future sourcing.
+              </p>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between text-xs">
+<span class="text-slate-400">Response Speed Score</span>
+<span class="text-primary font-bold">Top 5%</span>
+</div>
+<div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[95%]"></div>
+</div>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest italic">Fast responses improve recruiter brand by 40%</p>
+</div>
+</div>
+<!-- Main Input Section: Why I'm Declining -->
+<div class="col-span-12 glass-panel rounded-2xl p-10">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-primary">edit_note</span>
+<h3 class="text-lg font-bold text-white uppercase tracking-tight">Why I'm Declining</h3>
+</div>
+<div class="relative">
+<textarea class="w-full bg-surface-container-highest/40 border border-white/10 rounded-xl p-6 text-slate-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none min-h-[180px] transition-all placeholder:text-slate-600" placeholder="Enter internal notes on the candidate's feedback... (e.g. Compensation misalignment, cultural fit, better offer elsewhere)"></textarea>
+<div class="absolute bottom-4 right-4 flex gap-2">
+<span class="px-2 py-1 rounded bg-white/5 text-[9px] text-slate-500 font-bold uppercase">AI Analysis Ready</span>
+<span class="px-2 py-1 rounded bg-white/5 text-[9px] text-slate-500 font-bold uppercase">Private Note</span>
+</div>
+</div>
+<div class="mt-10 flex flex-col md:flex-row items-center justify-between gap-6 border-t border-white/5 pt-10">
+<div class="flex items-center gap-6">
+<div class="flex -space-x-3">
+<img class="w-8 h-8 rounded-full border-2 border-surface" data-alt="Portrait of a diverse team member in a professional setting. The image uses high-end editorial lighting, with soft shadows and a cool, modern color grade. The background is a blurred office environment with neon accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDWMjT0Vz2PDyRuSlSjt_dp7Xd3rRwKwaz2Br_REJNF-srGSFnmcfFZM5QcYQnu9J5tqjGGr753wBmPBFXqKaSIKpP11kLgqImFZN2ygmWVoTyhV-jlm7EoYAmjV62y0wdrF05cB4mIurZ8aeFw4Wnwn-qzyCXoOC6XnDpvRF1l4sJR3kUrxDdushFyohrnjNIfqSx5or83fSvmgD9fHJYM7SJ6YbbJN-I9Vlcr6M6NiboG9mW39e2HgLOM5Erc38sMHqcL2SKSTo"/>
+<img class="w-8 h-8 rounded-full border-2 border-surface" data-alt="Portrait of a young male professional with sharp features and a stylish haircut. He is wearing a dark, textured polo shirt. The lighting is crisp and modern, focusing on clarity and professional demeanor against a dark, tech-oriented backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBoUvHrazOmYsK-KrdA9kvOrnXILGJxzgix8Op2nYUh3TZKUt07pd1vkoEtaSfHWIZYZKQxUJUYTzxPncmRhgWlNq5BNNJrcvdTEnqmcxQ_ysYDcIo4Z6cGU6GhpjGB-PqGacgQimYvlFckljmYKj5FwD21P5tjBlf16mfpAA2osW8oIntE9GUxH9thMbderPzNFXguGVxJV4LUvFcqCQ1Fv8VropZg-ZOta2_uMsDELvI3z3vO0eTpbsKxBDhTmOs2jPUFO8cMxRE"/>
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-slate-800 flex items-center justify-center text-[10px] font-bold">+2</div>
+</div>
+<span class="text-xs text-slate-400">Hiring team will be notified of this decline stage.</span>
+</div>
+<div class="flex gap-4">
+<button class="px-8 py-4 rounded-xl bg-slate-800 text-white text-xs font-extrabold uppercase tracking-[0.15em] hover:bg-slate-700 transition-all active:scale-95">
+                  Save Draft
+                </button>
+<button class="px-10 py-4 rounded-xl bg-primary text-white text-xs font-extrabold uppercase tracking-[0.15em] shadow-[0_10px_20px_-5px_rgba(37,106,244,0.4)] hover:shadow-primary/40 hover:-translate-y-0.5 transition-all active:scale-95 flex items-center gap-3">
+                  Proceed to Reason Selection
+                  <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bottom Footer Details -->
+<div class="col-span-12 flex justify-between items-center px-4 py-4 opacity-50">
+<div class="text-[10px] text-slate-500 uppercase tracking-widest">Candidate ID: #QL-992834-ENG</div>
+<div class="text-[10px] text-slate-500 uppercase tracking-widest">Last Modified: 14 Oct 2023 at 14:22 GMT</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual FAB (Suppressed based on screen: Profile/Details - but technically this is a wizard, so we keep UI clean) -->
+</body></html>

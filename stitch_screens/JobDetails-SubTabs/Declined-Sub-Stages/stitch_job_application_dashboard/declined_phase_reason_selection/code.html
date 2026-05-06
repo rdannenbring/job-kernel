@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Job Manager - Declined Phase</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed": "#e2e8f0",
+                    "tertiary-fixed": "#ffe4e6",
+                    "outline-variant": "#1e293b",
+                    "inverse-on-surface": "#0f172a",
+                    "on-tertiary-fixed-variant": "#9f1239",
+                    "on-primary-fixed-variant": "#1d4ed8",
+                    "surface-dim": "#0b0f18",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-container": "#fb7185",
+                    "on-primary-container": "#60a5fa",
+                    "on-tertiary-fixed": "#4c0519",
+                    "on-surface-variant": "#94a3b8",
+                    "outline": "#334155",
+                    "primary-fixed": "#dbeafe",
+                    "surface-container": "#1e293b80",
+                    "primary-fixed-dim": "#bfdbfe",
+                    "on-secondary-fixed-variant": "#334155",
+                    "on-secondary-container": "#cbd5e1",
+                    "primary-container": "#256af433",
+                    "on-primary": "#ffffff",
+                    "inverse-surface": "#f8fafc",
+                    "on-primary-fixed": "#1e3a8a",
+                    "tertiary": "#f43f5e",
+                    "secondary": "#334155",
+                    "surface": "#101622",
+                    "surface-variant": "#1e293b",
+                    "surface-container-highest": "#2d3748",
+                    "surface-bright": "#1e293b",
+                    "background": "#101622",
+                    "tertiary-fixed-dim": "#fecdd3",
+                    "surface-tint": "#256af4",
+                    "on-background": "#f1f5f9",
+                    "on-secondary-fixed": "#0f172a",
+                    "on-error-container": "#fca5a5",
+                    "tertiary-container": "#f43f5e22",
+                    "on-secondary": "#f8fafc",
+                    "on-error": "#ffffff",
+                    "surface-container-lowest": "#080c14",
+                    "error-container": "#450a0a",
+                    "surface-container-high": "#1e293b99",
+                    "inverse-primary": "#60a5fa",
+                    "primary": "#256af4",
+                    "on-surface": "#f1f5f9",
+                    "surface-container-low": "#1e293b66",
+                    "secondary-fixed-dim": "#cbd5e1",
+                    "error": "#ef4444",
+                    "secondary-container": "#1e293b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "2xl": "1rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "display": ["Manrope"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-accent {
+            text-shadow: 0 0 10px rgba(37, 106, 244, 0.5);
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #101622;
+            color: #cbd5e1;
+            margin: 0;
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background">
+<!-- Atmosphere Blobs -->
+<div class="fixed top-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+<div class="fixed bottom-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[150px] translate-x-1/4 translate-y-1/4 pointer-events-none"></div>
+<!-- SideNavBar (JSON-Defined) -->
+<aside class="fixed left-0 top-0 h-screen w-64 bg-[#101622] flex flex-col h-full py-6 z-50">
+<div class="px-6 mb-10">
+<h1 class="text-xl font-bold tracking-tight text-white">Midnight Glass</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mt-1">Recruiter Pro</p>
+</div>
+<nav class="flex-1 space-y-1 px-4">
+<div class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors group cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded-lg text-white font-semibold bg-blue-600/10 border-r-2 border-[#256af4] transition-colors group cursor-pointer">
+<span class="material-symbols-outlined">work</span>
+<span class="text-sm font-medium">Jobs</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors group cursor-pointer">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-medium">Talent</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors group cursor-pointer">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="text-sm font-medium">Analytics</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors group cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</div>
+</nav>
+<div class="px-4 mt-auto">
+<button class="w-full py-3 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[0.98] transition-transform">
+                Post New Job
+            </button>
+<div class="mt-6 flex items-center gap-3 px-3">
+<img alt="User profile avatar" class="w-10 h-10 rounded-full object-cover grayscale" data-alt="Close up portrait of a professional male recruiter in a dark navy suit with subtle studio lighting and a deep slate background, maintaining the high-end Midnight Glass aesthetic through cool tones and sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDS9JPQOZBZTlHzHJBnLf0iLS9i5IuPSmrNjAgbCxh4_9byv55XhNO5k8m3D1QQwNfZuYXL2d89KZgw-K4JxOO31FCc0AOgK69aVGNBOYAE28_UqLLXaNvAwnMbfdkr4_mp6tiSdZJtwKgjhjzFq1k-buqZfJm-kP7D4Iwhf1LuF5n17w5AQMm0YTurCuq82pbKd0yBDlHWSuJSK-VLac6BqIznyUrYMD6mJTTUxP1Y2jkHzQeM9BpU7BKp3FwopeyWo1WY42HzJVc"/>
+<div class="overflow-hidden">
+<p class="text-sm font-semibold text-white truncate">Marcus Vane</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-tight">Talent Lead</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (JSON-Defined) -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-[#101622]/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-8 z-40">
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg">search</span>
+<input class="bg-slate-900/50 border-none rounded-full pl-10 pr-4 py-1.5 text-sm text-slate-300 w-64 focus:ring-1 focus:ring-primary" placeholder="Search applications..." type="text"/>
+</div>
+<nav class="flex gap-8">
+<a class="text-slate-400 hover:text-slate-200 font-manrope uppercase tracking-widest text-[10px]" href="#">Saved</a>
+<a class="text-slate-400 hover:text-slate-200 font-manrope uppercase tracking-widest text-[10px]" href="#">Generated</a>
+<a class="text-slate-400 hover:text-slate-200 font-manrope uppercase tracking-widest text-[10px]" href="#">Applied</a>
+<a class="text-slate-400 hover:text-slate-200 font-manrope uppercase tracking-widest text-[10px]" href="#">Interviewing</a>
+<a class="text-[#256af4] border-b-2 border-[#256af4] pb-4 font-manrope uppercase tracking-widest text-[10px]" href="#">Declined</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="ml-64 pt-24 px-8 pb-12">
+<!-- Context Header -->
+<div class="mb-10">
+<div class="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-[0.2em] mb-2">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+<span>Back to Pipeline</span>
+</div>
+<h2 class="text-4xl font-bold text-white tracking-tight">Phase: Declined</h2>
+<p class="text-slate-400 mt-2 max-w-2xl">Refining our search parameters based on candidate-led exits. Select a reason to update talent filtering algorithms.</p>
+</div>
+<div class="grid grid-cols-12 gap-8 items-start">
+<!-- Left: Vertical Sub-Navigation -->
+<div class="col-span-2 space-y-2">
+<div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 px-3">Sub-Stages</div>
+<button class="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-primary/10 border-r-2 border-primary text-white font-semibold group transition-all">
+<span class="text-sm">Reason Selected</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+<button class="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-white/5 text-slate-400 transition-all">
+<span class="text-sm">Draft Response</span>
+<span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100">chevron_right</span>
+</button>
+<button class="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-white/5 text-slate-400 transition-all">
+<span class="text-sm">Archive Profile</span>
+<span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100">chevron_right</span>
+</button>
+</div>
+<!-- Center: Reason Buckets Grid -->
+<div class="col-span-7 space-y-8">
+<div class="grid grid-cols-3 gap-4">
+<!-- Compensation -->
+<div class="glass-panel p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all border border-primary/20 group">
+<div class="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<h4 class="text-white font-bold mb-1">Compensation</h4>
+<p class="text-xs text-slate-400 leading-relaxed">Salary expectations exceed range or benefit package insufficient.</p>
+</div>
+<!-- Better Offer -->
+<div class="glass-panel p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group border border-white/5">
+<div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">star_half</span>
+</div>
+<h4 class="text-white font-bold mb-1">Better Offer</h4>
+<p class="text-xs text-slate-400 leading-relaxed">Candidate accepted a competing role elsewhere.</p>
+</div>
+<!-- Role Mismatch -->
+<div class="glass-panel p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group border border-white/5">
+<div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">psychology</span>
+</div>
+<h4 class="text-white font-bold mb-1">Role Mismatch</h4>
+<p class="text-xs text-slate-400 leading-relaxed">Responsibilities or career growth doesn't align with goals.</p>
+</div>
+<!-- Location/Commute -->
+<div class="glass-panel p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group border border-white/5">
+<div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">distance</span>
+</div>
+<h4 class="text-white font-bold mb-1">Location</h4>
+<p class="text-xs text-slate-400 leading-relaxed">Commute length or relocation logistics proved impossible.</p>
+</div>
+<!-- Work Model -->
+<div class="glass-panel p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group border border-white/5">
+<div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">home_work</span>
+</div>
+<h4 class="text-white font-bold mb-1">Work Model</h4>
+<p class="text-xs text-slate-400 leading-relaxed">Preference for Remote/Hybrid versus our In-Office policy.</p>
+</div>
+<!-- Company Concerns -->
+<div class="glass-panel p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group border border-white/5">
+<div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">domain_disabled</span>
+</div>
+<h4 class="text-white font-bold mb-1">Company</h4>
+<p class="text-xs text-slate-400 leading-relaxed">Culture fit, financial stability, or brand reputation concerns.</p>
+</div>
+<!-- Timing/Personal -->
+<div class="glass-panel p-6 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group border border-white/5 col-span-3">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300 group-hover:scale-110 transition-transform shrink-0">
+<span class="material-symbols-outlined">event_busy</span>
+</div>
+<div>
+<h4 class="text-white font-bold mb-1">Timing &amp; Personal</h4>
+<p class="text-xs text-slate-400 leading-relaxed">Family emergencies, current employer counter-offers, or general timing issues.</p>
+</div>
+<div class="ml-auto">
+<span class="material-symbols-outlined text-slate-500">add_circle</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Detailed Notes -->
+<div class="glass-panel p-8 rounded-2xl">
+<h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">edit_note</span>
+                        Candidate Feedback Notes
+                    </h3>
+<textarea class="w-full bg-slate-900 border-slate-700 rounded-xl p-4 text-slate-200 placeholder:text-slate-600 focus:ring-primary focus:border-primary transition-all min-h-[120px]" placeholder="Add specific details from the exit call..."></textarea>
+<div class="flex items-center justify-between mt-8">
+<div class="flex items-center gap-4">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="rounded border-slate-700 bg-slate-800 text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-xs text-slate-400 group-hover:text-slate-200 transition-colors">Flag as 'Do Not Reach Out'</span>
+</label>
+</div>
+<button class="px-8 py-3 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                            Save Reason &amp; Draft Response
+                        </button>
+</div>
+</div>
+</div>
+<!-- Right: Impact Analysis Widget -->
+<div class="col-span-3 space-y-6 sticky top-24">
+<div class="glass-panel rounded-2xl p-6 border-l-4 border-primary">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-bold text-white uppercase tracking-wider text-xs">Impact Analysis</h3>
+<span class="material-symbols-outlined text-primary text-sm">insights</span>
+</div>
+<p class="text-xs text-slate-400 mb-6">Declining due to <span class="text-primary font-bold">Compensation</span> will trigger the following filter adjustments:</p>
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">filter_alt</span>
+</div>
+<div>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest leading-none">Salary Filter</p>
+<p class="text-xs text-slate-200 mt-1">+15% floor adjustment</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">trending_down</span>
+</div>
+<div>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest leading-none">Match Score</p>
+<p class="text-xs text-slate-200 mt-1">Stricter seniority weighting</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">group</span>
+</div>
+<div>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest leading-none">Pipeline Impact</p>
+<p class="text-xs text-slate-200 mt-1">12 candidates deprioritized</p>
+</div>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-white/5">
+<img alt="Filter impact graph" class="w-full h-32 object-cover rounded-xl grayscale opacity-50 mb-4" data-alt="A sophisticated data visualization dashboard showing glowing neon blue trend lines and holographic bars against a dark slate glass surface. The lighting is low and moody, emphasizing a futuristic analytics aesthetic with deep depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAL9beV9uUUl8fGmtgypLOZ6E_zxSAuwLXSWgSeBR88L4tHWy-iset44oZo_IW9DVuTzkrCuLb2WIfYlaOTLFKZdTQnWdFTHZVm8K6i0lfW6-h6cxMoJ7NKOLukkczQpV-PpOdaJlYStPRp3n2e5DMx4LOJogQAs8q5xngtkYbjnPnZcBFkl3BUsMBMjyg1h_GsRoUIA6bnqlk702cJeADnV_Cymud7SbJwa_hELHhYhJ0J6XuiKs9oTTpwfpMQpwBeiOlOrcXQIHI"/>
+<p class="text-[10px] text-center text-slate-500">Live Prediction of Search Accuracy</p>
+</div>
+</div>
+<!-- Quick Action Tip -->
+<div class="p-4 rounded-xl bg-surface-container-highest/40 border border-white/5">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-amber-500 text-lg">lightbulb</span>
+<p class="text-[11px] text-slate-400 italic leading-relaxed">
+                            "Candidates frequently citing 'Work Model' may indicate our hybrid policy is uncompetitive in the current market. Consider flagging this for HR."
+                        </p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

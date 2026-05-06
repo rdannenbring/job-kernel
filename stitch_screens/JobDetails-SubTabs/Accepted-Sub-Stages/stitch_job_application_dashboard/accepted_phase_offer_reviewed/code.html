@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Offer Review - Midnight Glass</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ef4444",
+                        "surface-container": "#1e293b80",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "tertiary": "#f43f5e",
+                        "primary-container": "#256af433",
+                        "on-secondary-container": "#cbd5e1",
+                        "surface-container-low": "#1e293b66",
+                        "outline": "#334155",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#4c0519",
+                        "background": "#101622",
+                        "on-tertiary-container": "#fb7185",
+                        "on-surface": "#f1f5f9",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "on-background": "#f1f5f9",
+                        "surface-container-high": "#1e293b99",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffe4e6",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "primary-fixed": "#dbeafe",
+                        "surface": "#101622",
+                        "secondary-container": "#1e293b",
+                        "outline-variant": "#1e293b",
+                        "on-secondary": "#f8fafc",
+                        "surface-dim": "#0b0f18",
+                        "surface-container-lowest": "#080c14",
+                        "secondary": "#334155",
+                        "inverse-primary": "#60a5fa",
+                        "surface-container-highest": "#2d3748",
+                        "secondary-fixed": "#e2e8f0",
+                        "on-primary-container": "#60a5fa",
+                        "surface-tint": "#256af4",
+                        "on-secondary-fixed-variant": "#334155",
+                        "on-error": "#ffffff",
+                        "primary": "#256af4",
+                        "on-secondary-fixed": "#0f172a",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "tertiary-container": "#f43f5e22",
+                        "inverse-surface": "#f8fafc",
+                        "on-primary-fixed": "#1e3a8a",
+                        "inverse-on-surface": "#0f172a",
+                        "error-container": "#450a0a",
+                        "on-surface-variant": "#94a3b8",
+                        "surface-variant": "#1e293b",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-error-container": "#fca5a5",
+                        "surface-bright": "#1e293b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .neon-glow {
+            text-shadow: 0 0 8px rgba(37, 106, 244, 0.5);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body min-h-screen selection:bg-primary/30">
+<!-- Atmosphere Blobs -->
+<div class="fixed top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -z-10"></div>
+<div class="fixed bottom-0 left-64 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] -z-10"></div>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-64 border-r border-white/10 bg-slate-950/80 backdrop-blur-xl flex flex-col h-full py-8 px-4 z-50">
+<div class="mb-10 px-4">
+<h1 class="text-xl font-bold tracking-tighter text-white">Midnight Glass</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mt-1">Career Curator</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Applications is technically the parent category for Offer Review -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 transition-colors hover:bg-white/5 group" href="#">
+<span class="material-symbols-outlined text-lg">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600/20 text-blue-400 font-semibold border-r-2 border-blue-500 group" href="#">
+<span class="material-symbols-outlined text-lg">work</span>
+<span class="text-sm font-medium">Applications</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 transition-colors hover:bg-white/5 group" href="#">
+<span class="material-symbols-outlined text-lg">bookmark</span>
+<span class="text-sm font-medium">Saved Jobs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 transition-colors hover:bg-white/5 group" href="#">
+<span class="material-symbols-outlined text-lg">group</span>
+<span class="text-sm font-medium">Network</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 transition-colors hover:bg-white/5 group" href="#">
+<span class="material-symbols-outlined text-lg">analytics</span>
+<span class="text-sm font-medium">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-white/5 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 transition-colors hover:bg-white/5" href="#">
+<span class="material-symbols-outlined text-lg">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+<div class="flex items-center gap-3 px-4 py-4 mt-4 glass-panel rounded-2xl">
+<img alt="Premium User Avatar" class="w-10 h-10 rounded-full object-cover border border-white/10" data-alt="A professional headshot of a modern executive in a dark tailored suit, captured with cinematic low-key lighting against a blurred architectural background. The overall aesthetic is polished and high-end, featuring deep navy and charcoal tones with subtle rim lighting. The expression is confident and approachable, fitting for a premium career curator application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBw0zUaGGeVIh-qoVMButSy6UZxj7o-ymDB1uYqKq8i4jEXLGoIZ4RWXZ3LJJOU8CKbgP7cY-S1jSVvVvZfe00jvte1DYxnFJ-0w5ofN7sgX_ydEedewTXsHfSbywVJnN-1gZTwCd7n4p-3lwV1Ow99sfYijpzHisquQ0cyAVPmwj9F0mTxrOxvdYfl0jIpDNMhz115dZsgYghe69D3pzOF8TlpIHgVs8_4SXc6AHVQOtl-0-oNkXE5A82JoUgiEMvkxe_fUHD_cEI"/>
+<div class="overflow-hidden">
+<p class="text-xs font-bold text-white truncate">Alex Sterling</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-tighter">Pro Member</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Stage -->
+<main class="ml-64 min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-slate-900/40 backdrop-blur-md flex justify-between items-center px-8 z-40 border-b border-white/5">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 bg-slate-950/40 px-3 py-1.5 rounded-lg border border-white/5">
+<span class="material-symbols-outlined text-slate-400 text-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm text-slate-200 placeholder:text-slate-500 w-48" placeholder="Search applications..." type="text"/>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-slate-400 hover:text-blue-300 transition-colors font-manrope text-sm font-medium" href="#">Dashboard</a>
+<a class="text-blue-400 font-bold font-manrope text-sm font-medium" href="#">Applications</a>
+<a class="text-slate-400 hover:text-blue-300 transition-colors font-manrope text-sm font-medium" href="#">Active</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors relative">
+<span class="material-symbols-outlined text-slate-300">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-background"></span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-slate-300">history</span>
+</button>
+</div>
+</header>
+<!-- Content Area -->
+<div class="pt-24 pb-12 px-12 max-w-7xl mx-auto">
+<!-- Header Section -->
+<div class="mb-12 flex justify-between items-end">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">Accepted Phase</span>
+<span class="text-slate-500 text-xs">/</span>
+<span class="text-slate-300 text-xs font-medium">Offer Reviewed</span>
+</div>
+<h2 class="text-4xl font-extrabold tracking-tight text-white neon-glow">Offer Review</h2>
+<p class="text-slate-400 mt-2 max-w-md">Carefully audit the finalized terms from <span class="text-white font-semibold">Nexus AI Tech</span> before proceeding to signature.</p>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-2.5 rounded-xl bg-slate-800 text-white font-semibold text-sm hover:bg-slate-700 transition-all Active:scale-[0.98]">
+                        Log Negotiation
+                    </button>
+<button class="px-8 py-2.5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-all Active:scale-[0.98]">
+                        Accept &amp; Move Forward
+                    </button>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-8">
+<!-- Left Nav: Sub-navigation -->
+<div class="col-span-3 space-y-2">
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 mb-4">Journey Steps</p>
+<div class="space-y-1">
+<button class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-slate-500 opacity-60">
+<span class="text-sm font-medium">Initial Contact</span>
+<span class="material-symbols-outlined text-sm text-green-500" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</button>
+<button class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-slate-500 opacity-60">
+<span class="text-sm font-medium">Interview Rounds</span>
+<span class="material-symbols-outlined text-sm text-green-500" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</button>
+<button class="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-blue-600/20 text-blue-400 border-r-2 border-blue-500">
+<span class="text-sm font-bold">Offer Reviewed</span>
+<span class="material-symbols-outlined text-sm">pending</span>
+</button>
+<button class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-slate-500">
+<span class="text-sm font-medium">Background Check</span>
+<span class="material-symbols-outlined text-sm">lock</span>
+</button>
+<button class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-slate-500">
+<span class="text-sm font-medium">Onboarding</span>
+<span class="material-symbols-outlined text-sm">rocket_launch</span>
+</button>
+</div>
+<div class="mt-8 p-6 glass-panel rounded-2xl">
+<p class="text-xs font-bold text-slate-100 mb-4 uppercase tracking-widest">Hiring Manager</p>
+<div class="flex items-center gap-4">
+<img alt="Manager Profile" class="w-12 h-12 rounded-xl object-cover" data-alt="A portrait of a male tech manager in a clean minimalist office environment with cool blue accent lighting. He is wearing a modern casual blazer and has a thoughtful, professional expression. The photo uses a shallow depth of field to emphasize the subject against a background of high-end office technology and glass partitions." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkUNvE45WDpQlq7CdeFazF2SoXRw6tMH0BhDkNPRr79ZTEd7AMUNTH6SizDemK3FA5NPQ-GZu8YsvQEENg_AlCq7tXphMVjAwSZt7TK_A2hq7ay3Xz8AC-6D_4xqZm5ZC-VPLPe13CqGStgvmRZVCKCn-pUlMcqFZfyQTeaK6m7koEzMc3TvfZMNwD-7os-WzWp5B4l0f4kPLPS055cAv78vgBMDH7AkpSuGjJitfAch2_6GtF6Xzll1xKRJ2FjM8tkQbuBTGiTVQ"/>
+<div>
+<p class="text-sm font-bold text-white">David Chen</p>
+<p class="text-xs text-slate-400">VP of Engineering</p>
+</div>
+</div>
+<button class="w-full mt-4 py-2 border border-white/10 rounded-lg text-xs font-bold text-slate-300 hover:bg-white/5 transition-colors">
+                            Send Message
+                        </button>
+</div>
+</div>
+<!-- Column 1: Detailed Breakdown -->
+<div class="col-span-6 space-y-6">
+<div class="glass-panel rounded-2xl overflow-hidden">
+<div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+<h3 class="text-sm font-bold text-white uppercase tracking-widest">Terms Summary</h3>
+<span class="text-[10px] text-slate-400">REF: NEX-2024-OFFR</span>
+</div>
+<div class="p-8 grid grid-cols-2 gap-x-12 gap-y-10">
+<div>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Title</p>
+<p class="text-lg font-bold text-white">Senior Product Designer</p>
+</div>
+<div>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Level</p>
+<p class="text-lg font-bold text-white">L5 (Senior II)</p>
+</div>
+<div>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Salary</p>
+<p class="text-lg font-bold text-primary">$185,000 <span class="text-xs text-slate-400 font-normal">/ year</span></p>
+</div>
+<div>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Bonus</p>
+<p class="text-lg font-bold text-white">15% Target <span class="text-xs text-slate-400 font-normal">/ performance</span></p>
+</div>
+<div>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Equity</p>
+<p class="text-lg font-bold text-white">4,500 RSU <span class="text-xs text-slate-400 font-normal">/ 4yr vest</span></p>
+</div>
+<div>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Work Model</p>
+<p class="text-lg font-bold text-white">Hybrid <span class="text-xs text-slate-400 font-normal">(3 days/wk)</span></p>
+</div>
+<div class="col-span-2">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">Benefits Package</p>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-slate-300">Premium Health (PPO)</span>
+<span class="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-slate-300">4% 401k Match</span>
+<span class="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-slate-300">Unlimited PTO</span>
+<span class="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-slate-300">$2k Learning Stipend</span>
+</div>
+</div>
+<div>
+<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Start Date</p>
+<p class="text-lg font-bold text-white">October 14, 2024</p>
+</div>
+</div>
+</div>
+<div class="glass-panel p-8 rounded-2xl flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-primary">description</span>
+</div>
+<div>
+<p class="text-sm font-bold text-white">Full Offer Document.pdf</p>
+<p class="text-xs text-slate-500">Last updated today at 09:42 AM</p>
+</div>
+</div>
+<button class="p-3 rounded-xl hover:bg-white/5 transition-colors border border-white/10">
+<span class="material-symbols-outlined text-slate-300">download</span>
+</button>
+</div>
+</div>
+<!-- Column 2: Verification Checklist -->
+<div class="col-span-3 space-y-6">
+<div class="glass-panel rounded-2xl overflow-hidden">
+<div class="p-6 border-b border-white/5 bg-white/5">
+<h3 class="text-sm font-bold text-white uppercase tracking-widest">Verification</h3>
+</div>
+<div class="p-6 space-y-4">
+<p class="text-xs text-slate-400 mb-4 leading-relaxed">Please verify each term matches your expectations before proceeding.</p>
+<label class="flex items-start gap-3 p-4 rounded-xl border border-white/5 hover:bg-white/5 cursor-pointer transition-all group">
+<div class="mt-1">
+<input class="rounded bg-slate-900 border-slate-700 text-primary focus:ring-primary focus:ring-offset-slate-900" type="checkbox"/>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-200 group-hover:text-white">Compensation</p>
+<p class="text-[10px] text-slate-500">Salary &amp; Bonus targets</p>
+</div>
+</label>
+<label class="flex items-start gap-3 p-4 rounded-xl border border-white/5 hover:bg-white/5 cursor-pointer transition-all group">
+<div class="mt-1">
+<input class="rounded bg-slate-900 border-slate-700 text-primary focus:ring-primary focus:ring-offset-slate-900" type="checkbox"/>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-200 group-hover:text-white">Equity &amp; Vesting</p>
+<p class="text-[10px] text-slate-500">RSU count &amp; Schedule</p>
+</div>
+</label>
+<label class="flex items-start gap-3 p-4 rounded-xl border border-white/5 hover:bg-white/5 cursor-pointer transition-all group">
+<div class="mt-1">
+<input class="rounded bg-slate-900 border-slate-700 text-primary focus:ring-primary focus:ring-offset-slate-900" type="checkbox"/>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-200 group-hover:text-white">Logistics</p>
+<p class="text-[10px] text-slate-500">Start date &amp; Hybrid policy</p>
+</div>
+</label>
+<label class="flex items-start gap-3 p-4 rounded-xl border border-white/5 hover:bg-white/5 cursor-pointer transition-all group">
+<div class="mt-1">
+<input class="rounded bg-slate-900 border-slate-700 text-primary focus:ring-primary focus:ring-offset-slate-900" type="checkbox"/>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-200 group-hover:text-white">Benefits Audit</p>
+<p class="text-[10px] text-slate-500">Healthcare &amp; Perks</p>
+</div>
+</label>
+</div>
+<div class="p-6 bg-slate-950/40 border-t border-white/5">
+<p class="text-[10px] text-slate-500 italic text-center">Missing something? Use the "Log Negotiation" button above to request changes.</p>
+</div>
+</div>
+<!-- Negotiation History Teaser -->
+<div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl">history_edu</span>
+</div>
+<h4 class="text-xs font-bold text-white uppercase tracking-widest mb-3">Negotiation Log</h4>
+<div class="space-y-3 relative z-10">
+<div class="flex gap-3">
+<div class="w-0.5 bg-primary/30 rounded-full my-1"></div>
+<div>
+<p class="text-[11px] font-bold text-slate-300">Counter-offer Sent</p>
+<p class="text-[10px] text-slate-500">3 days ago • +$5k Equity</p>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="w-0.5 bg-green-500/30 rounded-full my-1"></div>
+<div>
+<p class="text-[11px] font-bold text-slate-300">Employer Approved</p>
+<p class="text-[10px] text-slate-500">Yesterday • Term Finalized</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB (Suppressed as per rules for focused journey screens) -->
+</body></html>

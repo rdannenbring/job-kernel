@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Rejected Phase - Rejection Classified</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "tertiary-fixed": "#ffe4e6",
+                  "error-container": "#450a0a",
+                  "surface-bright": "#1e293b",
+                  "surface-container-low": "#1e293b66",
+                  "on-secondary-fixed": "#0f172a",
+                  "inverse-primary": "#60a5fa",
+                  "primary": "#256af4",
+                  "surface-variant": "#1e293b",
+                  "secondary-container": "#1e293b",
+                  "background": "#101622",
+                  "surface-container-lowest": "#080c14",
+                  "error": "#ef4444",
+                  "on-tertiary": "#ffffff",
+                  "on-primary-fixed": "#1e3a8a",
+                  "inverse-surface": "#f8fafc",
+                  "outline-variant": "#1e293b",
+                  "surface-dim": "#0b0f18",
+                  "surface": "#101622",
+                  "tertiary-container": "#f43f5e22",
+                  "secondary": "#334155",
+                  "tertiary-fixed-dim": "#fecdd3",
+                  "on-background": "#f1f5f9",
+                  "primary-fixed-dim": "#bfdbfe",
+                  "on-tertiary-container": "#fb7185",
+                  "on-primary-fixed-variant": "#1d4ed8",
+                  "outline": "#334155",
+                  "on-primary": "#ffffff",
+                  "on-surface-variant": "#94a3b8",
+                  "primary-container": "#256af433",
+                  "on-secondary": "#f8fafc",
+                  "primary-fixed": "#dbeafe",
+                  "on-error-container": "#fca5a5",
+                  "on-primary-container": "#60a5fa",
+                  "on-tertiary-fixed": "#4c0519",
+                  "on-surface": "#f1f5f9",
+                  "on-tertiary-fixed-variant": "#9f1239",
+                  "on-error": "#ffffff",
+                  "surface-container": "#1e293b80",
+                  "secondary-fixed": "#e2e8f0",
+                  "inverse-on-surface": "#0f172a",
+                  "surface-tint": "#256af4",
+                  "secondary-fixed-dim": "#cbd5e1",
+                  "on-secondary-fixed-variant": "#334155",
+                  "tertiary": "#f43f5e",
+                  "surface-container-highest": "#2d3748",
+                  "surface-container-high": "#1e293b99",
+                  "on-secondary-container": "#cbd5e1"
+          },
+          "fontFamily": {
+                  "headline": ["Manrope"],
+                  "display": ["Manrope"],
+                  "body": ["Manrope"],
+                  "label": ["Manrope"]
+          }
+        },
+      }
+    }
+  </script>
+<style>
+    body { font-family: 'Manrope', sans-serif; }
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.4);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .neon-text {
+      text-shadow: 0 0 8px rgba(37, 106, 244, 0.4);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-900/40 backdrop-blur-xl flex justify-between items-center h-16 px-8 w-full shadow-xl shadow-blue-500/5 bg-gradient-to-b from-white/5 to-transparent">
+<div class="text-xl font-black text-slate-100 tracking-tighter">CareerFlow</div>
+<nav class="hidden md:flex gap-8 items-center">
+<a class="font-manrope text-sm tracking-widest uppercase text-slate-400 hover:text-slate-200 duration-300 ease-in-out" href="#">Dashboard</a>
+<a class="font-manrope text-sm tracking-widest uppercase text-blue-500 border-b-2 border-blue-500 pb-1 duration-300 ease-in-out" href="#">Job Tracker</a>
+<a class="font-manrope text-sm tracking-widest uppercase text-slate-400 hover:text-slate-200 duration-300 ease-in-out" href="#">Resume Lab</a>
+<a class="font-manrope text-sm tracking-widest uppercase text-slate-400 hover:text-slate-200 duration-300 ease-in-out" href="#">Analytics</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-400 hover:bg-white/5 p-2 rounded-full duration-300">notifications</button>
+<button class="material-symbols-outlined text-slate-400 hover:bg-white/5 p-2 rounded-full duration-300">settings</button>
+<div class="h-8 w-8 rounded-full bg-primary overflow-hidden border border-white/10">
+<img alt="User Profile" data-alt="A professional headshot of a Hispanic male in his early 30s with short dark hair and a friendly smile. He is wearing a dark navy blazer over a crisp white shirt. The background is a blurred high-end office interior with cool blue and slate grey tones, matching the Midnight Glass aesthetic. Soft cinematic lighting highlights his features." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBphh1wLwF2Jf-Ib6jNQKGPOVX7TOm2m1xRDHzyKslc9PFw7e7f-phrV_CyxTML3Co9CeBU7XFalckQtslYCniwlpIMoU7c1UeBxZ7GLXNTrvg5XyUAafes-vPpPqG_5AhX6pWBYz2D0voUGzpHksmr5Cw5TeS-dGpfh2SQ2BGAtk_dUWmv1Qp_YE96A2Q1VjMCD7BsYQa34v5d8bkd-htfOakeN5b2fauzgLwhOqPTgA4SmEs_R8hFA_uevqrf0FPX16nx_voj_l4"/>
+</div>
+</div>
+</header>
+<!-- Main Shell Layout -->
+<div class="flex min-h-screen pt-16">
+<!-- SideNavBar -->
+<aside class="h-full w-64 fixed left-0 top-0 bg-[#101622] flex flex-col h-screen pt-20 bg-slate-800/40 z-40 border-r border-white/5">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-xl bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">account_circle</span>
+</div>
+<div>
+<p class="text-slate-100 font-bold text-sm">Alex Rivera</p>
+<p class="font-manrope font-medium text-[10px] tracking-widest uppercase text-primary">Premium Member</p>
+</div>
+</div>
+</div>
+<nav class="flex-1">
+<a class="flex items-center gap-4 font-manrope font-medium text-[12px] tracking-widest uppercase text-slate-400 py-3 px-6 hover:bg-slate-800/50 hover:text-white transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+          Overview
+        </a>
+<a class="flex items-center gap-4 font-manrope font-medium text-[12px] tracking-widest uppercase text-blue-400 bg-blue-500/10 border-r-4 border-blue-500 py-3 px-6 transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">work</span>
+          My Applications
+        </a>
+<a class="flex items-center gap-4 font-manrope font-medium text-[12px] tracking-widest uppercase text-slate-400 py-3 px-6 hover:bg-slate-800/50 hover:text-white transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">description</span>
+          Resume Builder
+        </a>
+<a class="flex items-center gap-4 font-manrope font-medium text-[12px] tracking-widest uppercase text-slate-400 py-3 px-6 hover:bg-slate-800/50 hover:text-white transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">psychology</span>
+          Interview Prep
+        </a>
+<a class="flex items-center gap-4 font-manrope font-medium text-[12px] tracking-widest uppercase text-slate-400 py-3 px-6 hover:bg-slate-800/50 hover:text-white transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">group</span>
+          Network
+        </a>
+</nav>
+<div class="p-6">
+<button class="w-full py-3 px-4 rounded-xl bg-primary text-white text-[12px] font-bold tracking-widest uppercase shadow-lg shadow-primary/20 hover:brightness-110 transition-all">
+          Upgrade to Pro
+        </button>
+<a class="flex items-center gap-4 font-manrope font-medium text-[12px] tracking-widest uppercase text-slate-400 py-6 hover:text-white transition-all mt-4" href="#">
+<span class="material-symbols-outlined">help</span>
+          Help Center
+        </a>
+</div>
+</aside>
+<!-- Content Canvas -->
+<main class="ml-64 flex-1 p-8">
+<!-- Atmosphere Decoration -->
+<div class="fixed top-0 right-0 -z-10 w-[500px] h-[500px] bg-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="fixed bottom-0 left-64 -z-10 w-[300px] h-[300px] bg-tertiary/5 blur-[100px] rounded-full pointer-events-none"></div>
+<!-- Header Section -->
+<header class="mb-8">
+<div class="flex items-center gap-2 mb-2">
+<span class="text-slate-400 text-xs font-bold tracking-widest uppercase">My Applications</span>
+<span class="material-symbols-outlined text-slate-600 text-sm">chevron_right</span>
+<span class="text-error text-xs font-bold tracking-widest uppercase">Rejected Phase</span>
+</div>
+<h1 class="text-4xl font-extrabold text-slate-100 tracking-tight neon-text">Rejected Phase - Rejection Classified</h1>
+<p class="text-slate-400 mt-2 max-w-2xl">Transform setback into strategy. Classifying rejection reasons helps our AI engine optimize your future application approach and refine your Resume Lab iterations.</p>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Left: Classification Hub -->
+<div class="col-span-12 lg:col-span-8 flex flex-col gap-8">
+<!-- Reason Bucket Selector -->
+<section class="glass-panel rounded-2xl p-8">
+<h2 class="text-xl font-bold text-slate-100 mb-6 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">category</span>
+              Reason Bucket
+            </h2>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+<button class="flex flex-col items-center justify-center p-6 rounded-xl bg-primary/20 border border-primary/40 text-primary transition-all duration-300">
+<span class="material-symbols-outlined text-3xl mb-2" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="text-[10px] font-black tracking-widest uppercase">Skills Gap</span>
+</button>
+<button class="flex flex-col items-center justify-center p-6 rounded-xl bg-slate-900/60 border border-white/5 text-slate-400 hover:border-primary/30 hover:text-slate-200 transition-all duration-300">
+<span class="material-symbols-outlined text-3xl mb-2">diversity_3</span>
+<span class="text-[10px] font-black tracking-widest uppercase">Culture Fit</span>
+</button>
+<button class="flex flex-col items-center justify-center p-6 rounded-xl bg-slate-900/60 border border-white/5 text-slate-400 hover:border-primary/30 hover:text-slate-200 transition-all duration-300">
+<span class="material-symbols-outlined text-3xl mb-2">cancel</span>
+<span class="text-[10px] font-black tracking-widest uppercase">Role Cancelled</span>
+</button>
+<button class="flex flex-col items-center justify-center p-6 rounded-xl bg-slate-900/60 border border-white/5 text-slate-400 hover:border-primary/30 hover:text-slate-200 transition-all duration-300">
+<span class="material-symbols-outlined text-3xl mb-2">monetization_on</span>
+<span class="text-[10px] font-black tracking-widest uppercase">Salary Range</span>
+</button>
+<button class="flex flex-col items-center justify-center p-6 rounded-xl bg-slate-900/60 border border-white/5 text-slate-400 hover:border-primary/30 hover:text-slate-200 transition-all duration-300">
+<span class="material-symbols-outlined text-3xl mb-2">timer</span>
+<span class="text-[10px] font-black tracking-widest uppercase">Internal Fill</span>
+</button>
+<button class="flex flex-col items-center justify-center p-6 rounded-xl bg-slate-900/60 border border-white/5 text-slate-400 hover:border-primary/30 hover:text-slate-200 transition-all duration-300">
+<span class="material-symbols-outlined text-3xl mb-2">more_horiz</span>
+<span class="text-[10px] font-black tracking-widest uppercase">Other</span>
+</button>
+</div>
+</section>
+<!-- Raw Feedback Input -->
+<section class="glass-panel rounded-2xl p-8 flex-1">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-xl font-bold text-slate-100 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">forum</span>
+                Raw Feedback
+              </h2>
+<span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">Privacy Secured</span>
+</div>
+<p class="text-slate-400 text-sm mb-4 italic">"Paste the original rejection email or interviewer comments here. Our NLP engine will extract sentiment and key technical gaps."</p>
+<textarea class="w-full h-64 bg-slate-900/80 border border-white/10 rounded-xl p-6 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all resize-none" placeholder="We decided to move forward with other candidates whose experience better aligns with our current tech stack..."></textarea>
+<div class="flex justify-end mt-6">
+<button class="px-8 py-3 rounded-xl bg-primary text-white font-bold tracking-widest uppercase text-sm flex items-center gap-3 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                Submit Classification
+                <span class="material-symbols-outlined">auto_awesome</span>
+</button>
+</div>
+</section>
+</div>
+<!-- Right: Context & Data Insights -->
+<aside class="col-span-12 lg:col-span-4 flex flex-col gap-8">
+<!-- Application Context Card -->
+<div class="glass-panel rounded-2xl p-6">
+<h3 class="text-[10px] font-bold tracking-widest uppercase text-slate-500 mb-4">Target Application</h3>
+<div class="flex gap-4 mb-6">
+<div class="h-16 w-16 rounded-2xl overflow-hidden glass-panel flex items-center justify-center">
+<img alt="Company Logo" data-alt="A clean, minimalist 3D rendering of a modern tech company logo in a futuristic glass and chrome style. The logo is set against a dark, moody blue background with subtle volumetric lighting, perfectly fitting the Midnight Glass design system's cinematic aesthetic. The lighting is low-key with sharp highlights on the edges of the logo." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_aoFQ5mw174cGphzF0tSQuNm8D_acIllxxvZQGL--4vpgr7qXzj1IojZvGJBszU-81K7VgSrZFzRXBXWksvPlXHv1UrSKqJyTTysjssy1QsX1WmuSJkl5oY02FWVTKtPo86_LUdEt5oUa2gb8BW6gUzD7_x37VZUjIU_VlSVbbKATY87qlPzHfpHU_P8hgqeC1geJdP91-BdG_SaA0aPOMDpmWhA8d9RqPeYI56IxNLA7EG0zvFjR2dFY9n6e8TUFzuyUyFhl6sU"/>
+</div>
+<div>
+<h4 class="text-lg font-bold text-slate-100">Senior UX Designer</h4>
+<p class="text-primary text-sm font-medium">Metaverse Lab Inc.</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-[14px] text-slate-500">location_on</span>
+<span class="text-xs text-slate-500">Remote / Menlo Park, CA</span>
+</div>
+</div>
+</div>
+<div class="space-y-3 pt-4 border-t border-white/5">
+<div class="flex justify-between text-xs">
+<span class="text-slate-400">Date Applied</span>
+<span class="text-slate-200">Oct 12, 2023</span>
+</div>
+<div class="flex justify-between text-xs">
+<span class="text-slate-400">Interview Rounds</span>
+<span class="text-slate-200">3 of 5 completed</span>
+</div>
+<div class="flex justify-between text-xs">
+<span class="text-slate-400">Days in Pipeline</span>
+<span class="text-slate-200">24 Days</span>
+</div>
+</div>
+</div>
+<!-- Future Analytics Preview -->
+<div class="glass-panel rounded-2xl p-6 relative overflow-hidden">
+<!-- Decorative gradient blur -->
+<div class="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/20 blur-2xl rounded-full"></div>
+<h3 class="text-[10px] font-bold tracking-widest uppercase text-slate-500 mb-6">Impact Analysis</h3>
+<div class="space-y-6">
+<div class="flex items-center gap-4">
+<div class="h-10 w-10 rounded-full bg-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-xl">trending_up</span>
+</div>
+<div>
+<p class="text-slate-200 text-sm font-bold">Predictive Pivot</p>
+<p class="text-slate-500 text-[10px]">Your classification adds data to 14 similar roles in your pipeline.</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="h-10 w-10 rounded-full bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">psychology</span>
+</div>
+<div>
+<p class="text-slate-200 text-sm font-bold">Skill Synthesis</p>
+<p class="text-slate-500 text-[10px]">Identifying a "Skills Gap" will trigger a new Resume Lab suggestion.</p>
+</div>
+</div>
+</div>
+<div class="mt-8 p-4 bg-slate-900/60 rounded-xl border border-white/5">
+<p class="text-xs text-slate-400 leading-relaxed">
+<span class="text-primary font-bold">Pro Tip:</span> Classified rejections increase the accuracy of your "Match Score" by <span class="text-white">18.5%</span> across the entire Dashboard.
+              </p>
+</div>
+</div>
+<!-- Resume lab shortcut -->
+<div class="glass-panel rounded-2xl p-6 border-l-4 border-tertiary">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">science</span>
+<span class="text-[10px] font-black text-slate-400 tracking-widest uppercase">Resume Lab</span>
+</div>
+<p class="text-slate-100 font-bold mb-2">Refine Your Strategy</p>
+<p class="text-xs text-slate-400 mb-4">Ready to update your profile based on this feedback?</p>
+<button class="text-[10px] font-bold tracking-widest uppercase text-primary flex items-center gap-2 hover:translate-x-1 transition-transform">
+               Go to Lab
+               <span class="material-symbols-outlined text-xs">arrow_forward</span>
+</button>
+</div>
+</aside>
+</div>
+</main>
+</div>
+</body></html>

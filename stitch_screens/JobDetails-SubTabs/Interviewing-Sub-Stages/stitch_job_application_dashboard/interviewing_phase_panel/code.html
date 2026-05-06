@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#256af4",
+                        "on-surface": "#f1f5f9",
+                        "inverse-on-surface": "#0f172a",
+                        "primary-container": "#256af433",
+                        "background": "#101622",
+                        "surface-container-low": "#1e293b66",
+                        "surface-container": "#1e293b80",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "inverse-primary": "#60a5fa",
+                        "surface-dim": "#0b0f18",
+                        "on-secondary-fixed-variant": "#334155",
+                        "on-secondary-fixed": "#0f172a",
+                        "tertiary-fixed": "#ffe4e6",
+                        "on-secondary-container": "#cbd5e1",
+                        "error": "#ef4444",
+                        "surface": "#101622",
+                        "error-container": "#450a0a",
+                        "on-error-container": "#fca5a5",
+                        "surface-bright": "#1e293b",
+                        "on-background": "#f1f5f9",
+                        "secondary": "#334155",
+                        "secondary-fixed": "#e2e8f0",
+                        "primary-fixed": "#dbeafe",
+                        "on-tertiary-container": "#fb7185",
+                        "surface-container-highest": "#2d3748",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "on-secondary": "#f8fafc",
+                        "surface-container-lowest": "#080c14",
+                        "secondary-container": "#1e293b",
+                        "on-tertiary-fixed": "#4c0519",
+                        "on-primary-container": "#60a5fa",
+                        "on-error": "#ffffff",
+                        "outline": "#334155",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#256af4",
+                        "tertiary-container": "#f43f5e22",
+                        "tertiary": "#f43f5e",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "on-surface-variant": "#94a3b8",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "surface-container-high": "#1e293b99",
+                        "surface-variant": "#1e293b",
+                        "outline-variant": "#1e293b",
+                        "inverse-surface": "#f8fafc",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "on-primary-fixed": "#1e3a8a"
+                    },
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        display: ["Manrope"],
+                        body: ["Manrope"],
+                        label: ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .neon-accent {
+            text-shadow: 0 0 15px rgba(37, 106, 244, 0.4);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body overflow-hidden">
+<!-- Fixed SideNavBar (Collapsed logic applied via width) -->
+<aside class="fixed left-0 top-0 h-full w-20 flex flex-col py-8 px-4 bg-slate-950/80 backdrop-blur-xl border-r border-white/10 z-50 transition-all duration-300">
+<div class="flex flex-col items-center gap-8 h-full">
+<div class="text-xl font-bold tracking-tighter text-white mb-4">
+<span class="material-symbols-outlined text-primary text-3xl">blur_on</span>
+</div>
+<nav class="flex flex-col gap-6 w-full items-center">
+<button class="p-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group" title="Dashboard">
+<span class="material-symbols-outlined">dashboard</span>
+</button>
+<button class="p-3 rounded-xl bg-blue-600/20 text-blue-400 font-semibold border-r-2 border-blue-500" title="Applications">
+<span class="material-symbols-outlined">work</span>
+</button>
+<button class="p-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group" title="Saved Jobs">
+<span class="material-symbols-outlined">bookmark</span>
+</button>
+<button class="p-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group" title="Network">
+<span class="material-symbols-outlined">group</span>
+</button>
+<button class="p-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all group" title="Analytics">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+</nav>
+<div class="mt-auto flex flex-col gap-6 items-center">
+<button class="p-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all" title="Settings">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-white/10">
+<img class="w-full h-full object-cover" data-alt="Close up portrait of a professional male in a modern dark office environment. Soft moody lighting with blue highlights creates a high-end cinematic feel. The style is editorial and sophisticated, focusing on corporate leadership and modern career aesthetics." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7nyCaufuJV50_yX0fYQTaPazLgQOyc_c1tWbbQ6C2bKwya-QRANxUDKAS5XQHeRcB9QpXXkvRRAnJ1VAXWi1z5voX9ma_-jhgdGOVb8zlsOvt7GlXnOwEn8gSqesYn7D2aoakR8QEAXIeaLIawzFFfiI6FK97u_eru-NUjlzMthUgtkqHdrzofEAM0drqmBo7vVS2RLK_xo5k2_43SOOX_zmI7-xI2xBF4tN3N0TIKUxbQVgbtFcbS3HkGWfKPK5FEYNjV5gpyWQ"/>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Stage Content Area -->
+<main class="ml-20 h-screen overflow-hidden flex flex-col">
+<!-- TopAppBar -->
+<header class="h-16 flex justify-between items-center px-8 bg-slate-900/40 backdrop-blur-md border-b border-white/5 z-40">
+<div class="flex items-center gap-6">
+<h1 class="text-sm font-manrope font-bold tracking-widest text-slate-400 uppercase">Panel Interview Stage</h1>
+<div class="h-4 w-[1px] bg-white/10"></div>
+<div class="flex gap-4">
+<span class="text-sm font-medium text-slate-400">Applications</span>
+<span class="text-sm font-medium text-slate-400">/</span>
+<span class="text-sm font-medium text-blue-400 font-bold">Midnight Glass Inc.</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="material-symbols-outlined text-slate-400 hover:text-blue-300 cursor-pointer">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full border-2 border-slate-900"></span>
+</div>
+<span class="material-symbols-outlined text-slate-400 hover:text-blue-300 cursor-pointer">history</span>
+</div>
+</header>
+<!-- Main Workspace -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Sub-stage side menu -->
+<aside class="w-64 bg-surface-dim/50 border-r border-white/5 flex flex-col py-6 px-4">
+<div class="mb-8">
+<p class="text-[10px] font-bold tracking-widest text-slate-500 uppercase mb-4 px-2">Interview Phases</p>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 transition-all text-sm" href="#">
+<span class="material-symbols-outlined text-sm">radio_button_checked</span>
+                            Screening
+                        </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 transition-all text-sm" href="#">
+<span class="material-symbols-outlined text-sm">radio_button_checked</span>
+                            Technical Test
+                        </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-bold text-sm" href="#">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">account_tree</span>
+                            Panel Interview
+                        </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 cursor-not-allowed text-sm" href="#">
+<span class="material-symbols-outlined text-sm">lock</span>
+                            Executive Review
+                        </a>
+</nav>
+</div>
+<div class="mt-auto glass-panel p-4 rounded-xl">
+<p class="text-[10px] font-bold tracking-widest text-primary uppercase mb-2">Next Session</p>
+<p class="text-sm font-bold text-on-surface">Today, 2:30 PM</p>
+<p class="text-xs text-slate-400 mb-4">45 Minutes • Zoom</p>
+<button class="w-full py-2 bg-primary text-white text-xs font-bold rounded-lg shadow-lg shadow-primary/20 hover:opacity-90 transition-all">
+                        Join Call
+                    </button>
+</div>
+</aside>
+<!-- 2-Column Content Layout -->
+<section class="flex-1 overflow-y-auto no-scrollbar p-8 bg-gradient-to-br from-background via-surface-dim to-background">
+<!-- Atmospheric Blurs -->
+<div class="fixed top-20 right-20 w-96 h-96 bg-primary/10 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="fixed bottom-20 left-40 w-64 h-64 bg-primary/5 rounded-full blur-[80px] pointer-events-none"></div>
+<div class="max-w-6xl mx-auto flex flex-col gap-8">
+<header>
+<h2 class="text-4xl font-display font-extrabold text-on-surface tracking-tight neon-accent mb-2">Cross-Functional Strategy</h2>
+<p class="text-slate-400 max-w-2xl">You are meeting with the Product, Design, and Engineering leads. Focus on alignment, scalability, and design-system maturity.</p>
+</header>
+<div class="grid grid-cols-12 gap-8">
+<!-- Left Column: Panel Roster -->
+<div class="col-span-12 lg:col-span-5 flex flex-col gap-6">
+<h3 class="text-xs font-bold tracking-widest text-slate-500 uppercase px-1">Interview Panel (3)</h3>
+<!-- Interviewer Card 1 -->
+<div class="glass-panel p-5 rounded-2xl flex items-center gap-5 hover:border-primary/30 transition-all cursor-pointer group">
+<div class="w-16 h-16 rounded-xl overflow-hidden border border-white/10 shrink-0">
+<img class="w-full h-full object-cover" data-alt="Portrait of a modern female executive with a confident expression. Set in a blurred high-tech workspace with soft bokeh and teal accents. The lighting is crisp and professional, emphasizing a modern, editorial corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMBPfkHsyixirywUsVr6adRNof4Fr_yUvFgCjYnQjoHyk85I7Tj5C1u7KphCgVxeLdxDlj3lK56w36mfVkfSD7Gn9DL8n44vwrpq90pwrdfjzky_4SplDLoX237uLobe4qMF0xza1Eppf2-JvSnz9DDzREJlukcF-zpGcxiCIdQi-lsy6XmfA8Ii6jisUyEy7nqYMfOt_koGJd284XYvVo3E1K98E3couq1aE5mJkXb3go5acNX1yk4fBj_vLeME7AwNw6GO3eGp8"/>
+</div>
+<div class="flex-1">
+<h4 class="text-lg font-bold text-on-surface">Elena Rodriguez</h4>
+<p class="text-xs text-primary font-semibold tracking-wide mb-2 uppercase">Head of Design</p>
+<div class="flex gap-2">
+<span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">Strategy</span>
+<span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">Culture</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-600 group-hover:text-primary transition-colors">open_in_new</span>
+</div>
+<!-- Interviewer Card 2 -->
+<div class="glass-panel p-5 rounded-2xl flex items-center gap-5 hover:border-primary/30 transition-all cursor-pointer group">
+<div class="w-16 h-16 rounded-xl overflow-hidden border border-white/10 shrink-0">
+<img class="w-full h-full object-cover" data-alt="Professional portrait of a male technical lead in a sophisticated, minimalist architectural environment. The lighting is moody and dramatic with deep shadows and soft highlights, representing a tech-focused, high-end design aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuArh6aIzCOcGc9DDdwS3ajJOxaoKnok-FnUur27Lo7hFanaYufUTRqgqEJwOx2b7T3_hLHZIUU_16CNJ_RXomOLfHhC1NFHaR_eFp75cYHLygyJkIGR1vwpZoZSY9LM9niVCAq9cw9FSSVY5qso9wzjrCEGjgPx2HiIPPTtyb7_XYWvfRcD6V0yfYaMsM_dpPsUkKCUm2sO-sNuKMfeoLUtNmWxfQetykojB6G4Y_vKn6l0qLhChY7Gv-oPJkJjiIxMuvKtn8qTIWc"/>
+</div>
+<div class="flex-1">
+<h4 class="text-lg font-bold text-on-surface">Marcus Chen</h4>
+<p class="text-xs text-primary font-semibold tracking-wide mb-2 uppercase">VP Engineering</p>
+<div class="flex gap-2">
+<span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">Infrastructure</span>
+<span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">Feasibility</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-600 group-hover:text-primary transition-colors">open_in_new</span>
+</div>
+<!-- Interviewer Card 3 -->
+<div class="glass-panel p-5 rounded-2xl flex items-center gap-5 hover:border-primary/30 transition-all cursor-pointer group">
+<div class="w-16 h-16 rounded-xl overflow-hidden border border-white/10 shrink-0">
+<img class="w-full h-full object-cover" data-alt="Close up professional portrait of a woman in a sleek dark blazer, standing in a contemporary office setting with large windows. Morning light creates a soft, inviting glow. The style is professional, high-end, and focuses on corporate leadership." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5K4NC_EPaJmMIEiNB1FQVzzWUzJyo1NamYb37tek5muD8UbcOuRxjMl5YYfvEvB5_H43RbxHmWQPGd6-u4f36fkDhT4WN5qtWrWygmPykab1MGrUkNGU9SD56dKV0TNJJzbhYgS7rEpHL-_oEaGi3v9vbYww8eVoD-WC1oG4Faz9fT-D5v7HAKXak3qPIN-MHu0Xw4OkzRpAlIaXW2oG8SROmDqA4wgEECYJ0N5i60UCXyKKetb3L1zIgwbNdtf6JFXDziDjL8tU"/>
+</div>
+<div class="flex-1">
+<h4 class="text-lg font-bold text-on-surface">Sarah J. Miller</h4>
+<p class="text-xs text-primary font-semibold tracking-wide mb-2 uppercase">Product Director</p>
+<div class="flex gap-2">
+<span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">Roadmap</span>
+<span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">Growth</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-600 group-hover:text-primary transition-colors">open_in_new</span>
+</div>
+<!-- Confidence Tracking -->
+<div class="mt-4 p-6 rounded-2xl border border-primary/10 bg-primary/5">
+<h3 class="text-sm font-bold text-on-surface mb-4">Post-Session Pulse</h3>
+<div class="flex justify-between items-center mb-2">
+<span class="text-xs text-slate-400">Confidence Rating</span>
+<span class="text-xs font-bold text-primary">Awaiting Session</span>
+</div>
+<div class="flex gap-2 mb-6">
+<button class="flex-1 aspect-square rounded-lg bg-slate-800/50 hover:bg-red-500/20 transition-all flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-lg">mood_bad</span>
+</button>
+<button class="flex-1 aspect-square rounded-lg bg-slate-800/50 hover:bg-yellow-500/20 transition-all flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-lg">sentiment_neutral</span>
+</button>
+<button class="flex-1 aspect-square rounded-lg bg-slate-800/50 hover:bg-blue-500/20 transition-all flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-lg">sentiment_satisfied</span>
+</button>
+<button class="flex-1 aspect-square rounded-lg bg-slate-800/50 hover:bg-primary/40 transition-all flex items-center justify-center border border-white/5">
+<span class="material-symbols-outlined text-lg">sentiment_very_satisfied</span>
+</button>
+</div>
+<div class="flex items-center gap-3 text-xs text-slate-400">
+<span class="material-symbols-outlined text-sm text-green-400">check_circle</span>
+                                    Thank-you note draft generated
+                                </div>
+</div>
+</div>
+<!-- Right Column: Prep Strategy -->
+<div class="col-span-12 lg:col-span-7 flex flex-col gap-6">
+<h3 class="text-xs font-bold tracking-widest text-slate-500 uppercase px-1">Cross-Functional Strategy</h3>
+<!-- Prep Bento Grid -->
+<div class="grid grid-cols-2 gap-6">
+<div class="col-span-2 glass-panel p-6 rounded-3xl relative overflow-hidden">
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-4">
+<div class="p-2 bg-blue-500/20 rounded-lg text-primary">
+<span class="material-symbols-outlined">hub</span>
+</div>
+<h4 class="text-xl font-bold">The Core Narrative</h4>
+</div>
+<p class="text-slate-300 leading-relaxed mb-4">
+                                            Focus on how your design system experience bridges the gap between Elena's aesthetic vision and Marcus's implementation requirements. You are the "translator" who ensures Sarah's product roadmap can be built efficiently.
+                                        </p>
+<div class="flex flex-wrap gap-2">
+<span class="text-xs font-bold text-primary-container bg-primary/10 px-3 py-1 rounded-full">DESIGN OPS</span>
+<span class="text-xs font-bold text-primary-container bg-primary/10 px-3 py-1 rounded-full">EFFICIENCY</span>
+<span class="text-xs font-bold text-primary-container bg-primary/10 px-3 py-1 rounded-full">SCALE</span>
+</div>
+</div>
+<div class="absolute -right-10 -bottom-10 opacity-5">
+<span class="material-symbols-outlined text-[160px]">auto_awesome</span>
+</div>
+</div>
+<div class="col-span-1 glass-panel p-6 rounded-3xl">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">terminal</span>
+<h5 class="text-sm font-bold uppercase tracking-wider">For Marcus (Eng)</h5>
+</div>
+<ul class="flex flex-col gap-3">
+<li class="text-xs text-slate-400 flex items-start gap-2">
+<span class="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0"></span>
+                                            Discussing token handoff automation
+                                        </li>
+<li class="text-xs text-slate-400 flex items-start gap-2">
+<span class="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0"></span>
+                                            Accessibility as a code-level constraint
+                                        </li>
+<li class="text-xs text-slate-400 flex items-start gap-2">
+<span class="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0"></span>
+                                            Component versioning strategy
+                                        </li>
+</ul>
+</div>
+<div class="col-span-1 glass-panel p-6 rounded-3xl">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">view_quilt</span>
+<h5 class="text-sm font-bold uppercase tracking-wider">For Elena (Design)</h5>
+</div>
+<ul class="flex flex-col gap-3">
+<li class="text-xs text-slate-400 flex items-start gap-2">
+<span class="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0"></span>
+                                            Creative freedom vs. consistency
+                                        </li>
+<li class="text-xs text-slate-400 flex items-start gap-2">
+<span class="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0"></span>
+                                            Elevating brand through motion
+                                        </li>
+<li class="text-xs text-slate-400 flex items-start gap-2">
+<span class="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0"></span>
+                                            Mentoring junior UI designers
+                                        </li>
+</ul>
+</div>
+<div class="col-span-2 bg-slate-900/40 p-8 rounded-3xl border border-white/5">
+<h5 class="text-sm font-bold uppercase tracking-widest text-slate-500 mb-6">Strategic Questions to Ask Them</h5>
+<div class="space-y-4">
+<div class="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-help border-l-4 border-primary">
+<p class="text-sm italic text-on-surface">"How does the current design system impact your sprint velocity when launching 0-to-1 features?"</p>
+</div>
+<div class="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-help border-l-4 border-slate-600">
+<p class="text-sm italic text-on-surface">"Where do you see the biggest friction point between engineering constraints and design ambition?"</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Spacer for scroll -->
+<div class="h-20"></div>
+</section>
+</div>
+</main>
+<!-- Floating Action for Quick Note (FAB suppression logic: only relevant on prep/dashboard screens) -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-primary rounded-full shadow-2xl shadow-primary/40 flex items-center justify-center text-white hover:scale-105 transition-transform z-50">
+<span class="material-symbols-outlined">edit_note</span>
+</button>
+</body></html>

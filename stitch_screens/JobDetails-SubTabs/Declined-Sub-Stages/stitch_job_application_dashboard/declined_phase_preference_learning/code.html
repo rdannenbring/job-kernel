@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Midnight Glass - Preference Learning</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-fixed": "#e2e8f0",
+                      "tertiary-fixed": "#ffe4e6",
+                      "outline-variant": "#1e293b",
+                      "inverse-on-surface": "#0f172a",
+                      "on-tertiary-fixed-variant": "#9f1239",
+                      "on-primary-fixed-variant": "#1d4ed8",
+                      "surface-dim": "#0b0f18",
+                      "on-tertiary": "#ffffff",
+                      "on-tertiary-container": "#fb7185",
+                      "on-primary-container": "#60a5fa",
+                      "on-tertiary-fixed": "#4c0519",
+                      "on-surface-variant": "#94a3b8",
+                      "outline": "#334155",
+                      "primary-fixed": "#dbeafe",
+                      "surface-container": "#1e293b80",
+                      "primary-fixed-dim": "#bfdbfe",
+                      "on-secondary-fixed-variant": "#334155",
+                      "on-secondary-container": "#cbd5e1",
+                      "primary-container": "#256af433",
+                      "on-primary": "#ffffff",
+                      "inverse-surface": "#f8fafc",
+                      "on-primary-fixed": "#1e3a8a",
+                      "tertiary": "#f43f5e",
+                      "secondary": "#334155",
+                      "surface": "#101622",
+                      "surface-variant": "#1e293b",
+                      "surface-container-highest": "#2d3748",
+                      "surface-bright": "#1e293b",
+                      "background": "#101622",
+                      "tertiary-fixed-dim": "#fecdd3",
+                      "surface-tint": "#256af4",
+                      "on-background": "#f1f5f9",
+                      "on-secondary-fixed": "#0f172a",
+                      "on-error-container": "#fca5a5",
+                      "tertiary-container": "#f43f5e22",
+                      "on-secondary": "#f8fafc",
+                      "on-error": "#ffffff",
+                      "surface-container-lowest": "#080c14",
+                      "error-container": "#450a0a",
+                      "surface-container-high": "#1e293b99",
+                      "inverse-primary": "#60a5fa",
+                      "primary": "#256af4",
+                      "on-surface": "#f1f5f9",
+                      "surface-container-low": "#1e293b66",
+                      "secondary-fixed-dim": "#cbd5e1",
+                      "error": "#ef4444",
+                      "secondary-container": "#1e293b"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope"],
+                      "display": ["Manrope"],
+                      "body": ["Manrope"],
+                      "label": ["Manrope"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .neon-glow {
+            text-shadow: 0 0 8px rgba(37, 106, 244, 0.4);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen selection:bg-primary/30">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 h-full w-20 border-r border-white/10 bg-[#101622] contrast-125 shadow-xl shadow-black/50 z-50 flex flex-col items-center py-8 gap-8 font-manrope antialiased tracking-tight">
+<div class="text-blue-500 font-bold text-lg">MG</div>
+<nav class="flex flex-col gap-6 w-full px-3">
+<button class="text-slate-500 flex flex-col items-center gap-1 group hover:text-blue-400 hover:bg-white/5 transition-all p-2 rounded-lg scale-95 active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+</button>
+<button class="text-slate-500 flex flex-col items-center gap-1 group hover:text-blue-400 hover:bg-white/5 transition-all p-2 rounded-lg scale-95 active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="work_history">work_history</span>
+</button>
+<button class="text-slate-500 flex flex-col items-center gap-1 group hover:text-blue-400 hover:bg-white/5 transition-all p-2 rounded-lg scale-95 active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+</button>
+<button class="text-slate-500 flex flex-col items-center gap-1 group hover:text-blue-400 hover:bg-white/5 transition-all p-2 rounded-lg scale-95 active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+</button>
+<button class="text-slate-500 flex flex-col items-center gap-1 group hover:text-blue-400 hover:bg-white/5 transition-all p-2 rounded-lg scale-95 active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</nav>
+<div class="mt-auto">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-white/10">
+<img alt="User Profile" data-alt="A professional headshot of a modern software architect against a dark, moody studio background. The lighting is low-key with a sharp rim light that highlights the subject's profile, matching the deep navy and charcoal palette of the Midnight Glass design system. The overall mood is sophisticated and focused, representing a high-level digital curator." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDTDNMbQPmz3OxUHPHFMQ1BsQsfWBgnW8FVl0JVOl-bkLER8uTdoNyPRcPPsR8g2MT_D7fJ5mqYL9iq3vQCN3gR0r2qbqHotKudL8YvrnJixG5lRCree-VUiLc0EOQiYz_DW7El9lFSehjywvugc2KoIadzOQWlxH24SpukpPXUGR1gIi-5UMNuNR3ntARo8gfkqacMlH_A-xX1c_OdF0NYjrCMHyfKYNvG89xZeQByGE-wBhHAWosLHmvUmeK8cAoAoZ9hUHsTdA"/>
+</div>
+</div>
+</aside>
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 right-0 w-[calc(100%-5rem)] h-16 border-b border-white/5 bg-slate-900/40 backdrop-blur-xl z-40 flex justify-between items-center px-8 font-manrope text-sm font-medium tracking-wide uppercase">
+<div class="text-slate-100 font-black tracking-tighter text-xl normal-case">Midnight Glass</div>
+<nav class="hidden md:flex items-center gap-8 h-full">
+<a class="text-slate-400 hover:text-slate-100 transition-colors pb-5 border-b-2 border-transparent" href="#">Saved</a>
+<a class="text-slate-400 hover:text-slate-100 transition-colors pb-5 border-b-2 border-transparent" href="#">Applied</a>
+<a class="text-slate-400 hover:text-slate-100 transition-colors pb-5 border-b-2 border-transparent" href="#">Interviews</a>
+<a class="text-slate-400 hover:text-slate-100 transition-colors pb-5 border-b-2 border-transparent" href="#">Offered</a>
+<a class="text-slate-400 hover:text-slate-100 transition-colors pb-5 border-b-2 border-transparent" href="#">Accepted</a>
+<a class="text-[#256af4] border-[#256af4] pb-5 border-b-2" href="#">Rejected</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:text-slate-100"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="p-2 text-slate-400 hover:text-slate-100"><span class="material-symbols-outlined" data-icon="bolt">bolt</span></button>
+</div>
+</header>
+<!-- Main Content Stage -->
+<main class="ml-20 pt-16 min-h-screen">
+<div class="flex h-[calc(100vh-4rem)]">
+<!-- Vertical Sub-Navigation (Left) -->
+<nav class="w-64 border-r border-white/5 bg-surface-container-lowest flex flex-col py-8 px-6 gap-2">
+<div class="text-[10px] font-bold tracking-widest text-slate-500 uppercase mb-4 px-2">Decision Phase</div>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="feedback">feedback</span>
+<span class="text-sm font-semibold">Exit Interview</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary border border-primary/20 transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="psychology">psychology</span>
+<span class="text-sm font-semibold">Preference Learning</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="analytics">analytics</span>
+<span class="text-sm font-semibold">Market Analysis</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all mt-auto" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="archive">archive</span>
+<span class="text-sm font-semibold">Application Archive</span>
+</a>
+</nav>
+<!-- Content Area: Search Filter Optimization -->
+<div class="flex-1 overflow-y-auto bg-surface-dim p-8 relative">
+<!-- Atmosphere Effect -->
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="max-w-5xl mx-auto space-y-8">
+<!-- Header Section -->
+<header>
+<h1 class="text-4xl font-extrabold tracking-tight text-white mb-2 neon-glow">Preference Learning</h1>
+<p class="text-slate-400 text-lg max-w-2xl">We noticed a pattern in your recent declined applications. Let's optimize your search filters to better align with your current experience level and market value.</p>
+</header>
+<!-- Bento Grid Dashboard -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Main Control: Filter Optimization -->
+<div class="col-span-8 glass-panel rounded-2xl p-8">
+<h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="tune">tune</span>
+                                Search Filter Optimization
+                            </h2>
+<div class="space-y-8">
+<!-- Target Salary -->
+<div>
+<div class="flex justify-between items-end mb-4">
+<label class="text-[10px] font-bold tracking-widest text-slate-500 uppercase">Target Annual Salary</label>
+<span class="text-primary font-mono font-bold">$165k — $210k</span>
+</div>
+<div class="relative h-2 bg-slate-800 rounded-full overflow-hidden">
+<div class="absolute h-full bg-primary shadow-[0_0_12px_rgba(37,106,244,0.5)]" style="left: 35%; right: 20%;"></div>
+</div>
+<div class="flex justify-between mt-2 text-[10px] text-slate-600 font-bold uppercase">
+<span>$120k</span>
+<span>$250k+</span>
+</div>
+</div>
+<!-- Grid for Work Model & Seniority -->
+<div class="grid grid-cols-2 gap-8">
+<div class="space-y-4">
+<label class="text-[10px] font-bold tracking-widest text-slate-500 uppercase">Work Model Preference</label>
+<div class="flex flex-col gap-2">
+<button class="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-slate-900/50 hover:bg-slate-800 transition-colors">
+<span class="text-sm font-medium">Fully Remote</span>
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</button>
+<button class="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-slate-900/20 opacity-50 hover:opacity-100 transition-colors">
+<span class="text-sm font-medium">Hybrid (2-3 days)</span>
+<span class="material-symbols-outlined text-slate-600" data-icon="circle">circle</span>
+</button>
+</div>
+</div>
+<div class="space-y-4">
+<label class="text-[10px] font-bold tracking-widest text-slate-500 uppercase">Role Seniority</label>
+<div class="flex flex-col gap-2">
+<button class="flex items-center justify-between p-4 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors">
+<div class="flex flex-col items-start">
+<span class="text-sm font-bold">Staff / Lead</span>
+<span class="text-[10px] text-primary/70 uppercase">8+ Years Experience</span>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="radio_button_checked">radio_button_checked</span>
+</button>
+<button class="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-slate-900/20 opacity-50 hover:opacity-100 transition-colors">
+<div class="flex flex-col items-start">
+<span class="text-sm font-medium">Senior</span>
+<span class="text-[10px] text-slate-500 uppercase">5-8 Years Experience</span>
+</div>
+<span class="material-symbols-outlined text-slate-600" data-icon="circle">circle</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar: AI Insights -->
+<div class="col-span-4 space-y-6">
+<div class="glass-panel rounded-2xl p-6 border-l-2 border-l-primary/50">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="auto_awesome">auto_awesome</span>
+<h3 class="text-sm font-bold uppercase tracking-widest text-white">AI Insights</h3>
+</div>
+<div class="space-y-4">
+<p class="text-sm text-slate-300 leading-relaxed">Based on your last 3 declines, the market is currently valuing your "distributed systems" expertise 12% higher than your current target.</p>
+<div class="p-3 rounded-lg bg-primary/10 border border-primary/20">
+<p class="text-xs font-bold text-primary mb-1">RECOMMENDED UPDATE:</p>
+<p class="text-xs text-slate-200">Set target minimum to $175k to match industry benchmarks for your specific tech stack.</p>
+</div>
+<button class="w-full py-2 bg-slate-800 text-slate-100 rounded-lg text-xs font-bold uppercase tracking-tighter hover:bg-slate-700 transition-colors">Apply Recommended Tags</button>
+</div>
+</div>
+<div class="glass-panel rounded-2xl p-6 relative overflow-hidden group">
+<div class="relative z-10">
+<h3 class="text-sm font-bold uppercase tracking-widest text-white mb-2">Market Velocity</h3>
+<div class="text-3xl font-black text-white mb-4">High</div>
+<div class="flex gap-1 h-8 items-end">
+<div class="w-full bg-primary/20 h-[40%] rounded-t-sm"></div>
+<div class="w-full bg-primary/40 h-[60%] rounded-t-sm"></div>
+<div class="w-full bg-primary/60 h-[50%] rounded-t-sm"></div>
+<div class="w-full bg-primary/80 h-[90%] rounded-t-sm"></div>
+<div class="w-full bg-primary h-[75%] rounded-t-sm"></div>
+</div>
+</div>
+<div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+</div>
+<!-- Footer Action Section -->
+<div class="col-span-12 flex justify-between items-center py-6 border-t border-white/5 mt-4">
+<div class="flex items-center gap-4">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+<span class="material-symbols-outlined text-xs text-slate-400" data-icon="history">history</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+<span class="material-symbols-outlined text-xs text-slate-400" data-icon="update">update</span>
+</div>
+</div>
+<span class="text-xs text-slate-500 font-medium">Last synced with market data: 2 minutes ago</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-6 py-3 rounded-xl text-slate-300 font-bold text-sm hover:bg-white/5 transition-all">Discard Changes</button>
+<button class="px-8 py-3 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">Close &amp; Archive</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Visual Polish: Background Blobs -->
+<div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
+<div class="absolute top-[10%] left-[5%] w-[40rem] h-[40rem] bg-primary/5 rounded-full blur-[150px]"></div>
+<div class="absolute bottom-[10%] right-[10%] w-[30rem] h-[30rem] bg-tertiary-container/10 rounded-full blur-[150px]"></div>
+</div>
+</body></html>
