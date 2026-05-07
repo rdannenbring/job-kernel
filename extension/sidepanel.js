@@ -1743,7 +1743,9 @@ document.addEventListener('DOMContentLoaded', () => {
          const initials = conn.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
          
          item.innerHTML = `
-           <div class="side-conn-avatar" style="${conn.photo_url ? `background-image: url('${conn.photo_url}'); background-size: cover;` : ''}">${conn.photo_url ? '' : initials}</div>
+           <div class="side-conn-avatar" style="overflow:hidden;position:relative;">
+              ${conn.photo_url ? `<img src="${API_URL}/api/proxy-image?url=${encodeURIComponent(conn.photo_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;">${initials}</span>` : initials}
+            </div>
            <div class="side-conn-info">
              <div class="side-conn-name">${conn.name}</div>
              <div class="side-conn-headline">${conn.headline || ''}</div>
@@ -1757,16 +1759,23 @@ document.addEventListener('DOMContentLoaded', () => {
      // Also check for on-page connections from scrapedData
      const opc = scrapedData?.onPageConnections || [];
      if (opc.length > 0) {
+       // Auto-save all on-page contacts silently — no manual button needed
+       if (currentAppRecord) {
+         opc.forEach(conn => {
+           if (!matches.some(m => m.profile_url === conn.profile_url)) {
+             linkContact(conn, null);
+           }
+         });
+       }
+
+       // Plain label — no Link All button
        const opcContainer = document.createElement('div');
        opcContainer.className = 'side-networking-subtitle';
        opcContainer.innerHTML = `
          <div style="display: flex; align-items: center; gap: 4px;">
-           <span class="material-symbols-outlined" style="font-size: 14px;">visibility</span> 
-           Found on page (${opc.length})
+           <span class="material-symbols-outlined" style="font-size: 14px;">visibility</span>
+           Also found on page (${opc.length})
          </div>
-         <button id="btn-link-all-opc" class="side-conn-header-action" title="Link all found contacts">
-           Link All
-         </button>
        `;
        opcContainer.style.marginTop = '1rem';
        opcContainer.style.marginBottom = '0.5rem';
@@ -1776,55 +1785,30 @@ document.addEventListener('DOMContentLoaded', () => {
        opcContainer.style.color = 'var(--text-muted)';
        opcContainer.style.display = 'flex';
        opcContainer.style.alignItems = 'center';
-       opcContainer.style.justifyContent = 'space-between';
-       
+
        sideConnectionList.appendChild(opcContainer);
-       
-       const btnLinkAll = opcContainer.querySelector('#btn-link-all-opc');
-       if (btnLinkAll) {
-         btnLinkAll.onclick = async (e) => {
-           e.preventDefault();
-           e.stopPropagation();
-           if (!currentAppRecord) {
-             showStatus('Save the job first to link contacts.', 'info');
-             return;
-           }
-           btnLinkAll.disabled = true;
-           btnLinkAll.textContent = 'Linking...';
-           scrapedData.onPageConnections.forEach(conn => linkContact(conn, null));
-           btnLinkAll.textContent = 'Linked!';
-         };
-       }
-       
+
        opc.forEach(conn => {
-         // Avoid duplicates if already in matches
+         // Avoid duplicates already shown as matched primary connections
          if (matches.some(m => m.profile_url === conn.profile_url)) return;
-         
+
          const item = document.createElement('a');
          item.className = 'side-conn-item';
          item.href = conn.profile_url;
          item.target = '_blank';
-         
+
          const initials = conn.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-         
-          item.innerHTML = `
-            <div class="side-conn-avatar" style="background: ${conn.photo_url ? `url('${conn.photo_url}') center/cover` : 'linear-gradient(135deg, #10b981, #059669)'};">${conn.photo_url ? '' : initials}</div>
-            <div class="side-conn-info">
-              <div class="side-conn-name">${conn.name} ${conn.is_poster ? "<span class=\"badge badge-emerald\" style=\"font-size: 9px; margin-left: 4px;\">Poster</span>" : ""}</div>
-              <div class="side-conn-headline">${conn.headline || ""}</div>
-            </div>
-            <button class="side-conn-add-btn" title="Add to contacts">
-              <span class="material-symbols-outlined">person_add</span>
-            </button>
-          `;
-          
-          const addBtn = item.querySelector(".side-conn-add-btn");
-          addBtn.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            linkContact(conn, addBtn);
-          };
-         
+
+         item.innerHTML = `
+           <div class="side-conn-avatar" style="overflow:hidden; position:relative; background: ${conn.photo_url ? 'transparent' : 'linear-gradient(135deg, #10b981, #059669)'};">
+             ${conn.photo_url ? `<img src="${conn.photo_url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:white;">${initials}</span>` : initials}
+           </div>
+           <div class="side-conn-info">
+             <div class="side-conn-name">${conn.name} ${conn.is_poster ? "<span class=\"badge badge-emerald\" style=\"font-size: 9px; margin-left: 4px;\">Poster</span>" : ""}</div>
+             <div class="side-conn-headline">${conn.headline || ""}</div>
+           </div>
+         `;
+
          sideConnectionList.appendChild(item);
        });
      }
@@ -2105,8 +2089,8 @@ document.addEventListener('DOMContentLoaded', () => {
     networkEmpty.style.display = 'none';
     networkList.innerHTML = connections.map(c => `
       <a href="${c.profile_url}" target="_blank" class="network-item">
-        <div class="network-avatar">
-          <span class="material-symbols-outlined">person</span>
+        <div class="network-avatar" style="overflow:hidden;position:relative;">
+          ${c.photo_url ? `<img src="${c.photo_url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;">${c.name ? c.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() : '?'}</span>` : `<span class="material-symbols-outlined">person</span>`}
           ${c.degree ? `<span class="connection-degree">${c.degree}</span>` : ''}
         </div>
         <div class="network-item-info">

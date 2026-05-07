@@ -553,7 +553,12 @@ async function fetchConnectionsBatch(start = 0, count = 40) {
             if (mini.picture && mini.picture['com.linkedin.common.VectorImage']) {
                 const vectorImage = mini.picture['com.linkedin.common.VectorImage'];
                 if (vectorImage.rootUrl && vectorImage.artifacts && vectorImage.artifacts.length > 0) {
-                    photo_url = vectorImage.rootUrl + vectorImage.artifacts[0].fileIdentifyingUrlPathSegment;
+                    // Use the largest artifact for best quality and most stable URL
+                    const artifact = vectorImage.artifacts[vectorImage.artifacts.length - 1];
+                    let rawUrl = vectorImage.rootUrl + artifact.fileIdentifyingUrlPathSegment;
+                    // Strip session-bound token params that expire; keep the base CDN URL
+                    rawUrl = rawUrl.replace(/[?&]v=beta.*$/, '').replace(/[?&]e=\d+.*$/, '');
+                    photo_url = rawUrl;
                 }
             }
         } catch (e) {}

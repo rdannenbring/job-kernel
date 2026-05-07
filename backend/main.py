@@ -398,6 +398,7 @@ class ApplicationSaveRequest(BaseModel):
     files: Optional[dict] = {}
     additional_docs: Optional[List[dict]] = []
     excluded_profile_docs: Optional[List[str]] = []
+    company_research: Optional[Any] = None
 
 
 
@@ -2267,6 +2268,119 @@ CRITICAL INSTRUCTIONS:
         logger.error(f"Error enriching application {app_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/applications/{app_id}/company-research")
+async def generate_company_research(app_id: int, force: bool = False, user_id: int = Depends(get_current_user_id)):
+    """AI-generate company research data for all four sections (overview, detailed, financials, competitors).
+    
+    Stores the result as a JSON blob in the `company_research` column.
+    Uses force=True to always regenerate, even if research already exists.
+    """
+    try:
+        app_data = database_service.get_application_by_id(app_id, user_id)
+        if not app_data:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        # Return cached research if it exists and not forcing refresh
+        if not force and app_data.get("company_research"):
+            return {"company_research": app_data["company_research"], "cached": True}
+
+        company = app_data.get("company") or "Unknown Company"
+        jd = app_data.get("job_description") or ""
+        job_title = app_data.get("job_title") or "Unknown Role"
+
+        config = await get_merged_config(user_id)
+
+        system_prompt = (
+            "You are an expert business analyst and company researcher. "
+            "Given a company name and optionally a job description, generate comprehensive research data. "
+            "Return ONLY a valid JSON object with no extra text or markdown."
+        )
+
+        user_prompt = f"""Generate detailed company research for: {company}
+Role being applied to: {job_title}
+
+Job Description excerpt (use for additional context):
+{jd[:3000]}
+
+Return a JSON object with EXACTLY these top-level keys:
+{{
+  "overview": {{
+    "mission": "1-2 sentence mission statement or core purpose of the company",
+    "founded": "Year founded (or estimated)",
+    "headquarters": "City, Country",
+    "industry": "Primary industry",
+    "business_model": "1-2 sentence description of how the company makes money",
+    "employee_count": "Headcount (e.g. '9,800+' or '~500')",
+    "public_private": "Public or Private",
+    "ticker": "Stock ticker if public, else null",
+    "core_values": ["Value 1", "Value 2", "Value 3"],
+    "glassdoor_rating": "Rating out of 5 if known (e.g. '4.2'), else null",
+    "linkedin_followers": "Number of LinkedIn followers if known, else null",
+    "leadership": [
+      {{"title": "CEO", "name": "Name if known, else null"}},
+      {{"title": "CTO", "name": "Name if known, else null"}},
+      {{"title": "CPO", "name": "Name if known, else null"}}
+    ]
+  }},
+  "detailed": {{
+    "market_position": "1-2 sentences on their market position and competitive standing",
+    "culture_summary": "1-2 sentences about the engineering/product culture",
+    "tech_stack": ["Technology 1", "Technology 2", "Technology 3"],
+    "recent_news": [
+      {{"headline": "News headline", "source": "Source name", "time_ago": "e.g. '1 week ago'", "sentiment": "positive|neutral|negative"}},
+      {{"headline": "News headline 2", "source": "Source name", "time_ago": "e.g. '2 weeks ago'", "sentiment": "positive|neutral|negative"}}
+    ],
+    "work_model": "Remote/Hybrid/On-site policy if known, else null",
+    "notable_perks": ["Perk 1", "Perk 2", "Perk 3"]
+  }},
+  "financials": {{
+    "annual_revenue": "Most recent annual revenue (e.g. '$1.2B') or null",
+    "revenue_growth": "YoY revenue growth percentage or null",
+    "gross_margin": "Gross margin percentage or null",
+    "market_cap": "Market cap if public (e.g. '$58B') or null",
+    "funding_stage": "Series X / IPO / Public / Bootstrapped or null",
+    "total_funding": "Total funding raised if private (e.g. '$500M') or null",
+    "profitable": "Yes / No / Unknown",
+    "stock_symbol": "Ticker if public, else null",
+    "recent_acquisitions": [
+      {{"name": "Acquisition name", "year": "Year", "rationale": "1-sentence strategic rationale"}}
+    ]
+  }},
+  "competitors": {{
+    "primary_competitors": [
+      {{"name": "Competitor 1", "differentiator": "What sets them apart vs target company"}},
+      {{"name": "Competitor 2", "differentiator": "What sets them apart vs target company"}},
+      {{"name": "Competitor 3", "differentiator": "What sets them apart vs target company"}}
+    ],
+    "competitive_advantages": ["Advantage 1", "Advantage 2", "Advantage 3"],
+    "market_threats": ["Threat 1", "Threat 2"],
+    "interview_tips": "1-2 sentences on how to discuss competitive landscape in interviews"
+  }}
+}}
+
+IMPORTANT:
+- Base data on actual knowledge of the company. Use null for fields you are uncertain about.
+- Do NOT fabricate specific numbers. Use approximations with '~' if needed.
+- Return ONLY valid JSON, no markdown, no code blocks."""
+
+        content = await ai_service.execute_ai_request(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            response_format="json_object",
+            temperature=0.3,
+            config=config,
+        )
+        research = ai_service._parse_json_response(content)
+
+        # Persist to database
+        database_service.update_application(app_id, {"company_research": research}, user_id)
+
+        return {"company_research": research, "cached": False}
+    except Exception as e:
+        logger.error(f"Error generating company research for app {app_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/applications/{app_id}/score")
 async def score_application_endpoint(app_id: int, user_id: int = Depends(get_current_user_id)):
     """Re-calculate the AI match score for an application using the current profile/resume."""
@@ -2888,6 +3002,35 @@ async def delete_application_contact(app_id: int, contact_id: int, user_id: int 
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/proxy-image")
+async def proxy_image(url: str):
+    """
+    Proxy LinkedIn CDN images through the backend to avoid CORS/referrer
+    restrictions when loading stored Voyager API photo URLs in the extension.
+    Only LinkedIn CDN URLs are permitted to prevent misuse.
+    """
+    if not url.startswith("https://media.licdn.com/"):
+        raise HTTPException(status_code=400, detail="Only LinkedIn CDN images are supported")
+    try:
+        async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as client:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (compatible; JobKernel/1.0)",
+                "Referer": "https://www.linkedin.com/",
+            }
+            resp = await client.get(url, headers=headers)
+            if resp.status_code != 200:
+                raise HTTPException(status_code=resp.status_code, detail="Image fetch failed")
+            content_type = resp.headers.get("content-type", "image/jpeg")
+            return StreamingResponse(
+                iter([resp.content]),
+                media_type=content_type,
+                headers={"Cache-Control": "public, max-age=86400"}
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Proxy error: {str(e)}")
 
 
 @app.get("/api/linkedin/matches/{company_id}")

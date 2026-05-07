@@ -2712,8 +2712,8 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                        style={{ textDecoration: 'none', background: 'var(--bg-tertiary)', borderRadius: '0.5rem', border: '1px solid var(--border-color)', padding: '0.75rem' }}
                                     >
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', minWidth: 0 }}>
-                                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #4f46e5)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.8rem', flexShrink: 0 }}>
-                                                {conn.name?.split(' ').map(n => n[0]).join('') || '?'}
+                                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: conn.photo_url ? 'transparent' : 'linear-gradient(135deg, var(--primary), #4f46e5)', backgroundImage: conn.photo_url ? `url('${conn.photo_url}')` : undefined, backgroundSize: 'cover', backgroundPosition: 'center', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.8rem', flexShrink: 0, overflow: 'hidden' }}>
+                                                {!conn.photo_url && (conn.name?.split(' ').map(n => n[0]).join('') || '?')}
                                             </div>
                                             <div style={{ flex: 1, minWidth: 0 }}>
                                                 <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{conn.name}</div>

@@ -100,6 +100,7 @@ class Application(Base):
     bonus_equity = Column(Text, nullable=True)        # Summary of bonus/equity
     travel_requirements = Column(Text, nullable=True) # Summary of travel requirements
     outreach_script = Column(Text, nullable=True)     # Generated outreach script
+    company_research = Column(Text, nullable=True)    # JSON: AI-generated company research (overview, financials, competitors, detailed)
 
     # Relationships
     sub_steps = relationship("ApplicationSubStep", back_populates="application", cascade="all, delete-orphan")
@@ -616,6 +617,7 @@ class DatabaseService:
             "ALTER TABLE users ADD COLUMN email TEXT",
             "ALTER TABLE applications ADD COLUMN additional_docs TEXT",
             "ALTER TABLE applications ADD COLUMN excluded_profile_docs TEXT",
+            "ALTER TABLE applications ADD COLUMN company_research TEXT",
             # Ensure tables are created if not already (Base.metadata.create_all handles this mostly, but explicit for clarity in migrations)
             """
             CREATE TABLE IF NOT EXISTS application_sub_steps (
@@ -1195,6 +1197,7 @@ class DatabaseService:
             "indeed_url": app.indeed_url,
             "linkedin_rating": app.linkedin_rating,
             "linkedin_url": app.linkedin_url,
+            "company_research": json.loads(app.company_research) if app.company_research else None,
         }
 
     def get_application_by_resume_path(self, filename: str) -> Dict[str, Any]:
@@ -1371,6 +1374,9 @@ class DatabaseService:
             if 'bonus_equity' in data: app.bonus_equity = data['bonus_equity']
             if 'travel_requirements' in data: app.travel_requirements = data['travel_requirements']
             if 'outreach_script' in data: app.outreach_script = data['outreach_script']
+            if 'company_research' in data:
+                val = data['company_research']
+                app.company_research = json.dumps(val) if isinstance(val, (dict, list)) else val
             if 'substage_progress' in data:
                 val = data['substage_progress']
                 app.substage_progress = json.dumps(val) if isinstance(val, (dict, list)) else val

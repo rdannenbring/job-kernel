@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import PipelineProgressBar, { PIPELINE_STAGES, STAGE_TO_STATUS } from '../components/PipelineProgressBar';
 import { useAuth } from '../context/AuthContext';
 import ResumeEditor from '../components/JobMatch/ResumeEditor';
-import { CompanyOverviewView, FinancialsView, CompetitorView } from '../components/CompanyResearchViews';
+import { CompanyOverviewView, DetailedResearchView, FinancialsView, CompetitorView, ResearchSectionSkeleton } from '../components/CompanyResearchViews';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
@@ -62,6 +62,60 @@ function extractInline(text, keywords) {
 }
 
 // ── Components ────────────────────────────────────────────────────────────────
+
+/**
+ * Circular avatar that shows a LinkedIn profile photo when available,
+ * or the person's initials as a styled fallback.
+ */
+function ContactAvatar({ name, photoUrl, size = 56, muted = false }) {
+  const [imgError, setImgError] = useState(false);
+
+  const initials = name
+    ? name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase()).join('')
+    : '?';
+
+  const showPhoto = photoUrl && !imgError;
+
+  const fallbackStyle = {
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: size * 0.3,
+    fontWeight: 800,
+    flexShrink: 0,
+    background: muted
+      ? 'rgba(255, 255, 255, 0.06)'
+      : 'rgba(37, 106, 244, 0.12)',
+    color: muted ? 'var(--text-muted)' : 'var(--primary)',
+    border: muted
+      ? '1px solid rgba(255, 255, 255, 0.1)'
+      : '1px solid rgba(37, 106, 244, 0.25)',
+    letterSpacing: '-0.01em',
+  };
+
+  if (showPhoto) {
+    return (
+      <img
+        src={photoUrl}
+        alt={name}
+        onError={() => setImgError(true)}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          objectFit: 'cover',
+          flexShrink: 0,
+          border: '2px solid rgba(255, 255, 255, 0.1)',
+        }}
+      />
+    );
+  }
+
+  return <div style={fallbackStyle}>{initials}</div>;
+}
 
 const SAVED_SUBSTAGES = [
   { id: 'parsed', label: 'Job Analysis (parsed)', icon: 'analytics' },
@@ -914,7 +968,7 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange }) {
 function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connections = [], onAddContact, onSearchPeople, handleGenerateOutreach, generatingOutreach, outreachScript, setOutreachScript, openEditContact, handleDeleteContact }) {
   const { fetchWithAuth } = useAuth();
   const [activeSubStage, setActiveSubStage] = useState('parsed');
-  const [companyView, setCompanyView] = useState('detailed');
+  const [companyView, setCompanyView] = useState('overview');
   const [isEnriching, setIsEnriching] = useState(false);
   const [isScoring, setIsScoring] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -922,6 +976,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
   const [reviewForm, setReviewForm] = useState({});
   const [isSavingReview, setIsSavingReview] = useState(false);
   const [isReviewEditMode, setIsReviewEditMode] = useState(false);
+  const [isResearching, setIsResearching] = useState(false);
 
   useEffect(() => {
     if (app) setReviewForm(app);
@@ -1608,13 +1663,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                 {app.contacts?.length > 0 ? app.contacts.map((contact, i) => (
                   <div key={contact.id || i} className="card glass" style={{ padding: '1.25rem', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', minWidth: 0 }}>
-                      <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '0.75rem', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)', border: '1px solid rgba(255, 255, 255, 0.1)', overflow: 'hidden' }}>
-                        {contact.photo_url ? (
-                          <img src={contact.photo_url} alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          contact.name?.charAt(0)
-                        )}
-                      </div>
+                      <ContactAvatar name={contact.name} photoUrl={contact.photo_url} size={56} />
                       <div style={{ minWidth: 0 }}>
                         <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{contact.name}</h4>
                         <p style={{ margin: '0.25rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{contact.role || contact.headline || 'Application Contact'}</p>
@@ -1665,13 +1714,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                   return filteredConnections.length > 0 ? filteredConnections.map((person, i) => (
                   <div key={i} className="card glass" style={{ padding: '1.25rem', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', minWidth: 0 }}>
-                      <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '0.75rem', background: 'rgba(255, 255, 255, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-muted)', border: '1px solid rgba(255, 255, 255, 0.1)', overflow: 'hidden' }}>
-                        {person.photo_url ? (
-                          <img src={person.photo_url} alt={person.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          person.name?.charAt(0)
-                        )}
-                      </div>
+                      <ContactAvatar name={person.name} photoUrl={person.photo_url} size={56} muted />
                       <div style={{ minWidth: 0 }}>
                         <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.name}</h4>
                         <p style={{ margin: '0.25rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.headline || person.title || 'LinkedIn Match'}</p>
@@ -1772,89 +1815,155 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
             )}
           </div>
         );
-      case 'company':
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'fadeIn 0.4s ease-out' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Company Research</h3>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="btn-secondary" style={{ padding: '0.5rem', borderRadius: '0.5rem', display: 'flex', border: '1px solid var(--border-color)' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>travel_explore</span>
-                </button>
-              </div>
-            </div>
+      case 'company': {
+        const research = app?.company_research || null;
+        const hasResearch = research && (research.overview || research.detailed || research.financials || research.competitors);
+        const cNavItems = [
+          { id: 'overview', label: 'Company Overview', icon: 'dashboard' },
+          { id: 'detailed', label: 'Detailed Research', icon: 'manage_search' },
+          { id: 'financials', label: 'Financials & Market', icon: 'bar_chart' },
+          { id: 'competitors', label: 'Competitor Matrix', icon: 'view_headline' },
+        ];
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 1fr) 2fr', gap: '2rem' }}>
-              {/* Left Sidebar: Nav & Mission */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div className="card glass" style={{ padding: '0.5rem', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
-                  {(() => {
-                    const cNavItems = [
-                      { id: 'overview', label: 'Company Overview', icon: 'dashboard' },
-                      { id: 'detailed', label: 'Detailed Research', icon: 'manage_search' },
-                      { id: 'financials', label: 'Financials & Market', icon: 'bar_chart' },
-                      { id: 'competitors', label: 'Competitor Matrix', icon: 'view_headline' },
-                    ];
-                    return (
-                      <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        {cNavItems.map(item => (
-                          <button key={item.id} onClick={() => setCompanyView(item.id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderRadius: '0.75rem', cursor: 'pointer', width: '100%', textAlign: 'left', fontSize: '0.85rem', fontWeight: companyView === item.id ? 800 : 500, color: companyView === item.id ? 'var(--text-primary)' : 'var(--text-secondary)', background: companyView === item.id ? 'rgba(37, 106, 244, 0.12)' : 'transparent', border: companyView === item.id ? '1px solid rgba(37,106,244,0.25)' : '1px solid transparent', transition: 'all 0.2s' }}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                              <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: companyView === item.id ? 'var(--primary-color)' : 'var(--text-muted)', fontVariationSettings: companyView === item.id ? "'FILL' 1" : "'FILL' 0" }}>{item.icon}</span>
-                              {item.label}
-                            </span>
-                            {companyView === item.id ? <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary-color)', boxShadow: '0 0 8px var(--primary-color)' }} /> : <span className="material-symbols-outlined" style={{ fontSize: '1rem', opacity: 0.3 }}>chevron_right</span>}
-                          </button>
-                        ))}
-                      </nav>
-                    );
-                  })()}
+        const handleRunResearch = async (force = false) => {
+          setIsResearching(true);
+          try {
+            const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}/company-research?force=${force}`, { method: 'POST' });
+            if (res.ok) {
+              await onRefresh();
+            }
+          } catch (e) {
+            console.error('Company research failed', e);
+          } finally {
+            setIsResearching(false);
+          }
+        };
+
+        // ── Prompt panel: no research yet ────────────────────────────────────
+        if (!hasResearch && !isResearching) {
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'fadeIn 0.4s ease-out' }}>
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Company Research</h3>
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{app?.company || 'This company'}</p>
                 </div>
+              </div>
 
-                <div className="card glass" style={{ padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border-color)', position: 'relative', overflow: 'hidden' }}>
-                   <div style={{ position: 'absolute', top: '0', right: '0', padding: '1rem', opacity: 0.1 }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '3rem' }}>format_quote</span>
-                  </div>
-                  <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary-color)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Mission Statement</h4>
-                  <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-                    "{app?.core_purpose || 'Unlock the potential of human creativity by giving artists the opportunity to live off their art.'}"
+              {/* Prompt card */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2rem', padding: '4rem 2rem', background: 'rgba(30,41,59,0.4)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '1.5rem' }}>
+                <div style={{ width: '5rem', height: '5rem', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(37,106,244,0.2), rgba(139,92,246,0.2))', border: '2px solid rgba(37,106,244,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', color: 'var(--primary)' }}>travel_explore</span>
+                </div>
+                <div style={{ textAlign: 'center', maxWidth: '480px' }}>
+                  <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1.4rem', fontWeight: 900, color: 'var(--text-primary)' }}>Ready to research {app?.company || 'this company'}?</h4>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.65 }}>
+                    Our AI will generate a comprehensive company profile covering the mission & overview, market financials, competitive landscape, and engineering culture.
                   </p>
                 </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', maxWidth: '320px' }}>
+                  <button
+                    className="btn-primary"
+                    onClick={() => handleRunResearch(false)}
+                    style={{ padding: '0.875rem 2rem', borderRadius: '0.875rem', fontSize: '0.95rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.625rem' }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>auto_awesome</span>
+                    Run Company Research
+                  </button>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center' }}>Powered by AI · Takes ~15 seconds</p>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // ── Loading skeleton ──────────────────────────────────────────────────
+        if (isResearching) {
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'fadeIn 0.4s ease-out' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Company Research</h3>
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    <span className="spinner-inline" /> Researching {app?.company || 'this company'}…
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                <ResearchSectionSkeleton lines={5} height={120} />
+                <ResearchSectionSkeleton lines={3} height={100} />
+                <ResearchSectionSkeleton lines={4} height={80} />
+                <ResearchSectionSkeleton lines={4} height={80} />
+              </div>
+            </div>
+          );
+        }
+
+        // ── Full research view ────────────────────────────────────────────────
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'fadeIn 0.4s ease-out' }}>
+            {/* Header with refresh */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Company Research</h3>
+                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{app?.company || 'Target Company'}</p>
+              </div>
+              <button
+                className="btn-secondary"
+                onClick={() => handleRunResearch(true)}
+                disabled={isResearching}
+                style={{ padding: '0.5rem 1rem', borderRadius: '0.625rem', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid var(--border-color)' }}
+                title="Refresh company research with latest AI data"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>refresh</span>
+                REFRESH
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 1fr) 2fr', gap: '2rem' }}>
+              {/* Left Sidebar: Nav */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div className="card glass" style={{ padding: '0.5rem', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
+                  <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    {cNavItems.map(item => (
+                      <button key={item.id} onClick={() => setCompanyView(item.id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderRadius: '0.75rem', cursor: 'pointer', width: '100%', textAlign: 'left', fontSize: '0.85rem', fontWeight: companyView === item.id ? 800 : 500, color: companyView === item.id ? 'var(--text-primary)' : 'var(--text-secondary)', background: companyView === item.id ? 'rgba(37, 106, 244, 0.12)' : 'transparent', border: companyView === item.id ? '1px solid rgba(37,106,244,0.25)' : '1px solid transparent', transition: 'all 0.2s' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: companyView === item.id ? 'var(--primary)' : 'var(--text-muted)', fontVariationSettings: companyView === item.id ? "'FILL' 1" : "'FILL' 0" }}>{item.icon}</span>
+                          {item.label}
+                        </span>
+                        {companyView === item.id ? <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', boxShadow: '0 0 8px var(--primary)' }} /> : <span className="material-symbols-outlined" style={{ fontSize: '1rem', opacity: 0.3 }}>chevron_right</span>}
+                      </button>
+                    ))}
+                  </nav>
+                </div>
+
+                {/* Mission excerpt card */}
+                {research?.overview?.mission && (
+                  <div className="card glass" style={{ padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border-color)', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', top: '0', right: '0', padding: '1rem', opacity: 0.08 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '3rem' }}>format_quote</span>
+                    </div>
+                    <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Mission</h4>
+                    <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.55 }}>
+                      "{research.overview.mission}"
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Main Content Area */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                {companyView === 'overview' && <CompanyOverviewView app={app} />}
-                {companyView === 'financials' && <FinancialsView app={app} />}
-                {companyView === 'competitors' && <CompetitorView app={app} />}
-                {companyView === 'detailed' && <>
-                {/* Market Presence Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                  <div className="card glass" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', border: '1px solid var(--border-color)' }}>
-                    <div style={{ width: '2.5rem', height: '2.5rem', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span className="material-symbols-outlined" style={{ color: '#22c55e', fontSize: '1.2rem' }}>star</span>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Glassdoor</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{app?.glassdoor_rating || '4.2'}</div>
-                    </div>
-                  </div>
-                  <div className="card glass" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', border: '1px solid var(--border-color)' }}>
-                    <div style={{ width: '2.5rem', height: '2.5rem', backgroundColor: 'rgba(37, 106, 244, 0.1)', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span className="material-symbols-outlined" style={{ color: 'var(--primary-color)', fontSize: '1.2rem' }}>rate_review</span>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Indeed</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{app?.indeed_rating || '4.0'}</div>
-                    </div>
-                  </div>
-                  <div className="card glass" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', border: '1px solid var(--border-color)' }}>
-                    <div style={{ width: '2.5rem', height: '2.5rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span className="material-symbols-outlined" style={{ color: 'var(--text-primary)', fontSize: '1.2rem' }}>work</span>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>LinkedIn</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>Verified</div>
+                {companyView === 'overview' && <CompanyOverviewView research={research} app={app} />}
+                {companyView === 'detailed' && <DetailedResearchView research={research} app={app} />}
+                {companyView === 'financials' && <FinancialsView research={research} app={app} />}
+                {companyView === 'competitors' && <CompetitorView research={research} app={app} />}
+              </div>
+            </div>
+          </div>
+        );
+      }
+      case 'prioritized':
                     </div>
                   </div>
                 </div>
@@ -5118,7 +5227,8 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
         company: contact.company || app.company,
         email: contact.email,
         phone: contact.phone,
-        how_we_know: contact.how_we_know
+        how_we_know: contact.how_we_know,
+        photo_url: contact.photo_url
       };
       
       const method = isEditingContact ? 'PUT' : 'POST';
@@ -5470,9 +5580,7 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {connections.length > 0 ? connections.slice(0, 3).map((person, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', opacity: 0.5 }}>person</span>
-                  </div>
+                  <ContactAvatar name={person.name} photoUrl={person.photo_url} size={36} muted />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.name}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.headline || person.title}</div>
@@ -5552,9 +5660,12 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
                 <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }} className="custom-scrollbar">
                   {searchResults.map((person, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', borderRadius: '10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.title}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                        <ContactAvatar name={person.name} photoUrl={person.photo_url} size={32} muted />
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.title}</div>
+                        </div>
                       </div>
                       <button onClick={() => handleAddContact(person)} className="btn-secondary" style={{ fontSize: '0.75rem', padding: '4px 12px' }}>Add</button>
                     </div>
