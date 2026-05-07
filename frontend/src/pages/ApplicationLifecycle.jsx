@@ -911,7 +911,7 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange }) {
   );
 }
 
-function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connections = [], onAddContact, onSearchPeople }) {
+function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connections = [], onAddContact, onSearchPeople, handleGenerateOutreach, generatingOutreach, outreachScript, setOutreachScript, openEditContact, handleDeleteContact }) {
   const { fetchWithAuth } = useAuth();
   const [activeSubStage, setActiveSubStage] = useState('parsed');
   const [companyView, setCompanyView] = useState('detailed');
@@ -1602,14 +1602,18 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
             <section>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
                 <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.2rem' }}>contact_page</span>
-                <h4 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', tracking: '0.1em' }}>Stored Contacts</h4>
+                <h4 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', tracking: '0.1em' }}>Application Contacts</h4>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1rem' }}>
                 {app.contacts?.length > 0 ? app.contacts.map((contact, i) => (
                   <div key={contact.id || i} className="card glass" style={{ padding: '1.25rem', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', minWidth: 0 }}>
-                      <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '0.75rem', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                        {contact.name?.charAt(0)}
+                      <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '0.75rem', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)', border: '1px solid rgba(255, 255, 255, 0.1)', overflow: 'hidden' }}>
+                        {contact.photo_url ? (
+                          <img src={contact.photo_url} alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          contact.name?.charAt(0)
+                        )}
                       </div>
                       <div style={{ minWidth: 0 }}>
                         <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{contact.name}</h4>
@@ -1625,8 +1629,11 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                           <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>link</span>
                         </a>
                       )}
-                      <button className="btn-primary" style={{ padding: '0.5rem', borderRadius: '0.5rem', display: 'flex' }}>
+                      <button onClick={() => handleGenerateOutreach && handleGenerateOutreach(contact)} className="btn-primary" style={{ padding: '0.5rem', borderRadius: '0.5rem', display: 'flex' }} title="Generate Outreach Script">
                         <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>mail</span>
+                      </button>
+                      <button onClick={() => openEditContact(contact)} className="btn-secondary" style={{ padding: '0.5rem', borderRadius: '0.5rem', display: 'flex' }} title="Edit Contact">
+                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>edit</span>
                       </button>
                     </div>
                   </div>
@@ -1646,11 +1653,24 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                 <h4 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', tracking: '0.1em' }}>Potential Connections (LinkedIn)</h4>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1rem' }}>
-                {connections.length > 0 ? connections.map((person, i) => (
+                {(() => {
+                  const filteredConnections = connections.filter(person => {
+                    const isMatch = app.contacts?.some(contact => {
+                      return (contact.linkedin_url && person.profile_url && contact.linkedin_url === person.profile_url) ||
+                             (contact.name && person.name && contact.name === person.name);
+                    });
+                    return !isMatch;
+                  });
+
+                  return filteredConnections.length > 0 ? filteredConnections.map((person, i) => (
                   <div key={i} className="card glass" style={{ padding: '1.25rem', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', minWidth: 0 }}>
-                      <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '0.75rem', background: 'rgba(255, 255, 255, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-muted)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                        {person.name?.charAt(0)}
+                      <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '0.75rem', background: 'rgba(255, 255, 255, 0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-muted)', border: '1px solid rgba(255, 255, 255, 0.1)', overflow: 'hidden' }}>
+                        {person.photo_url ? (
+                          <img src={person.photo_url} alt={person.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          person.name?.charAt(0)
+                        )}
                       </div>
                       <div style={{ minWidth: 0 }}>
                         <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.name}</h4>
@@ -1674,18 +1694,23 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                       </button>
                     </div>
                   </div>
-                )) : (
+                  )) : (
                   <div style={{ gridColumn: '1 / -1', padding: '3rem', textAlign: 'center', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '1.5rem', border: '1px dashed var(--border-color)' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>search_off</span>
                     <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>No LinkedIn matches found for {app.company}.</p>
                   </div>
-                )}
+                  );
+                })()}
               </div>
             </section>
 
             {/* AI Insight Card */}
-            {connections.length > 0 && (
-              <div style={{ background: 'linear-gradient(135deg, rgba(37, 106, 244, 0.15) 0%, rgba(16, 22, 34, 0.4) 100%)', borderRadius: '1.25rem', padding: '1.75rem', border: '1px solid rgba(37, 106, 244, 0.2)', position: 'relative', overflow: 'hidden' }}>
+            {/* AI Insight Card */}
+            {(connections.length > 0 || outreachScript?.body) && (
+              <div id="networking-strategy-card" style={{ background: 'linear-gradient(135deg, rgba(37, 106, 244, 0.15) 0%, rgba(16, 22, 34, 0.4) 100%)', borderRadius: '1.25rem', padding: '1.75rem', border: '1px solid rgba(37, 106, 244, 0.2)', position: 'relative', overflow: 'hidden', transition: 'all 0.3s ease', opacity: generatingOutreach ? 0.7 : 1, filter: generatingOutreach ? 'brightness(1.2)' : 'none', ...(generatingOutreach ? { animation: 'pulse 2s infinite' } : {}) }}>
+                {generatingOutreach && (
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)', animation: 'shimmer 1.5s infinite', zIndex: 0 }} />
+                )}
                 <div style={{ position: 'absolute', top: '-1rem', right: '-1rem', opacity: 0.1 }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '6rem' }}>auto_awesome</span>
                 </div>
@@ -1695,14 +1720,53 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                     <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Networking Strategy</span>
                   </div>
                   <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>Leverage Your Network</h4>
-                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: '600px' }}>
-                    We found {connections.length} potential connections at {app.company}. Reaching out to employees in similar roles or design leadership can significantly increase your chances of getting an interview. Focus on those with mutual connections or shared backgrounds.
-                  </p>
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                    <button className="btn-secondary" style={{ padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontWeight: 700, fontSize: '0.85rem' }}>
-                      Generate Outreach Script
-                    </button>
-                  </div>
+                  
+                  {outreachScript?.body ? (
+                    <div style={{ marginTop: '1rem' }}>
+                      <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1rem' }}>
+                        Here is your generated outreach script. You can edit it directly before copying.
+                      </p>
+                      
+                      <div className="form-group" style={{ marginBottom: '1rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Subject Line</label>
+                        <input 
+                          type="text" 
+                          value={outreachScript.subject} 
+                          onChange={(e) => setOutreachScript({...outreachScript, subject: e.target.value})}
+                          style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ marginBottom: '1rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Message Content</label>
+                        <textarea 
+                          value={outreachScript.body}
+                          onChange={(e) => setOutreachScript({...outreachScript, body: e.target.value})}
+                          style={{ width: '100%', height: '200px', padding: '1rem', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', lineHeight: 1.5, resize: 'vertical' }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                        <button onClick={() => { navigator.clipboard.writeText(`${outreachScript.subject}\n\n${outreachScript.body}`); }} className="btn-primary" style={{ padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontWeight: 700, fontSize: '0.85rem' }}>
+                          Copy to Clipboard
+                        </button>
+                        <button onClick={() => handleGenerateOutreach && handleGenerateOutreach()} disabled={generatingOutreach} className="btn-secondary" style={{ padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontWeight: 700, fontSize: '0.85rem' }}>
+                          {generatingOutreach ? 'Regenerating...' : 'Regenerate'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: '600px' }}>
+                        We found {connections.length} potential connections at {app.company}. Reaching out to employees in similar roles or design leadership can significantly increase your chances of getting an interview. Focus on those with mutual connections or shared backgrounds.
+                      </p>
+                      <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                        <button onClick={() => handleGenerateOutreach && handleGenerateOutreach()} disabled={generatingOutreach} className="btn-secondary" style={{ padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontWeight: 700, fontSize: '0.85rem' }}>
+                          {generatingOutreach ? 'Generating...' : 'Generate Outreach Script'}
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -4949,9 +5013,28 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
   const [app, setApp] = useState(initialApp);
   const [connections, setConnections] = useState([]);
   const [showAddContact, setShowAddContact] = useState(false);
+  const [addContactMode, setAddContactMode] = useState('search');
+  const [manualContact, setManualContact] = useState({ name: '', title: '', company: '', email: '', phone: '', linkedin_url: '', how_we_know: '' });
   const [contactSearch, setContactSearch] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  const [editingContactId, setEditingContactId] = useState(null);
+
+  const [outreachScript, setOutreachScript] = useState({ subject: '', body: '' });
+  const [generatingOutreach, setGeneratingOutreach] = useState(false);
+
+  useEffect(() => {
+    if (app?.outreach_script) {
+      try {
+        const parsed = JSON.parse(app.outreach_script);
+        setOutreachScript({ subject: parsed.subject || '', body: parsed.body || '' });
+      } catch (e) {
+        setOutreachScript({ subject: 'Networking', body: app.outreach_script });
+      }
+    }
+  }, [app?.outreach_script]);
 
   useEffect(() => {
     if (!initialApp?.id) return;
@@ -5009,24 +5092,117 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
     }
   };
 
-  const handleAddContact = async (linkedinPerson) => {
+  const extractNameFromUrl = (url) => {
     try {
-      const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}/contacts`, {
-        method: 'POST',
+      const match = url.match(/linkedin\.com\/in\/([^/]+)/i);
+      if (match && match[1]) {
+        let nameSlug = match[1];
+        nameSlug = nameSlug.replace(/[-0-9]+$/, ''); // remove trailing numbers
+        return nameSlug.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ').trim();
+      }
+    } catch (e) {}
+    return '';
+  };
+
+  const handleAddContact = async (contact) => {
+    try {
+      let finalName = contact.name;
+      if (addContactMode === 'url' && !isEditingContact && !finalName) {
+         finalName = extractNameFromUrl(contact.linkedin_url) || 'Unknown Connection';
+      }
+
+      const payload = {
+        name: finalName,
+        role: contact.title || contact.role,
+        linkedin_url: contact.profile_url || contact.linkedin_url,
+        company: contact.company || app.company,
+        email: contact.email,
+        phone: contact.phone,
+        how_we_know: contact.how_we_know
+      };
+      
+      const method = isEditingContact ? 'PUT' : 'POST';
+      const endpoint = isEditingContact 
+        ? `${API_URL}/api/applications/${app.id}/contacts/${editingContactId}`
+        : `${API_URL}/api/applications/${app.id}/contacts`;
+
+      const res = await fetchWithAuth(endpoint, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: linkedinPerson.name,
-          role: linkedinPerson.title,
-          linkedin_url: linkedinPerson.profile_url,
-          company: app.company
-        })
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         refreshApp();
         setShowAddContact(false);
+        setIsEditingContact(false);
+        setEditingContactId(null);
       }
     } catch (e) {
-      console.error("Failed to add contact", e);
+      console.error("Failed to add/update contact", e);
+    }
+  };
+
+  const handleDeleteContact = async (contactId) => {
+    try {
+      const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}/contacts/${contactId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        refreshApp();
+        setShowAddContact(false);
+        setIsEditingContact(false);
+        setEditingContactId(null);
+      }
+    } catch (e) {
+      console.error("Failed to delete contact", e);
+    }
+  };
+
+  const openEditContact = (contact) => {
+    setManualContact({
+      name: contact.name || '',
+      title: contact.role || '',
+      company: contact.company || '',
+      email: contact.email || '',
+      phone: contact.phone || '',
+      linkedin_url: contact.linkedin_url || '',
+      how_we_know: contact.how_we_know || ''
+    });
+    setEditingContactId(contact.id);
+    setIsEditingContact(true);
+    setAddContactMode('manual');
+    setShowAddContact(true);
+  };
+
+  const handleGenerateOutreach = async (contact = null) => {
+    const card = document.getElementById('networking-strategy-card');
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    setGeneratingOutreach(true);
+    try {
+      const payload = contact ? {
+        contact_name: contact.name || '',
+        contact_role: contact.role || contact.title || '',
+        linkedin_url: contact.linkedin_url || contact.profile_url || '',
+        how_we_know: contact.how_we_know || ''
+      } : {
+        contact_name: "Hiring Manager",
+        contact_role: "Recruiter / Hiring Manager"
+      };
+
+      const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}/generate-outreach`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        refreshApp();
+      }
+    } catch (e) {
+      console.error("Failed to generate script", e);
+    } finally {
+      setGeneratingOutreach(false);
     }
   };
 
@@ -5108,6 +5284,12 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
           connections={connections}
           onAddContact={handleAddContact}
           onSearchPeople={() => setShowAddContact(true)}
+          handleGenerateOutreach={handleGenerateOutreach}
+          generatingOutreach={generatingOutreach}
+          outreachScript={outreachScript}
+          setOutreachScript={setOutreachScript}
+          openEditContact={openEditContact}
+          handleDeleteContact={handleDeleteContact}
         />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'generated') ? (
         <GeneratedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} />
@@ -5335,44 +5517,102 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
       {/* Add Contact Portal */}
       {showAddContact && createPortal(
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-          <div className="card glass" style={{ width: '100%', maxWidth: '500px', padding: '2rem', background: 'var(--bg-primary)' }}>
+          <div className="card glass" style={{ width: '100%', maxWidth: '600px', padding: '2rem', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>Add Contact</h2>
-              <button onClick={() => setShowAddContact(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>{isEditingContact ? 'Edit Contact' : 'Add Contact'}</h2>
+              <button onClick={() => { setShowAddContact(false); setIsEditingContact(false); setEditingContactId(null); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
             
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Search People at {app?.company}</label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input 
-                  type="text" 
-                  value={contactSearch} 
-                  onChange={(e) => setContactSearch(e.target.value)}
-                  placeholder="Name or title..."
-                  style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
-                />
-                <button onClick={searchPeople} disabled={isSearching} className="btn-primary" style={{ padding: '0 1.25rem' }}>
-                  {isSearching ? '...' : 'Search'}
-                </button>
-              </div>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+              <button onClick={() => setAddContactMode('search')} style={{ background: 'none', border: 'none', color: addContactMode === 'search' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: addContactMode === 'search' ? 800 : 600, padding: '0.5rem 1rem', cursor: 'pointer', borderBottom: addContactMode === 'search' ? '2px solid var(--primary)' : 'none' }}>Search My LinkedIn Network</button>
+              <button onClick={() => setAddContactMode('manual')} style={{ background: 'none', border: 'none', color: addContactMode === 'manual' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: addContactMode === 'manual' ? 800 : 600, padding: '0.5rem 1rem', cursor: 'pointer', borderBottom: addContactMode === 'manual' ? '2px solid var(--primary)' : 'none' }}>Manual Entry</button>
+              <button onClick={() => setAddContactMode('url')} style={{ background: 'none', border: 'none', color: addContactMode === 'url' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: addContactMode === 'url' ? 800 : 600, padding: '0.5rem 1rem', cursor: 'pointer', borderBottom: addContactMode === 'url' ? '2px solid var(--primary)' : 'none' }}>LinkedIn URL</button>
             </div>
-            
-            <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {searchResults.map((person, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', borderRadius: '10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.title}</div>
+
+            {addContactMode === 'search' && (
+              <>
+                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Search People at {app?.company}</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input 
+                      type="text" 
+                      value={contactSearch} 
+                      onChange={(e) => setContactSearch(e.target.value)}
+                      placeholder="Name or title..."
+                      style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                    />
+                    <button onClick={searchPeople} disabled={isSearching} className="btn-primary" style={{ padding: '0 1.25rem' }}>
+                      {isSearching ? '...' : 'Search'}
+                    </button>
                   </div>
-                  <button onClick={() => handleAddContact(person)} className="btn-secondary" style={{ fontSize: '0.75rem', padding: '4px 12px' }}>Add</button>
                 </div>
-              ))}
-              {searchResults.length === 0 && !isSearching && contactSearch && (
-                <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>No results found.</div>
-              )}
-            </div>
+                
+                <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }} className="custom-scrollbar">
+                  {searchResults.map((person, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', borderRadius: '10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.title}</div>
+                      </div>
+                      <button onClick={() => handleAddContact(person)} className="btn-secondary" style={{ fontSize: '0.75rem', padding: '4px 12px' }}>Add</button>
+                    </div>
+                  ))}
+                  {searchResults.length === 0 && !isSearching && contactSearch && (
+                    <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>No results found.</div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {addContactMode === 'manual' && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Name (Required)</label>
+                  <input type="text" value={manualContact.name} onChange={e => setManualContact({...manualContact, name: e.target.value})} placeholder="Jane Doe" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} />
+                </div>
+                <div className="form-group">
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Title / Role</label>
+                  <input type="text" value={manualContact.title} onChange={e => setManualContact({...manualContact, title: e.target.value})} placeholder="Software Engineer" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} />
+                </div>
+                <div className="form-group">
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Company</label>
+                  <input type="text" value={manualContact.company} onChange={e => setManualContact({...manualContact, company: e.target.value})} placeholder={app?.company} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} />
+                </div>
+                <div className="form-group">
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Email</label>
+                  <input type="email" value={manualContact.email} onChange={e => setManualContact({...manualContact, email: e.target.value})} placeholder="jane@example.com" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} />
+                </div>
+                <div className="form-group">
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Phone</label>
+                  <input type="tel" value={manualContact.phone} onChange={e => setManualContact({...manualContact, phone: e.target.value})} placeholder="555-123-4567" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} />
+                </div>
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>How we know them</label>
+                  <input type="text" value={manualContact.how_we_know} onChange={e => setManualContact({...manualContact, how_we_know: e.target.value})} placeholder="Met at conference..." style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} />
+                </div>
+                <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end', marginTop: '1rem', gap: '0.5rem' }}>
+                  {isEditingContact && (
+                    <button onClick={() => handleDeleteContact(editingContactId)} className="btn-secondary" style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}>Remove Contact</button>
+                  )}
+                  <button onClick={() => handleAddContact(manualContact)} disabled={!manualContact.name} className="btn-primary">{isEditingContact ? 'Save Changes' : 'Add Contact'}</button>
+                </div>
+              </div>
+            )}
+
+            {addContactMode === 'url' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="form-group">
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>LinkedIn Profile URL (Required)</label>
+                  <input type="url" value={manualContact.linkedin_url} onChange={e => setManualContact({...manualContact, linkedin_url: e.target.value})} placeholder="https://linkedin.com/in/..." style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                  <button onClick={() => handleAddContact(manualContact)} disabled={!manualContact.linkedin_url} className="btn-primary">Add Contact</button>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>,
         document.body

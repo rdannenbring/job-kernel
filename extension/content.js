@@ -566,13 +566,15 @@ const LINKEDIN_SCRAPER = {
 
                 const itemText = item.innerText.toLowerCase();
                 const isAlumni = itemText.includes('alumni') || itemText.includes('alumnus') || itemText.includes('class of');
+                const imgEl = item.querySelector('img');
 
                 connections.push({
                     name: name,
                     headline: headlineEl?.innerText.trim() || '',
                     profile_url: profileUrl,
                     degree: degree,
-                    is_alumni: isAlumni
+                    is_alumni: isAlumni,
+                    photo_url: imgEl ? imgEl.src : null
                 });
             }
         });
@@ -606,6 +608,7 @@ const LINKEDIN_SCRAPER = {
 
             const cardText = card.innerText.toLowerCase();
             const isAlumni = cardText.includes('alumni') || cardText.includes('alumnus') || cardText.includes('class of');
+            const imgEl = card.querySelector('img');
 
             connections.push({
                 name,
@@ -613,7 +616,8 @@ const LINKEDIN_SCRAPER = {
                 profile_url: profileUrl,
                 degree: degree,
                 is_alumni: isAlumni,
-                is_poster: /poster|hirer/i.test(card.className) || !!card.closest('.jobs-poster, .hirer-card__container')
+                is_poster: /poster|hirer/i.test(card.className) || !!card.closest('.jobs-poster, .hirer-card__container'),
+                photo_url: imgEl ? imgEl.src : null
             });
         }
     });
@@ -636,13 +640,15 @@ const LINKEDIN_SCRAPER = {
                 let degree = degreeEl ? degreeEl.innerText.trim() : null;
                 const containerText = container?.innerText.toLowerCase() || '';
                 const isAlumni = containerText.includes('alumni') || containerText.includes('alumnus') || containerText.includes('class of');
+                const imgEl = container?.querySelector('img');
 
                 connections.push({
                     name,
                     headline: headlineEl?.innerText.trim() || '',
                     profile_url: profileUrl,
                     degree: degree,
-                    is_alumni: isAlumni
+                    is_alumni: isAlumni,
+                    photo_url: imgEl ? imgEl.src : null
                 });
             }
         });

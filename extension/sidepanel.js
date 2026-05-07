@@ -1743,7 +1743,7 @@ document.addEventListener('DOMContentLoaded', () => {
          const initials = conn.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
          
          item.innerHTML = `
-           <div class="side-conn-avatar">${initials}</div>
+           <div class="side-conn-avatar" style="${conn.photo_url ? `background-image: url('${conn.photo_url}'); background-size: cover;` : ''}">${conn.photo_url ? '' : initials}</div>
            <div class="side-conn-info">
              <div class="side-conn-name">${conn.name}</div>
              <div class="side-conn-headline">${conn.headline || ''}</div>
@@ -1808,7 +1808,7 @@ document.addEventListener('DOMContentLoaded', () => {
          const initials = conn.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
          
           item.innerHTML = `
-            <div class="side-conn-avatar" style="background: linear-gradient(135deg, #10b981, #059669);">${initials}</div>
+            <div class="side-conn-avatar" style="background: ${conn.photo_url ? `url('${conn.photo_url}') center/cover` : 'linear-gradient(135deg, #10b981, #059669)'};">${conn.photo_url ? '' : initials}</div>
             <div class="side-conn-info">
               <div class="side-conn-name">${conn.name} ${conn.is_poster ? "<span class=\"badge badge-emerald\" style=\"font-size: 9px; margin-left: 4px;\">Poster</span>" : ""}</div>
               <div class="side-conn-headline">${conn.headline || ""}</div>
@@ -1873,7 +1873,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         name: contact.name,
                         headline: contact.headline,
                         profile_url: contact.profile_url,
-                        company_name: currentAppRecord.company
+                        company_name: currentAppRecord.company,
+                        photo_url: contact.photo_url
                     }]
                 })
             });
@@ -1887,7 +1888,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         name: contact.name,
                         headline: contact.headline,
                         role: contact.is_poster ? 'Job Poster' : contact.headline,
-                        linkedin_url: contact.profile_url
+                        linkedin_url: contact.profile_url,
+                        photo_url: contact.photo_url
                     })
                 });
                 

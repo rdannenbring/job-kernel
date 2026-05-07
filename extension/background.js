@@ -547,8 +547,18 @@ async function fetchConnectionsBatch(start = 0, count = 40) {
         if (atMatch) {
             company_name = atMatch[1].trim();
         }
+        
+        let photo_url = null;
+        try {
+            if (mini.picture && mini.picture['com.linkedin.common.VectorImage']) {
+                const vectorImage = mini.picture['com.linkedin.common.VectorImage'];
+                if (vectorImage.rootUrl && vectorImage.artifacts && vectorImage.artifacts.length > 0) {
+                    photo_url = vectorImage.rootUrl + vectorImage.artifacts[0].fileIdentifyingUrlPathSegment;
+                }
+            }
+        } catch (e) {}
 
-        return { name, headline, profile_url, company_id, company_name };
+        return { name, headline, profile_url, company_id, company_name, photo_url };
     }).filter(Boolean);
 
     if (batchConnections.length > 0) {

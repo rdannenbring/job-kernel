@@ -99,6 +99,7 @@ class Application(Base):
     parsed_skills = Column(Text, nullable=True)       # JSON list of concise skills
     bonus_equity = Column(Text, nullable=True)        # Summary of bonus/equity
     travel_requirements = Column(Text, nullable=True) # Summary of travel requirements
+    outreach_script = Column(Text, nullable=True)     # Generated outreach script
 
     # Relationships
     sub_steps = relationship("ApplicationSubStep", back_populates="application", cascade="all, delete-orphan")
@@ -128,6 +129,9 @@ class ApplicationContact(Base):
     phone = Column(String)
     linkedin_url = Column(String)
     headline = Column(String)
+    company = Column(String)
+    how_we_know = Column(String)
+    photo_url = Column(String)
     application = relationship("Application", back_populates="contacts")
 
 class ApplicationEvent(Base):
@@ -214,6 +218,7 @@ class LinkedInConnection(Base):
     company_name = Column(String)
     degree = Column(String) # "1st", "2nd", etc.
     is_alumni = Column(Boolean, default=False)
+    photo_url = Column(String)
     last_synced = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User")
@@ -587,7 +592,11 @@ class DatabaseService:
             "ALTER TABLE applications ADD COLUMN commute_details TEXT",
             "ALTER TABLE application_contacts ADD COLUMN linkedin_url TEXT",
             "ALTER TABLE application_contacts ADD COLUMN headline TEXT",
+            "ALTER TABLE application_contacts ADD COLUMN company TEXT",
+            "ALTER TABLE application_contacts ADD COLUMN how_we_know TEXT",
+            "ALTER TABLE application_contacts ADD COLUMN photo_url TEXT",
             "ALTER TABLE applications ADD COLUMN match_score INTEGER",
+            "ALTER TABLE applications ADD COLUMN outreach_script TEXT",
             "ALTER TABLE applications ADD COLUMN match_details TEXT",
             "ALTER TABLE applications ADD COLUMN substage_progress TEXT",
             "ALTER TABLE applications ADD COLUMN cover_letter_changes_summary TEXT",
@@ -657,6 +666,7 @@ class DatabaseService:
             """,
             "ALTER TABLE linkedin_connections ADD COLUMN degree TEXT",
             "ALTER TABLE linkedin_connections ADD COLUMN is_alumni BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE linkedin_connections ADD COLUMN photo_url TEXT",
             """
             CREATE TABLE IF NOT EXISTS user_api_keys (
                 id SERIAL PRIMARY KEY,
@@ -862,7 +872,8 @@ class DatabaseService:
                 substage_progress=json.dumps(data.get('substage_progress')) if data.get('substage_progress') else None,
                 additional_docs=json.dumps(data.get('additional_docs')) if isinstance(data.get('additional_docs'), (dict, list)) else data.get('additional_docs'),
                 excluded_profile_docs=json.dumps(data.get('excluded_profile_docs')) if isinstance(data.get('excluded_profile_docs'), (dict, list)) else data.get('excluded_profile_docs'),
-                source=data.get('source')
+                source=data.get('source'),
+                outreach_script=data.get('outreach_script')
             )
 
             session.add(new_app)
@@ -925,7 +936,10 @@ class DatabaseService:
                 email=data.get('email'),
                 phone=data.get('phone'),
                 linkedin_url=data.get('linkedin_url'),
-                headline=data.get('headline')
+                headline=data.get('headline'),
+                company=data.get('company'),
+                how_we_know=data.get('how_we_know'),
+                photo_url=data.get('photo_url')
             )
             session.add(contact)
             session.commit()
@@ -936,11 +950,67 @@ class DatabaseService:
                 "email": contact.email,
                 "phone": contact.phone,
                 "linkedin_url": contact.linkedin_url,
-                "headline": contact.headline
+                "headline": contact.headline,
+                "company": contact.company,
+                "how_we_know": contact.how_we_know,
+                "photo_url": contact.photo_url
             }
         except Exception as e:
             session.rollback()
             print(f"Error adding contact: {e}")
+            raise e
+        finally:
+            session.close()
+
+    def update_application_contact(self, contact_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update an existing contact."""
+        session = self.Session()
+        try:
+            contact = session.query(ApplicationContact).filter(ApplicationContact.id == contact_id).first()
+            if not contact:
+                return None
+            
+            if 'name' in data: contact.name = data['name']
+            if 'role' in data: contact.role = data['role']
+            if 'email' in data: contact.email = data['email']
+            if 'phone' in data: contact.phone = data['phone']
+            if 'linkedin_url' in data: contact.linkedin_url = data['linkedin_url']
+            if 'headline' in data: contact.headline = data['headline']
+            if 'company' in data: contact.company = data['company']
+            if 'how_we_know' in data: contact.how_we_know = data['how_we_know']
+            
+            session.commit()
+            return {
+                "id": contact.id,
+                "name": contact.name,
+                "role": contact.role,
+                "email": contact.email,
+                "phone": contact.phone,
+                "linkedin_url": contact.linkedin_url,
+                "headline": contact.headline,
+                "company": contact.company,
+                "how_we_know": contact.how_we_know
+            }
+        except Exception as e:
+            session.rollback()
+            print(f"Error updating contact: {e}")
+            raise e
+        finally:
+            session.close()
+
+    def delete_application_contact(self, contact_id: int) -> bool:
+        """Delete an existing contact."""
+        session = self.Session()
+        try:
+            contact = session.query(ApplicationContact).filter(ApplicationContact.id == contact_id).first()
+            if not contact:
+                return False
+            session.delete(contact)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            print(f"Error deleting contact: {e}")
             raise e
         finally:
             session.close()
@@ -1104,8 +1174,9 @@ class DatabaseService:
             "commute_distance_miles": app.commute_distance_miles,
             "commute_details": json.loads(app.commute_details) if app.commute_details else {},
             "source": app.source,
+            "outreach_script": app.outreach_script,
             "sub_steps": [{"id": s.id, "title": s.title, "description": s.description, "status": s.status, "date": s.date, "phase": s.phase} for s in app.sub_steps],
-            "contacts": [{"id": c.id, "name": c.name, "role": c.role, "email": c.email, "phone": c.phone, "linkedin_url": c.linkedin_url, "headline": c.headline} for c in app.contacts],
+            "contacts": [{"id": c.id, "name": c.name, "role": c.role, "email": c.email, "phone": c.phone, "linkedin_url": c.linkedin_url, "headline": c.headline, "company": c.company, "how_we_know": c.how_we_know, "photo_url": c.photo_url} for c in app.contacts],
             "events": [{"id": e.id, "event_type": e.event_type, "description": e.description, "timestamp": e.timestamp} for e in app.events],
             # AI-enriched fields
             "job_summary": app.job_summary,
@@ -1299,6 +1370,7 @@ class DatabaseService:
             if 'parsed_skills' in data: app.parsed_skills = data['parsed_skills']
             if 'bonus_equity' in data: app.bonus_equity = data['bonus_equity']
             if 'travel_requirements' in data: app.travel_requirements = data['travel_requirements']
+            if 'outreach_script' in data: app.outreach_script = data['outreach_script']
             if 'substage_progress' in data:
                 val = data['substage_progress']
                 app.substage_progress = json.dumps(val) if isinstance(val, (dict, list)) else val
@@ -1524,6 +1596,7 @@ class DatabaseService:
                         company_name=conn_data.get('company_name', ''),
                         degree=conn_data.get('degree'),
                         is_alumni=conn_data.get('is_alumni', False),
+                        photo_url=conn_data.get('photo_url'),
                         last_synced=datetime.utcnow(),
                         user_id=user_id
                     )
@@ -1537,6 +1610,7 @@ class DatabaseService:
                     existing.company_name = conn_data.get('company_name', existing.company_name)
                     existing.degree = conn_data.get('degree', existing.degree)
                     existing.is_alumni = conn_data.get('is_alumni', existing.is_alumni)
+                    existing.photo_url = conn_data.get('photo_url', existing.photo_url)
                     existing.last_synced = datetime.utcnow()
                     if user_id:
                         existing.user_id = user_id
@@ -1562,7 +1636,8 @@ class DatabaseService:
                     "name": c.name,
                     "headline": c.headline,
                     "profile_url": c.profile_url,
-                    "company_name": c.company_name
+                    "company_name": c.company_name,
+                    "photo_url": c.photo_url
                 } for c in conns
             ]
         finally:
@@ -1731,7 +1806,8 @@ class DatabaseService:
                     "headline": c.headline,
                     "profile_url": c.profile_url,
                     "company_id": c.company_id,
-                    "company_name": c.company_name
+                    "company_name": c.company_name,
+                    "photo_url": c.photo_url
                 } for c in conns
             ]
         finally:
@@ -1767,7 +1843,8 @@ class DatabaseService:
                     "profile_url": c.profile_url,
                     "company_id": c.company_id,
                     "company_name": c.company_name,
-                    "last_synced": c.last_synced.isoformat() if c.last_synced else None
+                    "last_synced": c.last_synced.isoformat() if c.last_synced else None,
+                    "photo_url": c.photo_url
                 } for c in conns
             ]
         finally:
@@ -1809,7 +1886,8 @@ class DatabaseService:
                     "name": c.name,
                     "headline": c.headline,
                     "profile_url": c.profile_url,
-                    "company_name": c.company_name
+                    "company_name": c.company_name,
+                    "photo_url": c.photo_url
                 } for c in conns
             ]
         finally:

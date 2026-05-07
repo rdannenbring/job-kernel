@@ -492,6 +492,7 @@ class LinkedInConnectionModel(BaseModel):
     company_name: Optional[str] = None
     degree: Optional[str] = None
     is_alumni: Optional[bool] = False
+    photo_url: Optional[str] = None
 
 class LinkedInSyncRequest(BaseModel):
     connections: List[LinkedInConnectionModel]
@@ -2127,6 +2128,59 @@ async def update_application_status(app_id: int, request: StatusUpdateRequest, u
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class OutreachRequest(BaseModel):
+    contact_name: str
+    contact_role: str
+    linkedin_url: Optional[str] = None
+    how_we_know: Optional[str] = None
+
+@app.post("/api/applications/{app_id}/generate-outreach")
+async def generate_outreach_script(app_id: int, request: OutreachRequest, user_id: int = Depends(get_current_user_id)):
+    try:
+        app_data = database_service.get_application_by_id(app_id, user_id)
+        if not app_data:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        profile = database_service.get_profile(user_id)
+        config = await get_merged_config(user_id)
+        
+        system_prompt = "Act as an expert recruiter, placement, and HR professional with extensive experience in creating high-converting outreach scripts. Your goal is to write a personalized LinkedIn message or email to a potential connection at a company the user is applying to. Keep it professional, concise, and engaging. RETURN YOUR RESPONSE AS A STRICT JSON OBJECT WITH TWO KEYS: 'subject' (a catchy subject line) and 'body' (the message content). DO NOT wrap it in markdown block quotes, just output the raw JSON."
+        
+        user_prompt = f"Company: {app_data.get('company')}\n"
+        user_prompt += f"Job Title: {app_data.get('job_title')}\n"
+        user_prompt += f"Contact Name: {request.contact_name}\n"
+        user_prompt += f"Contact Role: {request.contact_role}\n"
+        
+        if request.how_we_know:
+            user_prompt += f"How I know them: {request.how_we_know}\n"
+
+        user_prompt += "\nPlease generate a short, personalized outreach message. It should not exceed 100-150 words.\n"
+        user_prompt += "CRITICAL INSTRUCTION: Please fill in all placeholders directly using the following information from my profile:\n"
+        user_prompt += f"My Name: {profile.get('full_name', '') or profile.get('first_name', '') + ' ' + profile.get('last_name', '')}\n"
+        user_prompt += f"My Email: {profile.get('email', '')}\n"
+        user_prompt += f"My Phone: {profile.get('phone_primary', '')}\n"
+        user_prompt += f"My LinkedIn: {profile.get('linkedin_url', '')}\n"
+        user_prompt += "Ensure NO placeholder brackets like [Your Name] are left in the final text. Substitute them naturally."
+
+        response = await ai_service.execute_ai_request(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            response_format="json_object",
+            config=config
+        )
+        
+        database_service.update_application(app_id, {"outreach_script": response}, user_id)
+        
+        import json
+        try:
+            parsed = json.loads(response)
+        except Exception:
+            parsed = {"subject": "Outreach", "body": response}
+
+        return {"script": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/applications/{app_id}/enrich")
 async def enrich_application(app_id: int, force: bool = False, user_id: int = Depends(get_current_user_id)):
     """AI-generate enrichment fields (job_summary, core_purpose, etc.) from the job description.
@@ -2796,13 +2850,42 @@ class ContactCreate(BaseModel):
     phone: Optional[str] = None
     linkedin_url: Optional[str] = None
     headline: Optional[str] = None
+    company: Optional[str] = None
+    how_we_know: Optional[str] = None
+    photo_url: Optional[str] = None
 
 @app.post("/api/applications/{app_id}/contacts")
 async def add_application_contact(app_id: int, contact: ContactCreate, user_id: int = Depends(get_current_user_id)):
     print(f"👤 Adding contact {contact.name} to application {app_id}")
     try:
-        new_contact = database_service.add_application_contact(app_id, contact.dict(), user_id)
+        new_contact = database_service.add_application_contact(app_id, contact.dict())
         return new_contact
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/applications/{app_id}/contacts/{contact_id}")
+async def update_application_contact(app_id: int, contact_id: int, contact: ContactCreate, user_id: int = Depends(get_current_user_id)):
+    print(f"👤 Updating contact {contact_id} for application {app_id}")
+    try:
+        updated_contact = database_service.update_application_contact(contact_id, contact.dict(exclude_unset=True))
+        if not updated_contact:
+            raise HTTPException(status_code=404, detail="Contact not found")
+        return updated_contact
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/applications/{app_id}/contacts/{contact_id}")
+async def delete_application_contact(app_id: int, contact_id: int, user_id: int = Depends(get_current_user_id)):
+    print(f"👤 Deleting contact {contact_id} for application {app_id}")
+    try:
+        success = database_service.delete_application_contact(contact_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Contact not found")
+        return {"status": "success"}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
