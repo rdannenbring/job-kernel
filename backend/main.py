@@ -3008,19 +3008,25 @@ async def proxy_image(url: str):
     """
     Proxy LinkedIn CDN images through the backend to avoid CORS/referrer
     restrictions when loading stored Voyager API photo URLs in the extension.
-    Only LinkedIn CDN URLs are permitted to prevent misuse.
+    Allows both media and static LinkedIn CDN domains.
     """
-    if not url.startswith("https://media.licdn.com/"):
+    # Allow any subdomain of licdn.com
+    import urllib.parse
+    parsed = urllib.parse.urlparse(url)
+    if not (parsed.netloc.endswith('.licdn.com') or parsed.netloc == 'licdn.com'):
+        logger.warning(f"Proxy attempt for non-allowed domain: {url}")
         raise HTTPException(status_code=400, detail="Only LinkedIn CDN images are supported")
     try:
         async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as client:
             headers = {
-                "User-Agent": "Mozilla/5.0 (compatible; JobKernel/1.0)",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 "Referer": "https://www.linkedin.com/",
             }
             resp = await client.get(url, headers=headers)
             if resp.status_code != 200:
+                logger.error(f"Image proxy failed for {url} with status {resp.status_code}")
                 raise HTTPException(status_code=resp.status_code, detail="Image fetch failed")
+            
             content_type = resp.headers.get("content-type", "image/jpeg")
             return StreamingResponse(
                 iter([resp.content]),
@@ -3030,6 +3036,7 @@ async def proxy_image(url: str):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Proxy error for {url}: {e}")
         raise HTTPException(status_code=502, detail=f"Proxy error: {str(e)}")
 
 
@@ -3072,6 +3079,17 @@ async def debug_linkedin_connections(limit: int = 100, user_id: int = Depends(ge
         return {"total_count": len(connections), "connections": connections}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/linkedin/resolve-photo")
+async def resolve_linkedin_photo(url: str):
+    """
+    Attempt to find a profile photo for a LinkedIn URL by checking
+    our existing database of contacts.
+    """
+    photo_url = database_service.get_photo_by_linkedin_url(url)
+    if not photo_url:
+        raise HTTPException(status_code=404, detail="Photo not found in database")
+    return {"photo_url": photo_url}
 
 @app.delete("/api/linkedin/purge")
 async def purge_linkedin_connections(user_id: int = Depends(get_current_user_id)):

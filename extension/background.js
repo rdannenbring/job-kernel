@@ -21,11 +21,17 @@ async function fetchWithAuthBackground(url, options = {}) {
       const headers = { ...options.headers };
       
       if (token && url.startsWith(currentApiUrl)) {
-        headers['X-API-Key'] = token;
-      }
-      
-      if ((options.method === 'POST' || options.method === 'PUT') && !headers['Content-Type'] && !(options.body instanceof FormData)) {
-        headers['Content-Type'] = 'application/json';
+        const isJWT = token.split('.').length === 3;
+        const isNamedKey = token.startsWith('ja_');
+
+        if (isJWT) {
+          headers['Authorization'] = `Bearer ${token}`;
+        } else if (isNamedKey) {
+          headers['X-API-Key'] = token;
+        } else {
+          headers['X-API-Key'] = token;
+          headers['Authorization'] = `Bearer ${token}`;
+        }
       }
       
       try {
@@ -92,13 +98,50 @@ const handleMessage = (message, sender, sendResponse) => {
       remoteLog('INFO', 'Side panel opened from content script');
       sendResponse({ success: true });
     }).catch((err) => {
-      remoteLog('ERROR', `open_side_panel error: ${err.message}`);
+      console.error('[JobAutomator] Failed to open side panel:', err);
       sendResponse({ error: err.message });
     });
     return true;
+  }
+
+  // ── Scrape LinkedIn Photo ────────────────────────────────────────────────
+  if (message.action === 'scrape_linkedin_photo') {
+    (async () => {
+      try {
+        console.log(`[JobKernel] Background scraping photo for: ${message.url}`);
+        const response = await fetch(message.url);
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        const html = await response.text();
+        
+        // Extract photo from meta tags or scripts
+        // Pattern 1: og:image meta tag
+        const metaMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
+        let photoUrl = metaMatch ? metaMatch[1] : null;
+
+        // Pattern 2: profile-picture-v3
+        if (!photoUrl || photoUrl.includes('ghost_person')) {
+           const scriptMatch = html.match(/"profilePictureV3":\{"artifact":"([^"]+)"/);
+           if (scriptMatch) {
+             photoUrl = scriptMatch[1].replace(/&amp;/g, '&');
+           }
+        }
+
+        if (photoUrl && !photoUrl.includes('ghost_person') && !photoUrl.includes('placeholder')) {
+           console.log(`[JobKernel] Found photo URL: ${photoUrl}`);
+           sendResponse({ photoUrl });
+        } else {
+           sendResponse({ error: 'No valid photo found' });
+        }
+      } catch (err) {
+        console.error('[JobKernel] Error scraping photo:', err);
+        sendResponse({ error: err.message });
+      }
+    })();
+    return true;
+  }
 
   // ── Close side panel ───────────────────────────────────────────────────
-  } else if (message.action === 'close_side_panel') {
+  if (message.action === 'close_side_panel') {
     broadcastPanelState(false);
     chrome.runtime.sendMessage({ action: 'do_window_close' }).catch(() => {});
     sendResponse({ success: true });

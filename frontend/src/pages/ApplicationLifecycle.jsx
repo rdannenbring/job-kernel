@@ -74,6 +74,20 @@ function ContactAvatar({ name, photoUrl, size = 56, muted = false }) {
     ? name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase()).join('')
     : '?';
 
+  // Proxy any LinkedIn CDN image to bypass CORS/referrer restrictions
+  const isLinkedIn = photoUrl && (
+    photoUrl.includes('licdn.com') ||
+    photoUrl.includes('linkedin.com') ||
+    photoUrl.includes('media-exp') ||
+    photoUrl.includes('dms.licdn')
+  );
+  const displayUrl = isLinkedIn
+    ? `${API_URL}/api/proxy-image?url=${encodeURIComponent(photoUrl)}`
+    : photoUrl;
+
+  // Show the photo if we have a URL and it hasn't errored
+  // Note: data: URIs are not stored in the DB (extension filters them) but
+  // if one slips through, render it directly without proxying.
   const showPhoto = photoUrl && !imgError;
 
   const fallbackStyle = {
@@ -99,7 +113,7 @@ function ContactAvatar({ name, photoUrl, size = 56, muted = false }) {
   if (showPhoto) {
     return (
       <img
-        src={photoUrl}
+        src={displayUrl}
         alt={name}
         onError={() => setImgError(true)}
         style={{
@@ -1301,7 +1315,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                 <div>
                   <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Dates</div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
-                    Saved: {app.date_saved ? new Date(app.date_saved).toLocaleDateString() : '—'}<br/>
+                    Date Captured: {app.date_saved ? new Date(app.date_saved).toLocaleDateString() : '—'}<br/>
                     Posted: {app.date_posted || '—'}<br/>
                     Expires: {app.deadline || '—'}
                   </div>
@@ -1963,87 +1977,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
           </div>
         );
       }
-      case 'prioritized':
-                    </div>
-                  </div>
-                </div>
 
-                {/* News Section */}
-                <section>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h4 style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Recent Company News</h4>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>See all 24 sources</button>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div className="card glass" style={{ padding: '1.25rem', borderRadius: '1rem', border: '1px solid var(--border-color)', borderLeft: '4px solid #22c55e', cursor: 'pointer' }}>
-                      <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>TechCrunch • 2 days ago</span>
-                      <h5 style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>{app?.company || 'Spotify'} expands AI DJ feature to Spanish-speaking markets globally</h5>
-                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>The expansion follows a successful pilot in English-speaking markets, aiming to leverage localized cultural insights...</p>
-                    </div>
-                    <div className="card glass" style={{ padding: '1.25rem', borderRadius: '1rem', border: '1px solid var(--border-color)', borderLeft: '4px solid var(--primary-color)', cursor: 'pointer' }}>
-                      <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>Reuters • 1 week ago</span>
-                      <h5 style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>{app?.company || 'Spotify'} reports Q3 subscriber growth exceeding Wall Street estimates</h5>
-                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>The streaming giant continues to diversify revenue through podcasting and audiobooks despite global economic headwinds...</p>
-                    </div>
-                  </div>
-                </section>
-
-                {/* Cultural Insights */}
-                <section>
-                   <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Cultural & Engineering Insights</h4>
-                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
-                     <div className="card glass" style={{ padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                          <div style={{ padding: '0.5rem', background: 'rgba(37, 106, 244, 0.1)', borderRadius: '0.75rem', display: 'flex' }}>
-                            <span className="material-symbols-outlined" style={{ color: 'var(--primary-color)', fontSize: '1.5rem' }}>hub</span>
-                          </div>
-                          <div>
-                            <h5 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>Squad Model 2.0</h5>
-                            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>Autonomous teams with high alignment and loose coupling. Designers are embedded within cross-functional squads.</p>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                          {['Autonomy', 'Ownership', 'User-Centric'].map(tag => (
-                            <span key={tag} style={{ padding: '0.25rem 0.5rem', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '0.25rem', fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{tag}</span>
-                          ))}
-                        </div>
-                     </div>
-                     <div className="card glass" style={{ borderRadius: '1rem', border: '1px solid var(--border-color)', overflow: 'hidden', position: 'relative' }}>
-                        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxoyghDZv7ydchRv08fDkaZARI9BoaRXiYK1CSq6B0M45fULbeq5yESW9rmYpxA8NxWFllTUlHQCXr06GACyCUA7MPPMC57UFDEw8IVyL1KWgR9X96IQDKTqV0idB-dPs5cCD_ayV193zwC3Vwe75_TwPW_U0nfGf3Ns7H7DfMVdJKVqMeudmHS_BeVdGN2dlzVbNq0sK2zTqNY7PK0IFJDRUtEQcplbx6Bk-MZezEmQUmw_cfHrNxic9af0v9KXjHeW2-DFGWLpg" alt="Office" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
-                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(16, 22, 34, 0.9), transparent)', padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                          <h5 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>Internal Tools</h5>
-                          <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Proprietary design systems and frameworks used globally.</p>
-                        </div>
-                     </div>
-                   </div>
-                </section>
-
-                {/* Research Notes */}
-                <section className="card glass" style={{ padding: '1.5rem', borderRadius: '1rem', border: '1px dashed rgba(255, 255, 255, 0.2)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span className="material-symbols-outlined" style={{ color: 'var(--primary-color)' }}>edit_note</span>
-                    <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>Research Notes</h4>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                      <div style={{ width: '3px', height: 'auto', backgroundColor: 'var(--border-color)', borderRadius: '3px' }}></div>
-                      <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>"Focus on the recent shift toward AI personalization in interviews. They value data-driven design decisions paired with emotional resonance."</p>
-                    </div>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                      <div style={{ width: '3px', height: 'auto', backgroundColor: 'var(--border-color)', borderRadius: '3px' }}></div>
-                      <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>"Mention familiarity with the Encore Design System if possible. They are currently hiring for a major mobile redesign phase."</p>
-                    </div>
-                  </div>
-                  <button style={{ width: '100%', padding: '0.75rem', borderRadius: '0.75rem', border: '1px dashed rgba(255, 255, 255, 0.1)', background: 'transparent', color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>add</span>
-                    Add Research Entry
-                  </button>
-                </section>
-                </>}
-              </div>
-            </div>
-          </div>
-        );
       case 'prioritized':
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'fadeIn 0.4s ease-out', paddingBottom: '100px' }}>
@@ -5360,7 +5294,7 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
                 Active Application
               </span>
               <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                • Saved {app?.date_saved ? new Date(app.date_saved).toLocaleDateString() : '—'}
+                • Captured {app?.date_saved ? new Date(app.date_saved).toLocaleDateString() : '—'}
               </span>
             </div>
             <h1 style={{ fontSize: '2rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>{app?.job_title || '—'}</h1>

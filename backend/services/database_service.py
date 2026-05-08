@@ -980,6 +980,7 @@ class DatabaseService:
             if 'headline' in data: contact.headline = data['headline']
             if 'company' in data: contact.company = data['company']
             if 'how_we_know' in data: contact.how_we_know = data['how_we_know']
+            if 'photo_url' in data: contact.photo_url = data['photo_url']
             
             session.commit()
             return {
@@ -991,12 +992,34 @@ class DatabaseService:
                 "linkedin_url": contact.linkedin_url,
                 "headline": contact.headline,
                 "company": contact.company,
-                "how_we_know": contact.how_we_know
+                "how_we_know": contact.how_we_know,
+                "photo_url": contact.photo_url
             }
         except Exception as e:
             session.rollback()
             print(f"Error updating contact: {e}")
             raise e
+        finally:
+            session.close()
+
+    def get_photo_by_linkedin_url(self, linkedin_url: str) -> str:
+        """Find the photo URL for a given LinkedIn profile URL across all contacts."""
+        session = self.Session()
+        try:
+            # Canonicalize URL (remove trailing slash and query params)
+            base_url = linkedin_url.split('?')[0].rstrip('/')
+            
+            # Find any contact with this URL that has a photo
+            contact = session.query(ApplicationContact).filter(
+                ApplicationContact.linkedin_url.like(f"{base_url}%"),
+                ApplicationContact.photo_url.isnot(None),
+                ApplicationContact.photo_url != ""
+            ).first()
+            
+            return contact.photo_url if contact else None
+        except Exception as e:
+            print(f"Error fetching photo by URL: {e}")
+            return None
         finally:
             session.close()
 

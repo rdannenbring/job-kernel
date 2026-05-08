@@ -694,7 +694,7 @@ const Analytics = ({ setScreen }) => {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  {['Role', 'Company', 'Saved', 'Stage', 'Interest', 'Network', 'Score'].map(h => (
+                  {['Role', 'Company', 'Captured', 'Stage', 'Interest', 'Network', 'Score'].map(h => (
                     <th key={h} style={{ textAlign: 'left', padding: '0.4rem 0.75rem', color: 'var(--text-muted)', fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       {h}
                     </th>

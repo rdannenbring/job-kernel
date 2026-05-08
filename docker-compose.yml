@@ -21,10 +21,9 @@ services:
     build:
       context: ./backend
     restart: unless-stopped
-    # Port is NOT exposed publicly — Nginx proxies /api/* to this service.
-    # To expose for local debugging, use docker-compose.dev.yml override.
-    expose:
-      - "8000"
+    # Expose port for the Chrome extension and direct API access.
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
     env_file:
       - ./backend/.env
     environment:

@@ -567,6 +567,11 @@ const LINKEDIN_SCRAPER = {
                 const itemText = item.innerText.toLowerCase();
                 const isAlumni = itemText.includes('alumni') || itemText.includes('alumnus') || itemText.includes('class of');
                 const imgEl = item.querySelector('img');
+                const photoUrl = imgEl ? (
+                    imgEl.getAttribute('data-delayed-url') ||
+                    imgEl.getAttribute('srcset')?.split(',')[0].split(' ')[0] ||
+                    (imgEl.src && !imgEl.src.includes('ghost_person') && !imgEl.src.startsWith('data:') ? imgEl.src : null)
+                ) : null;
 
                 connections.push({
                     name: name,
@@ -574,7 +579,7 @@ const LINKEDIN_SCRAPER = {
                     profile_url: profileUrl,
                     degree: degree,
                     is_alumni: isAlumni,
-                    photo_url: imgEl ? imgEl.src : null
+                    photo_url: (photoUrl && photoUrl.includes('http')) ? photoUrl : null
                 });
             }
         });
@@ -582,7 +587,67 @@ const LINKEDIN_SCRAPER = {
 
     // 2. Check the Job Details pane (root)
     const root = getLIRoot();
-    // Look for various networking sections
+    
+        // Strategy 2a: Broad Initial Networking Scan
+    // Scan the entire job details pane for any profile links that are accompanied by photos
+    const allProfileLinks = root.querySelectorAll('a[href*="/in/"]');
+    allProfileLinks.forEach(link => {
+        const profileUrl = link.href.split('?')[0];
+        if (connections.some(c => c.profile_url === profileUrl)) return;
+
+        // Check if this link is part of a networking-related section
+        const section = link.closest('.jobs-people-who-can-help-section, [class*="people-who-can-help"], .jobs-facepile-list, .jobs-poster, [class*="networking"], [class*="facepile"]');
+        if (!section) return;
+
+        // Find the image. It might be inside the link, a sibling, or nearby in a facepile
+        const firstName = link.innerText.trim().split(' ')[0];
+        // Also check <picture> elements LinkedIn often uses for lazy-loading
+        const picEl = link.querySelector('picture') ||
+                      link.parentElement.querySelector('picture') ||
+                      section.querySelector('picture');
+        const imgInPic = picEl ? picEl.querySelector('img') : null;
+        const img = link.querySelector('img') || 
+                    link.parentElement.querySelector('img') ||
+                    imgInPic ||
+                    (firstName ? section.querySelector(`img[alt*="${firstName}"]`) : null) ||
+                    section.querySelector('img');
+        
+        const rawUrl = img ? (
+            img.getAttribute('data-delayed-url') ||
+            img.getAttribute('srcset')?.split(',')[0].split(' ')[0] ||
+            (img.src && !img.src.includes('ghost_person') && !img.src.startsWith('data:') ? img.src : null)
+        ) : null;
+
+        // Accept http URLs — data-delayed-url is always http, img.src ghosts are data: URIs
+        const photoUrl = (rawUrl && rawUrl.includes('http')) ? rawUrl : null;
+        if (!photoUrl) return;
+
+        let name = link.innerText.trim();
+        // Handle "Alexa and 4 others"
+        if (name.includes(' and ')) name = name.split(' and ')[0].trim();
+        // If name is just "1st" or "2nd", try image alt
+        if (!name || name.length < 2 || /^\d[nsrt][tdh]$/i.test(name)) {
+            name = img.alt ? img.alt.replace('Avatar of ', '').split(',')[0].trim() : '';
+        }
+        
+        // If still no name, try to find a sibling that looks like a name
+        if (!name) {
+            const nameEl = section.querySelector('strong, [class*="name"], .artdeco-entity-lockup__title');
+            if (nameEl) name = nameEl.innerText.trim();
+        }
+
+        if (name && name.length > 1 && name !== 'LinkedIn Member') {
+            connections.push({
+                name: name,
+                headline: 'Contact at Company',
+                profile_url: profileUrl,
+                photo_url: photoUrl
+            });
+            console.log(`[JobKernel] Broad scan found connection: ${name}`);
+        }
+    });
+
+    // Strategy 2b: Standard networking cards
     const networkCards = root.querySelectorAll('[class*="networking-card"], [class*="facepile-item"], .job-details-people-who-can-help__connections-card-summary, .jobs-poster, [class*="job-poster"], .hirer-card__container');
     
     networkCards.forEach(card => {
@@ -609,6 +674,15 @@ const LINKEDIN_SCRAPER = {
             const cardText = card.innerText.toLowerCase();
             const isAlumni = cardText.includes('alumni') || cardText.includes('alumnus') || cardText.includes('class of');
             const imgEl = card.querySelector('img');
+            // Prioritize data-delayed-url — it's the REAL photo URL before LinkedIn's lazy loader fires
+            const photoUrl = imgEl ? (
+                imgEl.getAttribute('data-delayed-url') ||
+                imgEl.getAttribute('srcset')?.split(' ')[0] ||
+                (imgEl.src && !imgEl.src.startsWith('data:') && imgEl.src) ||
+                null
+            ) : null;
+            
+            const finalPhotoUrl = (photoUrl && photoUrl.includes('http')) ? photoUrl : null;
 
             connections.push({
                 name,
@@ -617,10 +691,49 @@ const LINKEDIN_SCRAPER = {
                 degree: degree,
                 is_alumni: isAlumni,
                 is_poster: /poster|hirer/i.test(card.className) || !!card.closest('.jobs-poster, .hirer-card__container'),
-                photo_url: imgEl ? imgEl.src : null
+                photo_url: finalPhotoUrl
             });
         }
     });
+
+    // Strategy 2c: LinkedIn Facepile Initial Scan (the "Alexa and others in your network" section)
+    // This is the compact view BEFORE "Show All" is clicked. Profile names come from img alt text.
+    const facepileSections = root.querySelectorAll(
+        '.jobs-people-who-can-help-section, [class*="people-who-can-help"], [class*="facepile"], [class*="connections-facepile"]'
+    );
+    facepileSections.forEach(section => {
+        const imgs = section.querySelectorAll('img');
+        imgs.forEach(img => {
+            // Extract name from alt attr — LinkedIn uses "Avatar of First Last, Title" format
+            const alt = img.alt || '';
+            const nameFromAlt = alt.replace(/^Avatar of\s*/i, '').split(',')[0].trim();
+            if (!nameFromAlt || nameFromAlt.length < 2 || nameFromAlt === 'LinkedIn Member') return;
+
+            // Find the closest anchor or look for a nearby profile link
+            const link = img.closest('a[href*="/in/"]') ||
+                         img.parentElement?.closest('a[href*="/in/"]') ||
+                         section.querySelector(`a[href*="/in/"][aria-label*="${nameFromAlt.split(' ')[0]}"]`);
+            if (!link) return;
+
+            const profileUrl = link.href.split('?')[0];
+            if (connections.some(c => c.profile_url === profileUrl)) return;
+
+            const rawUrl = img.getAttribute('data-delayed-url') ||
+                           img.getAttribute('srcset')?.split(' ')[0] ||
+                           (img.src && !img.src.startsWith('data:') && img.src) ||
+                           img.getAttribute('src');
+            const photoUrl = (rawUrl && rawUrl.includes('http')) ? rawUrl : null;
+
+            connections.push({
+                name: nameFromAlt,
+                headline: 'Contact at Company',
+                profile_url: profileUrl,
+                photo_url: photoUrl
+            });
+            console.log(`[JobKernel] Facepile scan found: ${nameFromAlt} (${photoUrl ? 'has photo' : 'no photo'})`);
+        });
+    });
+
 
     // Strategy 3: Just find ANY /in/ link inside ANY networking area in the whole document
     const networkingAreas = document.querySelectorAll('.jobs-details__networking, .job-details-people-who-can-help, .jobs-search-connections-list, .jobs-details__main-content');
@@ -641,6 +754,13 @@ const LINKEDIN_SCRAPER = {
                 const containerText = container?.innerText.toLowerCase() || '';
                 const isAlumni = containerText.includes('alumni') || containerText.includes('alumnus') || containerText.includes('class of');
                 const imgEl = container?.querySelector('img');
+                // Prioritize data-delayed-url — LinkedIn's lazy-load real URL
+                const photoUrl = imgEl ? (
+                    imgEl.getAttribute('data-delayed-url') ||
+                    imgEl.getAttribute('srcset')?.split(' ')[0] ||
+                    (imgEl.src && !imgEl.src.startsWith('data:') && imgEl.src) ||
+                    null
+                ) : null;
 
                 connections.push({
                     name,
@@ -648,7 +768,7 @@ const LINKEDIN_SCRAPER = {
                     profile_url: profileUrl,
                     degree: degree,
                     is_alumni: isAlumni,
-                    photo_url: imgEl ? imgEl.src : null
+                    photo_url: (photoUrl && photoUrl.includes('http')) ? photoUrl : null
                 });
             }
         });
@@ -1295,6 +1415,49 @@ function handleJobNavigation() {
       });
     } catch(e) {}
   }, 1500);
+
+  // Second networking pass: LinkedIn lazy-loads images and sometimes descriptions ~2-4s after page render.
+  setTimeout(() => {
+    if (!isExtValid()) return;
+    if (!window.location.hostname.includes('linkedin.com')) return;
+    
+    const onPage = LINKEDIN_SCRAPER.networking?.() || [];
+    const fullScrape = scrapeJobData();
+    
+    chrome.storage.local.get(['latestJobData'], (result) => {
+      if (!result.latestJobData) return;
+      
+      let needsUpdate = false;
+      let updateData = { ...result.latestJobData };
+
+      // Check if we now have more networking photos
+      const prevConnections = result.latestJobData.onPageConnections || [];
+      const prevWithPhotos = prevConnections.filter(c => c.photo_url).length;
+      const newWithPhotos  = onPage.filter(c => c.photo_url).length;
+      
+      if (newWithPhotos > prevWithPhotos) {
+        console.log(`[JobKernel] Delayed re-scan: found ${newWithPhotos} photos (was ${prevWithPhotos})`);
+        updateData.onPageConnections = onPage;
+        needsUpdate = true;
+        safeSendMessage({ action: 'refresh_on_page_connections', onPageConnections: onPage });
+      }
+
+      // Check if description was empty/short but is now populated
+      const prevDesc = result.latestJobData.description || '';
+      const newDesc = fullScrape.description || '';
+      if (newDesc.length > prevDesc.length && newDesc.length > 50) {
+        console.log(`[JobKernel] Delayed re-scan: Job description fully loaded (${newDesc.length} chars)`);
+        updateData = { ...fullScrape, onPageConnections: onPage };
+        needsUpdate = true;
+        // This will trigger loadData in sidepanel, which will now find a valid description and trigger AI scoring
+        safeSendMessage({ action: 'refresh_panel_data' });
+      }
+
+      if (needsUpdate) {
+        chrome.storage.local.set({ latestJobData: updateData });
+      }
+    });
+  }, 4000);
 }
 
 // 1. History API patch

@@ -204,10 +204,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         // Test connection using the provided key and url directly
+        const testHeaders = {};
+        const isJWT = key.split('.').length === 3;
+        if (isJWT) {
+          testHeaders['Authorization'] = `Bearer ${key}`;
+        } else {
+          testHeaders['X-API-Key'] = key;
+        }
+
         const res = await fetch(`${apiUrl}/api/auth/me`, {
-          headers: {
-            'X-API-Key': key
-          }
+          headers: testHeaders
         });
 
         if (res.ok) {
@@ -341,34 +347,46 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchWithAuth(url, options = {}) {
     await settingsPromise;
     
-    // Get token/apiKey using a promise-based wrapper
+    // Use the latest token from storage every time to avoid stale closure values
     const result = await new Promise(resolve => chrome.storage.local.get(['apiKey', 'token'], resolve));
     const token = result.apiKey || result.token;
     
     const headers = { ...options.headers };
     
-    // Add API key for our own API
+    // Add API key/token for our own API
     if (url.startsWith(API_URL)) {
       if (token) {
-        headers['X-API-Key'] = token;
+        // Detect auth type: JWTs usually have 2 dots, API keys are often prefixed
+        const isJWT = token.split('.').length === 3;
+        const isNamedKey = token.startsWith('ja_');
+
+        if (isJWT) {
+          headers['Authorization'] = `Bearer ${token}`;
+        } else if (isNamedKey) {
+          headers['X-API-Key'] = token;
+        } else {
+          // Legacy/Fallback: Try both if unsure
+          headers['X-API-Key'] = token;
+          headers['Authorization'] = `Bearer ${token}`;
+        }
       } else {
-        console.warn('[JobKernel] Attempted request to API_URL without token:', url);
+        console.warn('[JobKernel] No token found for authenticated request to:', url);
       }
     }
-    
-    // Ensure content-type is set for POST/PUT if not already
+
     if ((options.method === 'POST' || options.method === 'PUT') && !headers['Content-Type'] && !(options.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
     }
-    
+
     try {
       const res = await fetch(url, { ...options, headers });
-      if (res.status === 401 && url.startsWith(API_URL)) {
-        console.warn('[JobKernel] Sidepanel received 401 Unauthorized. User might need to login.');
+      if (res.status === 401) {
+        console.error('[JobKernel] 401 Unauthorized from API:', url);
+        // Optional: clear stale token if 401? For now just log.
       }
       return res;
     } catch (err) {
-      console.error('[JobKernel] fetchWithAuth error:', err);
+      console.error('[JobKernel] fetchWithAuth network error:', err);
       throw err;
     }
   }
@@ -415,6 +433,62 @@ document.addEventListener('DOMContentLoaded', () => {
   // The scraped data from the browser
   let scrapedData = null;
   let scoringTimeout = null;
+  let lastScoredJobId = null;
+  let lastScoredJobUrl = null;
+  let lastScoredDescription = null;
+  let lastNetworkMatches = []; // DB matches from last renderSideConnections call
+  let resolvingPhotos = new Set(); // Track URLs currently being resolved to avoid duplicates
+
+  async function resolvePhotoForConnection(conn) {
+    if (!conn.profile_url || resolvingPhotos.has(conn.profile_url)) return;
+    
+    const isGhost = !conn.photo_url || conn.photo_url.includes('ghost_person') || conn.photo_url.includes('placeholder');
+    if (!isGhost) return;
+
+    resolvingPhotos.add(conn.profile_url);
+    console.log(`[JobKernel] Attempting to resolve photo for: ${conn.name}`);
+
+    try {
+      // 1. Try Backend Cache first
+      const res = await fetchWithAuth(`${API_URL}/api/linkedin/resolve-photo?url=${encodeURIComponent(conn.profile_url)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.photo_url) {
+          console.log(`[JobKernel] Resolved photo from backend cache for: ${conn.name}`);
+          conn.photo_url = data.photo_url;
+          renderSideConnections(lastNetworkMatches); // Re-render to show photo
+          resolvingPhotos.delete(conn.profile_url);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('[JobKernel] Backend photo resolution failed:', e);
+    }
+
+    // 2. Try Background Scrape (using user cookies)
+    chrome.runtime.sendMessage({ 
+      action: 'scrape_linkedin_photo', 
+      url: conn.profile_url 
+    }, (response) => {
+      if (response && response.photoUrl) {
+        console.log(`[JobKernel] Resolved photo via background scrape for: ${conn.name}`);
+        conn.photo_url = response.photoUrl;
+        
+        // Update UI
+        renderSideConnections(lastNetworkMatches);
+
+        // 3. Update Backend if it's a known contact
+        if (conn.id && currentAppRecord?.id) {
+          fetchWithAuth(`${API_URL}/api/applications/${currentAppRecord.id}/contacts/${conn.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photo_url: response.photoUrl })
+          }).catch(err => console.warn('[JobKernel] Failed to update backend with scraped photo:', err));
+        }
+      }
+      resolvingPhotos.delete(conn.profile_url);
+    });
+  }
 
   // ── Tell background we're alive so it can track panel state ─────────────
   const port = chrome.runtime.connect({ name: 'sidepanel' });
@@ -1229,7 +1303,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     empty.style.display = 'none';
     result.style.display = isDetails ? 'flex' : 'block';
-    if (val) val.textContent = score;
+    if (val) val.textContent = (score != null) ? score : '--';
 
     // Ring animation
     if (ring) {
@@ -1620,11 +1694,33 @@ document.addEventListener('DOMContentLoaded', () => {
           // 3. Kick off the heavy scoring analysis LAST (Slow/AI)
           // We use a small timeout to ensure the faster fetches above get a head start 
           // on the backend, particularly if it's single-threaded.
-          if (targetData.match_score == null) {
+          const currentJobUrl = (scrapedData?.link || scrapedData?.job_url || '').split('?')[0].split('#')[0];
+          const currentDesc = (scrapedData?.description || scrapedData?.job_description || '').substring(0, 1000); // Compare first 1000 chars for speed
+          const isSameJob = (currentAppRecord && currentAppRecord.id === lastScoredJobId) || 
+                           (currentJobUrl && currentJobUrl === lastScoredJobUrl && currentDesc === lastScoredDescription);
+
+          if (targetData.match_score == null && !isSameJob) {
             if (scoringTimeout) clearTimeout(scoringTimeout);
-            scoringTimeout = setTimeout(() => {
-              handleCalculateScore(null, currentMode === 'apply' ? 'apply' : 'details');
-            }, 300); // Slightly longer debounce
+
+            // Wait until we have a substantial description before auto-triggering scoring
+            if (currentDesc && currentDesc.length > 20) {
+              // Update markers IMMEDIATELY to prevent parallel triggers from loadData calls
+              lastScoredJobId = currentAppRecord?.id;
+              lastScoredJobUrl = currentJobUrl;
+              lastScoredDescription = currentDesc;
+
+              scoringTimeout = setTimeout(() => {
+                console.log('[JobKernel] Triggering match score calculation...');
+                handleCalculateScore(null, currentMode === 'apply' ? 'apply' : 'details');
+              }, 300);
+            } else {
+              console.log('[JobKernel] Skipping auto-score: Waiting for job description to load.');
+              // We do NOT update the `lastScored` markers here, so that when the 
+              // content script detects the loaded description and pushes an update, 
+              // it will successfully trigger `isSameJob = false` and reach this block again.
+            }
+          } else if (isSameJob) {
+            console.log('[JobKernel] Skipping score calculation (already scored/in-progress for this job).');
           }
         } catch (innerErr) {
           console.error('[JobAutomator] Error in loadData storage callback:', innerErr);
@@ -1726,15 +1822,61 @@ document.addEventListener('DOMContentLoaded', () => {
    }
  
    function renderSideConnections(matches) {
-     if ((!matches || matches.length === 0) && (!scrapedData?.onPageConnections || scrapedData.onPageConnections.length === 0)) {
-       sideConnectionBanner.style.display = 'none';
-       return;
-     }
+      lastNetworkMatches = matches || []; // persist for delayed photo updates
+      if ((!matches || matches.length === 0) && (!scrapedData?.onPageConnections || scrapedData.onPageConnections.length === 0)) {
+        sideConnectionBanner.style.display = 'none';
+        return;
+      }
 
-     sideConnectionList.innerHTML = '';
+      // 1. Merge fresh data from page (OPC) into primary matches (e.g. photos)
+      const opc = scrapedData?.onPageConnections || [];
+      if (opc.length > 0 && matches && matches.length > 0) {
+        opc.forEach(fresh => {
+          const m = matches.find(match => (match.profile_url?.split('?')[0].replace(/\/$/, '') === fresh.profile_url?.split('?')[0].replace(/\/$/, '')));
+          if (m && fresh.photo_url && !m.photo_url) {
+            console.log(`[JobKernel] Enriching matched connection ${m.name} with fresh photo from page`);
+            m.photo_url = fresh.photo_url;
+            linkContact(fresh, null); // Sync to DB
+          }
+        });
+      }
+
+      // 2. Auto-save all connections to the application
+      if (currentAppRecord) {
+        // Save all connections in parallel
+        (async () => {
+          const syncPromises = [];
+          if (matches && matches.length > 0) {
+            matches.forEach(conn => {
+              if (!currentAppRecord.contacts?.some(c => c.linkedin_url === conn.profile_url)) {
+                syncPromises.push(linkContact(conn, null, { skipRefresh: true }));
+              }
+            });
+          }
+          if (opc.length > 0) {
+            opc.forEach(conn => {
+              if (!matches.some(m => m.profile_url === conn.profile_url)) {
+                if (!currentAppRecord.contacts?.some(c => c.linkedin_url === conn.profile_url)) {
+                  syncPromises.push(linkContact(conn, null, { skipRefresh: true }));
+                }
+              }
+            });
+          }
+          if (syncPromises.length > 0) {
+            console.log(`[JobKernel] Batch syncing ${syncPromises.length} connections...`);
+            await Promise.all(syncPromises);
+            loadData({ silent: true });
+          }
+        })();
+      }
+
+      sideConnectionList.innerHTML = '';
      
      if (matches && matches.length > 0) {
        matches.forEach(conn => {
+         // Trigger lazy photo resolution if needed
+         resolvePhotoForConnection(conn);
+
          const item = document.createElement('a');
          item.className = 'side-conn-item';
          item.href = conn.profile_url;
@@ -1743,9 +1885,9 @@ document.addEventListener('DOMContentLoaded', () => {
          const initials = conn.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
          
          item.innerHTML = `
-           <div class="side-conn-avatar" style="overflow:hidden;position:relative;">
-              ${conn.photo_url ? `<img src="${API_URL}/api/proxy-image?url=${encodeURIComponent(conn.photo_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;">${initials}</span>` : initials}
-            </div>
+           <div class="side-conn-avatar" style="overflow:hidden; position:relative; background: ${conn.photo_url && !conn.photo_url.includes('ghost_person') ? 'transparent' : 'linear-gradient(135deg, #10b981, #059669)'};">
+             ${conn.photo_url && !conn.photo_url.includes('ghost_person') ? `<img src="${conn.photo_url.startsWith('data:') ? conn.photo_url : `${API_URL}/api/proxy-image?url=${encodeURIComponent(conn.photo_url)}`}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:white;">${initials}</span>` : `<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:white;">${initials}</span>`}
+           </div>
            <div class="side-conn-info">
              <div class="side-conn-name">${conn.name}</div>
              <div class="side-conn-headline">${conn.headline || ''}</div>
@@ -1756,41 +1898,34 @@ document.addEventListener('DOMContentLoaded', () => {
        });
      }
 
-     // Also check for on-page connections from scrapedData
-     const opc = scrapedData?.onPageConnections || [];
-     if (opc.length > 0) {
-       // Auto-save all on-page contacts silently — no manual button needed
-       if (currentAppRecord) {
-         opc.forEach(conn => {
-           if (!matches.some(m => m.profile_url === conn.profile_url)) {
-             linkContact(conn, null);
-           }
-         });
-       }
+      // Render On-Page Connections
+      if (opc.length > 0) {
+        // Plain label — no Link All button
+        const opcContainer = document.createElement('div');
+        opcContainer.className = 'side-networking-subtitle';
+        opcContainer.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 14px;">visibility</span>
+            Also found on page (${opc.length})
+          </div>
+        `;
+        opcContainer.style.marginTop = '1rem';
+        opcContainer.style.marginBottom = '0.5rem';
+        opcContainer.style.fontSize = '11px';
+        opcContainer.style.fontWeight = '700';
+        opcContainer.style.textTransform = 'uppercase';
+        opcContainer.style.color = 'var(--text-muted)';
+        opcContainer.style.display = 'flex';
+        opcContainer.style.alignItems = 'center';
 
-       // Plain label — no Link All button
-       const opcContainer = document.createElement('div');
-       opcContainer.className = 'side-networking-subtitle';
-       opcContainer.innerHTML = `
-         <div style="display: flex; align-items: center; gap: 4px;">
-           <span class="material-symbols-outlined" style="font-size: 14px;">visibility</span>
-           Also found on page (${opc.length})
-         </div>
-       `;
-       opcContainer.style.marginTop = '1rem';
-       opcContainer.style.marginBottom = '0.5rem';
-       opcContainer.style.fontSize = '11px';
-       opcContainer.style.fontWeight = '700';
-       opcContainer.style.textTransform = 'uppercase';
-       opcContainer.style.color = 'var(--text-muted)';
-       opcContainer.style.display = 'flex';
-       opcContainer.style.alignItems = 'center';
-
-       sideConnectionList.appendChild(opcContainer);
+        sideConnectionList.appendChild(opcContainer);
 
        opc.forEach(conn => {
          // Avoid duplicates already shown as matched primary connections
          if (matches.some(m => m.profile_url === conn.profile_url)) return;
+
+         // Trigger lazy photo resolution if needed
+         resolvePhotoForConnection(conn);
 
          const item = document.createElement('a');
          item.className = 'side-conn-item';
@@ -1800,8 +1935,8 @@ document.addEventListener('DOMContentLoaded', () => {
          const initials = conn.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
          item.innerHTML = `
-           <div class="side-conn-avatar" style="overflow:hidden; position:relative; background: ${conn.photo_url ? 'transparent' : 'linear-gradient(135deg, #10b981, #059669)'};">
-             ${conn.photo_url ? `<img src="${conn.photo_url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:white;">${initials}</span>` : initials}
+           <div class="side-conn-avatar" style="overflow:hidden; position:relative; background: ${conn.photo_url && !conn.photo_url.includes('ghost_person') ? 'transparent' : 'linear-gradient(135deg, #10b981, #059669)'};">
+             ${conn.photo_url && !conn.photo_url.includes('ghost_person') ? `<img src="${conn.photo_url.startsWith('data:') ? conn.photo_url : `${API_URL}/api/proxy-image?url=${encodeURIComponent(conn.photo_url)}`}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:white;">${initials}</span>` : `<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:white;">${initials}</span>`}
            </div>
            <div class="side-conn-info">
              <div class="side-conn-name">${conn.name} ${conn.is_poster ? "<span class=\"badge badge-emerald\" style=\"font-size: 9px; margin-left: 4px;\">Poster</span>" : ""}</div>
@@ -1837,7 +1972,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    async function linkContact(contact, btn) {
+    async function linkContact(contact, btn, options = {}) {
         if (!currentAppRecord) return; // Silent return for automated sync
         
         const originalContent = btn?.innerHTML;
@@ -1846,6 +1981,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('syncing');
         }
         
+        console.log(`[JobKernel] Saving contact: ${contact.name} to application ${currentAppRecord.id}`);
         try {
             // STEP 1: Sync to Global Network (linkedin_connections table)
             // This ensures they show up as "Matched" for ALL future jobs at this company
@@ -1864,7 +2000,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // STEP 2: Link to this specific Application (application_contacts table)
-            if (!currentAppRecord.contacts?.some(c => c.linkedin_url === contact.profile_url)) {
+            const existingContact = currentAppRecord.contacts?.find(c => c.linkedin_url === contact.profile_url);
+
+            if (!existingContact) {
                 const res = await fetchWithAuth(`${API_URL}/api/applications/${currentAppRecord.id}/contacts`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1878,20 +2016,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 if (res.ok) {
-                    if (btn) {
-                        btn.innerHTML = '<span class="material-symbols-outlined" style="color: var(--success)">check</span>';
-                        btn.classList.remove('syncing');
-                        btn.disabled = true;
-                        showStatus(`Linked ${contact.name}!`, 'success');
+                    const savedContact = await res.json();
+                    console.log(`[JobKernel] Successfully linked contact: ${contact.name}`);
+                    // Update local record to avoid re-syncing this render
+                    if (currentAppRecord) {
+                        if (!currentAppRecord.contacts) currentAppRecord.contacts = [];
+                        if (!currentAppRecord.contacts.some(c => c.linkedin_url === contact.profile_url)) {
+                            currentAppRecord.contacts.push({
+                                id: savedContact.id,
+                                name: contact.name,
+                                linkedin_url: contact.profile_url,
+                                photo_url: contact.photo_url
+                            });
+                        }
                     }
                 }
-            } else if (btn) {
+            } else if (!existingContact.photo_url && contact.photo_url) {
+                // Update existing contact with the newly discovered photo
+                const res = await fetchWithAuth(`${API_URL}/api/applications/${currentAppRecord.id}/contacts/${existingContact.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: existingContact.name,
+                        photo_url: contact.photo_url
+                    })
+                });
+                
+                if (res.ok) {
+                    existingContact.photo_url = contact.photo_url;
+                    console.log(`[JobKernel] Successfully updated contact photo for: ${contact.name}`);
+                }
+            }
+            if (btn) {
                 btn.innerHTML = '<span class="material-symbols-outlined" style="color: var(--success)">check</span>';
+                btn.classList.remove('syncing');
                 btn.disabled = true;
+                showStatus(`Linked ${contact.name}!`, 'success');
             }
 
-            // ALWAYS refresh data to show them in the main connections list
-            loadData({ silent: true });
+            // ALWAYS refresh data to show them in the main connections list unless skipped
+            if (!options.skipRefresh) {
+                console.log(`[JobKernel] Refreshing after contact link...`);
+                loadData({ silent: true });
+            }
         } catch (e) {
             console.error(e);
             if (btn) {
@@ -1942,19 +2109,13 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (message.action === 'LINKEDIN_SYNC_ERROR') {
       failSync(message.error);
     } else if (message.action === 'refresh_on_page_connections') {
-      if (scrapedData) {
-        scrapedData.onPageConnections = message.onPageConnections;
-        
-        // AUTOMATIC SYNC: Link leads if app is ready, otherwise they'll be sync'd when loadData finishes
-        if (currentAppRecord && scrapedData.onPageConnections && scrapedData.onPageConnections.length > 0) {
-            console.log(`[JobKernel] Active job found, auto-syncing leads...`);
-            scrapedData.onPageConnections.forEach(conn => linkContact(conn, null));
-        }
-
-        if (typeof renderSideConnections === 'function') {
-            loadData({ silent: true });
-        }
-      }
+      // Update scrapedData global (initialize if needed) then re-render
+      if (!scrapedData) scrapedData = {};
+      scrapedData.onPageConnections = message.onPageConnections;
+      // Re-render with the last-known DB matches so photos merge in immediately
+      renderSideConnections(lastNetworkMatches);
+      // Automatically sync newly discovered photos to the database
+      autoSyncLeads();
     }
   });
 
@@ -1962,9 +2123,18 @@ document.addEventListener('DOMContentLoaded', () => {
   async function autoSyncLeads() {
     if (!currentAppRecord || !scrapedData?.onPageConnections || scrapedData.onPageConnections.length === 0) return;
     
-    console.log(`[JobKernel] Triggering auto-sync for ${scrapedData.onPageConnections.length} leads...`);
+    const syncPromises = [];
     for (const conn of scrapedData.onPageConnections) {
-        await linkContact(conn, null);
+        const existingContact = currentAppRecord.contacts?.find(c => c.linkedin_url === conn.profile_url);
+        if (!existingContact || (!existingContact.photo_url && conn.photo_url)) {
+            syncPromises.push(linkContact(conn, null, { skipRefresh: true }));
+        }
+    }
+
+    if (syncPromises.length > 0) {
+        console.log(`[JobKernel] Auto-syncing ${syncPromises.length} leads...`);
+        await Promise.all(syncPromises);
+        loadData({ silent: true });
     }
   }
 
@@ -2403,7 +2573,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const getSummary = (s) => {
-      if (s === null) return "Evaluating your profile...";
+      if (s == null) return "Evaluating your profile...";
       if (s >= 90) return "Excellent profile match";
       if (s >= 80) return "Strong candidate alignment";
       if (s >= 70) return "Good baseline fit";
@@ -2418,19 +2588,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isSummaryTag) {
       badgeContent = `
         <span style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:${scoreBg};border:2px solid ${scoreBorder};color:${scoreColor};font-size:0.62rem;font-weight:800;flex-shrink:0;">
-          ${score !== null ? score : '?'}
+          ${score != null ? score : '?'}
         </span>
-        <span style="color:${scoreColor};font-weight:700;">${score !== null ? 'Match' : 'Score Pending'}</span>
+        <span style="color:${scoreColor};font-weight:700;">${score != null ? 'Match' : 'Score Pending'}</span>
       `;
       containerStyle = `display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 2rem; background: ${scoreBg}; border: 1px solid ${scoreBorder}; width: fit-content; cursor: default; font-size: 0.8rem;`;
     } else {
       const summary = getSummary(score);
       badgeContent = `
         <span style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:${scoreBg};border:2px solid ${scoreBorder};color:${scoreColor};font-size:0.85rem;font-weight:800;flex-shrink:0; margin-right: 4px;">
-          ${score !== null ? score : '?'}
+          ${score != null ? score : '?'}
         </span>
         <div style="display: flex; flex-direction: column; align-items: flex-start;">
-          <span style="color:${scoreColor}; font-weight:700; font-size: 0.9rem; line-height: 1.1;">${score !== null ? 'Match Score' : 'Score Pending'}</span>
+          <span style="color:${scoreColor}; font-weight:700; font-size: 0.9rem; line-height: 1.1;">${score != null ? 'Match Score' : 'Score Pending'}</span>
           <span style="color:var(--text-secondary); font-size: 0.75rem; font-weight: 500; line-height: 1.1;">${summary}</span>
         </div>
       `;
@@ -2767,7 +2937,7 @@ document.addEventListener('DOMContentLoaded', () => {
     summaryMeta.innerHTML = '';
     const tags = [
       { icon: 'calendar_today', label: 'Posted',  value: app.date_posted },
-      { icon: 'history',        label: 'Created', value: app.created_at ? new Date(app.created_at).toLocaleDateString() : null },
+      { icon: 'history',        label: 'Captured', value: app.created_at ? new Date(app.created_at).toLocaleDateString() : null },
       { icon: 'work',           label: 'Type',    value: app.job_type },
       { icon: 'location_on',    label: 'Loc',     value: app.location },
       { icon: 'distance',       label: 'Relo',    value: app.relocation },
@@ -3071,7 +3241,25 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         console.warn('[JobKernel] No description found for scoring.');
       }
+
+      const link = target.job_url || target.link;
+      if (link) {
+        formData.append('job_url', link);
+      }
       
+      // Ensure we have a valid auth context before triggering score
+      const authCheck = await new Promise(resolve => chrome.storage.local.get(['apiKey', 'token'], resolve));
+      if (!authCheck.apiKey && !authCheck.token) {
+        console.log('[JobKernel] Scoring deferred: No API Key or Token configured.');
+        // Assuming a helper for status feedback exists or can be added to the UI
+        showStatus('Missing API Key in Settings', 'error');
+        return;
+      }
+
+      // Restore loading feedback
+      updateMatchScoreUI(target, 'apply', true);
+      updateMatchScoreUI(target, 'details', true);
+
       formData.append('use_default_resume', 'true');
 
       const resp = await fetchWithAuth(`${API_URL}/api/score-job-match`, {
