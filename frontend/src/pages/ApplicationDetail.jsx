@@ -684,7 +684,29 @@ const LogoPickerModal = ({ companyName, onSelect, onClose }) => {
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate, onViewLifecycle, onStartFullGeneration, avgScore }) => {
+const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate, onViewLifecycle, onStartFullGeneration, avgScore, isEnrichingGlobal = false }) => {
+    const headerSentinelRef = React.useRef(null);
+    const [showStickyHeaderSummary, setShowStickyHeaderSummary] = React.useState(false);
+
+    React.useEffect(() => {
+        const scrollContainer = document.querySelector('main');
+        if (!scrollContainer) return;
+
+        const handleScroll = () => {
+            // Trigger the mini header after scrolling 150px (enough to clear the main title)
+            const shouldShow = scrollContainer.scrollTop > 150;
+            if (shouldShow !== showStickyHeaderSummary) {
+                setShowStickyHeaderSummary(shouldShow);
+            }
+        };
+
+        scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+        // Initial check
+        handleScroll();
+
+        return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }, [showStickyHeaderSummary]);
+
     const { fetchWithAuth } = useAuth();
     const [profileDocs, setProfileDocs] = React.useState([]);
     const [uploadingDoc, setUploadingDoc] = React.useState(false);
@@ -703,7 +725,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     const [regeneratingResume, setRegeneratingResume] = React.useState(false);
     const [regeneratingCL, setRegeneratingCL] = React.useState(false);
     const [activePhaseTab, setActivePhaseTab] = React.useState('Saved');
-    const [showDetails, setShowDetails] = React.useState(true);
+
 
     React.useEffect(() => {
         if (app?.pipeline_stage) {
@@ -1275,8 +1297,77 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
 
 
     return (
-        <div style={{ padding: '3rem', maxWidth: '1600px', width: '100%', margin: '0 auto', height: '100%', overflowY: 'auto', background: 'var(--bg-primary)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div style={{ maxWidth: '1600px', width: '100%', margin: '0 auto', background: 'var(--bg-primary)', position: 'relative' }}>
+            {/* Sticky Mini Header — Logo and Title (At root level to prevent clipping) */}
+            <div style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 10001,
+                background: 'var(--bg-primary)',
+                borderBottom: showStickyHeaderSummary ? '1px solid var(--border-color)' : 'none',
+                height: '70px',
+                visibility: showStickyHeaderSummary ? 'visible' : 'hidden',
+                opacity: showStickyHeaderSummary ? 1 : 0,
+                transform: showStickyHeaderSummary ? 'translateY(0)' : 'translateY(-10px)',
+                overflow: 'hidden',
+                transition: 'opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease',
+                pointerEvents: showStickyHeaderSummary ? 'auto' : 'none',
+                boxShadow: showStickyHeaderSummary ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
+                marginBottom: showStickyHeaderSummary ? '0' : '-70px', /* Avoid taking space when hidden */
+            }}>
+                <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '1rem', 
+                    padding: '0.75rem 3rem',
+                }}>
+                    {app.company_logo && (
+                        <img 
+                            src={app.company_logo} 
+                            alt={app.company} 
+                            style={{ 
+                                width: '1.75rem', 
+                                height: '1.75rem', 
+                                objectFit: 'contain', 
+                                borderRadius: '4px',
+                                background: 'rgba(255,255,255,0.03)',
+                                padding: '2px',
+                                transition: 'transform 0.3s ease',
+                                transform: showStickyHeaderSummary ? 'scale(1)' : 'scale(0.8)'
+                            }} 
+                        />
+                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                        <span style={{ 
+                            fontSize: '0.85rem', 
+                            fontWeight: 800, 
+                            color: 'var(--text-primary)', 
+                            whiteSpace: 'nowrap', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis',
+                            lineHeight: 1.2
+                        }}>
+                            {app.job_title}
+                        </span>
+                        <span style={{ 
+                            fontSize: '0.7rem', 
+                            fontWeight: 600, 
+                            color: 'var(--text-secondary)', 
+                            whiteSpace: 'nowrap', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em'
+                        }}>
+                            {app.company}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Header & Controls — padded wrapper */}
+            <div style={{ padding: '3rem', paddingBottom: '0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <button
                     onClick={onBack}
                     style={{
@@ -1511,10 +1602,13 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                             onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
                             onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
                         >
-                            {logoUrl
-                                ? <img src={logoUrl} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={() => setLogoUrl(null)} />
-                                : <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '2rem' }}>add_photo_alternate</span>
-                            }
+                            {isEnrichingGlobal ? (
+                                <div className="skeleton-shimmer" style={{ width: '100%', height: '100%', borderRadius: '4px' }} />
+                            ) : logoUrl ? (
+                                <img src={logoUrl} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={() => setLogoUrl(null)} />
+                            ) : (
+                                <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '2rem' }}>add_photo_alternate</span>
+                            )}
                             {/* Hover overlay */}
                             <div style={{
                                 position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)',
@@ -1546,11 +1640,45 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                         onChange={e => setFormData({ ...formData, company: e.target.value })}
                                         style={{ fontSize: '1.5rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.5rem', color: 'var(--text-secondary)', width: '100%', padding: '0.25rem 0.75rem' }}
                                     />
+                                    <input
+                                        type="text"
+                                        placeholder="Company Website URL"
+                                        value={formData.company_url || ''}
+                                        onChange={e => setFormData({ ...formData, company_url: e.target.value })}
+                                        style={{ fontSize: '1rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.5rem', color: 'var(--text-secondary)', width: '100%', padding: '0.25rem 0.75rem', marginTop: '0.5rem' }}
+                                    />
                                 </div>
                             ) : (
                                 <>
                                     <h1 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '0.25rem', lineHeight: '1.2', letterSpacing: '-0.02em' }}>{app.job_title}</h1>
-                                    <div style={{ fontSize: '1.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{app.company}</div>
+                                    <div style={{ fontSize: '1.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                        {isEnrichingGlobal ? (
+                                            <span className="text-shimmer" style={{ fontSize: '1.75rem', fontWeight: 500 }}>{app.company}</span>
+                                        ) : app.company_url ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                                <a 
+                                                    href={app.company_url.startsWith('http') ? app.company_url : `https://${app.company_url}`} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer" 
+                                                    style={{ color: 'inherit', textDecoration: 'none', borderBottom: '1px dashed transparent', transition: 'all 0.2s' }}
+                                                    onMouseOver={(e) => e.currentTarget.style.borderBottomColor = 'var(--primary)'}
+                                                    onMouseOut={(e) => e.currentTarget.style.borderBottomColor = 'transparent'}
+                                                >
+                                                    {app.company}
+                                                </a>
+                                                <a 
+                                                    href={app.company_url.startsWith('http') ? app.company_url : `https://${app.company_url}`} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    style={{ color: 'var(--primary)', opacity: 0.6, display: 'flex', textDecoration: 'none' }}
+                                                >
+                                                    <span className="material-symbols-outlined" style={{ fontSize: '1.4rem' }}>arrow_outward</span>
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            app.company
+                                        )}
+                                    </div>
                                 </>
                             )}
                         </div>
@@ -1660,6 +1788,9 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                         />
                     </div>
                 </div>
+
+                <div ref={headerSentinelRef} style={{ height: '1px', width: '100%' }} />
+
 
 
 
@@ -2280,118 +2411,10 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                         </div>
                     </div>
                 </div>
+</header>
 
 
-            </header>
 
-            {needsGeneration && (
-                <>
-                    <div style={{ marginBottom: '1rem', padding: '1.25rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(16, 185, 129, 0.1))', borderRadius: '1rem', border: '1px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                            <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>auto_awesome</span>
-                                Generate Documents
-                            </h3>
-                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Use AI to tailor your resume and write a cover letter based on this job.</p>
-                        </div>
-                        <button 
-                            className="btn btn-primary" 
-                            onClick={() => setShowInstructionsModal(true)}
-                            style={{ padding: '0.75rem 1.5rem', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                        >
-                            Generate Now
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>arrow_forward</span>
-                        </button>
-                    </div>
-
-                    {/* Pre-launch Instructions Modal */}
-                    {showInstructionsModal && (
-                        <div style={{
-                            position: 'fixed', inset: 0, zIndex: 9000,
-                            background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>
-                            <div style={{
-                                background: 'var(--bg-card)', borderRadius: '1rem',
-                                border: '1px solid var(--border-color)',
-                                padding: '2rem', width: '100%', maxWidth: '520px',
-                                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.6)',
-                                display: 'flex', flexDirection: 'column', gap: '1.5rem'
-                            }}>
-                                <div>
-                                    <h2 style={{ margin: '0 0 0.35rem', fontSize: '1.4rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>tune</span>
-                                        Any special instructions?
-                                    </h2>
-                                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6 }}>
-                                        Optionally guide the AI before it tailors your documents. Leave blank to use default settings.
-                                    </p>
-                                </div>
-
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>description</span>
-                                        Resume Instructions
-                                    </label>
-                                    <textarea
-                                        className="form-textarea"
-                                        rows={3}
-                                        placeholder="e.g. 'Emphasize my leadership roles' or 'Highlight Python experience'"
-                                        value={modalResumeInstructions}
-                                        onChange={e => setModalResumeInstructions(e.target.value)}
-                                        style={{ resize: 'vertical', fontSize: '0.9rem' }}
-                                        autoFocus
-                                    />
-                                </div>
-
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>mail</span>
-                                        Cover Letter Instructions
-                                    </label>
-                                    <textarea
-                                        className="form-textarea"
-                                        rows={3}
-                                        placeholder="e.g. 'Keep it under one page' or 'Formal and concise tone'"
-                                        value={modalClInstructions}
-                                        onChange={e => setModalClInstructions(e.target.value)}
-                                        style={{ resize: 'vertical', fontSize: '0.9rem' }}
-                                    />
-                                </div>
-
-                                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                                    <button
-                                        className="btn btn-secondary"
-                                        onClick={() => {
-                                            setShowInstructionsModal(false);
-                                            setModalResumeInstructions('');
-                                            setModalClInstructions('');
-                                        }}
-                                        style={{ flex: 1, justifyContent: 'center' }}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        className="btn btn-primary"
-                                        onClick={() => {
-                                            setShowInstructionsModal(false);
-                                            if (onStartFullGeneration) {
-                                                onStartFullGeneration(app, modalResumeInstructions, modalClInstructions);
-                                            }
-                                            setModalResumeInstructions('');
-                                            setModalClInstructions('');
-                                        }}
-                                        style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                                    >
-                                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>auto_awesome</span>
-                                        Generate
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </>
-            )}
 
             <PipelineProgressBar
                 currentStage={app.pipeline_stage}
@@ -2413,23 +2436,24 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     }
                 }}
             />
+            </div> {/* End Header Padded Wrapper */}
 
-            {/* Phase Tabs — sticky so they freeze at top when scrolling */}
+            {/* Phase Tabs — sticks below the mini header (Outside header to prevent clipping) */}
             <div style={{
-                display: 'flex',
-                gap: '0.2rem',
-                marginTop: '2.5rem',
                 position: 'sticky',
-                top: 0,
-                zIndex: 50,
+                top: 70, // Always target 70px to avoid gaps when mini header is visible
+                zIndex: 10000,
                 background: 'var(--bg-primary)',
-                paddingTop: '0.5rem',
-                marginLeft: '-0.5rem',
-                marginRight: '-0.5rem',
-                paddingLeft: '0.5rem',
-                paddingRight: '0.5rem',
                 backdropFilter: 'blur(16px)',
                 WebkitBackdropFilter: 'blur(16px)',
+                borderBottom: '1px solid var(--border-color)',
+                marginTop: '1.5rem',
+                display: 'flex',
+                gap: '0.2rem',
+                paddingLeft: '3rem',
+                paddingRight: '3rem',
+                paddingTop: '0.75rem',
+                paddingBottom: '0.5rem',
             }}>
                 {[
                     { id: 'Saved', label: 'Saved' },
@@ -2489,7 +2513,118 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                 })}
             </div>
 
-            {/* Phase Content from Lifecycle Component */}
+
+            {/* Main Content Areas — padded wrapper */}
+            <div style={{ padding: '3rem', paddingTop: '2rem' }}>
+                {needsGeneration && (
+                    <>
+                        <div style={{ marginBottom: '2rem', padding: '1.25rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(16, 185, 129, 0.1))', borderRadius: '1rem', border: '1px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div>
+                                <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>auto_awesome</span>
+                                    Generate Documents
+                                </h3>
+                                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Use AI to tailor your resume and write a cover letter based on this job.</p>
+                            </div>
+                            <button 
+                                className="btn btn-primary" 
+                                onClick={() => setShowInstructionsModal(true)}
+                                style={{ padding: '0.75rem 1.5rem', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                            >
+                                Generate Now
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>arrow_forward</span>
+                            </button>
+                        </div>
+
+                        {/* Pre-launch Instructions Modal */}
+                        {showInstructionsModal && (
+                            <div style={{
+                                position: 'fixed', inset: 0, zIndex: 9000,
+                                background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <div style={{
+                                    background: 'var(--bg-card)', borderRadius: '1rem',
+                                    border: '1px solid var(--border-color)',
+                                    padding: '2rem', width: '100%', maxWidth: '520px',
+                                    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.6)',
+                                    display: 'flex', flexDirection: 'column', gap: '1.5rem'
+                                }}>
+                                    <div>
+                                        <h2 style={{ margin: '0 0 0.35rem', fontSize: '1.4rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>tune</span>
+                                            Any special instructions?
+                                        </h2>
+                                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                                            Optionally guide the AI before it tailors your documents. Leave blank to use default settings.
+                                        </p>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>description</span>
+                                            Resume Instructions
+                                        </label>
+                                        <textarea
+                                            className="form-textarea"
+                                            rows={3}
+                                            placeholder="e.g. 'Emphasize my leadership roles' or 'Highlight Python experience'"
+                                            value={modalResumeInstructions}
+                                            onChange={e => setModalResumeInstructions(e.target.value)}
+                                            style={{ resize: 'vertical', fontSize: '0.9rem' }}
+                                            autoFocus
+                                        />
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>mail</span>
+                                            Cover Letter Instructions
+                                        </label>
+                                        <textarea
+                                            className="form-textarea"
+                                            rows={3}
+                                            placeholder="e.g. 'Keep it under one page' or 'Formal and concise tone'"
+                                            value={modalClInstructions}
+                                            onChange={e => setModalClInstructions(e.target.value)}
+                                            style={{ resize: 'vertical', fontSize: '0.9rem' }}
+                                        />
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                        <button
+                                            className="btn btn-secondary"
+                                            onClick={() => {
+                                                setShowInstructionsModal(false);
+                                                setModalResumeInstructions('');
+                                                setModalClInstructions('');
+                                            }}
+                                            style={{ flex: 1, justifyContent: 'center' }}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={() => {
+                                                if (onStartFullGeneration) {
+                                                    onStartFullGeneration(app, modalResumeInstructions, modalClInstructions);
+                                                }
+                                                setShowInstructionsModal(false);
+                                                setModalResumeInstructions('');
+                                                setModalClInstructions('');
+                                            }}
+                                            style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                                        >
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>auto_awesome</span>
+                                            Generate
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+                {/* Phase Content from Lifecycle Component */}
             <div style={{ 
                 marginBottom: '2.5rem', 
                 borderRadius: '0 1rem 1rem 1rem',
@@ -2507,276 +2642,8 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                 />
             </div>
 
-            {/* Job Details & Documents Accordion */}
-            <div id="job-details-accordion" style={{ marginTop: '2.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '1.5rem' }}>
-                <button 
-                    onClick={() => setShowDetails(!showDetails)}
-                    style={{ 
-                        width: '100%', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'space-between', 
-                        background: 'none', 
-                        border: 'none', 
-                        cursor: 'pointer', 
-                        padding: '1rem',
-                        borderRadius: '0.75rem',
-                        transition: 'background 0.2s',
-                        color: 'var(--text-primary)'
-                    }}
-                    onMouseOver={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.03)'}
-                    onMouseOut={(e) => e.target.style.background = 'transparent'}
-                >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.5rem' }}>feed</span>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Job Details & Documents</h2>
-                    </div>
-                    <span className="material-symbols-outlined" style={{ fontSize: '1.5rem', transform: showDetails ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }}>
-                        expand_more
-                    </span>
-                </button>
 
-                {showDetails && (
-                    <div style={{ marginTop: '1.5rem', animation: 'fadeIn 0.3s' }}>
-                <div className="job-details-grid">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                    {/* Remarks moved up to header */}
-                    
-                    <div className="card" style={{ padding: '2rem' }}>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span className="material-symbols-outlined">description</span>
-                            Description & Requirements
-                        </div>
-                        {isEditing ? (
-                            <textarea
-                                value={formData.job_description || ''}
-                                onChange={e => setFormData({ ...formData, job_description: e.target.value })}
-                                rows={15}
-                                placeholder="Paste job description here..."
-                                style={{ 
-                                    background: 'var(--bg-tertiary)', 
-                                    border: '1px solid var(--border-color)', 
-                                    borderRadius: '0.5rem', 
-                                    color: 'var(--text-primary)', 
-                                    width: '100%', 
-                                    padding: '1rem', 
-                                    fontSize: '0.9rem', 
-                                    outline: 'none', 
-                                    resize: 'vertical',
-                                    fontFamily: 'inherit',
-                                    lineHeight: '1.6'
-                                }}
-                            />
-                        ) : (
-                            <JobDescriptionContent text={app.job_description} />
-                        )}
-                    </div>
-
-                    {/* AI Insights - Moved below Description */}
-                    <div className="card" style={{ padding: '2rem' }}>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span className="material-symbols-outlined">auto_awesome</span>
-                            AI Insights & Tailoring Summary
-                        </div>
-                        
-                        <div className="two-col-grid">
-                            {/* Resume Changes */}
-                            <div>
-                                <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Resume Improvements</h4>
-                                {app.resume_changes_summary ? (
-                                    <ul style={{ paddingLeft: '1.2rem', margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                                        {safeParseJSON(app.resume_changes_summary, []).map((change, i) => (
-                                                <li key={i}>{change}</li>
-                                            ))}
-                                    </ul>
-                                ) : (
-                                    <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No summary available.</p>
-                                )}
-                            </div>
-
-                            {/* Cover Letter Refinements */}
-                            <div>
-                                <h4 style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Cover Letter History</h4>
-                                {app.cover_letter_changes_summary && safeParseJSON(app.cover_letter_changes_summary, []).length > 0 ? (
-                                    <ul style={{ paddingLeft: '1.2rem', margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                                        {safeParseJSON(app.cover_letter_changes_summary, []).map((change, i) => (
-                                                <li key={i}>{change}</li>
-                                            ))}
-                                    </ul>
-                                ) : (
-                                    <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No manual refinements made yet.</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {/* Compatibility Score Card */}
-                    {app.match_score != null && (() => {
-                        const cmp = getScoreComparison(app.match_score, avgScore);
-                        const sc = getScoreColors(app.match_score);
-                        return (
-                            <div id="compatibility-score-section" className="card" style={{ padding: '1.25rem', border: '1px solid var(--primary)', background: 'linear-gradient(to bottom right, rgba(99, 102, 241, 0.05), var(--bg-card))' }}>
-                                <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(99, 102, 241, 0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>analytics</span>
-                                    <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--primary)' }}>Compatibility Score</h3>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1rem' }}>
-                                    {/* Large score circle with arrow indicator */}
-                                    <div style={{ position: 'relative', flexShrink: 0 }}>
-                                        <div style={{
-                                            width: '80px', height: '80px', borderRadius: '50%',
-                                            background: sc.bg,
-                                            color: sc.text,
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            fontSize: '2rem', fontWeight: 800,
-                                            border: `4px solid ${sc.border}`,
-                                        }}>
-                                            {app.match_score}
-                                        </div>
-                                        {cmp && (cmp.isAbove || cmp.isBelow) && (
-                                            <span style={{
-                                                position: 'absolute', bottom: 0, right: 0,
-                                                width: 22, height: 22, borderRadius: '50%',
-                                                background: cmp.isAbove ? '#10b981' : '#ef4444',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                fontSize: '11px', fontWeight: 900, color: 'white',
-                                                border: '2px solid var(--bg-card)', lineHeight: 1,
-                                            }}>
-                                                {cmp.isAbove ? '\u25b2' : '\u25bc'}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.4, marginBottom: '0.5rem' }}>
-                                            {app.match_score >= 80 ? 'Excellent match for your profile!' :
-                                             app.match_score >= 60 ? 'Good match with some gaps.' :
-                                             'Challenging match. Significant tailoring recommended.'}
-                                        </div>
-                                        {cmp && (
-                                            <div style={{
-                                                display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                                                fontSize: '0.82rem', fontWeight: 700,
-                                                color: cmp.isAbove ? '#10b981' : cmp.isBelow ? '#ef4444' : 'var(--text-muted)',
-                                                background: cmp.isAbove ? 'rgba(16,185,129,0.1)' : cmp.isBelow ? 'rgba(239,68,68,0.1)' : 'var(--bg-tertiary)',
-                                                border: `1px solid ${cmp.isAbove ? 'rgba(16,185,129,0.3)' : cmp.isBelow ? 'rgba(239,68,68,0.3)' : 'var(--border-color)'}`,
-                                                borderRadius: '2rem',
-                                                padding: '0.2rem 0.65rem',
-                                            }}>
-                                                <span style={{ fontSize: '0.75rem' }}>
-                                                    {cmp.isAbove ? '\u25b2' : cmp.isBelow ? '\u25bc' : '\u25c6'}
-                                                </span>
-                                                {cmp.isAbove
-                                                    ? `${cmp.absDiff} pts above your avg (${cmp.avg})`
-                                                    : cmp.isBelow
-                                                        ? `${cmp.absDiff} pts below your avg (${cmp.avg})`
-                                                        : `Equal to your avg (${cmp.avg})`
-                                                }
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {(() => {
-                                    const matchData = safeParseJSON(app?.match_details, { criteria_scores: {} });
-                                    const scores = matchData.criteria_scores || {};
-                                    if (!app?.match_details || Object.keys(scores).length === 0) return null;
-                                    
-                                    return (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                            {Object.entries(scores).map(([key, info]) => (
-                                                <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                                                    <span style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{String(key).replace('_', ' ')}</span>
-                                                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{info?.score ?? '?'}/20</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    );
-                                })()}
-                            </div>
-                        );
-                    })()}
-
-                    {/* Networking Card */}
-                    {connections && connections.length > 0 && (
-                        <div id="networking-section" className="card" style={{ padding: '1.25rem', border: '1px solid rgba(16, 185, 129, 0.4)', background: 'linear-gradient(to bottom right, rgba(16, 185, 129, 0.05), var(--bg-card))' }}>
-                            <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#10b981' }}>group</span>
-                                <h3 style={{ fontSize: '1.1rem', margin: 0, color: '#10b981' }}>Networking ({connections.length})</h3>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                {connections.map((conn, i) => (
-                                    <a key={i} href={conn.profile_url} target="_blank" rel="noopener noreferrer" 
-                                       className="rating-row"
-                                       style={{ textDecoration: 'none', background: 'var(--bg-tertiary)', borderRadius: '0.5rem', border: '1px solid var(--border-color)', padding: '0.75rem' }}
-                                    >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', minWidth: 0 }}>
-                                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: conn.photo_url ? 'transparent' : 'linear-gradient(135deg, var(--primary), #4f46e5)', backgroundImage: conn.photo_url ? `url('${conn.photo_url.includes('licdn.com') ? `${API_URL}/api/proxy-image?url=${encodeURIComponent(conn.photo_url)}` : conn.photo_url}')` : undefined, backgroundSize: 'cover', backgroundPosition: 'center', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.8rem', flexShrink: 0, overflow: 'hidden' }}>
-                                                {!conn.photo_url && (conn.name?.split(' ').map(n => n[0]).join('') || '?')}
-                                            </div>
-                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{conn.name}</div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{conn.headline}</div>
-                                            </div>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>open_in_new</span>
-                                        </div>
-                                    </a>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Company Ratings Card */}
-                    <div className="card" style={{ padding: '1.25rem' }}>
-                        <div style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>analytics</span>
-                            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Company Insights</h3>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {/* Glassdoor */}
-                            <a href={app.glassdoor_url || `https://www.glassdoor.com/Search/results.htm?keyword=${encodeURIComponent(app.company)}`} 
-                               target="_blank" rel="noopener noreferrer"
-                               className="rating-row"
-                            >
-                                <img src="https://www.glassdoor.com/favicon.ico" alt="" style={{ width: '16px', height: '16px' }} />
-                                <span style={{ fontWeight: 500 }}>Glassdoor</span>
-                                <span style={{ marginLeft: 'auto', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                    {app.glassdoor_rating || 'Search'} <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>search</span>
-                                </span>
-                            </a>
-
-                            {/* Indeed */}
-                            <a href={app.indeed_url || `https://www.indeed.com/cmp/${encodeURIComponent(app.company)}`} 
-                               target="_blank" rel="noopener noreferrer"
-                               className="rating-row"
-                            >
-                                <img src="https://www.indeed.com/favicon.ico" alt="" style={{ width: '16px', height: '16px' }} />
-                                <span style={{ fontWeight: 500 }}>Indeed</span>
-                                <span style={{ marginLeft: 'auto', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                    {app.indeed_rating || 'Search'} <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>search</span>
-                                </span>
-                            </a>
-
-                            {/* LinkedIn */}
-                            <a href={app.linkedin_url || `https://www.linkedin.com/search/results/companies/?keywords=${encodeURIComponent(app.company)}`} 
-                               target="_blank" rel="noopener noreferrer"
-                               className="rating-row"
-                            >
-                                <img src="https://www.linkedin.com/favicon.ico" alt="" style={{ width: '16px', height: '16px' }} />
-                                <span style={{ fontWeight: 500 }}>LinkedIn</span>
-                                <span style={{ marginLeft: 'auto', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                    {app.linkedin_rating || 'Search'} <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>search</span>
-                                </span>
-                            </a>
-                        </div>
-                    </div>
-
-                </div>
-            </div> {/* End Grid Container */}
-                    </div>
-                )}
-            </div>
+        </div>
 
             <style>{`
                 .doc-row-btn {

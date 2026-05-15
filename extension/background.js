@@ -109,20 +109,41 @@ const handleMessage = (message, sender, sendResponse) => {
     (async () => {
       try {
         console.log(`[JobKernel] Background scraping photo for: ${message.url}`);
-        const response = await fetch(message.url);
+        const response = await fetch(message.url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'
+          }
+        });
         if (!response.ok) throw new Error(`HTTP error ${response.status}`);
         const html = await response.text();
         
         // Extract photo from meta tags or scripts
         // Pattern 1: og:image meta tag
         const metaMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
-        let photoUrl = metaMatch ? metaMatch[1] : null;
+        let photoUrl = metaMatch ? metaMatch[1].replace(/&amp;/g, '&') : null;
 
-        // Pattern 2: profile-picture-v3
+        // Pattern 2: profilePictureV3 or similar JSON blobs in scripts
         if (!photoUrl || photoUrl.includes('ghost_person')) {
-           const scriptMatch = html.match(/"profilePictureV3":\{"artifact":"([^"]+)"/);
+           const scriptMatch = html.match(/"(profilePictureV3|displayImageReference)":\{.*?"artifact":"([^"]+)"/);
            if (scriptMatch) {
-             photoUrl = scriptMatch[1].replace(/&amp;/g, '&');
+             photoUrl = scriptMatch[2].replace(/&amp;/g, '&');
+           }
+        }
+        
+        // Pattern 3: Fallback for older formats or different scripts
+        if (!photoUrl || photoUrl.includes('ghost_person')) {
+           const genericMatch = html.match(/"(picture|photo|avatar)":\s*"([^"]+media-proxy\.linkedin\.com[^"]+)"/);
+           if (genericMatch) {
+             photoUrl = genericMatch[2].replace(/\\u002d/g, '-').replace(/\\u0026/g, '&');
+           }
+        }
+        
+        // Pattern 4: Vector image format or specific media paths
+        if (!photoUrl || photoUrl.includes('ghost_person')) {
+           const vectorMatch = html.match(/"(rootUrl|fileId)":\s*"([^"]+media\.licdn\.com\/dms\/image\/[^"]+)"/);
+           if (vectorMatch) {
+             photoUrl = vectorMatch[2].replace(/\\u002d/g, '-').replace(/\\u0026/g, '&');
            }
         }
 
@@ -130,6 +151,7 @@ const handleMessage = (message, sender, sendResponse) => {
            console.log(`[JobKernel] Found photo URL: ${photoUrl}`);
            sendResponse({ photoUrl });
         } else {
+           console.warn(`[JobKernel] No valid photo found for ${message.url} (found: ${photoUrl})`);
            sendResponse({ error: 'No valid photo found' });
         }
       } catch (err) {
@@ -596,12 +618,37 @@ async function fetchConnectionsBatch(start = 0, count = 40) {
             if (mini.picture && mini.picture['com.linkedin.common.VectorImage']) {
                 const vectorImage = mini.picture['com.linkedin.common.VectorImage'];
                 if (vectorImage.rootUrl && vectorImage.artifacts && vectorImage.artifacts.length > 0) {
-                    // Use the largest artifact for best quality and most stable URL
+                    // Use the largest artifact for best quality
                     const artifact = vectorImage.artifacts[vectorImage.artifacts.length - 1];
-                    let rawUrl = vectorImage.rootUrl + artifact.fileIdentifyingUrlPathSegment;
-                    // Strip session-bound token params that expire; keep the base CDN URL
-                    rawUrl = rawUrl.replace(/[?&]v=beta.*$/, '').replace(/[?&]e=\d+.*$/, '');
-                    photo_url = rawUrl;
+                    // Keep the FULL URL including auth tokens — our proxy handles CORS,
+                    // and LinkedIn CDN returns 403 without the ?e=...&v=beta... params.
+                    photo_url = vectorImage.rootUrl + artifact.fileIdentifyingUrlPathSegment;
+                }
+            }
+            // Fallback: displayImageReference (newer LinkedIn API response format)
+            if (!photo_url && mini.picture && mini.picture.displayImageReference) {
+                const ref = mini.picture.displayImageReference;
+                if (ref.vectorImage) {
+                    const vi = ref.vectorImage;
+                    if (vi.rootUrl && vi.artifacts && vi.artifacts.length > 0) {
+                        const artifact = vi.artifacts[vi.artifacts.length - 1];
+                        photo_url = vi.rootUrl + artifact.fileIdentifyingUrlPathSegment;
+                    }
+                }
+            }
+            // Fallback: profilePicture at top level of element (some response shapes)
+            if (!photo_url && element.profilePicture) {
+                const pp = element.profilePicture;
+                if (pp.displayImageReference?.vectorImage) {
+                    const vi = pp.displayImageReference.vectorImage;
+                    if (vi.rootUrl && vi.artifacts?.length > 0) {
+                        photo_url = vi.rootUrl + vi.artifacts[vi.artifacts.length - 1].fileIdentifyingUrlPathSegment;
+                    }
+                } else if (pp['com.linkedin.common.VectorImage']) {
+                    const vi = pp['com.linkedin.common.VectorImage'];
+                    if (vi.rootUrl && vi.artifacts?.length > 0) {
+                        photo_url = vi.rootUrl + vi.artifacts[vi.artifacts.length - 1].fileIdentifyingUrlPathSegment;
+                    }
                 }
             }
         } catch (e) {}

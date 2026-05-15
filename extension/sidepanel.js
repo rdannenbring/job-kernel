@@ -123,19 +123,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const manualParseTextarea = document.getElementById('manual-parse-textarea');
 
   // Match Score Elements
-  const detailsMatchSection    = document.getElementById('details-match-section');
-  if (detailsMatchSection) detailsMatchSection.style.display = 'block'; 
-  const detailsMatchEmpty      = document.getElementById('details-match-empty');
-  const btnCalculateScoreDetails = document.getElementById('btn-calculate-score-details');
-  const detailsMatchResult     = document.getElementById('details-match-result');
-  const detailsMatchScoreValue = document.getElementById('details-match-score-value');
-  const detailsScoreClick      = document.getElementById('details-score-click');
-  
   const matchEmpty             = document.getElementById('match-empty');
   const btnCalculateScore      = document.getElementById('btn-calculate-score');
   const matchResult            = document.getElementById('match-result');
   const matchScoreValue        = document.getElementById('match-score-value');
   const matchScoreClick        = document.getElementById('match-score-click');
+  
+  const detailsMatchEmpty      = document.getElementById('details-match-empty');
+  const detailsMatchResult     = document.getElementById('details-match-result');
+  const detailsMatchScoreValue = document.getElementById('details-match-score-value');
+  const detailsScoreClick      = document.getElementById('details-score-click');
   
   const matchDetailsPanel      = document.getElementById('match-details-overlay');
   const btnCloseMatchPanel     = document.getElementById('btn-close-details');
@@ -438,6 +435,58 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastScoredDescription = null;
   let lastNetworkMatches = []; // DB matches from last renderSideConnections call
   let resolvingPhotos = new Set(); // Track URLs currently being resolved to avoid duplicates
+  let batchResolving = false;
+
+  async function resolvePhotosBatch(matches) {
+    if (!matches || matches.length === 0 || batchResolving) return;
+    
+    const missingUrls = matches
+      .filter(m => m.profile_url && !resolvingPhotos.has(m.profile_url))
+      .filter(m => !m.photo_url || m.photo_url.includes('ghost_person') || m.photo_url.includes('placeholder'))
+      .map(m => m.profile_url);
+      
+    if (missingUrls.length === 0) return;
+    
+    batchResolving = true;
+    // Limit batch size to avoid long timeouts
+    const toResolve = [...new Set(missingUrls)].slice(0, 15);
+    toResolve.forEach(url => resolvingPhotos.add(url));
+    
+    console.log(`[JobKernel] Triggering batch photo resolution for ${toResolve.length} connections`);
+    
+    try {
+      const res = await fetchWithAuth(`${API_URL}/api/linkedin/resolve-photos-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          profile_urls: toResolve,
+          application_id: currentAppRecord?.id
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.resolved && Object.keys(data.resolved).length > 0) {
+          console.log(`[JobKernel] Batch resolution successful, got ${Object.keys(data.resolved).length} photos`);
+          let updated = false;
+          matches.forEach(m => {
+            if (data.resolved[m.profile_url]) {
+              m.photo_url = data.resolved[m.profile_url];
+              updated = true;
+            }
+          });
+          if (updated) {
+            renderSideConnections(lastNetworkMatches);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[JobKernel] Batch photo resolution failed:', e);
+    } finally {
+      toResolve.forEach(url => resolvingPhotos.delete(url));
+      batchResolving = false;
+    }
+  }
 
   async function resolvePhotoForConnection(conn) {
     if (!conn.profile_url || resolvingPhotos.has(conn.profile_url)) return;
@@ -478,13 +527,32 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSideConnections(lastNetworkMatches);
 
         // 3. Update Backend if it's a known contact
-        if (conn.id && currentAppRecord?.id) {
-          fetchWithAuth(`${API_URL}/api/applications/${currentAppRecord.id}/contacts/${conn.id}`, {
+        let contactId = conn.id;
+        if (!contactId && currentAppRecord?.contacts) {
+          const matched = currentAppRecord.contacts.find(c => c.linkedin_url === conn.profile_url);
+          if (matched) contactId = matched.id;
+        }
+
+        if (contactId && currentAppRecord?.id) {
+          fetchWithAuth(`${API_URL}/api/applications/${currentAppRecord.id}/contacts/${contactId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ photo_url: response.photoUrl })
           }).catch(err => console.warn('[JobKernel] Failed to update backend with scraped photo:', err));
         }
+
+        // 4. Update Global Network Cache
+        fetchWithAuth(`${API_URL}/api/linkedin/sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                connections: [{
+                    name: conn.name,
+                    profile_url: conn.profile_url,
+                    photo_url: response.photoUrl
+                }]
+            })
+        }).catch(err => console.warn('[JobKernel] Failed to update global network with scraped photo:', err));
       }
       resolvingPhotos.delete(conn.profile_url);
     });
@@ -624,6 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
           salaryRange: metadata.salary_range || '',
           datePosted: metadata.date_posted || '',
           deadline: metadata.deadline || '',
+          company_url: metadata.company_url || '',
           description: text,
           url: window.location.href
         };
@@ -643,7 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Auto-fetch logo if company was found
         if (parsedData.company) {
-          fetchAndSetCompanyLogo(parsedData.company);
+          autoFetchLogo(parsedData.company);
         }
       }
     } catch (err) {
@@ -717,6 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Company logo ──────────────────────────────────────────────────────────
   let currentLogoUrl = null;
+  let currentCompanyUrl = null;
 
   function setLogo(url) {
     currentLogoUrl = url || null;
@@ -984,17 +1054,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Populate form from a data object ─────────────────────────────────────
   function populateForm(data) {
-    const detailsScoreContainer = document.getElementById('details-match-score-container');
-    if (detailsScoreContainer) {
-      detailsScoreContainer.innerHTML = '';
-      const badge = buildMatchScoreBadge(data.match_score, avgMatchScore, false);
-      if (badge) {
-        detailsScoreContainer.appendChild(badge);
-        detailsScoreContainer.style.display = 'block';
-      } else {
-        detailsScoreContainer.style.display = 'none';
-      }
-    }
+    currentLogoUrl = data.companyLogo || data.company_logo || null;
+    currentCompanyUrl = data.companyUrl || data.company_url || null;
+
+
 
     document.getElementById('title').value      = data.title       || data.job_title    || '';
     document.getElementById('company').value    = data.company     || '';
@@ -1237,33 +1300,9 @@ document.addEventListener('DOMContentLoaded', () => {
    * Handles the visibility of empty vs result states and calculates the average comparison.
    */
   function updateMatchScoreUI(app, mode = 'apply', isLoading = false) {
+    if (!app) return;
     const isDetails = mode === 'details';
     const score = app.match_score;
-    
-    // Update the Details-specific badge container if it exists
-    if (isDetails) {
-      const detailsScoreContainer = document.getElementById('details-match-score-container');
-      if (detailsScoreContainer) {
-        if (isLoading) {
-          detailsScoreContainer.innerHTML = `
-            <div class="summary-tag is-loading" style="cursor:wait; opacity:0.8; width: 100%; justify-content: center; padding: 0.5rem; border-radius: 2rem;">
-              <span class="material-symbols-outlined rotating" style="font-size:1.1rem; margin-right:8px;">progress_activity</span>
-              <span style="font-weight:700; font-size: 0.85rem;">Analyzing Match...</span>
-            </div>
-          `;
-          detailsScoreContainer.style.display = 'block';
-        } else {
-          detailsScoreContainer.innerHTML = '';
-          const badge = buildMatchScoreBadge(score, avgMatchScore, false);
-          if (badge) {
-            detailsScoreContainer.appendChild(badge);
-            detailsScoreContainer.style.display = 'block';
-          } else {
-            detailsScoreContainer.style.display = 'none';
-          }
-        }
-      }
-    }
 
     // Elements mapping based on mode
     const empty  = isDetails ? detailsMatchEmpty : matchEmpty;
@@ -1272,9 +1311,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!empty || !result) return;
 
+    // Use a single reference for the summary text element (IDs are mode-specific in HTML)
+    const summaryEl = result.querySelector('#match-summary, .match-summary-text, #details-match-summary');
+    
     if (isLoading) {
       empty.style.display = 'none';
-      result.style.display = isDetails ? 'flex' : 'block';
+      result.style.display = 'flex'; // Use flex for consistent layout
       result.classList.add('is-loading');
       
       const ring = result.querySelector('.match-ring-circle');
@@ -1284,8 +1326,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ring.style.stroke = 'var(--primary-light)';
       }
       
-      const summaryText = result.querySelector('#match-summary, .match-summary-text');
-      if (summaryText) summaryText.textContent = 'Analyzing compatibility...';
+      if (summaryEl) summaryEl.textContent = 'Analyzing compatibility...';
       if (val) val.textContent = '--';
       return;
     }
@@ -1294,16 +1335,70 @@ document.addEventListener('DOMContentLoaded', () => {
     const ring = result.querySelector('.match-ring-circle');
     if (ring) ring.classList.remove('analyzing');
 
+    // Helper for descriptive summary text
+    const getSummary = (s) => {
+      if (s == null) return "AI analysis recommended";
+      if (s >= 90) return "Excellent profile match";
+      if (s >= 80) return "Strong candidate alignment";
+      if (s >= 70) return "Good baseline fit";
+      if (s >= 60) return "Moderate match level";
+      if (s >= 50) return "Fair alignment found";
+      return "Needs review/gaps exist";
+    };
+
     if (score == null && isLoading === false) {
       // If score is missing and we aren't explicitly loading, show empty
       result.style.display = 'none';
       empty.style.display = 'flex';
+      
+      // Make the empty state clickable to trigger scoring
+      empty.style.cursor = 'pointer';
+      empty.title = 'Click to run match analysis';
+      empty.onclick = () => handleCalculateScore(app, mode);
+
+      // Populate empty state with descriptive content
+      empty.innerHTML = `
+        <div style="display: flex; align-items: center; width: 100%; padding: 4px;">
+          <div style="margin-right: 12px; color: var(--text-muted); display: flex; align-items: center;">
+            <span class="material-symbols-outlined" style="font-size: 1.4rem;">analytics</span>
+          </div>
+          <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500;">
+            AI match analysis recommended
+          </div>
+          <span class="material-symbols-outlined" style="margin-left: auto; font-size: 1.1rem; color: var(--primary-light); opacity: 0.7;">bolt</span>
+        </div>
+      `;
       return;
     }
-
+    
+    // Clear onclick if score exists
+    empty.onclick = null;
+    empty.style.cursor = '';
     empty.style.display = 'none';
-    result.style.display = isDetails ? 'flex' : 'block';
-    if (val) val.textContent = (score != null) ? score : '--';
+    result.style.display = 'flex'; // Consistent flex display
+    if (val) val.textContent = score;
+
+    // Summary text with average comparison
+    if (summaryEl) {
+      const baseSummary = getSummary(score);
+      if (avgMatchScore !== null && score != null) {
+        const diff = score - avgMatchScore;
+        const absDiff = Math.abs(Math.round(diff));
+        const isSignificant = absDiff >= 1;
+        
+        if (isSignificant) {
+          const isAbove = diff > 0;
+          const color = isAbove ? '#10b981' : '#ef4444';
+          const symbol = isAbove ? '▲' : '▼';
+          const diffText = `<span style="color:${color}; font-weight:700; margin-left: 6px; font-size: 0.75rem;">(${symbol} ${absDiff}% ${isAbove ? 'above' : 'below'} average)</span>`;
+          summaryEl.innerHTML = `${baseSummary} ${diffText}`;
+        } else {
+          summaryEl.textContent = baseSummary;
+        }
+      } else {
+        summaryEl.textContent = baseSummary || 'Assessment based on your profile.';
+      }
+    }
 
     // Ring animation
     if (ring) {
@@ -1315,28 +1410,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const hue = Math.round((score / 100) * 120);
       ring.style.stroke = `hsl(${hue}, 75%, 45%)`;
     }
-
-    // Update summary text with above/below average indicator
-    const summaryText = result.querySelector('#match-summary, .match-summary-text');
-    if (summaryText) {
-      if (avgMatchScore !== null) {
-        const diff = score - avgMatchScore;
-        const absDiff = Math.abs(Math.round(diff));
-        const isAbove = diff >= 1;
-        const isBelow = diff <= -1;
-        
-        if (isAbove || isBelow) {
-          const color = isAbove ? '#10b981' : '#ef4444';
-          const symbol = isAbove ? '\u25b2' : '\u25bc';
-          summaryText.innerHTML = `<span style="color:${color}; font-weight:700;">${symbol} ${absDiff} pts ${isAbove ? 'above' : 'below'} average</span>`;
-        } else {
-          summaryText.textContent = score > 80 ? 'Excellent match for your profile.' : 'Good baseline compatibility.';
-        }
-      } else {
-        summaryText.textContent = 'Assessment based on your profile.';
-      }
-    }
   }
+
 
 
   // ── Apply field diff highlighting ─────────────────────────────────────────
@@ -1625,8 +1700,10 @@ document.addEventListener('DOMContentLoaded', () => {
       
       chrome.storage.local.get(['latestJobData'], async (result) => {
         try {
-          // UPDATE GLOBAL scrapedData - IMPORTANT: do not shadow with const
+          // Reset stale globals before processing new load
+          currentAppRecord = null;
           scrapedData = result.latestJobData;
+
           if (!scrapedData) {
             hideLoading();
             return;
@@ -1833,10 +1910,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (opc.length > 0 && matches && matches.length > 0) {
         opc.forEach(fresh => {
           const m = matches.find(match => (match.profile_url?.split('?')[0].replace(/\/$/, '') === fresh.profile_url?.split('?')[0].replace(/\/$/, '')));
-          if (m && fresh.photo_url && !m.photo_url) {
-            console.log(`[JobKernel] Enriching matched connection ${m.name} with fresh photo from page`);
-            m.photo_url = fresh.photo_url;
-            linkContact(fresh, null); // Sync to DB
+          // Enrich if m exists AND fresh has a photo AND (m has no photo OR m has a ghost photo OR fresh photo is significantly different/newer)
+          if (m && fresh.photo_url) {
+            const isGhost = !m.photo_url || m.photo_url.includes('ghost_person') || m.photo_url.includes('placeholder');
+            if (isGhost || (fresh.photo_url !== m.photo_url && fresh.photo_url.includes('licdn.com'))) {
+              console.log(`[JobKernel] Enriching matched connection ${m.name} with fresh photo from page`);
+              m.photo_url = fresh.photo_url;
+              // Trigger a background sync for this specific contact if possible
+              linkContact(fresh, null, { skipRefresh: true }).catch(() => {});
+            }
           }
         });
       }
@@ -1873,6 +1955,9 @@ document.addEventListener('DOMContentLoaded', () => {
       sideConnectionList.innerHTML = '';
      
      if (matches && matches.length > 0) {
+       // Trigger batch resolution for missing photos
+       resolvePhotosBatch(matches);
+
        matches.forEach(conn => {
          // Trigger lazy photo resolution if needed
          resolvePhotoForConnection(conn);
@@ -2094,6 +2179,9 @@ document.addEventListener('DOMContentLoaded', () => {
   chrome.runtime.onMessage.addListener((message) => {
     if (message.action === 'job_loading') {
       showLoading();
+    } else if (message.action === 'store_job_data') {
+      scrapedData = message.data;
+      loadData();
     } else if (message.action === 'refresh_panel_data') {
       // Reload scraped data and cleanly re-fetch the database record 
       // checkExistingApplication now uses cache: 'no-store' so this is guaranteed fresh.
@@ -2382,6 +2470,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title:         document.getElementById('title').value,
       company:       document.getElementById('company').value,
       companyLogo:   currentLogoUrl,
+      companyUrl:    currentCompanyUrl,
       link:          document.getElementById('link').value,
       applyLink:     document.getElementById('applyLink').value,
       datePosted:    document.getElementById('datePosted').value,
@@ -2397,11 +2486,36 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  /**
+   * Performs a lightweight AI enrichment of the job metadata (primarily company_url)
+   * before saving a new application.
+   */
+  async function enrichJobMetadata(description) {
+    if (!description) return null;
+    try {
+      updateLoadingProgress(20, 'Enriching company metadata\u2026');
+      const res = await fetchWithAuth(`${API_URL}/api/analyze-job`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_description: description })
+      });
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success && result.analysis && result.analysis.metadata) {
+          return result.analysis.metadata;
+        }
+      }
+    } catch (e) {
+      extLog('WARN', 'Metadata enrichment failed (non-critical)', e);
+    }
+    return null;
+  }
+
   // ── Save / Update ─────────────────────────────────────────────────────────
   btnSave.addEventListener('click', async () => {
     if (!form.checkValidity()) { form.reportValidity(); return; }
 
-    const data = getFormData();
+    let data = getFormData();
 
     if (currentAppRecord) {
       // UPDATE existing application
@@ -2416,6 +2530,7 @@ document.addEventListener('DOMContentLoaded', () => {
             job_title:       data.title,
             company:         data.company,
             company_logo:    data.companyLogo,
+            company_url:     data.companyUrl,
             job_url:         data.link,
             apply_url:       data.applyLink,
             job_description: data.description,
@@ -2442,6 +2557,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const updated = await checkExistingApplication(data.link);
           if (updated) {
             currentAppRecord = updated;
+            populateForm(updated);
             applyDiffHighlights(updated, scrapedData);
             showSavedBanner(updated); // Re-show banner after update
           }
@@ -2464,7 +2580,24 @@ document.addEventListener('DOMContentLoaded', () => {
       // SAVE new application
       showLoading('Saving Application', 'Preparing job data\u2026');
       updateLoadingProgress(15);
+      
       try {
+        // Automatically enrich metadata if company_url is missing
+        if (!data.companyUrl && data.description) {
+          const enrichedMetadata = await enrichJobMetadata(data.description);
+          if (enrichedMetadata) {
+            if (enrichedMetadata.company_url) {
+              data.companyUrl = enrichedMetadata.company_url;
+              currentCompanyUrl = enrichedMetadata.company_url;
+            }
+            // Also backfill other missing fields if AI found them
+            if (!data.company && enrichedMetadata.company) {
+              data.company = enrichedMetadata.company;
+              document.getElementById('company').value = data.company;
+            }
+          }
+        }
+
         updateLoadingProgress(40, 'Sending to Kernel database\u2026');
         const res = await fetchWithAuth(`${API_URL}/api/save-application`, {
           method: 'POST',
@@ -2473,6 +2606,7 @@ document.addEventListener('DOMContentLoaded', () => {
             job_title:       data.title,
             company:         data.company,
             company_logo:    data.companyLogo,
+            company_url:     data.companyUrl,
             job_url:         data.link,
             apply_url:       data.applyLink,
             job_description: data.description,
@@ -2500,6 +2634,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const saved = await checkExistingApplication(data.link);
           if (saved) {
             currentAppRecord = saved;
+            populateForm(saved);
             showSavedBanner(saved);
             applyStatusRules(saved.status);
           }
@@ -2559,7 +2694,7 @@ document.addEventListener('DOMContentLoaded', () => {
       scoreColor = `hsl(0, 0%, 55%)`;
       scoreBg = `hsla(0, 0%, 40%, 0.15)`;
       scoreBorder = `hsla(0, 0%, 50%, 0.6)`;
-      tooltipText = 'Match Score: Pending (Save & Process to calculate with AI)';
+      tooltipText = 'Score: Pending (Run AI analysis to calculate)';
     } else {
       const hue = Math.round((score / 100) * 120);
       scoreColor = `hsl(${hue}, 75%, 55%)`;
@@ -2573,7 +2708,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const getSummary = (s) => {
-      if (s == null) return "Evaluating your profile...";
+      if (s == null) return "AI analysis recommended";
       if (s >= 90) return "Excellent profile match";
       if (s >= 80) return "Strong candidate alignment";
       if (s >= 70) return "Good baseline fit";
@@ -2590,7 +2725,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <span style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:${scoreBg};border:2px solid ${scoreBorder};color:${scoreColor};font-size:0.62rem;font-weight:800;flex-shrink:0;">
           ${score != null ? score : '?'}
         </span>
-        <span style="color:${scoreColor};font-weight:700;">${score != null ? 'Match' : 'Score Pending'}</span>
+        <span style="color:${scoreColor};font-weight:700;">${score != null ? 'Match' : 'Run Analysis'}</span>
       `;
       containerStyle = `display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 2rem; background: ${scoreBg}; border: 1px solid ${scoreBorder}; width: fit-content; cursor: default; font-size: 0.8rem;`;
     } else {
@@ -2600,7 +2735,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ${score != null ? score : '?'}
         </span>
         <div style="display: flex; flex-direction: column; align-items: flex-start;">
-          <span style="color:${scoreColor}; font-weight:700; font-size: 0.9rem; line-height: 1.1;">${score != null ? 'Match Score' : 'Score Pending'}</span>
+          <span style="color:${scoreColor}; font-weight:700; font-size: 0.9rem; line-height: 1.1;">${score != null ? 'Match Score' : 'Analysis Required'}</span>
           <span style="color:var(--text-secondary); font-size: 0.75rem; font-weight: 500; line-height: 1.1;">${summary}</span>
         </div>
       `;
@@ -2962,11 +3097,11 @@ document.addEventListener('DOMContentLoaded', () => {
       summaryMeta.appendChild(tagEl);
     });
 
-    // Match score badge with above/below-average indicator
-    const scoreBadge = buildMatchScoreBadge(app.match_score, avgMatchScore, true);
-    if (scoreBadge) {
-      summaryMeta.appendChild(scoreBadge);
-    }
+    // Removed duplicate score badge from summary meta
+    // const scoreBadge = buildMatchScoreBadge(app.match_score, avgMatchScore, true);
+    // if (scoreBadge) {
+    //   summaryMeta.appendChild(scoreBadge);
+    // }
 
     // Asset logic
     applyAssetsV2.innerHTML = '';
@@ -3235,13 +3370,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const formData = new FormData();
       if (appId) formData.append('application_id', appId);
       
-      const description = target.job_description || target.description;
-      if (description) {
-        formData.append('job_description', description);
-      } else {
-        console.warn('[JobKernel] No description found for scoring.');
-      }
-
       const link = target.job_url || target.link;
       if (link) {
         formData.append('job_url', link);
@@ -3251,8 +3379,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const authCheck = await new Promise(resolve => chrome.storage.local.get(['apiKey', 'token'], resolve));
       if (!authCheck.apiKey && !authCheck.token) {
         console.log('[JobKernel] Scoring deferred: No API Key or Token configured.');
-        // Assuming a helper for status feedback exists or can be added to the UI
         showStatus('Missing API Key in Settings', 'error');
+        // Reset UI state before exiting
+        updateMatchScoreUI(target, 'apply', false);
+        updateMatchScoreUI(target, 'details', false);
         return;
       }
 
@@ -3260,14 +3390,29 @@ document.addEventListener('DOMContentLoaded', () => {
       updateMatchScoreUI(target, 'apply', true);
       updateMatchScoreUI(target, 'details', true);
 
+      const description = target.job_description || target.description;
+      if (!description) {
+        console.warn('[JobKernel] No description found for scoring.');
+        showStatus('No job description found for analysis', 'warning');
+        updateMatchScoreUI(target, 'apply', false);
+        updateMatchScoreUI(target, 'details', false);
+        return;
+      }
+      formData.append('job_description', description);
+
       formData.append('use_default_resume', 'true');
 
-      const resp = await fetchWithAuth(`${API_URL}/api/score-job-match`, {
-        method: 'POST',
-        body: formData 
-      });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
-      if (resp.ok) {
+        const resp = await fetchWithAuth(`${API_URL}/api/score-job-match`, {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (resp.ok) {
         const result = await resp.json();
         console.log('[JobKernel] Scoring successful:', result);
         const score = result.overall_score || result.match_score || 0;
@@ -3342,6 +3487,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const details = app.match_details;
       if (details) {
         let detailsHtml = '';
+        
+        // Add Compatibility Summary if available
+        if (details.compatibility_summary) {
+          detailsHtml += `
+            <div style="margin-bottom: 2rem; padding: 1.25rem; background: var(--bg-tertiary); border-radius: 1rem; border: 1px solid var(--border-color);">
+              <h4 style="margin: 0 0 0.75rem 0; color: var(--primary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Narrative Analysis</h4>
+              <div style="font-size: 0.875rem; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap;">${details.compatibility_summary}</div>
+            </div>
+          `;
+        }
+
         if (details.criteria_scores) {
           detailsHtml += '<div style="display:flex; flex-direction:column; gap:1.25rem; padding:0.5rem;">';
           for (const [key, crit] of Object.entries(details.criteria_scores)) {

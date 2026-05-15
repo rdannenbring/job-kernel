@@ -284,7 +284,10 @@ input[type="range"]::-webkit-slider-runnable-track {
   height: 6px;
   cursor: pointer;
   background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
 }
 
 input[type="range"]::-moz-range-track {
@@ -305,6 +308,7 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: 50%;
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-fast);
+  margin-top: -7px; /* Centers thumb on 6px track ( (6-18)/2 + border? ) */
 }
 
 input[type="range"]::-webkit-slider-thumb:hover {
@@ -1477,4 +1481,192 @@ input::placeholder, textarea::placeholder {
 .btn-icon:hover {
   background: var(--bg-tertiary);
   color: var(--text-primary);
+}
+
+/* --- Shimmer Animations --- */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.text-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShimmer 2s infinite linear;
+  display: inline-block;
+}
+
+@keyframes textShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* --- Sub-stage Responsive Layout --- */
+.substage-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1.5rem;
+  transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.substage-nav-label {
+  white-space: nowrap;
+  transition: opacity 0.3s ease, transform 0.3s ease, width 0.3s ease;
+  display: inline-block;
+  overflow: hidden;
+}
+
+/* Base styles for collapsed state (Manual Toggle) */
+.substage-grid.is-collapsed {
+  grid-template-columns: 80px 1fr;
+}
+
+.substage-grid.is-collapsed .substage-nav-label {
+  opacity: 0;
+  width: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+  margin: 0 !important;
+}
+
+.substage-grid.is-collapsed .substage-nav-status {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  transform: scale(0.75);
+  background: var(--bg-main);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  box-shadow: 0 0 0 2px var(--bg-main);
+  font-size: 14px !important;
+  z-index: 2;
+}
+
+.substage-grid.is-collapsed .substage-nav-status:not(:has([style*="color"])) {
+  display: none;
+}
+
+/* Base styles for collapsed state (Automatic Responsive) */
+@media (max-width: 1400px) {
+  .substage-grid:not(.is-expanded) {
+    grid-template-columns: 80px 1fr;
+  }
+
+  .substage-grid:not(.is-expanded) .substage-nav-label {
+    opacity: 0;
+    width: 0;
+    transform: translateX(-10px);
+    pointer-events: none;
+    margin: 0 !important;
+  }
+
+  .substage-grid:not(.is-expanded) .substage-nav-status {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    transform: scale(0.75);
+    background: var(--bg-main);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    box-shadow: 0 0 0 2px var(--bg-main);
+    font-size: 14px !important;
+    z-index: 2;
+  }
+
+  .substage-grid:not(.is-expanded) .substage-nav-status:not(:has([style*="color"])) {
+    display: none;
+  }
+}
+
+/* Explicit expanded override for small screens */
+.substage-grid.is-expanded {
+  grid-template-columns: 260px 1fr !important;
+}
+
+.substage-grid.is-expanded .substage-nav-label {
+  opacity: 1 !important;
+  width: auto !important;
+  transform: none !important;
+  pointer-events: auto !important;
+}
+
+.substage-grid.is-expanded .substage-nav-status {
+  position: static !important;
+  transform: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  width: auto !important;
+  height: auto !important;
+  display: inline-flex !important;
+}
+
+.substage-nav-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 1rem;
+}
+
+.substage-nav-toggle-btn:hover {
+  background: var(--bg-card);
+  color: var(--primary);
+}
+
+/* Ensure nav buttons handle collapse gracefully */
+.substage-grid button {
+  overflow: hidden;
+  position: relative;
+}
+
+.substage-grid.is-collapsed {
+  grid-template-columns: 80px 1fr !important;
+}
+
+.substage-grid.is-collapsed .substage-nav-label {
+  opacity: 0 !important;
+  width: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
 }

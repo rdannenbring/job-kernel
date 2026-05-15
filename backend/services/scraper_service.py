@@ -113,6 +113,46 @@ class ScraperService:
         result = re.sub(r'\n{3,}', '\n\n', result)
         return result.strip()
 
+    async def scrape_url(self, url: str) -> str:
+        """
+        Scrape content from any URL using a robust approach.
+        Primarily uses Jina Reader for high-quality text/markdown extraction.
+        """
+        try:
+            # For general scraping, Jina is more reliable than manual BS4 for arbitrary sites
+            jina_url = f"https://r.jina.ai/{url}"
+            jina_headers = {
+                'User-Agent': 'Mozilla/5.0',
+                'X-Return-Format': 'text',
+            }
+            
+            response = requests.get(jina_url, headers=jina_headers, timeout=15)
+            response.raise_for_status()
+            
+            if response.text and len(response.text) > 50:
+                return response.text
+            else:
+                raise ValueError("Jina API yielded too little or no text.")
+                
+        except Exception as e:
+            # Fallback to standard request if Jina fails
+            try:
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                }
+                resp = requests.get(url, headers=headers, timeout=10)
+                resp.raise_for_status()
+                soup = BeautifulSoup(resp.text, 'html.parser')
+                
+                # Strip script and style elements
+                for script in soup(["script", "style"]):
+                    script.extract()
+                    
+                text = soup.get_text(separator='\n', strip=True)
+                return text
+            except Exception as e2:
+                raise ValueError(f"Failed to scrape URL {url}: {e} (Fallback: {e2})")
+
     async def scrape_job_description(self, url: str) -> str:
         """
         Scrape job description from a URL.

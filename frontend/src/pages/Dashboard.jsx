@@ -302,17 +302,20 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
             const weights = { 'High': 3, 'Medium': 2, 'Low': 1, '': 0 };
             return (weights[b.interest_level || ''] || 0) - (weights[a.interest_level || ''] || 0);
         }
-        if (sortBy === 'score_desc') {
-            if (a.match_score == null && b.match_score == null) return 0;
-            if (a.match_score == null) return 1;
-            if (b.match_score == null) return -1;
-            return b.match_score - a.match_score;
-        }
         if (sortBy === 'score_asc') {
             if (a.match_score == null && b.match_score == null) return 0;
             if (a.match_score == null) return 1;
             if (b.match_score == null) return -1;
             return a.match_score - b.match_score;
+        }
+        if (sortBy === 'priority_desc') {
+            const getPrio = (app) => {
+                const ranking = typeof app.prioritization_ranking === 'string' 
+                    ? JSON.parse(app.prioritization_ranking || '{}') 
+                    : (app.prioritization_ranking || {});
+                return ranking.score || 0;
+            };
+            return getPrio(b) - getPrio(a);
         }
         return 0;
     });
@@ -760,6 +763,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                         { id: 'interest_desc', label: 'Interest Level' },
                                         { id: 'score_desc', label: 'Score: High → Low' },
                                         { id: 'score_asc', label: 'Score: Low → High' },
+                                        { id: 'priority_desc', label: 'Priority Score' },
                                         { id: 'custom', label: 'Custom' }
                                     ].map(option => {
                                         const isSelected = sortBy === option.id;
@@ -896,6 +900,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                  sortBy === 'deadline_asc' ? 'Upcoming Deadline' :
                                  sortBy === 'score_desc' ? 'Score: High → Low' :
                                  sortBy === 'score_asc' ? 'Score: Low → High' :
+                                 sortBy === 'priority_desc' ? 'Priority Score' :
                                  sortBy === 'custom' ? 'Custom Order' :
                                  'Interest Level'}
                                 <button onClick={() => setSortBy('newest')} className="hover:text-rose-400 material-symbols-outlined text-[14px] ml-1">close</button>
@@ -973,12 +978,36 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                         style={{ position: 'relative' }}>
                                         {!isDragging && (
                                             <>
-                                            {app.match_score != null && (
-                                                <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 10, pointerEvents: 'none' }}>
-                                                    {renderScoreBadge(app.match_score, avgScore, { width: 32, height: 32, fontSize: '0.68rem' })}
-                                                </div>
-                                            )}
-                                            <div className="flex justify-between items-start pointer-events-none" style={{ paddingRight: app.match_score != null ? '44px' : 0 }}>
+                                            <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 10, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                {app.match_score != null && (
+                                                    renderScoreBadge(app.match_score, avgScore, { width: 32, height: 32, fontSize: '0.68rem' })
+                                                )}
+                                                {(() => {
+                                                    const prio = typeof app.prioritization_ranking === 'string' 
+                                                        ? JSON.parse(app.prioritization_ranking || '{}') 
+                                                        : (app.prioritization_ranking || {});
+                                                    if (prio.score) {
+                                                        return (
+                                                            <div style={{ 
+                                                                width: 32, height: 32, borderRadius: '50%', 
+                                                                background: 'rgba(37, 106, 244, 0.1)', 
+                                                                border: '2px solid rgba(37, 106, 244, 0.4)', 
+                                                                color: 'var(--primary)',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                fontSize: '0.68rem', fontWeight: 900,
+                                                                boxShadow: '0 0 10px rgba(37, 106, 244, 0.2)',
+                                                                backdropFilter: 'blur(4px)',
+                                                                position: 'relative'
+                                                            }}>
+                                                                <span className="material-symbols-outlined" style={{ fontSize: '10px', position: 'absolute', top: -4, right: -4, background: 'var(--primary)', color: 'white', borderRadius: '50%', padding: '2px' }}>bolt</span>
+                                                                {prio.score}
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
+                                            </div>
+                                            <div className="flex justify-between items-start pointer-events-none" style={{ paddingRight: (app.match_score != null || (typeof app.prioritization_ranking === 'string' ? JSON.parse(app.prioritization_ranking || '{}') : (app.prioritization_ranking || {})).score) ? '44px' : 0 }}>
                                                 <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 flex items-center justify-center overflow-hidden shrink-0">
                                                     {app.company_logo
                                                         ? <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'transparent', padding: '0' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'block'; }} />
@@ -999,7 +1028,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col gap-0.5 pointer-events-none" style={{ paddingRight: app.match_score != null ? '44px' : 0 }}>
+                                            <div className="flex flex-col gap-0.5 pointer-events-none" style={{ paddingRight: (app.match_score != null || (typeof app.prioritization_ranking === 'string' ? JSON.parse(app.prioritization_ranking || '{}') : (app.prioritization_ranking || {})).score) ? '44px' : 0 }}>
                                                 <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight line-clamp-2">{app.job_title || 'Unknown Role'}</h4>
                                                 <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">{app.company || 'Unknown'}</p>
                                             </div>
@@ -1042,11 +1071,35 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                         <div className="flex flex-col gap-4">
                             {processedApps.map(app => (
                                 <div key={app.id} onClick={() => onViewApp(app)} className="glass-card p-4 rounded-xl flex flex-col sm:flex-row gap-4 cursor-pointer group shadow-sm hover:shadow-md transition-all border border-slate-200/60 dark:border-white/10" style={{ position: 'relative' }}>
-                                    {app.match_score != null && (
-                                        <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, pointerEvents: 'none' }}>
-                                            {renderScoreBadge(app.match_score, avgScore, { width: 36, height: 36, fontSize: '0.72rem' })}
-                                        </div>
-                                    )}
+                                    <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, pointerEvents: 'none', display: 'flex', gap: '8px' }}>
+                                        {app.match_score != null && (
+                                            renderScoreBadge(app.match_score, avgScore, { width: 36, height: 36, fontSize: '0.72rem' })
+                                        )}
+                                        {(() => {
+                                            const prio = typeof app.prioritization_ranking === 'string' 
+                                                ? JSON.parse(app.prioritization_ranking || '{}') 
+                                                : (app.prioritization_ranking || {});
+                                            if (prio.score) {
+                                                return (
+                                                    <div style={{ 
+                                                        width: 36, height: 36, borderRadius: '50%', 
+                                                        background: 'rgba(37, 106, 244, 0.1)', 
+                                                        border: '2px solid rgba(37, 106, 244, 0.4)', 
+                                                        color: 'var(--primary)',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        fontSize: '0.72rem', fontWeight: 900,
+                                                        boxShadow: '0 0 10px rgba(37, 106, 244, 0.2)',
+                                                        backdropFilter: 'blur(4px)',
+                                                        position: 'relative'
+                                                    }}>
+                                                        <span className="material-symbols-outlined" style={{ fontSize: '12px', position: 'absolute', top: -4, right: -4, background: 'var(--primary)', color: 'white', borderRadius: '50%', padding: '2px' }}>bolt</span>
+                                                        {prio.score}
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
+                                    </div>
                                     <div className="flex items-start gap-4 flex-1">
                                         <div className="size-11 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
                                             {app.company_logo
@@ -1118,6 +1171,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Salary</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Deadline</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center">Score</th>
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center">Priority</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center">Interest</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Status</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">Actions</th>
@@ -1165,6 +1219,31 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                                   </div>
                                 : <span className="text-slate-400 text-xs">—</span>
                             }
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                            {(() => {
+                                const prio = typeof app.prioritization_ranking === 'string' 
+                                    ? JSON.parse(app.prioritization_ranking || '{}') 
+                                    : (app.prioritization_ranking || {});
+                                if (prio.score) {
+                                    return (
+                                       <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                                           <div style={{ 
+                                               width: 36, height: 36, borderRadius: '50%', 
+                                               background: 'rgba(37, 106, 244, 0.1)', 
+                                               border: '2px solid rgba(37, 106, 244, 0.4)', 
+                                               color: 'var(--primary)',
+                                               display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                               fontSize: '0.75rem', fontWeight: 900
+                                           }}>
+                                               <span className="material-symbols-outlined" style={{ fontSize: '10px', position: 'absolute', top: -2, right: -2, background: 'var(--primary)', color: 'white', borderRadius: '50%', padding: '2px' }}>bolt</span>
+                                               {prio.score}
+                                           </div>
+                                       </div>
+                                    );
+                                }
+                                return <span className="text-slate-400 text-xs">—</span>;
+                            })()}
                         </td>
                         <td className="px-6 py-4 text-center">
                             <div className="flex items-center justify-center">

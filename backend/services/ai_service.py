@@ -27,6 +27,7 @@ Return a JSON object with this EXACT structure:
     "metadata": {{
         "job_title": "Extract exact job title or 'Unknown Role'",
         "company": "Extract company name. IMPORTANT: Do NOT use the platform name (e.g., 'LinkedIn', 'Indeed', 'Otta') as the company unless the job is ACTUALLY at and for that organization. If the employer name is not found, use 'Unknown Company'.",
+        "company_url": "Provide the official company website URL (e.g., https://www.google.com). This is CRITICAL. If not explicitly found in the job description text, provide the official URL if you are certain of it based on the company name, otherwise return null.",
         "salary_range": "Extract salary range if present (e.g. '$160k-$190k' or '$50/hr'), else 'Not Listed'",
         "date_posted": "Extract date. If a relative date is found (e.g., '4 days ago', 'Posted yesterday'), calculate the ACTUAL date based on CURRENT DATE and return it as YYYY-MM-DD. Else 'Unknown'.",
         "deadline": "Extract application deadline if present (YYYY-MM-DD), else ''",
@@ -221,11 +222,14 @@ Evaluate the match based on the following 5 criteria. For each, provide a score 
 5. ATS/Keyword Alignment
 
 Then, calculate the "overall_score" out of 100 (sum of the 5 criteria).
-Finally, create a "coaching_plan" with 3-5 specific, actionable levers the candidate can pull to improve their resume for this specific role (e.g., "Highlight your Python data analysis experience more prominently", "Add the keyword 'Agile' to your project management bullet").
+Finally, create a "coaching_plan" with 3-5 specific, actionable levers the candidate can pull to improve their resume for this specific role.
+
+Also, provide a "compatibility_summary" which is a detailed, multi-paragraph narrative analysis (300-500 words) explaining exactly how the candidate's background fits the role, identifying specific strengths and calling out critical gaps. Use professional but encouraging language.
 
 Return a JSON object with this EXACT structure:
 {{
     "overall_score": 85,
+    "compatibility_summary": "Detailed narrative analysis here...",
     "criteria_scores": {{
         "core_role": {{"score": 18, "reason": "Explanation"}},
         "experience": {{"score": 15, "reason": "Explanation"}},
@@ -238,7 +242,29 @@ Return a JSON object with this EXACT structure:
         "Actionable advice 2",
         "Actionable advice 3"
     ]
-}}"""
+}}""",
+    "match_career_openings": """You are an expert career advisor. Given a list of job openings from a company's careers page and a candidate's profile, identify the top 3-5 roles that would be a good fit for the candidate.
+
+CANDIDATE PROFILE:
+{profile_text}
+
+JOB OPENINGS (Scraped from careers page):
+{jobs_text}
+
+Return a JSON object with this EXACT structure:
+{{
+    "matches": [
+        {{
+            "title": "Job Title",
+            "url": "URL if present, else null",
+            "location": "Location if present, else null",
+            "fit_score": 0-100,
+            "reasoning": "1-2 sentences on why this is a good fit"
+        }}
+    ],
+    "summary": "1-2 sentences summarizing the overall hiring landscape at the company for this candidate."
+}}
+"""
 }
 
 class AIService:

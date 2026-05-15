@@ -103,6 +103,8 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
 
     const [isRecalculating, setIsRecalculating] = useState(false);
+    const [draggedItemIndex, setDraggedItemIndex] = useState(null);
+    const [dragOverItemIndex, setDragOverItemIndex] = useState(null);
 
     const handleRecalculateCommutes = async () => {
         setIsRecalculating(true);
@@ -233,7 +235,18 @@ const Profile = () => {
                         certificates: data.certificates || [],
                         other: data.other || [],
                         social_links: data.social_links || [],
-                        preferences: data.preferences || { max_commute: '', work_setting: '', expected_salary: '' },
+                        preferences: data.preferences || { 
+                            max_commute: '', 
+                            work_setting: '', 
+                            expected_salary: '',
+                            prioritization_categories: [
+                                { id: 'role_fit', label: 'Role Fit', icon: 'work' },
+                                { id: 'career_growth', label: 'Growth', icon: 'trending_up' },
+                                { id: 'total_comp', label: 'Compensation', icon: 'payments' },
+                                { id: 'wlb', label: 'WLB', icon: 'balance' },
+                                { id: 'manager_team', label: 'Team', icon: 'groups' }
+                            ]
+                        },
                         base_resume_path: data.base_resume_path || null,
                         long_form_resume_path: data.long_form_resume_path || null,
                         example_cover_letter_path: data.example_cover_letter_path || null,
@@ -397,6 +410,94 @@ const Profile = () => {
         };
         resize(bioRef);
     }, [formData.bio, loading]);
+
+    const handleReorderCategories = (index, direction) => {
+        setFormData(prev => {
+            const categories = prev.preferences?.prioritization_categories || [
+                { id: 'role_fit', label: 'Role Fit', icon: 'work' },
+                { id: 'career_growth', label: 'Growth', icon: 'trending_up' },
+                { id: 'total_comp', label: 'Compensation', icon: 'payments' },
+                { id: 'wlb', label: 'WLB', icon: 'balance' },
+                { id: 'manager_team', label: 'Team', icon: 'groups' }
+            ];
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= categories.length) return prev;
+            
+            const nextCategories = [...categories];
+            const [moved] = nextCategories.splice(index, 1);
+            nextCategories.splice(newIndex, 0, moved);
+            
+            return {
+                ...prev,
+                preferences: {
+                    ...prev.preferences,
+                    prioritization_categories: nextCategories
+                }
+            };
+        });
+        setIsDirty(true);
+    };
+
+    const handleDragStart = (e, index) => {
+        e.currentTarget.style.transition = "none";
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", index.toString());
+        
+        if (e.dataTransfer.setDragImage) {
+            e.dataTransfer.setDragImage(e.currentTarget, 20, 20);
+        }
+
+        setTimeout(() => {
+            setDraggedItemIndex(index);
+        }, 50);
+    };
+
+    const handleDragEnter = (e, index) => {
+        setDragOverItemIndex(index);
+    };
+
+    const handleDragEnd = () => {
+        setDraggedItemIndex(null);
+        setDragOverItemIndex(null);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+    };
+
+    const handleDrop = (e, targetIndex) => {
+        e.preventDefault();
+        if (draggedItemIndex === null || draggedItemIndex === targetIndex) {
+            setDraggedItemIndex(null);
+            setDragOverItemIndex(null);
+            return;
+        }
+
+        setFormData(prev => {
+            const categories = [...(prev.preferences?.prioritization_categories || [
+                { id: 'role_fit', label: 'Role Fit', icon: 'work' },
+                { id: 'career_growth', label: 'Growth', icon: 'trending_up' },
+                { id: 'total_comp', label: 'Compensation', icon: 'payments' },
+                { id: 'wlb', label: 'WLB', icon: 'balance' },
+                { id: 'manager_team', label: 'Team', icon: 'groups' }
+            ])];
+            
+            const [moved] = categories.splice(draggedItemIndex, 1);
+            categories.splice(targetIndex, 0, moved);
+            
+            return {
+                ...prev,
+                preferences: {
+                    ...prev.preferences,
+                    prioritization_categories: categories
+                }
+            };
+        });
+        setIsDirty(true);
+        setDraggedItemIndex(null);
+        setDragOverItemIndex(null);
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -1295,6 +1396,85 @@ const Profile = () => {
                         </InputGroup>
                     </div>
                     
+                    <div style={{ marginTop: '3rem', borderTop: '1px solid var(--border-color-card)', paddingTop: '2rem' }}>
+                        <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--primary-light)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                            <span className="material-symbols-outlined">sort</span>
+                            Prioritization Strategy
+                        </h4>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                            Drag or use arrows to reorder categories. Items at the top will be weighted more heavily (up to 5x) when scoring new roles.
+                        </p>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {(formData.preferences?.prioritization_categories || [
+                                { id: 'role_fit', label: 'Role Fit', icon: 'work' },
+                                { id: 'career_growth', label: 'Growth', icon: 'trending_up' },
+                                { id: 'total_comp', label: 'Compensation', icon: 'payments' },
+                                { id: 'wlb', label: 'WLB', icon: 'balance' },
+                                { id: 'manager_team', label: 'Team', icon: 'groups' }
+                            ]).map((cat, idx, arr) => (
+                                <div 
+                                    key={cat.id} 
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, idx)}
+                                    onDragEnter={(e) => handleDragEnter(e, idx)}
+                                    onDragEnd={handleDragEnd}
+                                    onDragOver={handleDragOver}
+                                    onDrop={(e) => handleDrop(e, idx)}
+                                    className={`draggable-item ${draggedItemIndex === idx ? 'dragging' : ''}`}
+                                    style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'space-between', 
+                                        padding: '0.875rem 1.25rem', 
+                                        background: draggedItemIndex === idx ? 'var(--primary-glow)' : 'var(--bg-tertiary)', 
+                                        borderRadius: '0.75rem', 
+                                        border: dragOverItemIndex === idx && draggedItemIndex !== idx 
+                                            ? '2px dashed var(--primary)' 
+                                            : '1px solid var(--border-color)',
+                                        transition: draggedItemIndex === idx ? 'none' : 'all 0.2s ease',
+                                        cursor: draggedItemIndex === idx ? 'grabbing' : 'grab',
+                                        opacity: draggedItemIndex === idx ? 0.4 : 1,
+                                        position: 'relative',
+                                        zIndex: draggedItemIndex === idx ? 100 : 1,
+                                        userSelect: 'none'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'inherit', userSelect: 'none' }}>drag_indicator</span>
+                                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-light)', border: '1px solid var(--border-color)' }}>
+                                            {idx + 1}
+                                        </div>
+                                        <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>{cat.icon}</span>
+                                        <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{cat.label}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', marginRight: '1.5rem', gap: '0.5rem' }}>
+                                            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary-light)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Weight:</span>
+                                            <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>{arr.length - idx}x</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => handleReorderCategories(idx, -1)}
+                                            disabled={idx === 0}
+                                            className="btn-secondary"
+                                            style={{ padding: '4px', minWidth: '32px', height: '32px', opacity: idx === 0 ? 0.3 : 1 }}
+                                        >
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>expand_less</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => handleReorderCategories(idx, 1)}
+                                            disabled={idx === arr.length - 1}
+                                            className="btn-secondary"
+                                            style={{ padding: '4px', minWidth: '32px', height: '32px', opacity: idx === arr.length - 1 ? 0.3 : 1 }}
+                                        >
+                                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>expand_more</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center' }}>
                          <button 
                              onClick={handleRecalculateCommutes} 
@@ -1315,7 +1495,7 @@ const Profile = () => {
                              }}>
                                  {isRecalculating ? 'sync' : 'calculate'}
                              </span>
-                             {isRecalculating ? 'Recalculating...' : 'Refresh All Commute Calculations'}
+                             {isRecalculating ? 'Refresh All Commute Calculations' : 'Refresh All Commute Calculations'}
                          </button>
                      </div>
                 </section>

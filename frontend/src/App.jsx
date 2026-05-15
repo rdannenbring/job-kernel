@@ -47,6 +47,7 @@ function App() {
   const [selectedApp, setSelectedApp] = useState(null);
   const [apps, setApps] = useState([]);
   const [uiConfigTheme, setUiConfigTheme] = useState('system');
+  const [isEnriching, setIsEnriching] = useState(false);
 
 
   // Profile dirty-state ref — Profile.jsx sets window.__profileIsDirty = true/false
@@ -141,11 +142,69 @@ function App() {
     }
   }, [token]);
 
+  // Handle URL parameters for direct navigation or job processing
   useEffect(() => {
     if (!token) return;
-    loadApplications()
 
-    // Fetch config to apply UI settings
+    const processUrlParams = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const processJobData = params.get('processJob');
+      const viewAppId = params.get('viewApp');
+
+      if (processJobData) {
+        try {
+          const decoded = JSON.parse(decodeURIComponent(atob(processJobData)));
+          sessionStorage.setItem('extensionJobData', JSON.stringify(decoded));
+
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setScreen('new_app', { replace: true });
+        } catch (e) {
+          console.error("Failed to parse processJob from URL", e);
+        }
+      } else if (viewAppId) {
+        const id = parseInt(viewAppId);
+        try {
+          const res = await fetchWithAuth(`${API_URL}/api/applications/${id}`);
+          if (!res.ok) throw new Error("App not found");
+          const appData = await res.json();
+          
+          setSelectedApp(appData);
+          // Clean up URL and move to detail
+          window.history.replaceState({ screen: 'detail' }, '', SCREEN_TO_HASH['detail']);
+          setCurrentScreenState('detail');
+        } catch (e) {
+          console.error("Failed to load app for viewAppId", e);
+          window.history.replaceState({ screen: 'dashboard' }, '', '#dashboard');
+          setCurrentScreenState('dashboard');
+        }
+      } else {
+        // Handle share target (Mobile Capture)
+        const shareUrl = params.get('url');
+        const shareText = params.get('text');
+        if (shareUrl || shareText) {
+          setScreen('capture', { replace: true });
+        }
+      }
+    };
+
+    processUrlParams();
+
+    // Listen for hash changes to keep currentScreen in sync
+    const handlePopState = (e) => {
+      const screen = e.state?.screen || hashToScreen(window.location.hash);
+      setCurrentScreenState(screen);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [token, window.location.search, window.location.hash]);
+
+  // Initial data loading
+  useEffect(() => {
+    if (!token) return;
+    loadApplications();
+
     fetchWithAuth(`${API_URL}/api/config`)
       .then(res => res.json())
       .then(data => {
@@ -159,67 +218,41 @@ function App() {
         }
       })
       .catch(e => console.error("Failed to load global config:", e));
+  }, [token]);
 
-    // Check if a job was passed from the extension
-    const params = new URLSearchParams(window.location.search);
-    const processJobData = params.get('processJob');
-    const viewAppId = params.get('viewApp');
-
-    if (processJobData) {
-      try {
-        const decoded = JSON.parse(decodeURIComponent(atob(processJobData)));
-        sessionStorage.setItem('extensionJobData', JSON.stringify(decoded));
-
-        // Clean up URL so it doesn't persist on reload
-        window.history.replaceState({}, document.title, window.location.pathname);
-
-        // Auto-navigate to New Application screen
-        setScreen('new_app', { replace: true });
-      } catch (e) {
-        console.error("Failed to parse processJob from URL", e);
-      }
-    } else if (viewAppId) {
-      // Direct navigation to details
-      const id = parseInt(viewAppId);
-      
-      // We need to fetch the app specifically if it's not already in state
-      fetchWithAuth(`${API_URL}/api/applications/${id}`)
-        .then(res => {
-          if (!res.ok) throw new Error("App not found");
-          return res.json();
-        })
-        .then(app => {
-          setSelectedApp(app);
-          // Clean up URL
-          window.history.replaceState({}, document.title, window.location.pathname + "#detail");
-          setCurrentScreenState('detail');
-        })
-        .catch(e => {
-          console.error("Failed to load app for viewAppId", e);
-          // If we can't load the app, go back to dashboard
-          window.history.replaceState({ screen: 'dashboard' }, '', '#dashboard');
-          setCurrentScreenState('dashboard');
-        });
-    } else {
-      // Check for share target params (PWA mobile capture)
-      const shareUrl = params.get('url');
-      const shareText = params.get('text');
-      if (shareUrl || shareText) {
-        // Share target received — route to capture screen
-        // Keep query params so MobileCapture can read them
-        setScreen('capture', { replace: true });
-        return;
-      }
-
-      // Ensure the initial hash is reflected in history so Back works from the first screen
-      const initialScreen = hashToScreen(window.location.hash);
-      if (initialScreen === 'detail' && !selectedApp) {
-        setScreen('dashboard', { replace: true });
-      } else {
-        window.history.replaceState({ screen: initialScreen }, '', SCREEN_TO_HASH[initialScreen] || '#dashboard');
-      }
+  // Foundational Auto-enrichment: if a selected app in 'Saved' stage is missing 
+  // key metadata (summary or company URL), trigger enrichment immediately.
+  useEffect(() => {
+    if (!token || !selectedApp || selectedApp.pipeline_stage !== 'saved' || isEnriching) return;
+    
+    const needsEnrichment = !selectedApp.job_summary || !selectedApp.company_url;
+    
+    if (needsEnrichment) {
+      const triggerEnrichment = async () => {
+        setIsEnriching(true);
+        console.log(`[AutoEnrich] Foundational metadata missing for app ${selectedApp.id}. Triggering enrichment...`);
+        try {
+          const res = await fetchWithAuth(`${API_URL}/api/applications/${selectedApp.id}/enrich`, {
+            method: 'POST'
+          });
+          if (res.ok) {
+            // Refresh the app data to get the new metadata
+            const refreshRes = await fetchWithAuth(`${API_URL}/api/applications/${selectedApp.id}`);
+            if (refreshRes.ok) {
+              const updatedData = await refreshRes.json();
+              handleAppUpdate(selectedApp.id, updatedData);
+              console.log(`[AutoEnrich] Metadata populated for ${selectedApp.company}`);
+            }
+          }
+        } catch (e) {
+          console.error("Auto-enrichment failed in App:", e);
+        } finally {
+          setIsEnriching(false);
+        }
+      };
+      triggerEnrichment();
     }
-  }, [token])
+  }, [selectedApp?.id, selectedApp?.job_summary, selectedApp?.company_url, selectedApp?.pipeline_stage, token]);
   
   // Guard: if on detail/lifecycle screen but no app is selected, go back to dashboard
   useEffect(() => {
@@ -375,6 +408,7 @@ function App() {
             : null;
         return <ApplicationDetail 
                  app={selectedApp} 
+                 isEnrichingGlobal={isEnriching}
                  onBack={() => setScreen('dashboard')} 
                  onDelete={handleDeleteApp} 
                  onArchive={handleArchiveApp} 
@@ -408,7 +442,7 @@ function App() {
                />
       }
       case 'lifecycle':
-        return <ApplicationLifecycle app={selectedApp} onBack={() => setScreen('detail')} onUpdate={handleAppUpdate} />
+        return <ApplicationLifecycle app={selectedApp} isEnrichingGlobal={isEnriching} onBack={() => setScreen('detail')} onUpdate={handleAppUpdate} />
       case 'capture':
         return <MobileCapture onSaved={loadApplications} onGoToDashboard={() => setScreen('dashboard')} />
       case 'analytics':

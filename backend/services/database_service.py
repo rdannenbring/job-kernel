@@ -56,6 +56,7 @@ class Application(Base):
     kanban_order = Column(Integer, default=0)
     diff_data = Column(Text) # JSON string
     source = Column(String) # Origin platform (e.g. LinkedIn, Indeed)
+    company_url = Column(String) # Link to company website
     
     # Override fields for final versions
     override_resume_path = Column(String)
@@ -101,6 +102,7 @@ class Application(Base):
     travel_requirements = Column(Text, nullable=True) # Summary of travel requirements
     outreach_script = Column(Text, nullable=True)     # Generated outreach script
     company_research = Column(Text, nullable=True)    # JSON: AI-generated company research (overview, financials, competitors, detailed)
+    prioritization_ranking = Column(Text, nullable=True) # JSON: User-defined prioritization scoring
 
     # Relationships
     sub_steps = relationship("ApplicationSubStep", back_populates="application", cascade="all, delete-orphan")
@@ -618,6 +620,8 @@ class DatabaseService:
             "ALTER TABLE applications ADD COLUMN additional_docs TEXT",
             "ALTER TABLE applications ADD COLUMN excluded_profile_docs TEXT",
             "ALTER TABLE applications ADD COLUMN company_research TEXT",
+            "ALTER TABLE applications ADD COLUMN company_url TEXT",
+            "ALTER TABLE applications ADD COLUMN prioritization_ranking TEXT",
             # Ensure tables are created if not already (Base.metadata.create_all handles this mostly, but explicit for clarity in migrations)
             """
             CREATE TABLE IF NOT EXISTS application_sub_steps (
@@ -819,6 +823,9 @@ class DatabaseService:
                     if data.get('indeed_url') is not None: app.indeed_url = data.get('indeed_url')
                     if data.get('linkedin_rating') is not None: app.linkedin_rating = data.get('linkedin_rating')
                     if data.get('linkedin_url') is not None: app.linkedin_url = data.get('linkedin_url')
+                    if data.get('company_url') is not None: app.company_url = data.get('company_url')
+                    if data.get('company_research'): app.company_research = json.dumps(data.get('company_research'))
+                    if data.get('prioritization_ranking'): app.prioritization_ranking = json.dumps(data.get('prioritization_ranking'))
                     
                     session.commit()
                     return app.id
@@ -861,6 +868,7 @@ class DatabaseService:
                 indeed_url=data.get('indeed_url'),
                 linkedin_rating=data.get('linkedin_rating'),
                 linkedin_url=data.get('linkedin_url'),
+                company_url=data.get('company_url', ''),
                 profile_snapshot=json.dumps(data.get('profile_snapshot')) if data.get('profile_snapshot') else None,
                 override_resume_path=data.get('override_resume_path'),
                 override_cover_letter_path=data.get('override_cover_letter_path'),
@@ -875,7 +883,9 @@ class DatabaseService:
                 additional_docs=json.dumps(data.get('additional_docs')) if isinstance(data.get('additional_docs'), (dict, list)) else data.get('additional_docs'),
                 excluded_profile_docs=json.dumps(data.get('excluded_profile_docs')) if isinstance(data.get('excluded_profile_docs'), (dict, list)) else data.get('excluded_profile_docs'),
                 source=data.get('source'),
-                outreach_script=data.get('outreach_script')
+                outreach_script=data.get('outreach_script'),
+                company_research=json.dumps(data.get('company_research')) if data.get('company_research') else None,
+                prioritization_ranking=json.dumps(data.get('prioritization_ranking')) if data.get('prioritization_ranking') else None
             )
 
             session.add(new_app)
@@ -1020,6 +1030,29 @@ class DatabaseService:
         except Exception as e:
             print(f"Error fetching photo by URL: {e}")
             return None
+        finally:
+            session.close()
+
+    def update_contact_photo_by_url(self, application_id: int, linkedin_url: str, photo_url: str) -> bool:
+        """Update a contact's photo by matching their LinkedIn URL within a specific application."""
+        session = self.Session()
+        try:
+            base_url = linkedin_url.split('?')[0].rstrip('/')
+            contact = session.query(ApplicationContact).filter(
+                ApplicationContact.application_id == application_id,
+                ApplicationContact.linkedin_url.like(f"{base_url}%"),
+                (ApplicationContact.photo_url.is_(None) | (ApplicationContact.photo_url == ""))
+            ).first()
+            
+            if contact:
+                contact.photo_url = photo_url
+                session.commit()
+                return True
+            return False
+        except Exception as e:
+            session.rollback()
+            print(f"Error updating contact photo by URL: {e}")
+            return False
         finally:
             session.close()
 
@@ -1181,8 +1214,8 @@ class DatabaseService:
             "cover_letter_text": app.cover_letter_text,
             "resume_data": json.loads(app.resume_data) if app.resume_data else {},
             "diff_data": json.loads(app.diff_data) if app.diff_data else {},
-            "resume_changes_summary": app.resume_changes_summary,
-            "cover_letter_changes_summary": app.cover_letter_changes_summary,
+            "resume_changes_summary": json.loads(app.resume_changes_summary) if app.resume_changes_summary else [],
+            "cover_letter_changes_summary": json.loads(app.cover_letter_changes_summary) if app.cover_letter_changes_summary else [],
             "match_score": app.match_score,
             "match_details": json.loads(app.match_details) if app.match_details else {},
             "substage_progress": json.loads(app.substage_progress) if app.substage_progress else {},
@@ -1221,6 +1254,8 @@ class DatabaseService:
             "linkedin_rating": app.linkedin_rating,
             "linkedin_url": app.linkedin_url,
             "company_research": json.loads(app.company_research) if app.company_research else None,
+            "prioritization_ranking": json.loads(app.prioritization_ranking) if app.prioritization_ranking else {},
+            "company_url": app.company_url,
         }
 
     def get_application_by_resume_path(self, filename: str) -> Dict[str, Any]:
@@ -1317,6 +1352,7 @@ class DatabaseService:
             if 'company_logo' in data: app.company_logo = data['company_logo']
             if 'job_url' in data: app.job_url = data['job_url']
             if 'apply_url' in data: app.apply_url = data['apply_url']
+            if 'company_url' in data: app.company_url = data['company_url']
             if 'job_description' in data: app.job_description = data['job_description']
             if 'salary_range' in data: app.salary_range = data['salary_range']
             if 'date_posted' in data: app.date_posted = data['date_posted']
@@ -1339,7 +1375,9 @@ class DatabaseService:
             if 'is_archived' in data: 
                 app.is_archived = 'true' if (data['is_archived'] is True or data['is_archived'] == 'true') else 'false'
             if 'original_resume_path' in data: app.original_resume_path = data['original_resume_path']
-            if 'tailored_resume_path' in data: app.tailored_resume_path = data['tailored_resume_path'].split('/')[-1]
+            if 'tailored_resume_path' in data: 
+                path = data['tailored_resume_path']
+                app.tailored_resume_path = path.split('/')[-1] if path else None
             if 'files' in data and isinstance(data['files'], dict):
                 if data['files'].get('docx'): app.tailored_resume_path = data['files']['docx'].split('/')[-1]
                 if data['files'].get('cl_docx'): app.cover_letter_path = data['files']['cl_docx'].split('/')[-1]
@@ -1400,6 +1438,9 @@ class DatabaseService:
             if 'company_research' in data:
                 val = data['company_research']
                 app.company_research = json.dumps(val) if isinstance(val, (dict, list)) else val
+            if 'prioritization_ranking' in data:
+                val = data['prioritization_ranking']
+                app.prioritization_ranking = json.dumps(val) if isinstance(val, (dict, list)) else val
             if 'substage_progress' in data:
                 val = data['substage_progress']
                 app.substage_progress = json.dumps(val) if isinstance(val, (dict, list)) else val
@@ -1632,14 +1673,24 @@ class DatabaseService:
                     session.add(new_conn)
                     count += 1
                 else:
-                    # Update existing record
-                    existing.name = conn_data.get('name', existing.name)
-                    existing.headline = conn_data.get('headline', existing.headline)
-                    existing.company_id = str(conn_data.get('company_id', existing.company_id))
-                    existing.company_name = conn_data.get('company_name', existing.company_name)
-                    existing.degree = conn_data.get('degree', existing.degree)
-                    existing.is_alumni = conn_data.get('is_alumni', existing.is_alumni)
-                    existing.photo_url = conn_data.get('photo_url', existing.photo_url)
+                    # Update existing record — only overwrite fields with non-empty values
+                    # to prevent re-syncs from erasing previously-captured data
+                    if conn_data.get('name'):
+                        existing.name = conn_data['name']
+                    if conn_data.get('headline'):
+                        existing.headline = conn_data['headline']
+                    if conn_data.get('company_id'):
+                        existing.company_id = str(conn_data['company_id'])
+                    if conn_data.get('company_name'):
+                        existing.company_name = conn_data['company_name']
+                    if conn_data.get('degree'):
+                        existing.degree = conn_data['degree']
+                    if 'is_alumni' in conn_data:
+                        existing.is_alumni = conn_data['is_alumni']
+                    # Critical: only update photo if new value is a real URL
+                    new_photo = conn_data.get('photo_url')
+                    if new_photo and new_photo.startswith('http'):
+                        existing.photo_url = new_photo
                     existing.last_synced = datetime.utcnow()
                     if user_id:
                         existing.user_id = user_id

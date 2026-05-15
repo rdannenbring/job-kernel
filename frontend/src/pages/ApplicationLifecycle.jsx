@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import PipelineProgressBar, { PIPELINE_STAGES, STAGE_TO_STATUS } from '../components/PipelineProgressBar';
 import { useAuth } from '../context/AuthContext';
@@ -228,9 +228,26 @@ const safeParseJSON = (data, fallback = {}) => {
     try { return JSON.parse(data); } catch (e) { return fallback; }
 };
 
-function GeneratedSubStagePanel({ app, onRefresh, onStageChange }) {
+function GeneratedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
   const { fetchWithAuth } = useAuth();
   const [activeSubStage, setActiveSubStage] = useState('resume');
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const main = document.querySelector('main');
+    const grid = document.querySelector('.substage-grid');
+    if (main && grid) {
+      setTimeout(() => {
+        main.scrollTo({
+          top: grid.getBoundingClientRect().top + main.scrollTop - 135,
+          behavior: 'smooth'
+        });
+      }, 50);
+    }
+  }, [activeSubStage]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
   const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
@@ -247,12 +264,14 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange }) {
   const changes = safeParseJSON(app?.resume_changes_summary, []);
   const matchDetails = safeParseJSON(app?.match_details, {});
 
-  // Auto-generate if missing
+  // Auto-generate if missing - DISABLED per user request
+  /* 
   useEffect(() => {
     if (app && !app.tailored_resume_path && !isGenerating && !error) {
       handleRegenerate('resume');
     }
   }, [app?.id]);
+  */
 
   const handleRegenerate = async (type, instructions = '') => {
     setIsGenerating(true);
@@ -354,8 +373,9 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange }) {
   const navStyle = (id) => ({
     display: 'flex',
     alignItems: 'center',
-    gap: '0.875rem',
-    padding: '0.875rem 1.25rem',
+    justifyContent: navCollapsed ? 'center' : 'flex-start',
+    gap: navCollapsed ? '0' : '0.875rem',
+    padding: navCollapsed ? '0.875rem 0' : '0.875rem 1.25rem 0.875rem 0.5rem',
     borderRadius: '1rem',
     cursor: 'pointer',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -852,32 +872,58 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange }) {
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem', flex: 1, minHeight: 0 }}>
+    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
       {/* Left: Navigation */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        <h3 style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15em', padding: '0 1rem', marginBottom: '0.5rem' }}>Artifacts</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
+        <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
+          <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
+            <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>
+              {navCollapsed ? 'last_page' : 'first_page'}
+            </span>
+          </button>
+        </div>
+        <h3 className="substage-nav-label" style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15em', padding: '0 1rem', marginBottom: '0.5rem' }}>Artifacts</h3>
         {GENERATED_SUBSTAGES.map((s) => (
-          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={navStyle(s.id)}>
+          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={{ ...navStyle(s.id), position: 'relative' }} title={s.label}>
             <span className="material-symbols-outlined" style={{ 
               fontSize: '1.25rem',
               fontVariationSettings: activeSubStage === s.id ? "'FILL' 1" : "'FILL' 0"
             }}>
               {s.icon}
             </span>
-            <span style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
+            <span className="substage-nav-label" style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
           </button>
         ))}
         
-        <div style={{ marginTop: 'auto', padding: '1.5rem 1rem' }}>
-          <div style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '1rem', padding: '1rem' }}>
-             <p style={{ fontSize: '10px', fontWeight: 800, color: '#10b981', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Strategy Ready</p>
-             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>Documents are tailored to <strong>{app?.match_score || 0}%</strong> match accuracy.</p>
+        <div style={{ marginTop: 'auto', padding: navCollapsed ? '1.5rem 0' : '1.5rem 1rem' }}>
+          <div 
+            style={{ 
+              background: 'rgba(16, 185, 129, 0.05)', 
+              border: '1px solid rgba(16, 185, 129, 0.2)', 
+              borderRadius: '1rem', 
+              padding: navCollapsed ? '0.75rem' : '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: navCollapsed ? 'center' : 'flex-start',
+              cursor: navCollapsed ? 'help' : 'default',
+              transition: 'all 0.3s ease'
+            }}
+            title={navCollapsed ? `Strategy Ready: Documents are tailored to ${app?.match_score || 0}% match accuracy.` : ""}
+          >
+            {navCollapsed ? (
+              <span className="material-symbols-outlined" style={{ color: '#10b981', fontSize: '1.25rem' }}>info</span>
+            ) : (
+              <>
+                <p className="substage-nav-label" style={{ fontSize: '10px', fontWeight: 800, color: '#10b981', textTransform: 'uppercase', marginBottom: '0.5rem', width: '100%' }}>Strategy Ready</p>
+                <p className="substage-nav-label" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4, width: '100%', whiteSpace: 'normal' }}>Documents are tailored to <strong>{app?.match_score || 0}%</strong> match accuracy.</p>
+              </>
+            )}
           </div>
         </div>
       </div>
 
       {/* Right: Content Panel */}
-      <div style={{ flex: 1, overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflow: 'hidden', minHeight: 'calc(100vh - 130px)', paddingBottom: '4rem' }}>
         {renderContent()}
       </div>
       {isPreviewExpanded && (
@@ -979,9 +1025,39 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange }) {
   );
 }
 
-function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connections = [], onAddContact, onSearchPeople, handleGenerateOutreach, generatingOutreach, outreachScript, setOutreachScript, openEditContact, handleDeleteContact }) {
+function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connections = [], onAddContact, onSearchPeople, handleGenerateOutreach, generatingOutreach, outreachScript, setOutreachScript, openEditContact, handleDeleteContact, navCollapsed, onToggleNav }) {
   const { fetchWithAuth } = useAuth();
   const [activeSubStage, setActiveSubStage] = useState('parsed');
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const main = document.querySelector('main');
+    const grid = document.querySelector('.substage-grid');
+    if (main && grid) {
+      setTimeout(() => {
+        main.scrollTo({
+          top: grid.getBoundingClientRect().top + main.scrollTop - 135,
+          behavior: 'smooth'
+        });
+      }, 50);
+    }
+  }, [activeSubStage]);
+
+  // Auto-collapse sidebar on narrow screens when in Prioritized stage
+  useEffect(() => {
+    const handleResize = () => {
+      if (activeSubStage === 'prioritized' && window.innerWidth < 1440 && !navCollapsed) {
+        onToggleNav();
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [activeSubStage, navCollapsed]);
+
   const [companyView, setCompanyView] = useState('overview');
   const [isEnriching, setIsEnriching] = useState(false);
   const [isScoring, setIsScoring] = useState(false);
@@ -991,6 +1067,279 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
   const [isSavingReview, setIsSavingReview] = useState(false);
   const [isReviewEditMode, setIsReviewEditMode] = useState(false);
   const [isResearching, setIsResearching] = useState(false);
+
+  const [localPrioritization, setLocalPrioritization] = useState(() => {
+    return app?.prioritization_ranking ? (typeof app.prioritization_ranking === 'string' ? safeParseJSON(app.prioritization_ranking, {}) : app.prioritization_ranking) : {};
+  });
+  const [isSavingPrioritization, setIsSavingPrioritization] = useState(false);
+  const [selectedCriteria, setSelectedCriteria] = useState([]);
+  const [rationale, setRationale] = useState('');
+  const [showWeightInfo, setShowWeightInfo] = useState(false);
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
+  const [isWeightsOverridden, setIsWeightsOverridden] = useState(false);
+  const [draggedItemIndex, setDraggedItemIndex] = useState(null);
+  const [localPrioritizedComplete, setLocalPrioritizedComplete] = useState(() => {
+    const progress = safeParseJSON(app?.substage_progress, {});
+    return progress?.prioritized === true;
+  });
+  const [dragOverItemIndex, setDragOverItemIndex] = useState(null);
+
+  // Initialize prioritization state when app changes
+   useEffect(() => {
+    const rankingObj = app?.prioritization_ranking ? (typeof app.prioritization_ranking === 'string' ? safeParseJSON(app.prioritization_ranking, {}) : app.prioritization_ranking) : {};
+    setLocalPrioritization(rankingObj);
+    if (rankingObj?.rationale) {
+      setRationale(rankingObj.rationale);
+    }
+    setIsWeightsOverridden(!!rankingObj?.custom_categories);
+    
+    const progress = safeParseJSON(app?.substage_progress, {});
+    setLocalPrioritizedComplete(progress?.prioritized === true);
+  }, [app?.prioritization_ranking, app?.substage_progress]);
+
+  // Fetch user profile preferences or use overridden weights
+  useEffect(() => {
+    const fetchUserPrefs = async () => {
+      try {
+        const rankingObj = app?.prioritization_ranking ? (typeof app.prioritization_ranking === 'string' ? safeParseJSON(app.prioritization_ranking, {}) : app.prioritization_ranking) : {};
+        const savedScores = rankingObj?.criteria_scores || {};
+        
+        let cats = [];
+        if (rankingObj?.custom_categories) {
+          cats = rankingObj.custom_categories;
+          setIsWeightsOverridden(true);
+        } else {
+          const res = await fetchWithAuth(`${API_URL}/api/profile`);
+          if (res.ok) {
+            const data = await res.json();
+            cats = data?.preferences?.prioritization_categories || [
+              { id: 'role_fit', label: 'Role Fit', icon: 'work' },
+              { id: 'career_growth', label: 'Growth', icon: 'trending_up' },
+              { id: 'total_comp', label: 'Compensation', icon: 'payments' },
+              { id: 'wlb', label: 'WLB', icon: 'balance' },
+              { id: 'manager_team', label: 'Team', icon: 'groups' }
+            ];
+          } else {
+            cats = [
+              { id: 'role_fit', label: 'Role Fit', icon: 'work' },
+              { id: 'career_growth', label: 'Growth', icon: 'trending_up' },
+              { id: 'total_comp', label: 'Compensation', icon: 'payments' },
+              { id: 'wlb', label: 'WLB', icon: 'balance' },
+              { id: 'manager_team', label: 'Team', icon: 'groups' }
+            ];
+          }
+          setIsWeightsOverridden(false);
+        }
+
+        const mapped = cats.map((cat, idx, arr) => ({
+          id: cat.id,
+          label: cat.label,
+          weight: arr.length - idx,
+          score: savedScores[cat.id] ?? 5,
+          icon: cat.icon
+        }));
+        setSelectedCriteria(mapped);
+      } catch (e) {
+        console.error("Failed to load categories for prioritization", e);
+      }
+    };
+    if (app?.id) {
+      fetchUserPrefs();
+    }
+  }, [app?.id, app?.prioritization_ranking]);
+
+  // Drag and Drop Handlers for Override Modal
+  const handleDragStart = (e, index) => {
+    setDraggedItemIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index);
+    
+    // Create a ghost image or style
+    setTimeout(() => {
+        const target = e.target;
+        if (target) target.classList.add('dragging');
+    }, 0);
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    setDragOverItemIndex(index);
+  };
+
+  const handleDragEnd = (e) => {
+    setDraggedItemIndex(null);
+    setDragOverItemIndex(null);
+    const target = e.target;
+    if (target) target.classList.remove('dragging');
+  };
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    const sourceIndex = draggedItemIndex;
+    if (sourceIndex === null || sourceIndex === targetIndex) return;
+
+    const newCriteria = [...selectedCriteria];
+    const [movedItem] = newCriteria.splice(sourceIndex, 1);
+    newCriteria.splice(targetIndex, 0, movedItem);
+    
+    // Recalculate weights based on new order
+    const updated = newCriteria.map((c, idx, arr) => ({
+      ...c,
+      weight: arr.length - idx
+    }));
+    
+    setSelectedCriteria(updated);
+    setDraggedItemIndex(null);
+    setDragOverItemIndex(null);
+  };
+
+  const handleReorder = (idx, direction) => {
+    const newIndex = idx + direction;
+    if (newIndex < 0 || newIndex >= selectedCriteria.length) return;
+    
+    const newCriteria = [...selectedCriteria];
+    const [movedItem] = newCriteria.splice(idx, 1);
+    newCriteria.splice(newIndex, 0, movedItem);
+    
+    const updated = newCriteria.map((c, i, arr) => ({
+      ...c,
+      weight: arr.length - i
+    }));
+    
+    setSelectedCriteria(updated);
+  };
+
+  const handleApplyOverride = () => {
+    const customCats = selectedCriteria.map(c => ({
+      id: c.id,
+      label: c.label,
+      icon: c.icon
+    }));
+    
+    const finalScore = calculateScore();
+    const scoresObj = {};
+    selectedCriteria.forEach(c => { scoresObj[c.id] = c.score; });
+    
+    handleSavePrioritizationData({
+      ...localPrioritization,
+      criteria_scores: scoresObj,
+      custom_categories: customCats,
+      score: finalScore,
+      last_scored: new Date().toISOString()
+    });
+    setShowOverrideModal(false);
+  };
+
+  const handleResetToProfile = async () => {
+    try {
+      const res = await fetchWithAuth(`${API_URL}/api/profile`);
+      if (res.ok) {
+        const data = await res.json();
+        const cats = data?.preferences?.prioritization_categories || [];
+        const rankingObj = app?.prioritization_ranking ? (typeof app.prioritization_ranking === 'string' ? safeParseJSON(app.prioritization_ranking, {}) : app.prioritization_ranking) : {};
+        const savedScores = rankingObj?.criteria_scores || {};
+        
+        const mapped = cats.map((cat, idx, arr) => ({
+          id: cat.id,
+          label: cat.label,
+          weight: arr.length - idx,
+          score: savedScores[cat.id] ?? 5,
+          icon: cat.icon
+        }));
+        
+        setSelectedCriteria(mapped);
+        
+        // Save to backend without custom_categories
+        const { custom_categories, ...rest } = rankingObj;
+        handleSavePrioritizationData({
+          ...rest,
+          score: calculateScore()
+        });
+        setShowOverrideModal(false);
+      }
+    } catch (e) {
+      console.error("Failed to reset weights", e);
+    }
+  };
+
+  const updateWeight = (id, weight) => {
+    setSelectedCriteria(selectedCriteria.map(c => c.id === id ? { ...c, weight } : c));
+  };
+
+  const updateScore = (id, score) => {
+    setSelectedCriteria(selectedCriteria.map(c => c.id === id ? { ...c, score } : c));
+  };
+
+  const calculateScore = () => {
+    if (selectedCriteria.length === 0) return 0;
+    const total = selectedCriteria.reduce((sum, c) => sum + (c.weight * c.score), 0);
+    const max = selectedCriteria.reduce((sum, c) => sum + (c.weight * 10), 0);
+    return Math.round((total / max) * 100);
+  };
+
+  const handleSavePrioritizationData = async (updatedRanking, newStage = null) => {
+    setIsSavingPrioritization(true);
+    try {
+      const progress = safeParseJSON(app?.substage_progress, {});
+      const payload = {
+        prioritization_ranking: updatedRanking,
+        substage_progress: { ...progress, prioritized: true }
+      };
+
+      if (newStage) {
+        payload.pipeline_stage = newStage;
+        payload.status = STAGE_TO_STATUS[newStage] || app.status;
+        payload.force = true;
+      }
+
+      const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        setLocalPrioritizedComplete(true);
+        console.log("Prioritization saved successfully, refreshing...");
+        await onRefresh();
+      }
+    } catch (e) {
+      console.error("Failed to save prioritization", e);
+    } finally {
+      setIsSavingPrioritization(false);
+    }
+  };
+
+  const handleSavePrioritization = () => {
+    const finalScore = calculateScore();
+    const scoresObj = {};
+    selectedCriteria.forEach(c => { scoresObj[c.id] = c.score; });
+    
+    const updatedRanking = {
+      criteria_scores: scoresObj,
+      rationale,
+      score: finalScore,
+      last_scored: new Date().toISOString(),
+      custom_categories: isWeightsOverridden ? selectedCriteria.map(c => ({ id: c.id, label: c.label, icon: c.icon })) : null
+    };
+
+    handleSavePrioritizationData(updatedRanking);
+  };
+
+  const handleLockAndMove = () => {
+    const finalScore = calculateScore();
+    const scoresObj = {};
+    selectedCriteria.forEach(c => { scoresObj[c.id] = c.score; });
+    
+    const updatedRanking = {
+      criteria_scores: scoresObj,
+      rationale,
+      score: finalScore,
+      last_scored: new Date().toISOString(),
+      custom_categories: isWeightsOverridden ? selectedCriteria.map(c => ({ id: c.id, label: c.label, icon: c.icon })) : null
+    };
+
+    handleSavePrioritizationData(updatedRanking, 'generated');
+  };
 
   useEffect(() => {
     if (app) setReviewForm(app);
@@ -1032,6 +1381,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
 
   const isComplete = (id) => {
     if (id === 'parsed') return true;
+    if (id === 'prioritized' && localPrioritizedComplete) return true;
     const progress = safeParseJSON(app?.substage_progress, {});
     return progress?.[id] === true;
   };
@@ -1130,8 +1480,8 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
   const navStyle = (id) => ({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0.875rem 1.25rem',
+    justifyContent: navCollapsed ? 'center' : 'space-between',
+    padding: navCollapsed ? '0.875rem 0' : '0.875rem 1.25rem 0.875rem 0.5rem',
     borderRadius: '1rem',
     cursor: 'pointer',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -1979,13 +2329,73 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
       }
 
       case 'prioritized':
+        const finalScore = calculateScore();
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'fadeIn 0.4s ease-out', paddingBottom: '100px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'fadeIn 0.4s ease-out', paddingBottom: '120px' }}>
+            <style>{`
+              input.premium-slider {
+                -webkit-appearance: none !important;
+                appearance: none !important;
+                width: 100% !important;
+                height: 10px !important;
+                border-radius: 5px !important;
+                background: linear-gradient(to right, var(--primary) 0%, var(--primary) var(--slider-fill, 0%), rgba(100, 116, 139, 0.3) var(--slider-fill, 0%), rgba(100, 116, 139, 0.3) 100%) !important;
+                border: 1px solid var(--border-color) !important;
+                outline: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                cursor: pointer !important;
+              }
+              input.premium-slider::-webkit-slider-runnable-track {
+                width: 100% !important;
+                height: 10px !important;
+                cursor: pointer !important;
+                background: transparent !important;
+                border: none !important;
+              }
+              input.premium-slider::-moz-range-track {
+                width: 100% !important;
+                height: 10px !important;
+                cursor: pointer !important;
+                background: transparent !important;
+                border: none !important;
+              }
+              input.premium-slider::-webkit-slider-thumb {
+                -webkit-appearance: none !important;
+                appearance: none !important;
+                width: 20px !important;
+                height: 20px !important;
+                border-radius: 50% !important;
+                background: #ffffff !important;
+                border: 4px solid var(--primary) !important;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.25) !important;
+                margin-top: -5px !important; /* (10 - 20)/2 = -5px perfectly centers thumb on 10px track */
+                transition: transform 0.1s ease !important;
+              }
+              input.premium-slider::-webkit-slider-thumb:hover {
+                transform: scale(1.2) !important;
+              }
+              input.premium-slider::-moz-range-thumb {
+                width: 20px !important;
+                height: 20px !important;
+                border-radius: 50% !important;
+                background: #ffffff !important;
+                border: 4px solid var(--primary) !important;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.25) !important;
+                transition: transform 0.1s ease !important;
+              }
+              input.premium-slider::-moz-range-thumb:hover {
+                transform: scale(1.2) !important;
+              }
+            `}</style>
+            {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <span style={{ color: 'var(--primary-color)', fontSize: '10px', textTransform: 'uppercase', tracking: '0.2em', fontWeight: 800, marginBottom: '0.5rem', display: 'block' }}>Stage IV: Selection Optimization</span>
-                <h3 style={{ fontSize: '1.75rem', fontWeight: 900, margin: 0, color: 'var(--text-primary)', tracking: '-0.02em' }}>Final Prioritization Ranking</h3>
-                <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '0.9rem', maxWidth: '600px' }}>Aggregate your research data to finalize your intent. High-ranking roles will be prioritized for the Generation Phase.</p>
+                <span style={{ color: 'var(--primary)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 800, marginBottom: '0.5rem', display: 'block' }}>Stage IV: Selection Optimization</span>
+                <h3 style={{ fontSize: '1.75rem', fontWeight: 900, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Final Prioritization Ranking</h3>
+                <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '0.9rem', maxWidth: '600px' }}>
+                  Aggregate your research data to finalize your intent. High-ranking roles will be prioritized for the Generation Phase.
+                </p>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button className="btn-secondary" style={{ padding: '0.5rem', borderRadius: '0.5rem', display: 'flex', border: '1px solid var(--border-color)' }}>
@@ -1994,67 +2404,170 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2rem', alignItems: 'start' }}>
-              {/* Left Column: Strategic Evaluation & Rationale */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                {/* Strategic Evaluation Card */}
-                <div className="card glass" style={{ padding: '2.5rem', borderRadius: '1.5rem', border: '1px solid var(--border-color)', position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', top: 0, right: 0, padding: '1rem', opacity: 0.1 }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '4rem' }}>analytics</span>
+            {/* Main Layout Grid - Redesigned for Full Width Priority */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '2rem', alignItems: 'start' }}>
+              {/* Top Section: Intelligence Summary & Dynamic Weights in a flexible row */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '2rem' }}>
+                {/* Priority Intelligence Output (Now more visible) */}
+                <div className="card glass" style={{ padding: '2rem', borderRadius: '1.5rem', border: '1px solid var(--border-color)', background: 'var(--bg-card)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '2.5rem' }}>
+                  <div style={{ position: 'relative', width: '130px', height: '130px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg viewBox="0 0 160 160" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)', overflow: 'visible' }}>
+                      <circle cx="80" cy="80" r="64" fill="none" stroke="var(--border-color-input)" strokeWidth="12"></circle>
+                      <circle 
+                        cx="80" cy="80" r="64" 
+                        fill="none" 
+                        stroke="var(--primary)" 
+                        strokeWidth="12" 
+                        strokeDasharray="402.12" 
+                        strokeDashoffset={402.12 - (402.12 * finalScore / 100)} 
+                        strokeLinecap="round" 
+                        style={{ filter: 'drop-shadow(0 0 8px rgba(37,106,244,0.4))', transition: 'stroke-dashoffset 0.6s ease-out' }}
+                      ></circle>
+                    </svg>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: '2.25rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>{finalScore}</span>
+                      <span style={{ fontSize: '9px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Score</span>
+                    </div>
                   </div>
-                  <h4 style={{ margin: '0 0 2.5rem 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span className="material-symbols-outlined" style={{ color: 'var(--primary-color)' }}>analytics</span>
-                    Strategic Evaluation
-                  </h4>
                   
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-                    {[
-                      { id: 'job_fit', label: 'Job Fit', desc: 'How well do your skills and experience align with the core requirements of this role?', level: 4 },
-                      { id: 'company_alignment', label: 'Company Alignment', desc: "Do the company's culture, mission, and long-term stability match your career goals?", level: 3 },
-                      { id: 'overall_interest', label: 'Overall Interest', desc: 'Your personal level of excitement and motivation to work for this specific organization.', level: app?.interest_level || 5 }
-                    ].map((dim) => (
-                      <div key={dim.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ maxWidth: '400px' }}>
-                          <h5 style={{ margin: '0 0 0.25rem 0', fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{dim.label}</h5>
-                          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{dim.desc}</p>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: '10px', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Curation Intel</span>
+                    <h4 style={{ margin: '0.25rem 0', fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-primary)' }}>
+                      {finalScore >= 80 ? 'Top Tier Intent' : finalScore >= 60 ? 'Competitive Opportunity' : 'Secondary Draft'}
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                      Weights from your {isWeightsOverridden ? 'custom overrides' : 'profile strategy'} are applied to these category scores.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="card glass" style={{ padding: '1.5rem 2rem', borderRadius: '1.5rem', border: '1px solid var(--border-color)', background: 'var(--bg-card)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.75rem', background: 'rgba(37, 106, 244, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', flexShrink: 0 }}>
+                    <span className="material-symbols-outlined">insights</span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    Adjusting these scores synchronizes directly with your cover letter and resume generation prompt weightings.
+                  </p>
+                </div>
+              </div>
+
+              {/* Middle Section: Dynamic Weights (Full Width) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                {/* Dynamic Weights & Scoring Matrix */}
+                <div className="card glass" style={{ padding: '2.5rem', borderRadius: '1.5rem', border: '1px solid var(--border-color)', position: 'relative', overflow: 'hidden', background: 'var(--bg-card)', boxShadow: 'var(--shadow-sm)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2.5rem', paddingBottom: '1.25rem', borderBottom: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.75rem', background: 'rgba(37, 106, 244, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                        <span className="material-symbols-outlined">tune</span>
+                      </div>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-primary)' }}>Dynamic Strategy Scoring</h4>
+                        <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Configure category scores to influence generation focus</p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      {isWeightsOverridden && (
+                        <span style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--warning)', background: 'rgba(255, 171, 0, 0.1)', padding: '0.25rem 0.75rem', borderRadius: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '0.9rem' }}>warning</span>
+                          Overridden
+                        </span>
+                      )}
+                      <div style={{ position: 'relative' }}>
+                        <span 
+                          className="material-symbols-outlined" 
+                          onMouseEnter={() => setShowWeightInfo(true)}
+                          onMouseLeave={() => setShowWeightInfo(false)}
+                          onClick={() => setShowWeightInfo(!showWeightInfo)}
+                          style={{ cursor: 'pointer', color: 'var(--primary)', fontSize: '1.2rem', opacity: 0.8 }}
+                        >
+                          info
+                        </span>
+                        
+                        {(showWeightInfo) && (
+                          <div className="card glass" style={{ position: 'absolute', top: '100%', right: 0, width: '280px', padding: '1.25rem', zIndex: 1000, marginTop: '0.75rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)' }}>
+                            <h5 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 800 }}>Weighting Intelligence</h5>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                              Weights are globally determined by your category ranking in the User Profile. Items at the top are weighted more heavily (up to 5x).
+                            </p>
+                            <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end' }}>
+                              <a href="/profile" style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                Manage Profile Weights
+                                <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>open_in_new</span>
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <button 
+                        onClick={() => setShowOverrideModal(true)}
+                        style={{ padding: '0.4rem 0.75rem', borderRadius: '0.5rem', background: isWeightsOverridden ? 'rgba(37, 106, 244, 0.1)' : 'var(--bg-tertiary)', border: '1px solid ' + (isWeightsOverridden ? 'var(--primary)' : 'var(--border-color)'), color: isWeightsOverridden ? 'var(--primary)' : 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
+                      >
+                        {isWeightsOverridden ? 'Edit Overrides' : 'Override Weights'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Criteria Sliders List - Redesigned for Vertical Stacking & Width */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
+                    {selectedCriteria.map((c) => (
+                      <div key={c.id} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.25rem', borderRadius: '1.25rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color-card)', transition: 'transform 0.2s ease' }}>
+                        {/* Top Row: Info & Stats */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', border: '1px solid var(--border-color)' }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>{c.icon || 'star'}</span>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>{c.label}</div>
+                              <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', opacity: 0.8 }}>Weight: {c.weight}x</div>
+                            </div>
+                          </div>
+                          
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Score</div>
+                              <div style={{ fontFamily: 'monospace', fontWeight: 900, fontSize: '1.1rem', color: 'var(--text-primary)' }}>{c.score}<span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>/10</span></div>
+                            </div>
+                            <div style={{ textAlign: 'right', borderLeft: '1px solid var(--border-color)', paddingLeft: '1rem' }}>
+                              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Subtotal</div>
+                              <div style={{ fontFamily: 'monospace', color: 'var(--primary)', fontWeight: 900, fontSize: '1.1rem' }}>{c.score * c.weight}</div>
+                            </div>
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          {[1, 2, 3, 4, 5].map(i => (
-                            <button key={i} style={{ 
-                              width: '2.5rem', 
-                              height: '2.5rem', 
-                              borderRadius: '0.75rem', 
-                              backgroundColor: i <= dim.level ? 'rgba(37, 106, 244, 0.15)' : 'rgba(255, 255, 255, 0.03)', 
-                              color: i <= dim.level ? 'var(--primary-color)' : 'rgba(255, 255, 255, 0.1)', 
-                              border: '1px solid ' + (i <= dim.level ? 'rgba(37, 106, 244, 0.2)' : 'transparent'),
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s'
-                            }}>
-                              <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', fontVariationSettings: i <= dim.level ? "'FILL' 1" : "'FILL' 0" }}>star</span>
-                            </button>
-                          ))}
+
+                        {/* Bottom Row: Full Width Slider */}
+                        <div style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '0 0.5rem' }}>
+                          <input 
+                            type="range" 
+                            min="1" 
+                            max="10" 
+                            value={c.score} 
+                            onChange={(e) => updateScore(c.id, parseInt(e.target.value))}
+                            className="premium-slider"
+                            style={{ '--slider-fill': `${((c.score - 1) / 9) * 100}%` }}
+                          />
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Rationale Section */}
-                <div className="card glass" style={{ padding: '2.5rem', borderRadius: '1.5rem', border: '1px solid var(--border-color)' }}>
+                {/* Qualitative Notes Rationale Section */}
+                <div className="card glass" style={{ padding: '2.5rem', borderRadius: '1.5rem', border: '1px solid var(--border-color)', background: 'var(--bg-card)', boxShadow: 'var(--shadow-sm)' }}>
                   <h4 style={{ margin: '0 0 1.5rem 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span className="material-symbols-outlined" style={{ color: 'var(--primary-color)' }}>description</span>
+                    <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>description</span>
                     Prioritization Rationale
                   </h4>
                   <div style={{ position: 'relative' }}>
                     <textarea 
+                      value={rationale}
+                      onChange={(e) => setRationale(e.target.value)}
+                      placeholder="Synthesize your research findings and explain why this role has earned its current priority ranking..."
                       style={{ 
                         width: '100%', 
-                        minHeight: '160px', 
-                        background: 'rgba(0, 0, 0, 0.2)', 
-                        border: '1px solid var(--border-color)', 
+                        minHeight: '120px', 
+                        background: 'var(--bg-input)', 
+                        border: '1px solid var(--border-color-input)', 
                         borderRadius: '1rem', 
                         padding: '1.25rem', 
                         color: 'var(--text-primary)', 
@@ -2063,113 +2576,137 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                         resize: 'none',
                         outline: 'none'
                       }}
-                      placeholder="Synthesize your research findings and explain why this role has earned its current priority ranking..."
-                      defaultValue={app?.notes || ""}
                     />
-                    <div style={{ position: 'absolute', bottom: '1rem', right: '1rem', display: 'flex', gap: '0.5rem' }}>
-                      <button style={{ padding: '0.4rem 0.75rem', borderRadius: '0.5rem', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-secondary)', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', border: 'none', cursor: 'pointer' }}>Import Notes</button>
-                      <button style={{ padding: '0.4rem 0.75rem', borderRadius: '0.5rem', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-secondary)', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', border: 'none', cursor: 'pointer' }}>Clear</button>
-                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column: Curation Intelligence */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div className="card glass" style={{ padding: '2rem', borderRadius: '1.5rem', border: '1px solid var(--border-color)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Curation Intelligence</span>
-                    <span className="material-symbols-outlined" style={{ color: 'var(--primary-color)', fontSize: '1.2rem' }}>bolt</span>
-                  </div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2.5rem' }}>
-                    <div style={{ position: 'relative', width: '130px', height: '130px' }}>
-                      <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-                        <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="2.5"></circle>
-                        <circle cx="18" cy="18" r="16" fill="none" stroke="var(--primary-color)" strokeWidth="2.5" strokeDasharray="88, 100" strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 6px var(--primary-color))' }}></circle>
-                      </svg>
-                      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>88</span>
-                        <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', marginTop: '2px' }}>Percent</span>
-                      </div>
-                    </div>
-                    <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-                      <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>Compatibility Score</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>High Probability Match</div>
-                    </div>
-                  </div>
+              {/* Sticky CTA Footer */}
+              <div style={{ 
+                position: 'fixed', 
+                bottom: 0, 
+                left: navCollapsed ? '100px' : '280px', 
+                right: 0, 
+                padding: '1.25rem 2.5rem', 
+                background: 'var(--bg-card)', 
+                backdropFilter: 'blur(12px)', 
+                borderTop: '1px solid var(--border-color)', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                zIndex: 100,
+                boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
+                transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                    Ready to tailor your documents using this configuration?
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button 
+                    className="btn-secondary" 
+                    onClick={handleSavePrioritization}
+                    disabled={isSavingPrioritization}
+                    style={{ padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontWeight: 700 }}
+                  >
+                    Save as Draft
+                  </button>
+                  <button 
+                    className="btn-primary" 
+                    onClick={handleLockAndMove}
+                    disabled={isSavingPrioritization}
+                    style={{ padding: '0.6rem 1.5rem', borderRadius: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  >
+                    Save Prioritization & Move to Generated Phase
+                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>arrow_forward</span>
+                  </button>
+                </div>
+              </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div style={{ padding: '1rem', background: 'rgba(37, 106, 244, 0.05)', borderRadius: '1rem', border: '1px solid rgba(37, 106, 244, 0.1)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: 'var(--primary-color)' }}>verified</span>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>Key Match Highlight</span>
-                      </div>
-                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                        Your experience with <span style={{ color: 'var(--primary-color)', fontWeight: 700 }}>React Architectures</span> perfectly aligns with the team's Q4 scaling initiatives.
-                      </p>
+              {/* Override Weights Modal */}
+              {showOverrideModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+                  <div className="card glass" style={{ width: '500px', padding: '2.5rem', borderRadius: '1.5rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-2xl)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                      <h4 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>tune</span>
+                        Custom Job Weighting
+                      </h4>
+                      <button onClick={() => setShowOverrideModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                        <span className="material-symbols-outlined">close</span>
+                      </button>
                     </div>
-                    <div style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>info</span>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>Skill Gap Found</span>
-                      </div>
-                      <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                        Minor lack of exposure to <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Web3 protocols</span>; consider emphasizing quick-learning capabilities.
-                      </p>
+                    
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '2rem', lineHeight: 1.5 }}>
+                      Adjust the priority of categories specifically for this job listing. Drag to reorder; items at the top will be weighted more heavily.
+                    </p>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
+                      {selectedCriteria.map((cat, idx, arr) => (
+                        <div 
+                          key={cat.id} 
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, idx)}
+                          onDragOver={(e) => handleDragOver(e, idx)}
+                          onDragEnd={handleDragEnd}
+                          onDrop={(e) => handleDrop(e, idx)}
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between', 
+                            padding: '0.85rem 1.25rem', 
+                            background: draggedItemIndex === idx ? 'rgba(37, 106, 244, 0.1)' : 'var(--bg-tertiary)', 
+                            borderRadius: '1rem', 
+                            border: dragOverItemIndex === idx && draggedItemIndex !== idx 
+                                ? '2px dashed var(--primary)' 
+                                : '1px solid var(--border-color)',
+                            cursor: 'grab',
+                            opacity: draggedItemIndex === idx ? 0.4 : 1,
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>drag_indicator</span>
+                            <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary)', border: '1px solid var(--border-color)' }}>
+                              {idx + 1}
+                            </div>
+                            <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>{cat.icon}</span>
+                            <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{cat.label}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase' }}>{arr.length - idx}x</span>
+                            <div style={{ display: 'flex', gap: '0.25rem' }}>
+                              <button onClick={() => handleReorder(idx, -1)} disabled={idx === 0} style={{ padding: '0.25rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', opacity: idx === 0 ? 0.2 : 1 }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>keyboard_arrow_up</span>
+                              </button>
+                              <button onClick={() => handleReorder(idx, 1)} disabled={idx === arr.length - 1} style={{ padding: '0.25rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', opacity: idx === arr.length - 1 ? 0.2 : 1 }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>keyboard_arrow_down</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                      <button 
+                        onClick={handleResetToProfile}
+                        style={{ padding: '0.75rem 1.5rem', borderRadius: '0.75rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer' }}
+                      >
+                        Restore Profile Defaults
+                      </button>
+                      <button 
+                        onClick={handleApplyOverride}
+                        className="btn-primary"
+                        style={{ padding: '0.75rem 2rem', borderRadius: '0.75rem', fontWeight: 800, fontSize: '0.9rem' }}
+                      >
+                        Apply & Save Overrides
+                      </button>
                     </div>
                   </div>
                 </div>
-
-                <div className="card glass" style={{ borderRadius: '1.5rem', border: '1px solid var(--border-color)', overflow: 'hidden', position: 'relative' }}>
-                  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCIFwt82rHRUOiMAepNTtEXAxxDmrKq9-hmXKOU5bV8cB1bec0Ab0oAg179Py4XZg50VZunO-jH5N-ICfncvwsxIls2L02AOesiLB8K1LcimRT4K-ZfC4NoWdXfj3OO5nsK1QtBLvQ8Rfz6Kp-7CtA7BalPYKwz9FZBK57S_lERJooHWgUumGuaMEJvc4oDKYwYcSoqJaTkpjAFkeL5nihcRsS-J65Wqmw131sXXos2H83dBTD-_PiYuBqIOkKX2Syxhhxg0NCM6dk" alt="Nexus" style={{ width: '100%', height: '120px', objectFit: 'cover' }} />
-                  <div style={{ padding: '1.25rem' }}>
-                    <h5 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>Global Tech Nexus</h5>
-                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>San Francisco, CA</p>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Series D Funding</span>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary-color)' }}>$240M+</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Sticky CTA Footer */}
-            <div style={{ 
-              position: 'fixed', 
-              bottom: 0, 
-              left: '520px', 
-              right: 0, 
-              padding: '1.5rem 3rem', 
-              background: 'rgba(16, 22, 34, 0.8)', 
-              backdropFilter: 'blur(12px)', 
-              borderTop: '1px solid var(--border-color)', 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              zIndex: 100 
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ display: 'flex', marginLeft: '0.5rem' }}>
-                  {[1, 2, 3].map(i => (
-                    <img key={i} src={`https://lh3.googleusercontent.com/aida-public/AB6AXuDSOHxFW4pA6ydU1JORXejuRNqZRsU4G2P8A3XHy9b7pXaEp0lxxfzIsTcrXevruA_jr4sFzG_8TQhsevB0PVAqdefuJQtAKXvhmoUGO2MNx3CGxBV11Im9-szitQZg7A8BwTOxuPxY7RotbkjcfwbXcrvDeRqvIMvqY856HtdRgT9GO3QlW_AIPaMUQYxSzPoEJEZ2SSlaU5aZX4Xf-6wAKuBX6dLdjWv3V_dqCtaMlo0iP3-sQ4TzqxrM4bi1FPKyOVQ2HRc2SDc`} alt="Team" style={{ width: '1.5rem', height: '1.5rem', borderRadius: '50%', border: '2px solid var(--bg-surface)', marginLeft: '-0.5rem' }} />
-                  ))}
-                  <div style={{ width: '1.5rem', height: '1.5rem', borderRadius: '50%', background: 'var(--bg-tertiary)', border: '2px solid var(--bg-surface)', marginLeft: '-0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-secondary)' }}>+4</div>
-                </div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>6 team members are also tracking this role.</span>
-              </div>
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button className="btn-secondary" style={{ padding: '0.75rem 1.5rem', borderRadius: '0.75rem', fontWeight: 800 }}>Save as Draft</button>
-                <button 
-                  className="btn-primary" 
-                  onClick={() => onStageChange('generated')}
-                  style={{ padding: '0.75rem 2rem', borderRadius: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                >
-                  Move to Generated Phase
-                  <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>arrow_forward</span>
-                </button>
-              </div>
+              )}
             </div>
           </div>
         );
@@ -2179,11 +2716,18 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
     }
   };
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem' }}>
+    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
       {/* Left: Navigation */}
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
+        <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
+          <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
+            <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>
+              {navCollapsed ? 'last_page' : 'first_page'}
+            </span>
+          </button>
+        </div>
         {SAVED_SUBSTAGES.map((s) => (
-          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={navStyle(s.id)}>
+          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={{ ...navStyle(s.id), position: 'relative' }} title={s.label}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
               <span className="material-symbols-outlined" style={{ 
                 fontSize: '1.25rem',
@@ -2191,13 +2735,15 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
               }}>
                 {s.icon}
               </span>
-              <span style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
+              <span className="substage-nav-label" style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
             </div>
-            {isComplete(s.id) ? (
-              <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: '#10b981' }}>check_circle</span>
-            ) : (
-              activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>
-            )}
+            <span className="substage-nav-status">
+              {isComplete(s.id) ? (
+                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: '#10b981' }}>check_circle</span>
+              ) : (
+                activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>
+              )}
+            </span>
           </button>
         ))}
       </div>
@@ -2208,7 +2754,8 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
         borderRadius: '1.25rem', 
         padding: '2rem',
         border: '1px solid var(--border-color)',
-        minHeight: '400px',
+        minHeight: 'calc(100vh - 130px)',
+        paddingBottom: '4rem',
         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
       }}>
         {renderContent()}
@@ -2219,8 +2766,25 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-function AppliedSubStagePanel({ app, onRefresh, onStageChange }) {
+function AppliedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
   const [activeSubStage, setActiveSubStage] = useState('submitted');
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const main = document.querySelector('main');
+    const grid = document.querySelector('.substage-grid');
+    if (main && grid) {
+      setTimeout(() => {
+        main.scrollTo({
+          top: grid.getBoundingClientRect().top + main.scrollTop - 135,
+          behavior: 'smooth'
+        });
+      }, 50);
+    }
+  }, [activeSubStage]);
 
   const isComplete = (id) => {
     const progress = safeParseJSON(app?.substage_progress, {});
@@ -2230,8 +2794,8 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange }) {
   const navStyle = (id) => ({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0.875rem 1.25rem',
+    justifyContent: navCollapsed ? 'center' : 'space-between',
+    padding: navCollapsed ? '0.875rem 0' : '0.875rem 1.25rem 0.875rem 0.5rem',
     borderRadius: '0.75rem',
     cursor: 'pointer',
     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -2668,10 +3232,17 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange }) {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem' }}>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+      <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
+        <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
+          <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
+            <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>
+              {navCollapsed ? 'last_page' : 'first_page'}
+            </span>
+          </button>
+        </div>
         {APPLIED_SUBSTAGES.map((s) => (
-          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={navStyle(s.id)}>
+          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={{ ...navStyle(s.id), position: 'relative' }} title={s.label}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
               <span className="material-symbols-outlined" style={{ 
                 fontSize: '1.25rem',
@@ -2679,13 +3250,15 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange }) {
               }}>
                 {s.icon}
               </span>
-              <span style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
+              <span className="substage-nav-label" style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
             </div>
-            {isComplete(s.id) ? (
-              <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: '#10b981' }}>check_circle</span>
-            ) : (
-              activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>
-            )}
+            <span className="substage-nav-status">
+              {isComplete(s.id) ? (
+                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: '#10b981' }}>check_circle</span>
+              ) : (
+                activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>
+              )}
+            </span>
           </button>
         ))}
       </div>
@@ -2695,7 +3268,8 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange }) {
         borderRadius: '1.25rem', 
         padding: '2rem',
         border: '1px solid var(--border-color)',
-        minHeight: '400px',
+        minHeight: 'calc(100vh - 130px)',
+        paddingBottom: '4rem',
         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
       }}>
         {renderContent()}
@@ -2707,15 +3281,32 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 
-function InterviewingSubStagePanel({ app, onRefresh, onStageChange }) {
+function InterviewingSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
   const [activeSubStage, setActiveSubStage] = useState('recruiter_screen');
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const main = document.querySelector('main');
+    const grid = document.querySelector('.substage-grid');
+    if (main && grid) {
+      setTimeout(() => {
+        main.scrollTo({
+          top: grid.getBoundingClientRect().top + main.scrollTop - 135,
+          behavior: 'smooth'
+        });
+      }, 50);
+    }
+  }, [activeSubStage]);
 
   const navStyle = (id) => ({
-    padding: '1rem 1.25rem',
+    padding: navCollapsed ? '1rem 0' : '1rem 1.25rem 1rem 0.5rem',
     borderRadius: '0.75rem',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: navCollapsed ? 'center' : 'space-between',
     width: '100%',
     textAlign: 'left',
     background: activeSubStage === id ? 'rgba(37, 106, 244, 0.1)' : 'transparent',
@@ -3276,14 +3867,21 @@ function InterviewingSubStagePanel({ app, onRefresh, onStageChange }) {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem' }}>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <div style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
+    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+      <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
+        <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
+          <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
+            <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>
+              {navCollapsed ? 'last_page' : 'first_page'}
+            </span>
+          </button>
+        </div>
+        <div className="substage-nav-label" style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
           <p style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', margin: 0 }}>Interview Pipeline</p>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0.25rem 0 0 0' }}>{app?.job_title || 'Product Designer'}</h2>
         </div>
         {INTERVIEWING_SUBSTAGES.map((s) => (
-          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={navStyle(s.id)}>
+          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={{ ...navStyle(s.id), position: 'relative' }} title={s.label}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
               <span className="material-symbols-outlined" style={{ 
                 fontSize: '1.25rem',
@@ -3291,9 +3889,11 @@ function InterviewingSubStagePanel({ app, onRefresh, onStageChange }) {
               }}>
                 {s.icon}
               </span>
-              <span style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
+              <span className="substage-nav-label" style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
             </div>
-            {activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>}
+            <span className="substage-nav-status">
+              {activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>}
+            </span>
           </button>
         ))}
       </div>
@@ -3303,7 +3903,8 @@ function InterviewingSubStagePanel({ app, onRefresh, onStageChange }) {
         borderRadius: '1.25rem', 
         padding: '2rem',
         border: '1px solid var(--border-color)',
-        minHeight: '600px',
+        minHeight: 'calc(100vh - 130px)',
+        paddingBottom: '4rem',
         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
       }}>
         {renderContent()}
@@ -3312,15 +3913,32 @@ function InterviewingSubStagePanel({ app, onRefresh, onStageChange }) {
   );
 }
 
-function DecisionSubStagePanel({ app, onRefresh, onStageChange }) {
+function DecisionSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
   const [activeSubStage, setActiveSubStage] = useState('awaiting_decision');
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const main = document.querySelector('main');
+    const grid = document.querySelector('.substage-grid');
+    if (main && grid) {
+      setTimeout(() => {
+        main.scrollTo({
+          top: grid.getBoundingClientRect().top + main.scrollTop - 135,
+          behavior: 'smooth'
+        });
+      }, 50);
+    }
+  }, [activeSubStage]);
 
   const navStyle = (id) => ({
-    padding: '1rem 1.25rem',
+    padding: navCollapsed ? '1rem 0' : '1rem 1.25rem 1rem 0.5rem',
     borderRadius: '0.75rem',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: navCollapsed ? 'center' : 'space-between',
     width: '100%',
     textAlign: 'left',
     background: activeSubStage === id ? 'rgba(37, 106, 244, 0.1)' : 'transparent',
@@ -4042,14 +4660,21 @@ function DecisionSubStagePanel({ app, onRefresh, onStageChange }) {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem' }}>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <div style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
+    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+      <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
+        <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
+          <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
+            <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>
+              {navCollapsed ? 'last_page' : 'first_page'}
+            </span>
+          </button>
+        </div>
+        <div className="substage-nav-label" style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
           <p style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', margin: 0 }}>Decision Pipeline</p>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0.25rem 0 0 0' }}>{app?.job_title || 'Product Designer'}</h2>
         </div>
         {DECISION_SUBSTAGES.map((s) => (
-          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={navStyle(s.id)}>
+          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={{ ...navStyle(s.id), position: 'relative' }} title={s.label}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
               <span className="material-symbols-outlined" style={{ 
                 fontSize: '1.25rem',
@@ -4057,9 +4682,11 @@ function DecisionSubStagePanel({ app, onRefresh, onStageChange }) {
               }}>
                 {s.icon}
               </span>
-              <span style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
+              <span className="substage-nav-label" style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
             </div>
-            {activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>}
+            <span className="substage-nav-status">
+              {activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>}
+            </span>
           </button>
         ))}
       </div>
@@ -4069,7 +4696,8 @@ function DecisionSubStagePanel({ app, onRefresh, onStageChange }) {
         borderRadius: '1.25rem', 
         padding: '2rem',
         border: '1px solid var(--border-color)',
-        minHeight: '600px',
+        minHeight: 'calc(100vh - 130px)',
+        paddingBottom: '4rem',
         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
       }}>
         {renderContent()}
@@ -4078,15 +4706,32 @@ function DecisionSubStagePanel({ app, onRefresh, onStageChange }) {
   );
 }
 
-function AcceptedSubStagePanel({ app, onRefresh, onStageChange, initialSubStage = 'offer_received' }) {
+function AcceptedSubStagePanel({ app, onRefresh, onStageChange, initialSubStage = 'offer_received', navCollapsed, onToggleNav }) {
   const [activeSubStage, setActiveSubStage] = useState(initialSubStage);
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const main = document.querySelector('main');
+    const grid = document.querySelector('.substage-grid');
+    if (main && grid) {
+      setTimeout(() => {
+        main.scrollTo({
+          top: grid.getBoundingClientRect().top + main.scrollTop - 135,
+          behavior: 'smooth'
+        });
+      }, 50);
+    }
+  }, [activeSubStage]);
 
   const navStyle = (id) => ({
-    padding: '1rem 1.25rem',
+    padding: navCollapsed ? '1rem 0' : '1rem 1.25rem 1rem 0.5rem',
     borderRadius: '0.75rem',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: navCollapsed ? 'center' : 'space-between',
     width: '100%',
     textAlign: 'left',
     background: activeSubStage === id ? 'rgba(37, 106, 244, 0.1)' : 'transparent',
@@ -4599,14 +5244,21 @@ function AcceptedSubStagePanel({ app, onRefresh, onStageChange, initialSubStage 
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem' }}>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <div style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
+    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+      <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
+        <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
+          <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
+            <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>
+              {navCollapsed ? 'last_page' : 'first_page'}
+            </span>
+          </button>
+        </div>
+        <div className="substage-nav-label" style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
           <p style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', margin: 0 }}>Accepted Journey</p>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0.25rem 0 0 0' }}>{app?.job_title || 'Product Designer'}</h2>
         </div>
         {ACCEPTED_SUBSTAGES.map((s) => (
-          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={navStyle(s.id)}>
+          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={{ ...navStyle(s.id), position: 'relative' }} title={s.label}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
               <span className="material-symbols-outlined" style={{ 
                 fontSize: '1.25rem',
@@ -4614,9 +5266,11 @@ function AcceptedSubStagePanel({ app, onRefresh, onStageChange, initialSubStage 
               }}>
                 {s.icon}
               </span>
-              <span style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
+              <span className="substage-nav-label" style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
             </div>
-            {activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>}
+            <span className="substage-nav-status">
+              {activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>}
+            </span>
           </button>
         ))}
       </div>
@@ -4626,7 +5280,8 @@ function AcceptedSubStagePanel({ app, onRefresh, onStageChange, initialSubStage 
         borderRadius: '1.25rem', 
         padding: '2rem',
         border: '1px solid var(--border-color)',
-        minHeight: '600px',
+        minHeight: 'calc(100vh - 130px)',
+        paddingBottom: '4rem',
         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
       }}>
         {renderContent()}
@@ -4635,15 +5290,32 @@ function AcceptedSubStagePanel({ app, onRefresh, onStageChange, initialSubStage 
   );
 }
 
-function RejectedSubStagePanel({ app, onRefresh, onStageChange }) {
+function RejectedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
   const [activeSubStage, setActiveSubStage] = useState('rejection_received');
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const main = document.querySelector('main');
+    const grid = document.querySelector('.substage-grid');
+    if (main && grid) {
+      setTimeout(() => {
+        main.scrollTo({
+          top: grid.getBoundingClientRect().top + main.scrollTop - 135,
+          behavior: 'smooth'
+        });
+      }, 50);
+    }
+  }, [activeSubStage]);
 
   const navStyle = (id) => ({
-    padding: '1rem 1.25rem',
+    padding: navCollapsed ? '1rem 0' : '1rem 1.25rem 1rem 0.5rem',
     borderRadius: '0.75rem',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: navCollapsed ? 'center' : 'space-between',
     width: '100%',
     textAlign: 'left',
     background: activeSubStage === id ? 'rgba(244, 63, 94, 0.1)' : 'transparent',
@@ -4759,14 +5431,21 @@ function RejectedSubStagePanel({ app, onRefresh, onStageChange }) {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem' }}>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <div style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
+    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+      <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
+        <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
+          <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
+            <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>
+              {navCollapsed ? 'last_page' : 'first_page'}
+            </span>
+          </button>
+        </div>
+        <div className="substage-nav-label" style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
           <p style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', margin: 0 }}>Rejection Flow</p>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0.25rem 0 0 0' }}>{app?.job_title || 'Product Designer'}</h2>
         </div>
         {REJECTED_SUBSTAGES.map((s) => (
-          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={navStyle(s.id)}>
+          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={{ ...navStyle(s.id), position: 'relative' }} title={s.label}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
               <span className="material-symbols-outlined" style={{ 
                 fontSize: '1.25rem',
@@ -4774,9 +5453,11 @@ function RejectedSubStagePanel({ app, onRefresh, onStageChange }) {
               }}>
                 {s.icon}
               </span>
-              <span style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
+              <span className="substage-nav-label" style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
             </div>
-            {activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>}
+            <span className="substage-nav-status">
+              {activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>}
+            </span>
           </button>
         ))}
       </div>
@@ -4786,7 +5467,8 @@ function RejectedSubStagePanel({ app, onRefresh, onStageChange }) {
         borderRadius: '1.25rem', 
         padding: '2rem',
         border: '1px solid var(--border-color)',
-        minHeight: '600px',
+        minHeight: 'calc(100vh - 130px)',
+        paddingBottom: '4rem',
         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
       }}>
         {renderContent()}
@@ -4795,15 +5477,32 @@ function RejectedSubStagePanel({ app, onRefresh, onStageChange }) {
   );
 }
 
-function DeclinedSubStagePanel({ app, onRefresh, onStageChange }) {
+function DeclinedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
   const [activeSubStage, setActiveSubStage] = useState('offer_review');
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const main = document.querySelector('main');
+    const grid = document.querySelector('.substage-grid');
+    if (main && grid) {
+      setTimeout(() => {
+        main.scrollTo({
+          top: grid.getBoundingClientRect().top + main.scrollTop - 135,
+          behavior: 'smooth'
+        });
+      }, 50);
+    }
+  }, [activeSubStage]);
 
   const navStyle = (id) => ({
-    padding: '1rem 1.25rem',
+    padding: navCollapsed ? '1rem 0' : '1rem 1.25rem 1rem 0.5rem',
     borderRadius: '0.75rem',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: navCollapsed ? 'center' : 'space-between',
     width: '100%',
     textAlign: 'left',
     background: activeSubStage === id ? 'rgba(37, 106, 244, 0.1)' : 'transparent',
@@ -4865,14 +5564,21 @@ function DeclinedSubStagePanel({ app, onRefresh, onStageChange }) {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem' }}>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <div style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
+    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+      <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
+        <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
+          <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
+            <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>
+              {navCollapsed ? 'last_page' : 'first_page'}
+            </span>
+          </button>
+        </div>
+        <div className="substage-nav-label" style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
           <p style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', margin: 0 }}>Declined Flow</p>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0.25rem 0 0 0' }}>{app?.job_title || 'Product Designer'}</h2>
         </div>
         {DECLINED_SUBSTAGES.map((s) => (
-          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={navStyle(s.id)}>
+          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={{ ...navStyle(s.id), position: 'relative' }} title={s.label}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
               <span className="material-symbols-outlined" style={{ 
                 fontSize: '1.25rem',
@@ -4880,9 +5586,11 @@ function DeclinedSubStagePanel({ app, onRefresh, onStageChange }) {
               }}>
                 {s.icon}
               </span>
-              <span style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
+              <span className="substage-nav-label" style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
             </div>
-            {activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>}
+            <span className="substage-nav-status">
+              {activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>}
+            </span>
           </button>
         ))}
       </div>
@@ -4892,7 +5600,8 @@ function DeclinedSubStagePanel({ app, onRefresh, onStageChange }) {
         borderRadius: '1.25rem', 
         padding: '2rem',
         border: '1px solid var(--border-color)',
-        minHeight: '600px',
+        minHeight: 'calc(100vh - 130px)',
+        paddingBottom: '4rem',
         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
       }}>
         {renderContent()}
@@ -4901,15 +5610,32 @@ function DeclinedSubStagePanel({ app, onRefresh, onStageChange }) {
   );
 }
 
-function WithdrawnSubStagePanel({ app, onRefresh, onStageChange }) {
+function WithdrawnSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
   const [activeSubStage, setActiveSubStage] = useState('decision_made');
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const main = document.querySelector('main');
+    const grid = document.querySelector('.substage-grid');
+    if (main && grid) {
+      setTimeout(() => {
+        main.scrollTo({
+          top: grid.getBoundingClientRect().top + main.scrollTop - 135,
+          behavior: 'smooth'
+        });
+      }, 50);
+    }
+  }, [activeSubStage]);
 
   const navStyle = (id) => ({
-    padding: '1rem 1.25rem',
+    padding: navCollapsed ? '1rem 0' : '1rem 1.25rem 1rem 0.5rem',
     borderRadius: '0.75rem',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: navCollapsed ? 'center' : 'space-between',
     width: '100%',
     textAlign: 'left',
     background: activeSubStage === id ? 'rgba(37, 106, 244, 0.1)' : 'transparent',
@@ -5013,14 +5739,21 @@ function WithdrawnSubStagePanel({ app, onRefresh, onStageChange }) {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem' }}>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <div style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
+    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+      <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
+        <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
+          <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
+            <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>
+              {navCollapsed ? 'last_page' : 'first_page'}
+            </span>
+          </button>
+        </div>
+        <div className="substage-nav-label" style={{ marginBottom: '1.5rem', padding: '0 0.5rem' }}>
           <p style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', margin: 0 }}>Withdrawn Flow</p>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0.25rem 0 0 0' }}>{app?.job_title || 'Product Designer'}</h2>
         </div>
         {WITHDRAWN_SUBSTAGES.map((s) => (
-          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={navStyle(s.id)}>
+          <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={{ ...navStyle(s.id), position: 'relative' }} title={s.label}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
               <span className="material-symbols-outlined" style={{ 
                 fontSize: '1.25rem',
@@ -5028,9 +5761,11 @@ function WithdrawnSubStagePanel({ app, onRefresh, onStageChange }) {
               }}>
                 {s.icon}
               </span>
-              <span style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
+              <span className="substage-nav-label" style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
             </div>
-            {activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>}
+            <span className="substage-nav-status">
+              {activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>}
+            </span>
           </button>
         ))}
       </div>
@@ -5040,7 +5775,8 @@ function WithdrawnSubStagePanel({ app, onRefresh, onStageChange }) {
         borderRadius: '1.25rem', 
         padding: '2rem',
         border: '1px solid var(--border-color)',
-        minHeight: '600px',
+        minHeight: 'calc(100vh - 130px)',
+        paddingBottom: '4rem',
         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
       }}>
         {renderContent()}
@@ -5054,6 +5790,7 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
 
   const { fetchWithAuth } = useAuth();
   const [app, setApp] = useState(initialApp);
+  const [navCollapsed, setNavCollapsed] = useState(false);
   const [connections, setConnections] = useState([]);
   const [showAddContact, setShowAddContact] = useState(false);
   const [addContactMode, setAddContactMode] = useState('search');
@@ -5110,8 +5847,11 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
   const refreshApp = async () => {
     try {
       const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`);
-      const data = await res.json();
-      setApp(data);
+      if (res.ok) {
+        const data = await res.json();
+        setApp(data);
+        if (onUpdate) onUpdate(app.id, data);
+      }
     } catch (e) {
       console.error("Failed to refresh application data", e);
     }
@@ -5334,25 +6074,27 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
           setOutreachScript={setOutreachScript}
           openEditContact={openEditContact}
           handleDeleteContact={handleDeleteContact}
+          navCollapsed={navCollapsed}
+          onToggleNav={() => setNavCollapsed(!navCollapsed)}
         />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'generated') ? (
-        <GeneratedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} />
+        <GeneratedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'applied') ? (
-        <AppliedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} />
+        <AppliedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'interviewing') ? (
-        <InterviewingSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} />
+        <InterviewingSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'decision') ? (
-        <DecisionSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} />
+        <DecisionSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'offered') ? (
-        <AcceptedSubStagePanel key="offered" app={app} onRefresh={refreshApp} onStageChange={updateStage} initialSubStage="offer_received" />
+        <AcceptedSubStagePanel key="offered" app={app} onRefresh={refreshApp} onStageChange={updateStage} initialSubStage="offer_received" navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'accepted') ? (
-        <AcceptedSubStagePanel key="accepted" app={app} onRefresh={refreshApp} onStageChange={updateStage} initialSubStage="formal_acceptance" />
+        <AcceptedSubStagePanel key="accepted" app={app} onRefresh={refreshApp} onStageChange={updateStage} initialSubStage="formal_acceptance" navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'rejected') ? (
-        <RejectedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} />
+        <RejectedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'declined') ? (
-        <DeclinedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} />
+        <DeclinedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
 ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'withdrawn') ? (
-        <WithdrawnSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} />
+        <WithdrawnSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
       ) : (
 
 

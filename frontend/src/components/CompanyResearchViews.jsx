@@ -2,7 +2,7 @@
 // All views now consume the `research` prop (AI-generated JSON).
 
 const S = {
-  card: { background: 'rgba(30,41,59,0.4)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '1rem', padding: '1.5rem' },
+  card: { background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: '1rem', padding: '1.5rem' },
   label: { fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-muted)', marginBottom: '0.4rem' },
   kpi: { fontSize: '1.6rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 },
   kpiSub: { fontSize: '0.7rem', fontWeight: 600, marginTop: '0.25rem' },
@@ -38,18 +38,26 @@ export function CompanyOverviewView({ research, app }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
       {/* Mission card */}
-      <div style={{ ...S.card, background: 'linear-gradient(135deg, rgba(37,106,244,0.12), rgba(30,41,59,0.4))', borderLeft: '4px solid var(--primary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ ...S.card, background: 'linear-gradient(135deg, rgba(37,106,244,0.12), var(--glass-bg))', borderLeft: '4px solid var(--primary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ flex: 1 }}>
           <div style={S.label}>Mission</div>
           <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.55, maxWidth: '560px' }}>
             "{ov.mission || `${co} is a leading company in its industry.`}"
           </p>
-          {ov.industry && (
-            <div style={{ marginTop: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0.75rem', borderRadius: '99px', background: 'rgba(37,106,244,0.12)', border: '1px solid rgba(37,106,244,0.2)' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '0.85rem', color: 'var(--primary)' }}>work</span>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{ov.industry}</span>
-            </div>
-          )}
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+            {ov.industry && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0.75rem', borderRadius: '99px', background: 'rgba(37,106,244,0.12)', border: '1px solid rgba(37,106,244,0.2)' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '0.85rem', color: 'var(--primary)' }}>work</span>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{ov.industry}</span>
+              </div>
+            )}
+            {ov.careers_url && (
+              <a href={ov.careers_url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0.75rem', borderRadius: '99px', background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.2)', transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                <span className="material-symbols-outlined" style={{ fontSize: '0.85rem', color: '#34d399' }}>launch</span>
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Careers Page</span>
+              </a>
+            )}
+          </div>
         </div>
         <span className="material-symbols-outlined" style={{ fontSize: '3rem', opacity: 0.08, flexShrink: 0 }}>format_quote</span>
       </div>
@@ -75,7 +83,7 @@ export function CompanyOverviewView({ research, app }) {
           <div style={{ ...S.label, color: 'var(--primary)', marginBottom: '1rem' }}>Core Values</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
             {(ov.core_values || ['Innovation', 'Integrity', 'Collaboration']).map(v => (
-              <div key={v} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0.875rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div key={v} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0.875rem', borderRadius: '0.75rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
                 <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1rem' }}>diamond</span>
                 <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{v}</span>
               </div>
@@ -156,7 +164,7 @@ export function DetailedResearchView({ research, app }) {
           {dt.notable_perks && dt.notable_perks.length > 0 && (
             <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
               {dt.notable_perks.map(p => (
-                <span key={p} style={{ padding: '0.2rem 0.6rem', background: 'rgba(255,255,255,0.06)', borderRadius: '0.35rem', fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{p}</span>
+                <span key={p} style={{ padding: '0.2rem 0.6rem', background: 'var(--bg-tertiary)', borderRadius: '0.35rem', fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{p}</span>
               ))}
             </div>
           )}
@@ -248,7 +256,7 @@ export function FinancialsView({ research, app }) {
           {fin.recent_acquisitions && fin.recent_acquisitions.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
               {fin.recent_acquisitions.map((a, i) => (
-                <div key={i} style={{ display: 'flex', gap: '0.75rem', padding: '0.625rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div key={i} style={{ display: 'flex', gap: '0.75rem', padding: '0.625rem', borderRadius: '0.75rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
                   <div style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', background: 'rgba(37,106,244,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1rem' }}>business_center</span>
                   </div>
@@ -281,7 +289,7 @@ export function CompetitorView({ research, app }) {
           <div style={{ ...S.label, marginBottom: '1rem' }}>Primary Competitors</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {comp.primary_competitors.map((c, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', padding: '0.875rem', borderRadius: '0.875rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', padding: '0.875rem', borderRadius: '0.875rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
                 <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem', background: 'rgba(37,106,244,0.1)', border: '1px solid rgba(37,106,244,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: 'var(--primary)' }}>business</span>
                 </div>
@@ -329,7 +337,7 @@ export function CompetitorView({ research, app }) {
 
       {/* Interview tips */}
       {comp.interview_tips && (
-        <div style={{ ...S.card, borderLeft: '4px solid var(--primary)', background: 'linear-gradient(135deg, rgba(37,106,244,0.08), rgba(30,41,59,0.4))' }}>
+        <div style={{ ...S.card, borderLeft: '4px solid var(--primary)', background: 'linear-gradient(135deg, rgba(37,106,244,0.08), var(--glass-bg))' }}>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
             <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.25rem', flexShrink: 0 }}>tips_and_updates</span>
             <div>
@@ -339,6 +347,90 @@ export function CompetitorView({ research, app }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Career Matches ──────────────────────────────────────────────────────────
+export function CareerMatchesView({ research, app }) {
+  const matches = research?.career_matches?.matches || [];
+  const summary = research?.career_matches?.summary;
+
+  if (!research?.overview?.careers_url) {
+    return (
+      <div style={{ ...S.card, textAlign: 'center', padding: '3rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+        <span className="material-symbols-outlined" style={{ fontSize: '3rem', color: 'var(--text-muted)', opacity: 0.5 }}>search_off</span>
+        <div>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>No Careers URL Found</h3>
+          <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '400px' }}>
+            We couldn't identify a careers page for this company. Try adding one to the research data or checking the company website manually.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (matches.length === 0) {
+    return (
+      <div style={{ ...S.card, textAlign: 'center', padding: '3rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+        <div className="skeleton-shimmer" style={{ width: '3rem', height: '3rem', borderRadius: '50%' }} />
+        <div>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>Scanning for Opportunities...</h3>
+          <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '400px' }}>
+            We're currently scanning the company's careers page to find other roles that might fit your profile. This usually takes 30-60 seconds.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
+      {summary && (
+        <div style={{ ...S.card, background: 'rgba(37,106,244,0.05)', borderLeft: '4px solid var(--primary)' }}>
+          <div style={S.label}>Landscape Summary</div>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: 1.6, fontWeight: 500 }}>{summary}</p>
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+        {matches.map((m, i) => (
+          <div key={i} style={{ ...S.card, display: 'flex', gap: '1.25rem', alignItems: 'center', transition: 'transform 0.2s', cursor: m.url ? 'pointer' : 'default' }} onMouseEnter={e => m.url && (e.currentTarget.style.transform = 'translateY(-2px)')} onMouseLeave={e => m.url && (e.currentTarget.style.transform = 'translateY(0)')} onClick={() => m.url && window.open(m.url, '_blank')}>
+            <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '1rem', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid var(--border-color)' }}>
+              <div style={{ position: 'relative' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '1.75rem', color: 'var(--primary)' }}>work</span>
+                <div style={{ position: 'absolute', top: -4, right: -4, width: '1.25rem', height: '1.25rem', borderRadius: '50%', background: m.fit_score > 80 ? '#34d399' : '#fb923c', border: '2px solid var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 900, color: 'white' }}>
+                  {m.fit_score}
+                </div>
+              </div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{m.title}</h4>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {m.location && (
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '0.85rem' }}>location_on</span>
+                      {m.location}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{m.reasoning}</p>
+            </div>
+            {m.url && (
+              <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '1.25rem', opacity: 0.5 }}>chevron_right</span>
+            )}
+          </div>
+        ))}
+      </div>
+      
+      <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+        <a href={research.overview.careers_url} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+          View all openings on Careers Page
+          <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>open_in_new</span>
+        </a>
+      </div>
     </div>
   );
 }

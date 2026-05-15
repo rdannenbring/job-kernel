@@ -2012,6 +2012,28 @@ const connectionObserver = new MutationObserver((mutations) => {
     console.log('[JobAutomator] Modal detected — re-scraping data.');
     const jobData = scrapeJobData();
     chrome.storage.local.set({ latestJobData: jobData });
+    
+    // Specialized observer for the modal to catch lazy-loaded images
+    const modals = document.querySelectorAll('.artdeco-modal, [role="dialog"]');
+    modals.forEach(modal => {
+        if (modal.dataset.kernelWatched) return;
+        modal.dataset.kernelWatched = 'true';
+        
+        const imgObserver = new MutationObserver((mutations) => {
+            const hasNewPhoto = mutations.some(m => {
+                if (m.type === 'attributes' && (m.attributeName === 'src' || m.attributeName === 'data-delayed-url')) {
+                    const src = m.target.getAttribute('src') || m.target.getAttribute('data-delayed-url');
+                    return src && src.includes('media.licdn.com') && !src.includes('ghost_person');
+                }
+                return false;
+            });
+            if (hasNewPhoto) {
+                console.log('[JobKernel] Lazy-loaded photo detected in modal — updating.');
+                processLinkedInConnections();
+            }
+        });
+        imgObserver.observe(modal, { attributes: true, subtree: true, attributeFilter: ['src', 'data-delayed-url'] });
+    });
   }
 
   const now = Date.now();

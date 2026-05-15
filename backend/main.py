@@ -349,6 +349,7 @@ class ApplicationSaveRequest(BaseModel):
     company_logo: Optional[str] = ""
     job_url: Optional[str] = ""
     apply_url: Optional[str] = ""
+    company_url: Optional[str] = ""
     job_description: Optional[str] = ""
     original_resume_path: Optional[str] = ""
     tailored_resume_path: Optional[str] = ""
@@ -390,15 +391,14 @@ class ApplicationSaveRequest(BaseModel):
     pipeline_stage: Optional[str] = 'saved'
     commute_time_mins: Optional[int] = None
     commute_distance_miles: Optional[float] = None
-    match_score: Optional[int] = None
-    match_details: Optional[Any] = None
+    substage_progress: Optional[Any] = None
+    company_research: Optional[Any] = None
     commute_details: Optional[Any] = {}
     diff_data: Optional[Any] = {}
-    substage_progress: Optional[Any] = {}
     files: Optional[dict] = {}
     additional_docs: Optional[List[dict]] = []
     excluded_profile_docs: Optional[List[str]] = []
-    company_research: Optional[Any] = None
+    prioritization_ranking: Optional[Any] = None
 
 
 
@@ -1366,6 +1366,7 @@ async def tailor_resume(
     resume: Optional[UploadFile] = File(None),
     job_description: Optional[str] = Form(None),
     job_url: Optional[str] = Form(None),
+    application_id: Optional[int] = Form(None),
     use_default_resume: bool = Form(False),
     additional_context_paths: Optional[str] = Form(None),
     additional_files: List[UploadFile] = File([]),
@@ -1380,6 +1381,10 @@ async def tailor_resume(
     try:
         config = await get_merged_config(user_id)
         profile = database_service.get_profile(user_id)
+        app_obj = None
+        if application_id:
+            app_obj = database_service.get_application_by_id(application_id)
+
         file_path = None
         original_filename = "resume.docx"
         
@@ -1389,6 +1394,10 @@ async def tailor_resume(
             file_path = f"{UPLOADS_DIR}/{original_filename}"
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(resume.file, buffer)
+        elif app_obj and app_obj.get("original_resume_path"):
+            # Use the resume associated with this application
+            file_path = app_obj["original_resume_path"]
+            original_filename = os.path.basename(file_path)
         elif profile.get("base_resume_path"):
             # Use base resume from profile
             base_resume_path = profile["base_resume_path"]
@@ -1417,6 +1426,13 @@ async def tailor_resume(
 
         # Handle Job Description Source
         final_job_description: str = job_description or ""
+        
+        # If no description provided, try to get from application
+        if not final_job_description and app_obj:
+            final_job_description = app_obj.get("job_description") or ""
+            if not job_url:
+                job_url = app_obj.get("job_url")
+
         if job_url:
             print(f"Scraping job from: {job_url}")
             try:
@@ -1434,6 +1450,7 @@ async def tailor_resume(
 
         if not final_job_description:
             raise HTTPException(status_code=400, detail="No job description provided (text or URL)")
+
             
         print(f"Processing resume: {original_filename}")
         
@@ -1589,6 +1606,21 @@ async def tailor_resume(
         original_text_content = "\n\n".join(resume_data.get("full_text", []))
         tailored_text_content = "\n\n".join(tailored_resume_data.get("full_text", []))
         
+        if application_id:
+            print(f"💾 Saving tailored resume results to database for application {application_id}")
+            success = database_service.update_application(application_id, {
+                "tailored_resume_path": output_filename,
+                "resume_data": tailored_resume_data,
+                "resume_changes_summary": change_summary,
+                "diff_data": {
+                    "original": original_text_content,
+                    "ai_tailored": tailored_text_content,
+                    "tailored": tailored_text_content
+                }
+            })
+            print(f"✅ Database update {'successful' if success else 'failed'}")
+
+
         response = {
             "message": "Resume tailored successfully",
             "files": {
@@ -1607,9 +1639,11 @@ async def tailor_resume(
             "resume_data": tailored_resume_data,
             "original_filename": original_filename,
             "job_metadata": tailored_resume_data.get("job_metadata", {}),
-            "job_description": final_job_description,  # Return the actual text used (scraped or pasted)
-            "extracted_context": all_additional_context
+            "job_description": final_job_description,
+            "extracted_context": all_additional_context,
+            "application": database_service.get_application_by_id(application_id) if application_id else None
         }
+
         
         # Add font warnings if any fonts were substituted
         if font_info.get('missing_fonts'):
@@ -1622,6 +1656,7 @@ async def tailor_resume(
             response['font_warnings'] = warnings
         
         return response
+
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -1741,6 +1776,29 @@ async def generate_cover_letter_endpoint(request: CoverLetterRequest, user_id: i
         user_profile = database_service.get_profile(user_id)
         config = await get_merged_config(user_id)
         
+        # --- Resolve Job Description and Resume from Application ---
+        job_description = request.job_description
+        resume_text = request.resume_text
+        base_filename = request.base_filename or "cover_letter"
+        
+        if request.application_id:
+            app_obj = database_service.get_application_by_id(request.application_id)
+            if app_obj:
+                if not job_description:
+                    job_description = app_obj.get("job_description")
+                if not resume_text:
+                    # Try to extract from the application's resume
+                    r_path = app_obj.get("original_resume_path")
+                    if r_path and os.path.exists(r_path):
+                        resume_text = document_service.extract_text(r_path)
+                    elif user_profile.get("base_resume_path") and os.path.exists(user_profile["base_resume_path"]):
+                        resume_text = document_service.extract_text(user_profile["base_resume_path"])
+                if not request.base_filename:
+                    base_filename = app_obj.get("company", "cover_letter")
+
+        if not job_description:
+            raise HTTPException(status_code=400, detail="No job description provided (text or URL)")
+
         # --- Handle Additional Context Documents from Paths ---
         combined_additional_context = request.additional_context or ""
         if request.additional_context_paths:
@@ -1783,8 +1841,8 @@ async def generate_cover_letter_endpoint(request: CoverLetterRequest, user_id: i
                 print(f"Warning: Failed to parse example cover letter {example_cl_path}: {e}")
 
         result = await ai_service.generate_cover_letter(
-            resume_text=request.resume_text, 
-            job_description=request.job_description, 
+            resume_text=resume_text, 
+            job_description=job_description, 
             user_profile=user_profile,
             additional_context=combined_additional_context,
             example_cover_letter=example_cl_text,
@@ -1793,10 +1851,11 @@ async def generate_cover_letter_endpoint(request: CoverLetterRequest, user_id: i
         )
         content = result.get("content", "")
         
-        base_name = os.path.splitext(request.base_filename)[0]
-        output_docx = f"{OUTPUTS_DIR}/{base_name}_cover_letter.docx"
-        output_pdf = f"{OUTPUTS_DIR}/{base_name}_cover_letter.pdf"
-        output_txt = f"{OUTPUTS_DIR}/{base_name}_cover_letter.txt"
+        # Safe filename
+        safe_base_name = re.sub(r'[^\w\s-]', '', base_filename).strip().replace(' ', '_')
+        output_docx = f"{OUTPUTS_DIR}/{safe_base_name}_cover_letter.docx"
+        output_pdf = f"{OUTPUTS_DIR}/{safe_base_name}_cover_letter.pdf"
+        output_txt = f"{OUTPUTS_DIR}/{safe_base_name}_cover_letter.txt"
         
         document_service.create_cover_letter_docx(content, output_docx)
         document_service.create_pdf_from_docx(output_docx, output_pdf)
@@ -1804,6 +1863,12 @@ async def generate_cover_letter_endpoint(request: CoverLetterRequest, user_id: i
         with open(output_txt, 'w') as f:
             f.write(content)
             
+        if request.application_id:
+            database_service.update_application(request.application_id, {
+                "cover_letter_path": os.path.basename(output_docx),
+                "cover_letter_text": content
+            })
+
         return {
             "message": "Cover letter generated",
             "content": content,
@@ -1811,13 +1876,17 @@ async def generate_cover_letter_endpoint(request: CoverLetterRequest, user_id: i
             "missing_fields": result.get("missing_fields", []),
             "detected_info": result.get("detected_info", {}),
             "files": {
-                "docx": f"/api/download/{base_name}_cover_letter.docx",
-                "pdf": f"/api/download/{base_name}_cover_letter.pdf",
-                "txt": f"/api/download/{base_name}_cover_letter.txt"
-            }
+                "docx": f"/api/download/{safe_base_name}_cover_letter.docx",
+                "pdf": f"/api/download/{safe_base_name}_cover_letter.pdf",
+                "txt": f"/api/download/{safe_base_name}_cover_letter.txt"
+            },
+            "application": database_service.get_application_by_id(request.application_id) if request.application_id else None
         }
+
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/refine-cover-letter")
 async def refine_cover_letter_endpoint(request: RefineCoverLetterRequest, user_id: int = Depends(get_current_user_id)):
@@ -2230,7 +2299,8 @@ Return a JSON object with EXACTLY these fields:
     "preferences": ["Concise preference 1", "Concise preference 2"],
     "skills": ["Skill 1", "Skill 2"],
     "bonus_equity": "1-2 sentence summary of Bonus and Equity compensation. If none stated, return 'Not specified.'",
-    "travel_requirements": "1-2 sentence summary of Travel Requirements. If none stated, return 'None specified.'"
+    "travel_requirements": "1-2 sentence summary of Travel Requirements. If none stated, return 'None specified.'",
+    "company_url": "Provide the official company website URL. If not explicitly found in the job description text, provide the official URL if you are certain of it based on the company name, otherwise null."
 }}
 
 CRITICAL INSTRUCTIONS:
@@ -2260,6 +2330,10 @@ CRITICAL INSTRUCTIONS:
             "travel_requirements": result.get("travel_requirements"),
         }
 
+        # Include company_url if provided by AI and not already present
+        if result.get("company_url") and not app_data.get("company_url"):
+            enrichment["company_url"] = result.get("company_url")
+
         # Persist — use a direct SQL update to avoid touching other fields
         database_service.update_application(app_id, enrichment, user_id)
 
@@ -2269,7 +2343,7 @@ CRITICAL INSTRUCTIONS:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/applications/{app_id}/company-research")
-async def generate_company_research(app_id: int, force: bool = False, user_id: int = Depends(get_current_user_id)):
+async def generate_company_research(app_id: int, background_tasks: BackgroundTasks, force: bool = False, user_id: int = Depends(get_current_user_id)):
     """AI-generate company research data for all four sections (overview, detailed, financials, competitors).
     
     Stores the result as a JSON blob in the `company_research` column.
@@ -2307,6 +2381,8 @@ Return a JSON object with EXACTLY these top-level keys:
   "overview": {{
     "mission": "1-2 sentence mission statement or core purpose of the company",
     "founded": "Year founded (or estimated)",
+    "website": "Link to company homepage (e.g. 'https://acme.com') or null",
+    "careers_url": "Link to company careers page or job listings (e.g. 'https://acme.com/careers') or null",
     "headquarters": "City, Country",
     "industry": "Primary industry",
     "business_model": "1-2 sentence description of how the company makes money",
@@ -2371,15 +2447,71 @@ IMPORTANT:
             config=config,
         )
         research = ai_service._parse_json_response(content)
-
+        
+        # Extract website for top-level field
+        company_website = research.get("overview", {}).get("website")
+        careers_url = research.get("overview", {}).get("careers_url")
+        
         # Persist to database
-        database_service.update_application(app_id, {"company_research": research}, user_id)
+        update_data = {"company_research": research}
+        if company_website:
+            update_data["company_url"] = company_website
+            
+        database_service.update_application(app_id, update_data, user_id)
+
+        # Trigger background scan of careers page if careers_url is found
+        if careers_url:
+            background_tasks.add_task(scan_company_jobs, app_id, careers_url, user_id)
 
         return {"company_research": research, "cached": False}
     except Exception as e:
         logger.error(f"Error generating company research for app {app_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+async def scan_company_jobs(app_id: int, careers_url: str, user_id: int):
+    """Background task to scrape careers page and find matching roles."""
+    try:
+        logger.info(f"Starting background job scan for app {app_id} at {careers_url}")
+        
+        # 1. Scrape the careers page
+        jobs_text = await scraper_service.scrape_url(careers_url)
+        if not jobs_text or len(jobs_text) < 100:
+            logger.warning(f"Aborting job scan for app {app_id}: Scraped text too short.")
+            return
+
+        # 2. Get user profile for matching
+        profile = database_service.get_profile(user_id)
+        profile_text = ""
+        if profile:
+            profile_text = f"Title: {profile.get('job_title')}\nBio: {profile.get('bio')}\nSkills: {', '.join(profile.get('skills', []))}"
+        
+        # 3. Use AI to find matches
+        config = await get_merged_config(user_id)
+        prompt_template = ai_service.get_prompt("match_career_openings", config)
+        prompt = prompt_template.format(profile_text=profile_text, jobs_text=jobs_text[:15000]) # Cap text for context window
+        
+        content = await ai_service.execute_ai_request(
+            system_prompt="You are a specialized career matching assistant.",
+            user_prompt=prompt,
+            response_format="json_object",
+            temperature=0.3,
+            config=config
+        )
+        matches_data = ai_service._parse_json_response(content)
+        
+        # 4. Update the application research with the matches
+        app_data = database_service.get_application_by_id(app_id, user_id)
+        if app_data and app_data.get("company_research"):
+            research = app_data["company_research"]
+            if isinstance(research, str):
+                research = json.loads(research)
+            
+            research["career_matches"] = matches_data
+            database_service.update_application(app_id, {"company_research": research}, user_id)
+            logger.info(f"Background job scan complete for app {app_id}")
+
+    except Exception as e:
+        logger.error(f"Error in scan_company_jobs for app {app_id}: {e}")
 
 @app.post("/api/applications/{app_id}/score")
 async def score_application_endpoint(app_id: int, user_id: int = Depends(get_current_user_id)):
@@ -3083,13 +3215,43 @@ async def debug_linkedin_connections(limit: int = 100, user_id: int = Depends(ge
 @app.get("/api/linkedin/resolve-photo")
 async def resolve_linkedin_photo(url: str):
     """
-    Attempt to find a profile photo for a LinkedIn URL by checking
-    our existing database of contacts.
+    Attempt to find a profile photo for a LinkedIn URL.
+    1. Check database cache.
+    2. Try a lightweight server-side scrape of the public profile (og:image).
     """
+    # 1. Database check
     photo_url = database_service.get_photo_by_linkedin_url(url)
-    if not photo_url:
-        raise HTTPException(status_code=404, detail="Photo not found in database")
-    return {"photo_url": photo_url}
+    if photo_url:
+        return {"photo_url": photo_url}
+        
+    # 2. Server-side scrape fallback
+    try:
+        import httpx
+        import re
+        
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+            }
+            response = await client.get(url, headers=headers)
+            if response.status_code == 200:
+                html = response.text
+                # Look for og:image
+                match = re.search(r'<meta property="og:image" content="([^"]+)"', html)
+                if match:
+                    photo_url = match.group(1).replace("&amp;", "&")
+                    if "ghost_person" not in photo_url:
+                        # Success!
+                        database_service.save_linkedin_connections([{
+                            "profile_url": url,
+                            "photo_url": photo_url
+                        }], None)
+                        return {"photo_url": photo_url}
+    except Exception as e:
+        print(f"[API] resolve-photo scrape error: {e}")
+        
+    raise HTTPException(status_code=404, detail="Photo not found")
 
 @app.delete("/api/linkedin/purge")
 async def purge_linkedin_connections(user_id: int = Depends(get_current_user_id)):
@@ -3099,6 +3261,84 @@ async def purge_linkedin_connections(user_id: int = Depends(get_current_user_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+class PhotoResolveBatchRequest(BaseModel):
+    profile_urls: List[str]
+    application_id: Optional[int] = None
+
+@app.post("/api/linkedin/resolve-photos-batch")
+async def resolve_photos_batch(request: PhotoResolveBatchRequest, user_id: int = Depends(get_current_user_id)):
+    """
+    Bulk-resolve profile photos for LinkedIn connections.
+    1. Check database cache for each URL.
+    2. For cache misses, try to scrape the public profile page for og:image.
+    3. Persist any found photos to linkedin_connections + application_contacts.
+    Returns a dict of {profile_url: photo_url} for successfully resolved photos.
+    """
+    import re as _re
+    results = {}
+    urls_to_scrape = []
+    
+    # 1. Check cache for all URLs first
+    for url in request.profile_urls:
+        cached = database_service.get_photo_by_linkedin_url(url)
+        if cached:
+            results[url] = cached
+        else:
+            urls_to_scrape.append(url)
+    
+    # 2. Scrape public profiles for uncached URLs (in parallel, with rate limiting)
+    if urls_to_scrape:
+        async def scrape_one(profile_url: str) -> tuple:
+            try:
+                async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as client:
+                    headers = {
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                        "Accept-Language": "en-US,en;q=0.5"
+                    }
+                    resp = await client.get(profile_url, headers=headers)
+                    if resp.status_code == 200:
+                        html = resp.text
+                        match = _re.search(r'<meta property="og:image" content="([^"]+)"', html)
+                        if match:
+                            photo = match.group(1).replace("&amp;", "&")
+                            if "ghost_person" not in photo and "placeholder" not in photo:
+                                return (profile_url, photo)
+            except Exception as e:
+                logger.debug(f"Failed to scrape {profile_url}: {e}")
+            return (profile_url, None)
+        
+        import asyncio
+        # Process in batches of 5 to avoid overwhelming LinkedIn
+        batch_size = 5
+        for i in range(0, len(urls_to_scrape), batch_size):
+            batch = urls_to_scrape[i:i+batch_size]
+            tasks = [scrape_one(url) for url in batch]
+            batch_results = await asyncio.gather(*tasks)
+            for url, photo in batch_results:
+                if photo:
+                    results[url] = photo
+            # Small delay between batches
+            if i + batch_size < len(urls_to_scrape):
+                await asyncio.sleep(0.5)
+    
+    # 3. Persist found photos to database
+    if results:
+        for url, photo in results.items():
+            # Update linkedin_connections table
+            database_service.save_linkedin_connections([{
+                "profile_url": url,
+                "photo_url": photo
+            }], user_id)
+            
+            # Update application_contacts if app_id was provided
+            if request.application_id:
+                database_service.update_contact_photo_by_url(
+                    request.application_id, url, photo
+                )
+    
+    return {"resolved": results, "total": len(results), "attempted": len(request.profile_urls)}
 
 @app.post("/api/capture-job")
 async def capture_job(request: CaptureJobRequest, user_id: int = Depends(get_current_user_id)):
@@ -3158,6 +3398,7 @@ async def capture_job(request: CaptureJobRequest, user_id: int = Depends(get_cur
                 "salary_range": metadata.get("salary_range", ""),
                 "date_posted": metadata.get("date_posted", ""),
                 "deadline": metadata.get("deadline", ""),
+                "company_url": metadata.get("company_url", ""),
             },
             "duplicate": existing if url and existing else None
         }
