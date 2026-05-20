@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import PipelineProgressBar, { PIPELINE_STAGES, STAGE_TO_STATUS } from '../components/PipelineProgressBar';
 import { useAuth } from '../context/AuthContext';
 import ResumeEditor from '../components/JobMatch/ResumeEditor';
-import { CompanyOverviewView, DetailedResearchView, FinancialsView, CompetitorView, ResearchSectionSkeleton } from '../components/CompanyResearchViews';
+import { CompanyOverviewView, DetailedResearchView, FinancialsView, CompetitorView, CareerMatchesView, ResearchSectionSkeleton } from '../components/CompanyResearchViews';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
@@ -228,7 +228,7 @@ const safeParseJSON = (data, fallback = {}) => {
     try { return JSON.parse(data); } catch (e) { return fallback; }
 };
 
-function GeneratedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
+function GeneratedSubStagePanel({ app, onRefresh, onStageChange, onStartFullGeneration, navCollapsed, onToggleNav }) {
   const { fetchWithAuth } = useAuth();
   const [activeSubStage, setActiveSubStage] = useState('resume');
   const isFirstRender = useRef(true);
@@ -257,6 +257,9 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, o
   const [isCLPreviewExpanded, setIsCLPreviewExpanded] = useState(false);
   const [refineInstructions, setRefineInstructions] = useState('');
   const [pendingRefinement, setPendingRefinement] = useState(null);
+  const [showInstructionsModal, setShowInstructionsModal] = useState(false);
+  const [modalResumeInstructions, setModalResumeInstructions] = useState('');
+  const [modalClInstructions, setModalClInstructions] = useState('');
 
   // Parse JSON fields safely
   const requirements = safeParseJSON(app?.parsed_requirements, []);
@@ -368,6 +371,12 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, o
     } finally {
       if (showLoader) setIsGenerating(false);
     }
+  };
+
+  const isComplete = (id) => {
+    if (id === 'resume') return !!app?.tailored_resume_path;
+    if (id === 'cover_letter') return !!app?.cover_letter_path;
+    return false;
   };
 
   const navStyle = (id) => ({
@@ -535,15 +544,17 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, o
                         <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>fullscreen</span>
                       </button>
                     )}
-                    <button 
-                      onClick={() => handleRegenerate('resume')}
-                      className="btn-secondary" 
-                      style={{ padding: '0.4rem 0.8rem', borderRadius: '0.5rem', fontSize: '0.7rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                      title="Re-generate Resume"
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>refresh</span>
-                      REGENERATE
-                    </button>
+                    {app?.tailored_resume_path && (
+                      <button 
+                        onClick={() => handleRegenerate('resume')}
+                        className="btn-secondary" 
+                        style={{ padding: '0.4rem 0.8rem', borderRadius: '0.5rem', fontSize: '0.7rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                        title="Re-generate Resume"
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>refresh</span>
+                        REGENERATE
+                      </button>
+                    )}
                     {app?.tailored_resume_path && (
                       <button 
                         onClick={() => setIsEditorOpen(true)}
@@ -643,7 +654,6 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, o
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
                       <span className="material-symbols-outlined" style={{ fontSize: '4rem', marginBottom: '1rem', opacity: 0.2 }}>description</span>
                       <p>No tailored resume generated yet.</p>
-                      <button onClick={() => handleRegenerate('resume')} className="btn-primary" style={{ marginTop: '1rem' }}>Generate Now</button>
                     </div>
                   )}
                 </div>
@@ -701,14 +711,16 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, o
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-                    <button
-                      onClick={() => handleRegenerate('cover_letter')}
-                      className="btn-secondary"
-                      style={{ padding: '0.4rem 0.8rem', borderRadius: '0.5rem', fontSize: '0.7rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>refresh</span>
-                      REGENERATE
-                    </button>
+                    {app?.cover_letter_path && (
+                      <button
+                        onClick={() => handleRegenerate('cover_letter')}
+                        className="btn-secondary"
+                        style={{ padding: '0.4rem 0.8rem', borderRadius: '0.5rem', fontSize: '0.7rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>refresh</span>
+                        REGENERATE
+                      </button>
+                    )}
                     {app?.cover_letter_path && (
                       <>
                         <button
@@ -769,7 +781,6 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, o
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
                       <span className="material-symbols-outlined" style={{ fontSize: '4rem', marginBottom: '1rem', opacity: 0.2 }}>mail</span>
                       <p>No cover letter generated yet.</p>
-                      <button onClick={() => handleRegenerate('cover_letter')} className="btn-primary" style={{ marginTop: '1rem' }}>Generate Now</button>
                     </div>
                   )}
                 </div>
@@ -885,13 +896,22 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, o
         <h3 className="substage-nav-label" style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15em', padding: '0 1rem', marginBottom: '0.5rem' }}>Artifacts</h3>
         {GENERATED_SUBSTAGES.map((s) => (
           <button key={s.id} onClick={() => setActiveSubStage(s.id)} style={{ ...navStyle(s.id), position: 'relative' }} title={s.label}>
-            <span className="material-symbols-outlined" style={{ 
-              fontSize: '1.25rem',
-              fontVariationSettings: activeSubStage === s.id ? "'FILL' 1" : "'FILL' 0"
-            }}>
-              {s.icon}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+              <span className="material-symbols-outlined" style={{ 
+                fontSize: '1.25rem',
+                fontVariationSettings: activeSubStage === s.id ? "'FILL' 1" : "'FILL' 0"
+              }}>
+                {s.icon}
+              </span>
+              <span className="substage-nav-label" style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
+            </div>
+            <span className="substage-nav-status">
+              {isComplete(s.id) ? (
+                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: '#10b981' }}>check_circle</span>
+              ) : (
+                activeSubStage === s.id && <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>chevron_right</span>
+              )}
             </span>
-            <span className="substage-nav-label" style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
           </button>
         ))}
         
@@ -924,8 +944,94 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, o
 
       {/* Right: Content Panel */}
       <div style={{ flex: 1, overflow: 'hidden', minHeight: 'calc(100vh - 130px)', paddingBottom: '4rem' }}>
+        {(!app?.tailored_resume_path || !app?.cover_letter_path) && (
+          <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'linear-gradient(135deg, rgba(37, 106, 244, 0.1), rgba(16, 185, 129, 0.1))', borderRadius: '1.25rem', border: '1px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', animation: 'fadeIn 0.5s ease-out' }}>
+            <div>
+              <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>auto_awesome</span>
+                Generate Documents
+              </h3>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Use AI to tailor your resume and write a cover letter based on this job.</p>
+            </div>
+            <button 
+              className="btn-primary" 
+              onClick={() => setShowInstructionsModal(true)}
+              style={{ padding: '0.75rem 1.5rem', borderRadius: '0.75rem', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              Generate Now
+              <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>arrow_forward</span>
+            </button>
+          </div>
+        )}
         {renderContent()}
       </div>
+
+      {/* Instructions Modal */}
+      {showInstructionsModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card glass" style={{ width: '100%', maxWidth: '520px', padding: '2rem', borderRadius: '1.5rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-2xl)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div>
+              <h2 style={{ margin: '0 0 0.35rem', fontSize: '1.4rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>tune</span>
+                Any special instructions?
+              </h2>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: 1.6 }}>
+                Guide the AI before it tailors your documents. Leave blank for default optimization.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {!app?.tailored_resume_path && (
+                <div className="form-group">
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Resume Instructions</label>
+                  <textarea 
+                    value={modalResumeInstructions}
+                    onChange={(e) => setModalResumeInstructions(e.target.value)}
+                    placeholder="e.g. Focus on my cloud architecture experience..."
+                    style={{ width: '100%', height: '100px', padding: '1rem', borderRadius: '0.75rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', resize: 'none' }}
+                  />
+                </div>
+              )}
+              {!app?.cover_letter_path && (
+                <div className="form-group">
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Cover Letter Instructions</label>
+                  <textarea 
+                    value={modalClInstructions}
+                    onChange={(e) => setModalClInstructions(e.target.value)}
+                    placeholder="e.g. Mention why I love their mission..."
+                    style={{ width: '100%', height: '100px', padding: '1rem', borderRadius: '0.75rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', resize: 'none' }}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button 
+                onClick={() => setShowInstructionsModal(false)}
+                className="btn-secondary"
+                style={{ flex: 1, padding: '0.75rem', borderRadius: '0.75rem', fontWeight: 700 }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  setShowInstructionsModal(false);
+                  if (onStartFullGeneration) {
+                    onStartFullGeneration(app, modalResumeInstructions, modalClInstructions);
+                  }
+                  setModalResumeInstructions('');
+                  setModalClInstructions('');
+                }}
+                className="btn-primary"
+                style={{ flex: 1, padding: '0.75rem', borderRadius: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>auto_awesome</span>
+                Generate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {isPreviewExpanded && (
         <div style={{ 
           position: 'fixed', 
@@ -1021,14 +1127,69 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, o
           </div>
         </div>
       )}
+
+      {/* Sticky CTA Footer */}
+      {app?.tailored_resume_path && app?.cover_letter_path && (
+        <div style={{ 
+          position: 'fixed', 
+          bottom: 0, 
+          left: navCollapsed ? '100px' : '280px', 
+          right: 0, 
+          padding: '1.25rem 2.5rem', 
+          background: 'var(--bg-card)', 
+          backdropFilter: 'blur(12px)', 
+          borderTop: '1px solid var(--border-color)', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          zIndex: 1000,
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
+          transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ 
+              width: '32px', 
+              height: '32px', 
+              borderRadius: '50%', 
+              background: 'rgba(16, 185, 129, 0.1)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center' 
+            }}>
+              <span className="material-symbols-outlined" style={{ color: '#10b981', fontSize: '1.25rem' }}>check_circle</span>
+            </div>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+              Resume and Cover Letter are ready. Ready to Apply?
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button 
+              className="btn-primary" 
+              onClick={() => onStageChange('applied')}
+              style={{ padding: '0.6rem 1.5rem', borderRadius: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              Move to Applied Stage
+              <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>send</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connections = [], onAddContact, onSearchPeople, handleGenerateOutreach, generatingOutreach, outreachScript, setOutreachScript, openEditContact, handleDeleteContact, navCollapsed, onToggleNav }) {
+function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connections = [], onAddContact, onSearchPeople, handleGenerateOutreach, generatingOutreach, outreachScript, setOutreachScript, openEditContact, handleDeleteContact, navCollapsed, onToggleNav, initialSubStage, onAnchorConsumed }) {
   const { fetchWithAuth } = useAuth();
-  const [activeSubStage, setActiveSubStage] = useState('parsed');
+  const [activeSubStage, setActiveSubStage] = useState(initialSubStage || 'parsed');
   const isFirstRender = useRef(true);
+
+  // Handle notification deep-link: when initialSubStage changes, switch to it
+  useEffect(() => {
+    if (initialSubStage) {
+      setActiveSubStage(initialSubStage);
+      if (onAnchorConsumed) onAnchorConsumed();
+    }
+  }, [initialSubStage, onAnchorConsumed]);
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -1052,11 +1213,25 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
       if (activeSubStage === 'prioritized' && window.innerWidth < 1440 && !navCollapsed) {
         onToggleNav();
       }
+      // Auto-collapse company research internal nav
+      if (activeSubStage === 'company') {
+        setIsResearchNavCollapsed(window.innerWidth < 1024);
+      }
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [activeSubStage, navCollapsed]);
+
+  // Mark Network Contacts as complete when viewed
+  useEffect(() => {
+    if (activeSubStage === 'network') {
+      const progress = safeParseJSON(app?.substage_progress, {});
+      if (!progress.network) {
+        updateSubStageProgress('network', true);
+      }
+    }
+  }, [activeSubStage, app?.substage_progress]);
 
   const [companyView, setCompanyView] = useState('overview');
   const [isEnriching, setIsEnriching] = useState(false);
@@ -1067,6 +1242,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
   const [isSavingReview, setIsSavingReview] = useState(false);
   const [isReviewEditMode, setIsReviewEditMode] = useState(false);
   const [isResearching, setIsResearching] = useState(false);
+  const [isResearchNavCollapsed, setIsResearchNavCollapsed] = useState(() => window.innerWidth < 1024);
 
   const [localPrioritization, setLocalPrioritization] = useState(() => {
     return app?.prioritization_ranking ? (typeof app.prioritization_ranking === 'string' ? safeParseJSON(app.prioritization_ranking, {}) : app.prioritization_ranking) : {};
@@ -1309,6 +1485,26 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
     }
   };
 
+  const updateSubStageProgress = async (subStageId, isComplete) => {
+    try {
+      const progress = safeParseJSON(app?.substage_progress, {});
+      if (progress[subStageId] === isComplete) return;
+
+      const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          substage_progress: { ...progress, [subStageId]: isComplete }
+        })
+      });
+      if (res.ok) {
+        onRefresh();
+      }
+    } catch (e) {
+      console.error(`Failed to update progress for ${subStageId}`, e);
+    }
+  };
+
   const handleSavePrioritization = () => {
     const finalScore = calculateScore();
     const scoresObj = {};
@@ -1411,21 +1607,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
     }
   };
 
-  const handleMatchReload = async () => {
-    setIsScoring(true);
-    try {
-      const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}/score`, {
-        method: 'POST'
-      });
-      if (res.ok) {
-        onRefresh();
-      }
-    } catch (e) {
-      console.error("Scoring failed", e);
-    } finally {
-      setIsScoring(false);
-    }
-  };
+
 
   const handleRefreshAnalysis = async () => {
     setIsEnriching(true);
@@ -1542,15 +1724,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                   <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>{isEnriching || (isScoring && isEnriching) ? 'hourglass_empty' : 'refresh'}</span>
                   {isEnriching ? 'Refreshing...' : 'Refresh Analysis'}
                 </button>
-                <button 
-                  onClick={handleMatchReload} 
-                  disabled={isScoring || isEnriching}
-                  className="btn-primary" 
-                  style={{ padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontSize: '0.875rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>{isScoring && !isEnriching ? 'hourglass_empty' : 'model_training'}</span>
-                  {isScoring && !isEnriching ? 'Generating...' : 'Generate Custom Resume'}
-                </button>
+
               </div>
             </div>
 
@@ -1894,7 +2068,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                   style={{ padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontSize: '0.875rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>{isSavingReview ? 'hourglass_empty' : 'check'}</span>
-                  {isSavingReview ? 'Saving...' : 'Approve'}
+                  {isSavingReview ? 'Saving...' : 'Accept Job Details'}
                 </button>
               ) : (
                 <button 
@@ -1909,7 +2083,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
             </div>
 
             <div className="card glass" style={{ padding: '1.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-color-card)', boxShadow: 'var(--shadow-md)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
                 {[
                   { id: 'job_title', label: 'Job Title', type: 'text', colSpan: 1 },
                   { id: 'company', label: 'Company', type: 'text', colSpan: 1 },
@@ -1941,7 +2115,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                   const isMissing = requiredFields.includes(field.id) && !reviewForm[field.id];
                   
                   return (
-                    <div key={field.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', gridColumn: field.colSpan === 2 ? 'span 2' : 'span 1', minWidth: 0 }}>
+                    <div key={field.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: field.colSpan === 2 ? '1 1 100%' : '1 1 300px', minWidth: 0 }}>
                       <label style={{ fontSize: '0.85rem', fontWeight: 700, color: isMissing && isReviewEditMode ? '#f87171' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         {field.label}
                         {isMissing && isReviewEditMode && <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#f87171' }}>error</span>}
@@ -2180,13 +2354,14 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
           </div>
         );
       case 'company': {
-        const research = app?.company_research || null;
+        const research = safeParseJSON(app?.company_research, null);
         const hasResearch = research && (research.overview || research.detailed || research.financials || research.competitors);
         const cNavItems = [
           { id: 'overview', label: 'Company Overview', icon: 'dashboard' },
           { id: 'detailed', label: 'Detailed Research', icon: 'manage_search' },
           { id: 'financials', label: 'Financials & Market', icon: 'bar_chart' },
           { id: 'competitors', label: 'Competitor Matrix', icon: 'view_headline' },
+          { id: 'careers', label: 'Career Matches', icon: 'work' },
         ];
 
         const handleRunResearch = async (force = false) => {
@@ -2194,10 +2369,21 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
           try {
             const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}/company-research?force=${force}`, { method: 'POST' });
             if (res.ok) {
-              await onRefresh();
+              const data = await res.json();
+              const researchData = safeParseJSON(data.company_research, null);
+              if (!researchData || (!researchData.overview && !researchData.detailed && !researchData.financials && !researchData.competitors)) {
+                alert("Failed to extract valid company research from AI response. Please try again.");
+              } else {
+                await updateSubStageProgress('company', true);
+                await onRefresh();
+              }
+            } else {
+              const errData = await res.json().catch(() => ({ detail: 'Unknown server error' }));
+              alert(`Company research failed: ${errData.detail || 'Server returned an error'}`);
             }
           } catch (e) {
             console.error('Company research failed', e);
+            alert(`Company research error: ${e.message}`);
           } finally {
             setIsResearching(false);
           }
@@ -2285,25 +2471,62 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 1fr) 2fr', gap: '2rem' }}>
+            <div className={`research-layout-grid ${isResearchNavCollapsed ? 'research-nav-collapsed' : ''}`}>
               {/* Left Sidebar: Nav */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div className="card glass" style={{ padding: '0.5rem', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
+                  {/* Toggle button */}
+                  <div style={{ display: 'flex', justifyContent: isResearchNavCollapsed ? 'center' : 'flex-end', padding: '0 0.25rem', marginBottom: '0.25rem' }}>
+                    <button
+                      className="substage-nav-toggle-btn"
+                      onClick={() => setIsResearchNavCollapsed(p => !p)}
+                      title={isResearchNavCollapsed ? 'Expand menu' : 'Collapse menu'}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>
+                        {isResearchNavCollapsed ? 'last_page' : 'first_page'}
+                      </span>
+                    </button>
+                  </div>
                   <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     {cNavItems.map(item => (
-                      <button key={item.id} onClick={() => setCompanyView(item.id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderRadius: '0.75rem', cursor: 'pointer', width: '100%', textAlign: 'left', fontSize: '0.85rem', fontWeight: companyView === item.id ? 800 : 500, color: companyView === item.id ? 'var(--text-primary)' : 'var(--text-secondary)', background: companyView === item.id ? 'rgba(37, 106, 244, 0.12)' : 'transparent', border: companyView === item.id ? '1px solid rgba(37,106,244,0.25)' : '1px solid transparent', transition: 'all 0.2s' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: companyView === item.id ? 'var(--primary)' : 'var(--text-muted)', fontVariationSettings: companyView === item.id ? "'FILL' 1" : "'FILL' 0" }}>{item.icon}</span>
-                          {item.label}
-                        </span>
-                        {companyView === item.id ? <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', boxShadow: '0 0 8px var(--primary)' }} /> : <span className="material-symbols-outlined" style={{ fontSize: '1rem', opacity: 0.3 }}>chevron_right</span>}
+                      <button
+                        key={item.id}
+                        onClick={() => setCompanyView(item.id)}
+                        title={isResearchNavCollapsed ? item.label : ''}
+                        style={{
+                          display: 'flex',
+                          justifyContent: isResearchNavCollapsed ? 'center' : 'space-between',
+                          alignItems: 'center',
+                          padding: isResearchNavCollapsed ? '0.75rem 0' : '0.75rem 1rem',
+                          borderRadius: '0.75rem',
+                          cursor: 'pointer',
+                          width: '100%',
+                          textAlign: 'left',
+                          fontSize: '0.85rem',
+                          fontWeight: companyView === item.id ? 800 : 500,
+                          color: companyView === item.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+                          background: companyView === item.id ? 'rgba(37, 106, 244, 0.12)' : 'transparent',
+                          border: companyView === item.id ? '1px solid rgba(37,106,244,0.25)' : '1px solid transparent',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: companyView === item.id ? 'var(--primary)' : 'var(--text-muted)', fontVariationSettings: companyView === item.id ? "'FILL' 1" : "'FILL' 0", flexShrink: 0 }}>{item.icon}</span>
+                        {!isResearchNavCollapsed && (
+                          <>
+                            <span style={{ flex: 1, marginLeft: '0.5rem' }}>{item.label}</span>
+                            {companyView === item.id
+                              ? <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)', boxShadow: '0 0 8px var(--primary)', flexShrink: 0 }} />
+                              : <span className="material-symbols-outlined" style={{ fontSize: '1rem', opacity: 0.3 }}>chevron_right</span>
+                            }
+                          </>
+                        )}
                       </button>
                     ))}
                   </nav>
                 </div>
 
-                {/* Mission excerpt card */}
-                {research?.overview?.mission && (
+                {/* Mission excerpt card — hidden when nav collapsed */}
+                {!isResearchNavCollapsed && research?.overview?.mission && (
                   <div className="card glass" style={{ padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border-color)', position: 'relative', overflow: 'hidden' }}>
                     <div style={{ position: 'absolute', top: '0', right: '0', padding: '1rem', opacity: 0.08 }}>
                       <span className="material-symbols-outlined" style={{ fontSize: '3rem' }}>format_quote</span>
@@ -2317,11 +2540,12 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
               </div>
 
               {/* Main Content Area */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', minWidth: 0 }} className="research-content-area">
                 {companyView === 'overview' && <CompanyOverviewView research={research} app={app} />}
                 {companyView === 'detailed' && <DetailedResearchView research={research} app={app} />}
                 {companyView === 'financials' && <FinancialsView research={research} app={app} />}
                 {companyView === 'competitors' && <CompetitorView research={research} app={app} />}
+                {companyView === 'careers' && <CareerMatchesView research={research} app={app} onRefresh={onRefresh} fetchWithAuth={fetchWithAuth} apiUrl={API_URL} />}
               </div>
             </div>
           </div>
@@ -2737,7 +2961,21 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
               </span>
               <span className="substage-nav-label" style={{ fontSize: '0.9rem', fontWeight: activeSubStage === s.id ? 800 : 600 }}>{s.label}</span>
             </div>
-            <span className="substage-nav-status">
+            <span className="substage-nav-status" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              {s.id === 'network' && (
+                <span style={{ 
+                  fontSize: '10px', 
+                  fontWeight: 800, 
+                  color: isComplete('network') ? '#10b981' : 'var(--text-muted)', 
+                  background: isComplete('network') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)', 
+                  padding: '1px 5px', 
+                  borderRadius: '4px', 
+                  border: isComplete('network') ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid var(--border-color)',
+                  marginRight: '2px'
+                }}>
+                  {app.contacts?.length || 0}
+                </span>
+              )}
               {isComplete(s.id) ? (
                 <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: '#10b981' }}>check_circle</span>
               ) : (
@@ -5785,12 +6023,29 @@ function WithdrawnSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, o
   );
 }
 
-function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = false, activePhaseTab, avgScore }) {
+function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, onStartFullGeneration, hideHeader = false, activePhaseTab, avgScore, notificationAnchor, onAnchorConsumed }) {
 
 
   const { fetchWithAuth } = useAuth();
   const [app, setApp] = useState(initialApp);
-  const [navCollapsed, setNavCollapsed] = useState(false);
+  const [navCollapsed, setNavCollapsed] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    let wasNarrow = window.innerWidth < 1024;
+    const handleResize = () => {
+      const isNarrow = window.innerWidth < 1024;
+      if (isNarrow && !wasNarrow) {
+        setNavCollapsed(true);
+        wasNarrow = true;
+      } else if (!isNarrow && wasNarrow) {
+        setNavCollapsed(false);
+        wasNarrow = false;
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [connections, setConnections] = useState([]);
   const [showAddContact, setShowAddContact] = useState(false);
   const [addContactMode, setAddContactMode] = useState('search');
@@ -6010,6 +6265,17 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
 
   const currentStageIndex = PIPELINE_STAGES.findIndex(s => s.id.toLowerCase() === (activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase());
 
+  const completedMainStages = [];
+  const progress = safeParseJSON(app?.substage_progress, {});
+  
+  if (progress?.parsed && progress?.reviewed && progress?.network && progress?.company && progress?.prioritized) {
+    completedMainStages.push('saved');
+  }
+  
+  if (app?.tailored_resume_path && app?.cover_letter_path) {
+    completedMainStages.push('generated');
+  }
+
   return (
     <div className="lifecycle-container" style={{ padding: hideHeader ? '0' : '2rem', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Header */}
@@ -6055,6 +6321,7 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
           currentStage={app?.pipeline_stage || 'saved'} 
           onStageClick={updateStage} 
           isArchived={app?.is_archived === 'true'}
+          completedMainStages={completedMainStages}
         />
       )}
 
@@ -6076,9 +6343,18 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, hideHeader = 
           handleDeleteContact={handleDeleteContact}
           navCollapsed={navCollapsed}
           onToggleNav={() => setNavCollapsed(!navCollapsed)}
+          initialSubStage={notificationAnchor}
+          onAnchorConsumed={onAnchorConsumed}
         />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'generated') ? (
-        <GeneratedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
+        <GeneratedSubStagePanel 
+          app={app} 
+          onRefresh={refreshApp} 
+          onStageChange={updateStage} 
+          onStartFullGeneration={onStartFullGeneration}
+          navCollapsed={navCollapsed} 
+          onToggleNav={() => setNavCollapsed(!navCollapsed)} 
+        />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'applied') ? (
         <AppliedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'interviewing') ? (

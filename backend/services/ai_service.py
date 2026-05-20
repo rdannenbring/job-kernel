@@ -243,16 +243,30 @@ Return a JSON object with this EXACT structure:
         "Actionable advice 3"
     ]
 }}""",
-    "match_career_openings": """You are an expert career advisor. Given a list of job openings from a company's careers page and a candidate's profile, identify the top 3-5 roles that would be a good fit for the candidate.
+    "match_career_openings": """You are an expert career advisor. Given a list of job openings from a company's careers page, a candidate's profile, and the specific job the candidate is applying for, perform TWO tasks:
+
+1. **Find the Direct Listing**: Search the scraped job openings for the EXACT job the candidate is currently applying for (matched by title and description similarity). If found, return it as "direct_listing".
+2. **Find Similar Roles**: Identify the top 3-5 OTHER roles (excluding the direct listing) that would also be a good fit for the candidate.
 
 CANDIDATE PROFILE:
 {profile_text}
+
+CURRENT APPLICATION (the job the candidate is applying for):
+Job Title: {current_job_title}
+Job Description excerpt: {current_job_excerpt}
 
 JOB OPENINGS (Scraped from careers page):
 {jobs_text}
 
 Return a JSON object with this EXACT structure:
 {{
+    "direct_listing": {{
+        "found": true,
+        "title": "Exact title as it appears on careers page",
+        "url": "Direct application URL from careers page, or null",
+        "confidence": "high|medium|low",
+        "match_reasoning": "1 sentence explaining why you believe this is the same listing"
+    }},
     "matches": [
         {{
             "title": "Job Title",
@@ -264,6 +278,11 @@ Return a JSON object with this EXACT structure:
     ],
     "summary": "1-2 sentences summarizing the overall hiring landscape at the company for this candidate."
 }}
+
+IMPORTANT:
+- For "direct_listing": Set "found" to false if you cannot confidently identify the same job. Only set "found" to true with "high" or "medium" confidence when the title and responsibilities clearly match.
+- For "matches": Do NOT include the direct listing job in this array. Only include OTHER interesting roles.
+- If there are no other interesting roles, return an empty "matches" array.
 """
 }
 

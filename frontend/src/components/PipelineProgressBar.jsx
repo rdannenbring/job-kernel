@@ -26,7 +26,7 @@ const STAGES = {
 
 export const PIPELINE_STAGES = Object.values(STAGES);
 
-const PipelineProgressBar = ({ currentStage: stageProp, onStageClick, isArchived }) => {
+const PipelineProgressBar = ({ currentStage: stageProp, onStageClick, isArchived, completedMainStages = [] }) => {
   const currentStage = (stageProp || 'saved').toLowerCase();
 
   const getStatus = (id) => {
@@ -86,10 +86,12 @@ const PipelineProgressBar = ({ currentStage: stageProp, onStageClick, isArchived
 
   const renderNode = (stage) => {
     const status = getStatus(stage.id);
+    const isExplicitlyCompleted = completedMainStages.includes(stage.id);
     const isCurrent = status === 'current';
-    const isCompleted = status === 'completed';
-    const isFuture = status === 'future';
-    const nodeColor = stage.color || 'var(--primary)';
+    const isCompleted = status === 'completed' || isExplicitlyCompleted;
+    const isFuture = status === 'future' && !isExplicitlyCompleted;
+    const baseNodeColor = stage.color || 'var(--primary)';
+    const nodeColor = isExplicitlyCompleted ? '#10b981' : baseNodeColor;
 
     return (
       <div 

@@ -113,6 +113,277 @@ class ScraperService:
         result = re.sub(r'\n{3,}', '\n\n', result)
         return result.strip()
 
+    # ── ATS platform detection patterns ────────────────────────────────────────
+    ATS_PATTERNS = {
+        'greenhouse':      [r'boards\.greenhouse\.io', r'grnh\.se'],
+        'lever':           [r'jobs\.lever\.co', r'lever\.co'],
+        'workday':         [r'myworkday\.com', r'workday\.com', r'wd\d+\.myworkdayjobs'],
+        'successfactors':  [r'successfactors\.com', r'career\d*\.successfactors'],
+        'icims':           [r'icims\.com', r'\.icims\.'],
+        'smartrecruiters': [r'smartrecruiters\.com', r'jobs\.smartrecruiters'],
+        'jobvite':         [r'jobvite\.com', r'jobs\.jobvite'],
+        'ashby':           [r'ashbyhq\.com', r'jobs\.ashby'],
+    }
+
+    def _detect_ats(self, html: str, url: str) -> Optional[str]:
+        """Detect which ATS platform a careers page uses."""
+        combined = html + ' ' + url
+        for platform, patterns in self.ATS_PATTERNS.items():
+            for pat in patterns:
+                if re.search(pat, combined, re.IGNORECASE):
+                    return platform
+        return None
+
+    def _extract_greenhouse_jobs(self, html: str, url: str) -> Optional[str]:
+        """Try Greenhouse board API for job listings."""
+        # Greenhouse boards look like: boards.greenhouse.io/{company}
+        match = re.search(r'boards\.greenhouse\.io/([^/"\'\s?]+)', html + ' ' + url)
+        if not match:
+            return None
+        company = match.group(1)
+        try:
+            api_url = f"https://boards-api.greenhouse.io/v1/boards/{company}/jobs"
+            resp = requests.get(api_url, timeout=10)
+            if resp.ok:
+                data = resp.json()
+                jobs = data.get('jobs', [])
+                if jobs:
+                    lines = []
+                    for j in jobs:
+                        title = j.get('title', 'Unknown')
+                        loc = j.get('location', {}).get('name', '')
+                        link = j.get('absolute_url', '')
+                        lines.append(f"• {title} — {loc}\n  Apply: {link}")
+                    return f"Found {len(jobs)} open positions:\n\n" + "\n\n".join(lines)
+        except Exception:
+            pass
+        return None
+
+    def _extract_lever_jobs(self, html: str, url: str) -> Optional[str]:
+        """Try Lever postings API for job listings."""
+        match = re.search(r'jobs\.lever\.co/([^/"\'\s?]+)', html + ' ' + url)
+        if not match:
+            return None
+        company = match.group(1)
+        try:
+            api_url = f"https://api.lever.co/v0/postings/{company}"
+            resp = requests.get(api_url, timeout=10)
+            if resp.ok:
+                jobs = resp.json()
+                if jobs:
+                    lines = []
+                    for j in jobs:
+                        title = j.get('text', 'Unknown')
+                        loc = j.get('categories', {}).get('location', '')
+                        team = j.get('categories', {}).get('team', '')
+                        link = j.get('hostedUrl', '')
+                        lines.append(f"• {title} — {loc} ({team})\n  Apply: {link}")
+                    return f"Found {len(jobs)} open positions:\n\n" + "\n\n".join(lines)
+        except Exception:
+            pass
+        return None
+
+    def _extract_ashby_jobs(self, html: str, url: str) -> Optional[str]:
+        """Try Ashby API for job listings."""
+        match = re.search(r'jobs\.ashbyhq\.com/([^/"\'\s?]+)', html + ' ' + url)
+        if not match:
+            return None
+        company = match.group(1)
+        try:
+            api_url = f"https://api.ashbyhq.com/posting-api/job-board/{company}"
+            resp = requests.get(api_url, timeout=10)
+            if resp.ok:
+                data = resp.json()
+                jobs = data.get('jobs', [])
+                if jobs:
+                    lines = []
+                    for j in jobs:
+                        title = j.get('title', 'Unknown')
+                        loc = j.get('location', '')
+                        link = j.get('jobUrl', '')
+                        lines.append(f"• {title} — {loc}\n  Apply: {link}")
+                    return f"Found {len(jobs)} open positions:\n\n" + "\n\n".join(lines)
+        except Exception:
+            pass
+        return None
+
+    def _extract_sitemap_jobs(self, url: str) -> Optional[str]:
+        """Try to find and parse a sitemap.xml or RSS feed for job listings."""
+        from urllib.parse import urlparse
+        domain = urlparse(url).netloc
+        scheme = urlparse(url).scheme
+        base_url = f"{scheme}://{domain}"
+        
+        sitemap_urls = [
+            f"{base_url}/sitemap.xml",
+            f"{base_url}/sitemap_index.xml",
+            f"{base_url}/jobs/sitemap.xml",
+            url.rstrip('/') + "/sitemap.xml"
+        ]
+        
+        for sitemap_url in set(sitemap_urls):
+            try:
+                resp = requests.get(sitemap_url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=15)
+                if not resp.ok:
+                    continue
+                    
+                text = resp.text
+                
+                # Check for RSS feed format (used by SuccessFactors)
+                items = re.findall(r'<item>(.*?)</item>', text, re.DOTALL | re.IGNORECASE)
+                if items:
+                    lines = []
+                    for item in items:
+                        title_match = re.search(r'<title>(.*?)</title>', item, re.IGNORECASE)
+                        link_match = re.search(r'<link>(.*?)</link>', item, re.IGNORECASE)
+                        if title_match and link_match:
+                            title = title_match.group(1).replace('<![CDATA[', '').replace(']]>', '').strip()
+                            link = link_match.group(1).replace('<![CDATA[', '').replace(']]>', '').strip()
+                            # Only include if it looks like a job
+                            if any(k in title.lower() or k in link.lower() for k in ['job', 'engineer', 'manager', 'specialist', 'analyst', 'director', 'requisition', 'technician']):
+                                lines.append(f"• {title}\n  Apply: {link}")
+                    
+                    if lines:
+                        return f"Found {len(lines)} jobs in RSS sitemap:\n\n" + "\n\n".join(lines)
+                
+                # Check for standard XML sitemap format
+                urls = re.findall(r'<loc>(.*?)</loc>', text, re.IGNORECASE)
+                if urls:
+                    job_urls = [u for u in urls if any(k in u.lower() for k in ['/job/', 'jobreq', 'requisition', 'position', 'posting', 'careers'])]
+                    if job_urls:
+                        # Extract the final path segment as a pseudo-title
+                        lines = []
+                        for u in job_urls:
+                            pseudo_title = u.strip('/').split('/')[-1].replace('-', ' ').title()
+                            lines.append(f"• {pseudo_title}\n  Apply: {u}")
+                        return f"Found {len(lines)} job URLs in XML sitemap:\n\n" + "\n\n".join(lines)
+            except Exception:
+                pass
+                
+        return None
+
+    def _try_google_cache(self, careers_url: str, job_title: str = "") -> Optional[str]:
+        """Use Google search to find cached/indexed job listings from a careers site."""
+        try:
+            from urllib.parse import quote_plus
+            domain = urlparse(careers_url).netloc
+            query = f"site:{domain} jobs"
+            if job_title:
+                query += f" \"{job_title}\""
+            
+            jina_search_url = f"https://s.jina.ai/{quote_plus(query)}"
+            resp = requests.get(jina_search_url, headers={
+                'User-Agent': 'Mozilla/5.0',
+                'X-Return-Format': 'text',
+            }, timeout=15)
+            
+            if resp.ok and len(resp.text) > 200:
+                return resp.text
+        except Exception:
+            pass
+        return None
+
+    async def scrape_careers_page(self, url: str, job_title: str = "") -> str:
+        """
+        Scrape job listings from a company careers page.
+        Uses a multi-strategy approach to handle JS-rendered ATS platforms:
+        1. Detect ATS platform and try its public API
+        2. Try Jina with JS rendering wait headers
+        3. Fallback to Google-indexed content via Jina Search
+        4. Last resort: raw HTTP + BeautifulSoup
+        """
+        import logging
+        logger = logging.getLogger('app')
+        
+        headers_browser = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+
+        # Step 0: Fetch raw HTML for ATS detection
+        raw_html = ""
+        try:
+            resp = requests.get(url, headers=headers_browser, timeout=10)
+            resp.raise_for_status()
+            raw_html = resp.text
+        except Exception as e:
+            logger.warning(f"Could not fetch raw HTML for ATS detection: {e}")
+
+        # Step 1: Detect ATS platform and try its API
+        ats = self._detect_ats(raw_html, url)
+        if ats:
+            logger.info(f"Detected ATS platform: {ats} for {url}")
+            api_result = None
+            if ats == 'greenhouse':
+                api_result = self._extract_greenhouse_jobs(raw_html, url)
+            elif ats == 'lever':
+                api_result = self._extract_lever_jobs(raw_html, url)
+            elif ats == 'ashby':
+                api_result = self._extract_ashby_jobs(raw_html, url)
+            
+            if api_result and len(api_result) > 100:
+                logger.info(f"ATS API returned {len(api_result)} chars of job data")
+                return api_result
+
+        # Step 2: Check for sitemaps or RSS feeds (extremely common and reliable for SEO)
+        logger.info(f"Checking for sitemap/RSS feeds at {url}")
+        sitemap_result = self._extract_sitemap_jobs(url)
+        if sitemap_result and len(sitemap_result) > 100:
+            logger.info(f"Sitemap parser returned {len(sitemap_result)} chars of job data")
+            return sitemap_result
+
+        # Step 3: Try Jina Reader with JS wait selectors for common job list patterns
+        try:
+            jina_url = f"https://r.jina.ai/{url}"
+            jina_headers = {
+                'User-Agent': 'Mozilla/5.0',
+                'X-Return-Format': 'text',
+                'X-Wait-For-Selector': '.job-listing, .job-title, .requisition, [class*="job"], [data-job], a[href*="job"], tr[class*="result"]',
+                'X-Timeout': '15',
+            }
+            jina_resp = requests.get(jina_url, headers=jina_headers, timeout=20)
+            jina_resp.raise_for_status()
+            
+            jina_text = jina_resp.text
+            # Check if the Jina response actually contains job-like content
+            job_indicators = ['apply', 'requisition', 'position', 'location', 'remote', 'hybrid', 'full-time', 'part-time']
+            indicator_count = sum(1 for ind in job_indicators if ind in jina_text.lower())
+            
+            if len(jina_text) > 500 and indicator_count >= 3:
+                logger.info(f"Jina JS rendering returned {len(jina_text)} chars with {indicator_count} job indicators")
+                return jina_text
+            else:
+                logger.info(f"Jina returned {len(jina_text)} chars but only {indicator_count} job indicators — likely shell content")
+        except Exception as e:
+            logger.warning(f"Jina JS rendering failed for {url}: {e}")
+
+        # Step 3: Try Google-indexed content via Jina Search
+        google_result = self._try_google_cache(url, job_title)
+        if google_result and len(google_result) > 200:
+            logger.info(f"Google cache/search returned {len(google_result)} chars for {url}")
+            return google_result
+
+        # Step 4: Last resort — strip JS/CSS from raw HTML and return what we have
+        if raw_html:
+            logger.info(f"Falling back to raw HTML parsing for {url}")
+            soup = BeautifulSoup(raw_html, 'html.parser')
+            for tag in soup(["script", "style", "nav", "footer", "header"]):
+                tag.extract()
+            
+            # Try to find any links that look like job listings
+            job_links = []
+            for a in soup.find_all('a', href=True):
+                href = a['href']
+                text = a.get_text(strip=True)
+                if text and len(text) > 5 and any(k in href.lower() for k in ['job', 'position', 'career', 'requisition', 'opening', 'apply']):
+                    job_links.append(f"• {text}\n  Link: {href}")
+            
+            page_text = soup.get_text(separator='\n', strip=True)
+            if job_links:
+                return f"Job-related links found on page:\n\n" + "\n\n".join(job_links[:50]) + f"\n\n---\nPage text:\n{page_text}"
+            return page_text
+
+        raise ValueError(f"All scraping strategies failed for {url}")
+
     async def scrape_url(self, url: str) -> str:
         """
         Scrape content from any URL using a robust approach.

@@ -11,6 +11,7 @@ import csv
 import zipfile
 import io
 import platform
+import re
 from typing import Optional, List, Dict, Any
 from dotenv import load_dotenv
 import json
@@ -326,12 +327,13 @@ class ApproveRefinementRequest(BaseModel):
     pending_refinement: dict
 
 class CoverLetterRequest(BaseModel):
-    resume_text: str
-    job_description: str
-    base_filename: str
+    resume_text: Optional[str] = None
+    job_description: Optional[str] = None
+    base_filename: Optional[str] = None
     additional_context: Optional[str] = ""
     additional_context_paths: Optional[List[str]] = []
     instructions: Optional[str] = ""
+    application_id: Optional[int] = None
 
 class RefineCoverLetterRequest(BaseModel):
     content: str
@@ -1789,10 +1791,15 @@ async def generate_cover_letter_endpoint(request: CoverLetterRequest, user_id: i
                 if not resume_text:
                     # Try to extract from the application's resume
                     r_path = app_obj.get("original_resume_path")
-                    if r_path and os.path.exists(r_path):
-                        resume_text = document_service.extract_text(r_path)
-                    elif user_profile.get("base_resume_path") and os.path.exists(user_profile["base_resume_path"]):
-                        resume_text = document_service.extract_text(user_profile["base_resume_path"])
+                    if r_path:
+                        full_r_path = os.path.join(UPLOADS_DIR, r_path) if not os.path.isabs(r_path) else r_path
+                        if os.path.exists(full_r_path):
+                            resume_text = document_service.extract_text(full_r_path)
+                    
+                    if not resume_text and user_profile.get("base_resume_path"):
+                        base_r_path = user_profile["base_resume_path"]
+                        if os.path.exists(base_r_path):
+                            resume_text = document_service.extract_text(base_r_path)
                 if not request.base_filename:
                     base_filename = app_obj.get("company", "cover_letter")
 
@@ -2439,14 +2446,27 @@ IMPORTANT:
 - Do NOT fabricate specific numbers. Use approximations with '~' if needed.
 - Return ONLY valid JSON, no markdown, no code blocks."""
 
-        content = await ai_service.execute_ai_request(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            response_format="json_object",
-            temperature=0.3,
-            config=config,
-        )
-        research = ai_service._parse_json_response(content)
+        research = None
+        last_error = None
+        for attempt in range(2):
+            try:
+                content = await ai_service.execute_ai_request(
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                    response_format="json_object",
+                    temperature=0.3 + (attempt * 0.2), # Increase temperature on retry to change generation path
+                    config=config,
+                )
+                research = ai_service._parse_json_response(content)
+                if research:
+                    break
+            except Exception as e:
+                last_error = e
+                if attempt == 1:
+                    logger.error(f"Failed to generate valid JSON after 2 attempts for app {app_id}: {e}")
+                    
+        if not research:
+            raise HTTPException(status_code=500, detail=f"Failed to generate valid JSON: {str(last_error) if last_error else 'Unknown error'}")
         
         # Extract website for top-level field
         company_website = research.get("overview", {}).get("website")
@@ -2473,22 +2493,35 @@ async def scan_company_jobs(app_id: int, careers_url: str, user_id: int):
     try:
         logger.info(f"Starting background job scan for app {app_id} at {careers_url}")
         
-        # 1. Scrape the careers page
-        jobs_text = await scraper_service.scrape_url(careers_url)
+        # 1. Get the current application details (needed for job title in scraping)
+        app_data = database_service.get_application_by_id(app_id, user_id)
+        current_job_title = app_data.get("job_title", "") if app_data else ""
+        
+        # 2. Scrape the careers page using the multi-strategy scraper
+        jobs_text = await scraper_service.scrape_careers_page(careers_url, job_title=current_job_title)
         if not jobs_text or len(jobs_text) < 100:
-            logger.warning(f"Aborting job scan for app {app_id}: Scraped text too short.")
+            logger.warning(f"Aborting job scan for app {app_id}: Scraped text too short ({len(jobs_text or '')} chars).")
             return
 
-        # 2. Get user profile for matching
+        # 3. Get user profile for matching
         profile = database_service.get_profile(user_id)
         profile_text = ""
         if profile:
             profile_text = f"Title: {profile.get('job_title')}\nBio: {profile.get('bio')}\nSkills: {', '.join(profile.get('skills', []))}"
         
-        # 3. Use AI to find matches
+        # 4. Build prompt context from application details
+        current_jd = app_data.get("job_description", "") if app_data else ""
+        current_job_excerpt = current_jd[:1500] if current_jd else ""
+        
+        # 4. Use AI to find matches
         config = await get_merged_config(user_id)
         prompt_template = ai_service.get_prompt("match_career_openings", config)
-        prompt = prompt_template.format(profile_text=profile_text, jobs_text=jobs_text[:15000]) # Cap text for context window
+        prompt = prompt_template.format(
+            profile_text=profile_text,
+            current_job_title=current_job_title,
+            current_job_excerpt=current_job_excerpt,
+            jobs_text=jobs_text[:15000]
+        )
         
         content = await ai_service.execute_ai_request(
             system_prompt="You are a specialized career matching assistant.",
@@ -2499,7 +2532,7 @@ async def scan_company_jobs(app_id: int, careers_url: str, user_id: int):
         )
         matches_data = ai_service._parse_json_response(content)
         
-        # 4. Update the application research with the matches
+        # 5. Update the application research with the matches
         app_data = database_service.get_application_by_id(app_id, user_id)
         if app_data and app_data.get("company_research"):
             research = app_data["company_research"]
@@ -2507,11 +2540,64 @@ async def scan_company_jobs(app_id: int, careers_url: str, user_id: int):
                 research = json.loads(research)
             
             research["career_matches"] = matches_data
-            database_service.update_application(app_id, {"company_research": research}, user_id)
+            update_payload = {"company_research": research}
+            
+            # 6. Auto-update apply_url if direct listing found with high confidence
+            direct = matches_data.get("direct_listing", {})
+            if direct.get("found") and direct.get("url") and direct.get("confidence") in ("high", "medium"):
+                update_payload["apply_url"] = direct["url"]
+                logger.info(f"Auto-updated apply_url for app {app_id} to direct listing: {direct['url']}")
+            
+            database_service.update_application(app_id, update_payload, user_id)
             logger.info(f"Background job scan complete for app {app_id}")
+
+            # 7. Emit notification
+            match_count = len(matches_data.get("matches", []))
+            company_name = app_data.get("company", "Unknown")
+            if direct.get("found") and direct.get("confidence") in ("high", "medium"):
+                # Apply URL was auto-updated — this is a background data change
+                notif_title = f"Apply link updated for {company_name}"
+                notif_msg = f"We found your job listing on {company_name}'s careers page and automatically updated the apply link. {match_count} other matching role{'s' if match_count != 1 else ''} also found."
+                notif_category = "update"
+            elif direct.get("found"):
+                # Found but low confidence — user should verify
+                notif_title = f"Possible direct listing at {company_name}"
+                notif_msg = f"We found a potential match for your role on {company_name}'s careers page (low confidence). Please review and update the apply link if correct."
+                notif_category = "action"
+            elif match_count > 0:
+                # No direct listing, but similar roles found — user might want to explore
+                notif_title = f"{match_count} similar role{'s' if match_count != 1 else ''} at {company_name}"
+                notif_msg = f"Your specific listing was not found on the careers page, but we found {match_count} similar role{'s' if match_count != 1 else ''} that may interest you."
+                notif_category = "info"
+            else:
+                notif_title = f"Career scan complete for {company_name}"
+                notif_msg = f"No matching roles were found on {company_name}'s careers page."
+                notif_category = "info"
+            
+            database_service.create_notification(
+                user_id=user_id,
+                title=notif_title,
+                message=notif_msg,
+                category=notif_category,
+                link_screen="lifecycle",
+                link_app_id=app_id,
+                link_anchor="company",
+            )
 
     except Exception as e:
         logger.error(f"Error in scan_company_jobs for app {app_id}: {e}")
+        try:
+            database_service.create_notification(
+                user_id=user_id,
+                title="Career scan failed",
+                message=f"An error occurred while scanning the careers page: {str(e)[:200]}",
+                category="error",
+                link_screen="lifecycle",
+                link_app_id=app_id,
+                link_anchor="company",
+            )
+        except Exception:
+            pass
 
 @app.post("/api/applications/{app_id}/score")
 async def score_application_endpoint(app_id: int, user_id: int = Depends(get_current_user_id)):
@@ -3430,6 +3516,26 @@ async def sync_manual_edits(filename: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
+# ── Notification Endpoints ──────────────────────────────────────────────────
+@app.get("/api/notifications")
+async def get_notifications(user_id: int = Depends(get_current_user_id)):
+    """Get all notifications for the current user."""
+    return database_service.get_notifications(user_id, limit=50)
+
+@app.put("/api/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: int, user_id: int = Depends(get_current_user_id)):
+    """Mark a single notification as read."""
+    success = database_service.mark_notification_read(notification_id, user_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"ok": True}
+
+@app.put("/api/notifications/read-all")
+async def mark_all_notifications_read(user_id: int = Depends(get_current_user_id)):
+    """Mark all notifications as read for the current user."""
+    count = database_service.mark_all_notifications_read(user_id)
+    return {"ok": True, "count": count}
 
 @app.on_event("startup")
 async def startup_event():

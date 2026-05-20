@@ -45,7 +45,7 @@ async function fetchWithAuthBackground(url, options = {}) {
 }
 
 /**
- * Send a log message to the backend.
+ * Send a log message to the backend with store-and-forward capability.
  */
 async function remoteLog(level, message, context = null) {
   // Always log to local console first
@@ -53,24 +53,110 @@ async function remoteLog(level, message, context = null) {
                         level.toLowerCase() === 'warning' ? 'warn' : 'log';
   console[consoleMethod](`[RemoteLog] ${message}`, context || '');
 
+  const logEntry = { level, message, context, timestamp: new Date().toISOString() };
+
   try {
     // Only attempt if we have an API URL
     chrome.storage.local.get(['jobkernelApiUrl'], async (res) => {
       const currentApiUrl = res.jobkernelApiUrl || API_URL;
       if (!currentApiUrl) return;
 
-      await fetchWithAuthBackground(`${currentApiUrl}/api/extension/logs`, {
-        method: 'POST',
-        body: JSON.stringify({ level, message, context })
-      });
+      try {
+        await fetchWithAuthBackground(`${currentApiUrl}/api/extension/logs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(logEntry)
+        });
+        
+        // If successful, try to flush any queued logs
+        flushLogQueue(currentApiUrl);
+      } catch (err) {
+        if (err.message === 'Failed to fetch' || err instanceof TypeError) {
+          queueLogEntry(logEntry);
+        } else {
+          console.warn('[JobAutomator] Failed to send remote log:', err);
+        }
+      }
     });
   } catch (e) {
-    // Fallback if remote logging itself fails
-    console.warn('[JobAutomator] Failed to send remote log:', e);
+    // Fallback if remote logging wrapper itself fails
+    console.warn('[JobAutomator] Error in remoteLog wrapper:', e);
+  }
+}
+
+function queueLogEntry(logEntry) {
+  try {
+    chrome.storage.local.get(['logQueue'], (data) => {
+      let queue = data.logQueue || [];
+      queue.push(logEntry);
+      // Keep max 100 logs
+      if (queue.length > 100) queue = queue.slice(queue.length - 100);
+      chrome.storage.local.set({ logQueue: queue });
+    });
+  } catch (e) {
+    console.error('Failed to queue log:', e);
+  }
+}
+
+let isFlushingLogs = false;
+function flushLogQueue(currentApiUrl) {
+  if (isFlushingLogs) return;
+  isFlushingLogs = true;
+  
+  try {
+    chrome.storage.local.get(['logQueue'], async (data) => {
+      const queue = data.logQueue || [];
+      if (queue.length === 0) {
+        isFlushingLogs = false;
+        return;
+      }
+
+      const remainingQueue = [];
+      let isOnline = true;
+      for (const log of queue) {
+        if (!isOnline) {
+          remainingQueue.push(log);
+          continue;
+        }
+        try {
+          await fetchWithAuthBackground(`${currentApiUrl}/api/extension/logs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(log)
+          });
+        } catch (e) {
+          if (e.message === 'Failed to fetch' || e instanceof TypeError) {
+            isOnline = false;
+            remainingQueue.push(log);
+          }
+        }
+      }
+      
+      chrome.storage.local.set({ logQueue: remainingQueue });
+      isFlushingLogs = false;
+    });
+  } catch (e) {
+    console.error('Failed to flush logs:', e);
+    isFlushingLogs = false;
   }
 }
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
+  // We don't set openPanelOnActionClick globally anymore, as we want to handle it per-tab.
+  // Instead, we disable the global side panel to be safe.
+  chrome.sidePanel.setOptions({ enabled: false }).catch(console.error);
+});
+
+chrome.action.onClicked.addListener((tab) => {
+  // When the user explicitly clicks the extension icon in the toolbar, 
+  // enable and open the side panel for this specific tab.
+  chrome.sidePanel.setOptions({
+    tabId: tab.id,
+    path: 'sidepanel.html',
+    enabled: true
+  }).then(() => {
+    chrome.sidePanel.open({ tabId: tab.id, windowId: tab.windowId });
+    broadcastPanelState(true);
+  }).catch(console.error);
 });
 
 /**
@@ -92,8 +178,10 @@ const handleMessage = (message, sender, sendResponse) => {
   // ── Open side panel ────────────────────────────────────────────────────
   if (message.action === 'open_side_panel') {
     const windowId = sender.tab?.windowId;
-    if (!windowId) { sendResponse({ error: 'no windowId' }); return true; }
-    chrome.sidePanel.open({ windowId }).then(() => {
+    const tabId = sender.tab?.id;
+    if (!windowId || !tabId) { sendResponse({ error: 'no windowId or tabId' }); return true; }
+    
+    chrome.sidePanel.open({ tabId, windowId }).then(() => {
       broadcastPanelState(true);
       remoteLog('INFO', 'Side panel opened from content script');
       sendResponse({ success: true });
@@ -171,6 +259,8 @@ const handleMessage = (message, sender, sendResponse) => {
 
   // ── Legacy toggle (kept for backwards compatibility) ────────────────────
   } else if (message.action === 'toggle_side_panel') {
+    const windowId = sender.tab?.windowId;
+    const tabId = sender.tab?.id;
     chrome.storage.local.get(['isPanelOpen'], (result) => {
       const isOpen = result.isPanelOpen || false;
       if (isOpen) {
@@ -178,7 +268,8 @@ const handleMessage = (message, sender, sendResponse) => {
         chrome.runtime.sendMessage({ action: 'do_window_close' }).catch(() => {});
         sendResponse({ action: 'closed' });
       } else {
-        chrome.sidePanel.open({ windowId: sender.tab.windowId }).then(() => {
+        chrome.sidePanel.setOptions({ tabId: tabId, path: 'sidepanel.html', enabled: true });
+        chrome.sidePanel.open({ tabId, windowId }).then(() => {
           broadcastPanelState(true);
           sendResponse({ action: 'opened' });
         }).catch((err) => {
@@ -188,20 +279,30 @@ const handleMessage = (message, sender, sendResponse) => {
     });
     return true;
 
-  // ── Open and store (solves missing user gesture) ────────────────────────
+  // ── Pre-enable side panel (called on page load) ─────────────────────────
+  } else if (message.action === 'pre_enable_side_panel') {
+    const tabId = sender.tab?.id;
+    if (tabId) {
+      chrome.sidePanel.setOptions({ tabId: tabId, path: 'sidepanel.html', enabled: true }).catch(console.error);
+    }
+    sendResponse({ success: true });
+    return true;
+
+  // ── Open and store (instant open) ────────────────────────
   } else if (message.action === 'open_and_store') {
     const windowId = sender.tab?.windowId;
-    if (!windowId) { sendResponse({ error: 'no windowId' }); return true; }
+    const tabId = sender.tab?.id;
+    if (!windowId || !tabId) { sendResponse({ error: 'no windowId or tabId' }); return true; }
+    
+    // Open immediately to guarantee user gesture is preserved and UI feels snappy.
+    // The panel was already pre-enabled by 'pre_enable_side_panel' on page load.
+    chrome.sidePanel.open({ tabId, windowId }).catch(console.error);
+    broadcastPanelState(true);
+    
+    // Asynchronously store the data and refresh the panel
     chrome.storage.local.set({ latestJobData: message.data }, () => {
-      chrome.sidePanel.open({ windowId }).then(() => {
-        broadcastPanelState(true);
-        // Always tell the panel to refresh — even if the stored value didn't
-        // change (same job URL reloaded), so it re-checks the DB for updates.
-        chrome.runtime.sendMessage({ action: 'refresh_panel_data' }).catch(() => {});
-        sendResponse({ success: true });
-      }).catch((err) => {
-        sendResponse({ error: err.message });
-      });
+      chrome.runtime.sendMessage({ action: 'refresh_panel_data' }).catch(() => {});
+      sendResponse({ success: true });
     });
     return true;
 
@@ -463,6 +564,12 @@ const handleMessage = (message, sender, sendResponse) => {
     return true;
   } else if (message.action === 'log') {
     remoteLog(message.level || 'INFO', message.message, message.context);
+    sendResponse({ success: true });
+    return true;
+  } else if (message.action === 'flush_logs') {
+    chrome.storage.local.get(['jobkernelApiUrl'], (res) => {
+      flushLogQueue(res.jobkernelApiUrl || API_URL);
+    });
     sendResponse({ success: true });
     return true;
   }

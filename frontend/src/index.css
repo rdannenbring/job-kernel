@@ -639,6 +639,20 @@ input::placeholder, textarea::placeholder {
   flex-wrap: wrap;
 }
 
+/* Responsive grid for form controls */
+.responsive-controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .responsive-controls-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 /* Loading Spinner */
 .spinner {
   display: inline-block;
@@ -1454,6 +1468,33 @@ input::placeholder, textarea::placeholder {
   }
 }
 
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideRight {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .modal-content::-webkit-scrollbar {
   display: none;
@@ -1670,3 +1711,97 @@ input::placeholder, textarea::placeholder {
   margin: 0 !important;
   pointer-events: none !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Company Research — Responsive Layout
+   ════════════════════════════════════════════════════════════ */
+
+/* 2-col: [left nav] [content] */
+.research-layout-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 2fr;
+  gap: 2rem;
+  transition: grid-template-columns 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Collapsed: icon-only left nav */
+.research-layout-grid.research-nav-collapsed {
+  grid-template-columns: 72px 1fr;
+  gap: 1.25rem;
+}
+
+/* On medium screens stack the outer nav+content to single column */
+@media (max-width: 900px) {
+  .research-layout-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem;
+  }
+}
+
+/* ── Container context ───────────────────────────────────────────
+   The content area registers itself as a container so all inner
+   grids below respond to the *available content width* instead of
+   the browser window width.
+   ─────────────────────────────────────────────────────────────── */
+.research-content-area {
+  container-type: inline-size;
+  container-name: research-content;
+}
+
+/* ── Content grids (defaults: full columns) ────────────────────── */
+.research-stats-grid {
+  display: grid;
+  /* auto-fit so cards wrap naturally as soon as they'd be < 130px */
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1rem;
+}
+
+.research-two-col {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+}
+
+.research-equal-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.research-three-col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+/* ── Container breakpoints ──────────────────────────────────────── */
+
+/* 3-col → 2-col when content area is below 620px */
+@container research-content (max-width: 620px) {
+  .research-three-col {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* 2-col grids → single column when content area is below 500px */
+@container research-content (max-width: 500px) {
+  .research-two-col,
+  .research-equal-col,
+  .research-three-col {
+    grid-template-columns: 1fr;
+  }
+  /* stats: pin to 2 cols at this size (auto-fit already handles it,
+     but this ensures consistent look at very small sizes) */
+  .research-stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Everything single-column at very narrow content areas */
+@container research-content (max-width: 360px) {
+  .research-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+

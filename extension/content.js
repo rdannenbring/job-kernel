@@ -374,7 +374,7 @@ const LINKEDIN_SCRAPER = {
       const split = text.split('·');
       if (split.length >= 1) {
           let loc = split[0].replace(/\((remote|hybrid|on-site)\)/gi, '').trim();
-          if (loc && !/\d/.test(loc) && !/reposted|promoted|applicant|apply/i.test(loc)) return loc;
+          if (loc && !/\d/.test(loc) && !/reposted|promoted|applicant|apply|early|fast/i.test(loc)) return loc;
       }
     }
 
@@ -393,7 +393,7 @@ const LINKEDIN_SCRAPER = {
                     let loc = split[0].replace(/\((remote|hybrid|on-site)\)/gi, '').trim();
                     // Split sometimes gives "Company Name\nLocation" if they are in the same block
                     if (loc.includes('\n')) loc = loc.split('\n').pop().trim();
-                    if (loc && !/\d/.test(loc) && !/reposted|promoted|click|viewed|applicant|apply/i.test(loc)) return loc;
+                    if (loc && !/\d/.test(loc) && !/reposted|promoted|click|viewed|applicant|apply|early|fast/i.test(loc)) return loc;
                 }
             }
             parent = parent.parentElement;
@@ -418,7 +418,7 @@ const LINKEDIN_SCRAPER = {
         const t = n.innerText.trim();
         // Matches "City, State", "City, Country", "Remote", "United States", etc.
         // It must be relatively short to be a location
-        if (t.length > 2 && t.length < 40 && !/\d/.test(t) && !/click|apply|save|about|show|people|viewed|applicant/i.test(t)) {
+        if (t.length > 2 && t.length < 40 && !/\d/.test(t) && !/click|apply|save|about|show|people|viewed|applicant|early|fast/i.test(t)) {
             // Check if it matches City, ST pattern or known large regions
             if (/, \w{2}$/.test(t) || /, \w{2,}/.test(t) || /remote/i.test(t) || /united states/i.test(t)) {
                 return t.replace(/\((remote|hybrid|on-site)\)/gi, '').trim();

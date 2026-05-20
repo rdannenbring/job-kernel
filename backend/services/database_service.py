@@ -246,6 +246,22 @@ class UserApiKey(Base):
     
     user = relationship("User")
 
+class Notification(Base):
+    __tablename__ = 'notifications'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    category = Column(String, default='info')  # 'success', 'info', 'warning', 'error'
+    title = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    link_screen = Column(String, nullable=True)   # e.g. 'lifecycle', 'detail'
+    link_app_id = Column(Integer, nullable=True)   # Application ID to navigate to
+    link_anchor = Column(String, nullable=True)    # Sub-stage/section to scroll to (e.g. 'company')
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+
 # Import remaining sqlalchemy types
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
@@ -681,7 +697,21 @@ class DatabaseService:
                 api_key TEXT NOT NULL UNIQUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
+            """,
             """
+            CREATE TABLE IF NOT EXISTS notifications (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                category TEXT DEFAULT 'info',
+                title TEXT NOT NULL,
+                message TEXT NOT NULL,
+                link_screen TEXT,
+                link_app_id INTEGER,
+                is_read BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            "ALTER TABLE notifications ADD COLUMN link_anchor TEXT"
         ]
         with self.engine.connect() as conn:
             for sql in migrations:
@@ -1997,6 +2027,80 @@ class DatabaseService:
         finally:
             if own_session:
                 session.close()
+
+    # ── Notifications ───────────────────────────────────────────────────────────
+    def create_notification(self, user_id: int, title: str, message: str,
+                            category: str = 'info', link_screen: str = None,
+                            link_app_id: int = None, link_anchor: str = None) -> Dict[str, Any]:
+        """Create a new notification for a user."""
+        session = self.Session()
+        try:
+            n = Notification(
+                user_id=user_id, category=category, title=title,
+                message=message, link_screen=link_screen,
+                link_app_id=link_app_id, link_anchor=link_anchor
+            )
+            session.add(n)
+            session.commit()
+            return {
+                "id": n.id, "user_id": n.user_id, "category": n.category,
+                "title": n.title, "message": n.message,
+                "link_screen": n.link_screen, "link_app_id": n.link_app_id,
+                "link_anchor": n.link_anchor, "is_read": n.is_read,
+                "created_at": n.created_at.isoformat() if n.created_at else None
+            }
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def get_notifications(self, user_id: int, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get recent notifications for a user, newest first."""
+        session = self.Session()
+        try:
+            results = (session.query(Notification)
+                       .filter(Notification.user_id == user_id)
+                       .order_by(Notification.created_at.desc())
+                       .limit(limit)
+                       .all())
+            return [{
+                "id": n.id, "user_id": n.user_id, "category": n.category,
+                "title": n.title, "message": n.message,
+                "link_screen": n.link_screen, "link_app_id": n.link_app_id,
+                "link_anchor": n.link_anchor, "is_read": n.is_read,
+                "created_at": n.created_at.isoformat() if n.created_at else None
+            } for n in results]
+        finally:
+            session.close()
+
+    def mark_notification_read(self, notification_id: int, user_id: int) -> bool:
+        """Mark a single notification as read."""
+        session = self.Session()
+        try:
+            n = session.query(Notification).filter(
+                Notification.id == notification_id,
+                Notification.user_id == user_id
+            ).first()
+            if not n:
+                return False
+            n.is_read = True
+            session.commit()
+            return True
+        finally:
+            session.close()
+
+    def mark_all_notifications_read(self, user_id: int) -> int:
+        """Mark all notifications as read for a user. Returns count updated."""
+        session = self.Session()
+        try:
+            count = (session.query(Notification)
+                     .filter(Notification.user_id == user_id, Notification.is_read == False)
+                     .update({"is_read": True}))
+            session.commit()
+            return count
+        finally:
+            session.close()
 
 
 if __name__ == "__main__":

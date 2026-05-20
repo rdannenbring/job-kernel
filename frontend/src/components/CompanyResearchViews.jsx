@@ -1,5 +1,6 @@
-// Company Research sub-views: Overview, Detailed, Financials, Competitors
+// Company Research sub-views: Overview, Detailed, Financials, Competitors, Career Matches
 // All views now consume the `research` prop (AI-generated JSON).
+import { useState } from 'react';
 
 const S = {
   card: { background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: '1rem', padding: '1.5rem' },
@@ -63,22 +64,22 @@ export function CompanyOverviewView({ research, app }) {
       </div>
 
       {/* Stats row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+      <div className="research-stats-grid">
         {stats.map(s => (
           <div key={s.label} style={{ ...S.card, display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
             <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.75rem', background: `${s.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <span className="material-symbols-outlined" style={{ color: s.color, fontSize: '1.2rem' }}>{s.icon}</span>
             </div>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div style={S.label}>{s.label}</div>
-              <div style={{ ...S.kpi, fontSize: '1rem', fontWeight: 800, lineHeight: 1.2 }}>{s.val}</div>
+              <div style={{ ...S.kpi, fontSize: '1rem', fontWeight: 800, lineHeight: 1.2, overflowWrap: 'break-word' }}>{s.val}</div>
             </div>
           </div>
         ))}
       </div>
 
       {/* Core Values + Glassdoor */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+      <div className="research-two-col">
         <div style={S.card}>
           <div style={{ ...S.label, color: 'var(--primary)', marginBottom: '1rem' }}>Core Values</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
@@ -147,7 +148,7 @@ export function DetailedResearchView({ research, app }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
       {/* Market position + culture */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div className="research-equal-col">
         <div style={S.card}>
           <div style={{ ...S.label, color: 'var(--primary)', marginBottom: '0.75rem' }}>Market Position</div>
           <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{dt.market_position || '—'}</p>
@@ -187,7 +188,7 @@ export function DetailedResearchView({ research, app }) {
       {dt.recent_news && dt.recent_news.length > 0 && (
         <div>
           <div style={{ ...S.label, marginBottom: '0.875rem' }}>Recent News</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="research-equal-col">
             {dt.recent_news.map((n, i) => (
               <div key={i} style={{ ...S.card, borderLeft: `4px solid ${sentimentColor(n.sentiment)}`, cursor: 'default' }}>
                 <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.4rem' }}>{n.source} • {n.time_ago}</span>
@@ -213,7 +214,7 @@ export function FinancialsView({ research, app }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+      <div className="research-three-col">
         {kpis.map(k => (
           <div key={k.label} style={S.card}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
@@ -232,7 +233,7 @@ export function FinancialsView({ research, app }) {
       </div>
 
       {/* Funding / profitability info */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div className="research-equal-col">
         <div style={S.card}>
           <div style={{ ...S.label, marginBottom: '0.75rem' }}>Funding & Stage</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -303,7 +304,7 @@ export function CompetitorView({ research, app }) {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div className="research-equal-col">
         {/* Competitive advantages */}
         {comp.competitive_advantages && comp.competitive_advantages.length > 0 && (
           <div style={S.card}>
@@ -352,9 +353,35 @@ export function CompetitorView({ research, app }) {
 }
 
 // ── Career Matches ──────────────────────────────────────────────────────────
-export function CareerMatchesView({ research, app }) {
+export function CareerMatchesView({ research, app, onRefresh, fetchWithAuth, apiUrl }) {
   const matches = research?.career_matches?.matches || [];
   const summary = research?.career_matches?.summary;
+  const direct = research?.career_matches?.direct_listing;
+  const [isUpdatingUrl, setIsUpdatingUrl] = useState(false);
+  const [urlUpdated, setUrlUpdated] = useState(false);
+
+  // Check if the current apply_url already matches the direct listing
+  const alreadyUsingDirect = direct?.url && app?.apply_url === direct.url;
+
+  const handleReplaceApplyUrl = async () => {
+    if (!direct?.url || !fetchWithAuth || !app?.id) return;
+    setIsUpdatingUrl(true);
+    try {
+      const res = await fetchWithAuth(`${apiUrl}/api/applications/${app.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apply_url: direct.url }),
+      });
+      if (res.ok) {
+        setUrlUpdated(true);
+        if (onRefresh) await onRefresh();
+      }
+    } catch (e) {
+      console.error('Failed to update apply URL', e);
+    } finally {
+      setIsUpdatingUrl(false);
+    }
+  };
 
   if (!research?.overview?.careers_url) {
     return (
@@ -370,61 +397,196 @@ export function CareerMatchesView({ research, app }) {
     );
   }
 
-  if (matches.length === 0) {
+  if (!direct && matches.length === 0) {
     return (
       <div style={{ ...S.card, textAlign: 'center', padding: '3rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
         <div className="skeleton-shimmer" style={{ width: '3rem', height: '3rem', borderRadius: '50%' }} />
         <div>
           <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>Scanning for Opportunities...</h3>
           <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)', maxWidth: '400px' }}>
-            We're currently scanning the company's careers page to find other roles that might fit your profile. This usually takes 30-60 seconds.
+            We're currently scanning the company's careers page to find the direct listing and other roles that might fit your profile. This usually takes 30-60 seconds.
           </p>
         </div>
       </div>
     );
   }
 
+  const confidenceColor = (c) => {
+    if (c === 'high') return '#22c55e';
+    if (c === 'medium') return '#fb923c';
+    return 'var(--text-muted)';
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
+      {/* ── Direct Listing Section ───────────────────────────────────── */}
+      {direct && (
+        <div style={{
+          ...S.card,
+          background: direct.found
+            ? 'linear-gradient(135deg, rgba(34,197,94,0.08), rgba(37,106,244,0.06))'
+            : 'var(--glass-bg)',
+          borderLeft: `4px solid ${direct.found ? '#22c55e' : 'var(--border-color)'}`,
+          padding: '1.75rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem' }}>
+            <div style={{
+              width: '3.5rem', height: '3.5rem', borderRadius: '1rem', flexShrink: 0,
+              background: direct.found ? 'rgba(34,197,94,0.12)' : 'var(--bg-tertiary)',
+              border: `1px solid ${direct.found ? 'rgba(34,197,94,0.25)' : 'var(--border-color)'}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <span className="material-symbols-outlined" style={{
+                fontSize: '1.75rem',
+                color: direct.found ? '#22c55e' : 'var(--text-muted)',
+                fontVariationSettings: direct.found ? "'FILL' 1" : "'FILL' 0",
+              }}>
+                {direct.found ? 'verified' : 'search_off'}
+              </span>
+            </div>
+
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
+                <span style={{ ...S.label, margin: 0, color: direct.found ? '#22c55e' : 'var(--text-muted)' }}>
+                  Direct Job Listing
+                </span>
+                {direct.found && direct.confidence && (
+                  <span style={{
+                    fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase',
+                    padding: '0.15rem 0.5rem', borderRadius: '99px',
+                    background: `${confidenceColor(direct.confidence)}18`,
+                    color: confidenceColor(direct.confidence),
+                    border: `1px solid ${confidenceColor(direct.confidence)}30`,
+                  }}>
+                    {direct.confidence} confidence
+                  </span>
+                )}
+              </div>
+
+              {direct.found ? (
+                <>
+                  <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    {direct.title}
+                  </h4>
+                  <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    {direct.match_reasoning}
+                  </p>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    {direct.url && (
+                      <a href={direct.url} target="_blank" rel="noreferrer" style={{
+                        textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                        padding: '0.4rem 0.85rem', borderRadius: '0.5rem',
+                        background: 'rgba(37,106,244,0.1)', border: '1px solid rgba(37,106,244,0.2)',
+                        fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)',
+                        transition: 'transform 0.2s',
+                      }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '0.9rem' }}>open_in_new</span>
+                        View on Company Site
+                      </a>
+                    )}
+
+                    {direct.url && !alreadyUsingDirect && !urlUpdated && (
+                      <button
+                        onClick={handleReplaceApplyUrl}
+                        disabled={isUpdatingUrl}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer',
+                          padding: '0.4rem 0.85rem', borderRadius: '0.5rem',
+                          background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)',
+                          fontSize: '0.75rem', fontWeight: 700, color: '#22c55e',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '0.9rem' }}>
+                          {isUpdatingUrl ? 'hourglass_empty' : 'swap_horiz'}
+                        </span>
+                        {isUpdatingUrl ? 'Updating...' : 'Use as Apply Link'}
+                      </button>
+                    )}
+
+                    {(alreadyUsingDirect || urlUpdated) && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                        padding: '0.4rem 0.85rem', borderRadius: '0.5rem',
+                        background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.15)',
+                        fontSize: '0.75rem', fontWeight: 700, color: '#22c55e',
+                      }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '0.9rem', fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                        Apply Link Updated
+                      </span>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h4 style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Listing Not Found on Careers Page
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                    We scanned the company's careers page but couldn't confidently match your current application to a direct listing. The role may be posted through a third-party job board only.
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Summary ─────────────────────────────────────────────────── */}
       {summary && (
         <div style={{ ...S.card, background: 'rgba(37,106,244,0.05)', borderLeft: '4px solid var(--primary)' }}>
-          <div style={S.label}>Landscape Summary</div>
+          <div style={S.label}>Hiring Landscape</div>
           <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: 1.6, fontWeight: 500 }}>{summary}</p>
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
-        {matches.map((m, i) => (
-          <div key={i} style={{ ...S.card, display: 'flex', gap: '1.25rem', alignItems: 'center', transition: 'transform 0.2s', cursor: m.url ? 'pointer' : 'default' }} onMouseEnter={e => m.url && (e.currentTarget.style.transform = 'translateY(-2px)')} onMouseLeave={e => m.url && (e.currentTarget.style.transform = 'translateY(0)')} onClick={() => m.url && window.open(m.url, '_blank')}>
-            <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '1rem', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid var(--border-color)' }}>
-              <div style={{ position: 'relative' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '1.75rem', color: 'var(--primary)' }}>work</span>
-                <div style={{ position: 'absolute', top: -4, right: -4, width: '1.25rem', height: '1.25rem', borderRadius: '50%', background: m.fit_score > 80 ? '#34d399' : '#fb923c', border: '2px solid var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 900, color: 'white' }}>
-                  {m.fit_score}
-                </div>
-              </div>
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{m.title}</h4>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {m.location && (
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '0.85rem' }}>location_on</span>
-                      {m.location}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{m.reasoning}</p>
-            </div>
-            {m.url && (
-              <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '1.25rem', opacity: 0.5 }}>chevron_right</span>
-            )}
+      {/* ── Similar Roles ───────────────────────────────────────────── */}
+      {matches.length > 0 && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.1rem' }}>explore</span>
+            <span style={{ ...S.label, margin: 0, fontSize: '0.65rem' }}>Other Roles That May Interest You</span>
           </div>
-        ))}
-      </div>
-      
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+            {matches.map((m, i) => (
+              <div key={i} style={{ ...S.card, display: 'flex', gap: '1.25rem', alignItems: 'center', transition: 'transform 0.2s', cursor: m.url ? 'pointer' : 'default' }} onMouseEnter={e => m.url && (e.currentTarget.style.transform = 'translateY(-2px)')} onMouseLeave={e => m.url && (e.currentTarget.style.transform = 'translateY(0)')} onClick={() => m.url && window.open(m.url, '_blank')}>
+                <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '1rem', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid var(--border-color)' }}>
+                  <div style={{ position: 'relative' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '1.75rem', color: 'var(--primary)' }}>work</span>
+                    <div style={{ position: 'absolute', top: -4, right: -4, width: '1.25rem', height: '1.25rem', borderRadius: '50%', background: m.fit_score > 80 ? '#34d399' : '#fb923c', border: '2px solid var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 900, color: 'white' }}>
+                      {m.fit_score}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{m.title}</h4>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      {m.location && (
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: '0.85rem' }}>location_on</span>
+                          {m.location}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{m.reasoning}</p>
+                </div>
+                {m.url && (
+                  <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '1.25rem', opacity: 0.5 }}>chevron_right</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* ── Footer link ─────────────────────────────────────────────── */}
       <div style={{ textAlign: 'center', marginTop: '1rem' }}>
         <a href={research.overview.careers_url} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
           View all openings on Careers Page

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import './index.css'
 import Sidebar from './components/Layout/Sidebar'
 import Dashboard from './pages/Dashboard'
@@ -14,6 +14,8 @@ import ResetPassword from './pages/ResetPassword'
 import Admin from './pages/Admin'
 import Account from './pages/Account'
 import { useAuth } from './context/AuthContext'
+import NotificationToast from './components/NotificationToast'
+import NotificationCenter from './components/NotificationCenter'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
@@ -45,6 +47,7 @@ function App() {
     return hashToScreen(window.location.hash) || 'dashboard';
   });
   const [selectedApp, setSelectedApp] = useState(null);
+  const [notificationAnchor, setNotificationAnchor] = useState(null);
   const [apps, setApps] = useState([]);
   const [uiConfigTheme, setUiConfigTheme] = useState('system');
   const [isEnriching, setIsEnriching] = useState(false);
@@ -442,7 +445,37 @@ function App() {
                />
       }
       case 'lifecycle':
-        return <ApplicationLifecycle app={selectedApp} isEnrichingGlobal={isEnriching} onBack={() => setScreen('detail')} onUpdate={handleAppUpdate} />
+        return <ApplicationLifecycle 
+          app={selectedApp} 
+          isEnrichingGlobal={isEnriching} 
+          onBack={() => setScreen('detail')} 
+          onUpdate={handleAppUpdate}
+          notificationAnchor={notificationAnchor}
+          onAnchorConsumed={() => setNotificationAnchor(null)}
+          onStartFullGeneration={(appToGen, resumeInst, clInst) => {
+            sessionStorage.setItem('extensionJobData', JSON.stringify({
+              id: appToGen.id,
+              title: appToGen.job_title,
+              company: appToGen.company,
+              logo: appToGen.company_logo,
+              link: appToGen.job_url,
+              applyLink: appToGen.apply_url,
+              description: appToGen.job_description,
+              salaryRange: appToGen.salary_range,
+              datePosted: appToGen.date_posted,
+              deadline: appToGen.deadline,
+              jobType: appToGen.job_type,
+              locationType: appToGen.location_type,
+              location: appToGen.location,
+              relocation: appToGen.relocation,
+              interestLevel: appToGen.interest_level,
+              remarks: appToGen.remarks,
+              resumeInstructions: resumeInst,
+              clInstructions: clInst
+            }));
+            setScreen('new_app');
+          }}
+        />
       case 'capture':
         return <MobileCapture onSaved={loadApplications} onGoToDashboard={() => setScreen('dashboard')} />
       case 'analytics':
@@ -463,6 +496,28 @@ function App() {
   // Hide sidebar on capture screen (mobile-first)
   const showSidebar = currentScreen !== 'capture';
 
+  // ── Notification navigation handler ──────────────────────────────────────
+  // Must be declared before any conditional returns (Rules of Hooks).
+  const handleNotificationNavigate = useCallback(async (screen, appId, anchor) => {
+    if (appId) {
+      try {
+        const res = await fetchWithAuth(`${API_URL}/api/applications/${appId}`);
+        if (res.ok) {
+          const appData = await res.json();
+          setSelectedApp(appData);
+        }
+      } catch (e) {
+        console.error('Failed to load app for notification', e);
+      }
+    }
+    if (anchor) {
+      setNotificationAnchor(anchor);
+    }
+    if (screen) {
+      setScreen(screen);
+    }
+  }, [fetchWithAuth, setScreen]);
+
   if (authLoading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
@@ -482,6 +537,7 @@ function App() {
     return <Auth />;
   }
 
+
   return (
     <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       {/* Sidebar Navigation */}
@@ -500,6 +556,10 @@ function App() {
       <main style={{ flex: 1, height: '100%', overflowY: 'auto', position: 'relative' }}>
         {renderScreen()}
       </main>
+
+      {/* Notification system - global overlays */}
+      <NotificationToast onNavigate={handleNotificationNavigate} />
+      <NotificationCenter onNavigate={handleNotificationNavigate} />
     </div>
   )
 }

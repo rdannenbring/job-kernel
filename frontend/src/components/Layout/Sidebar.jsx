@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import logoImgDark from '../../assets/jobkernel-logo-dark.png';
 import logoImgLight from '../../assets/jobkernel-logo-light.png';
+import { useNotifications } from '../../context/NotificationContext';
 
 const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle, user, onLogout }) => {
     const [collapsed, setCollapsed] = useState(false);
+    const { unreadCount, centerOpen, setCenterOpen } = useNotifications();
     
     // Auto-collapse based on window width
     React.useEffect(() => {
@@ -176,6 +178,59 @@ const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle, user, onLogou
                         );
                     })}
                 </nav>
+
+                {/* Notification Bell */}
+                <button
+                    data-notification-bell
+                    onClick={() => setCenterOpen(!centerOpen)}
+                    title={collapsed ? `Notifications${unreadCount > 0 ? ` (${unreadCount})` : ''}` : undefined}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.65rem',
+                        padding: collapsed ? '0.6rem' : '0.6rem 0.75rem',
+                        borderRadius: '0.5rem',
+                        background: centerOpen ? 'rgba(37,106,244,0.12)' : 'transparent',
+                        color: centerOpen ? 'var(--primary-light)' : 'var(--text-secondary)',
+                        border: centerOpen ? '1px solid rgba(37,106,244,0.2)' : '1px solid transparent',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        textAlign: 'left',
+                        justifyContent: collapsed ? 'center' : 'flex-start',
+                        width: '100%',
+                        whiteSpace: 'nowrap',
+                        position: 'relative',
+                    }}
+                    onMouseEnter={e => { if (!centerOpen) { e.currentTarget.style.background = 'var(--bg-tertiary)'; e.currentTarget.style.color = 'var(--text-primary)'; } }}
+                    onMouseLeave={e => { if (!centerOpen) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; } }}
+                >
+                    <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>notifications</span>
+                        {unreadCount > 0 && (
+                            <span style={{
+                                position: 'absolute', top: '-4px', right: '-6px',
+                                minWidth: '16px', height: '16px', borderRadius: '99px',
+                                background: '#ef4444', color: 'white',
+                                fontSize: '0.55rem', fontWeight: 900,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                padding: '0 3px', border: '2px solid var(--bg-sidebar)',
+                                animation: 'pulse 2s infinite',
+                            }}>
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
+                    </span>
+                    {!collapsed && <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Notifications</span>}
+                    {!collapsed && unreadCount > 0 && (
+                        <span style={{
+                            marginLeft: 'auto', fontSize: '0.65rem', fontWeight: 800,
+                            background: '#ef4444', color: 'white', borderRadius: '99px',
+                            padding: '0.1rem 0.4rem', minWidth: '1rem', textAlign: 'center',
+                        }}>
+                            {unreadCount}
+                        </span>
+                    )}
+                </button>
 
                 {/* Theme Toggle */}
                 <div style={{ padding: '0.2rem 0', marginTop: 'auto' }}>

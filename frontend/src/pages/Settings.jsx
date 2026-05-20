@@ -137,7 +137,15 @@ const RevealModal = ({ keyData, onClose }) => {
 
 const Settings = ({ theme: externalTheme, onThemeChange, setScreen }) => {
     const { fetchWithAuth, user } = useAuth();
-    const [uiConfig, setUiConfig] = useState({ font_size: 14.5, theme: 'system' });
+    const defaultNotifPrefs = {
+        success: { badge: true, toast: true },
+        info:    { badge: true, toast: true },
+        warning: { badge: true, toast: true },
+        error:   { badge: true, toast: true },
+        action:  { badge: true, toast: true },
+        update:  { badge: true, toast: true },
+    };
+    const [uiConfig, setUiConfig] = useState({ font_size: 14.5, theme: 'system', notification_prefs: defaultNotifPrefs });
     const [apiKeys, setApiKeys] = useState([]);
     const [revealedKeys, setRevealedKeys] = useState({}); // keyId -> bool
     const [loading, setLoading] = useState(false);
@@ -256,9 +264,10 @@ const Settings = ({ theme: externalTheme, onThemeChange, setScreen }) => {
             <div style={{ display: 'flex', marginBottom: '2rem', borderBottom: '1px solid #334155', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex' }}>
                     {[
-                        { id: 'extension',  label: 'API Keys' },
-                        { id: 'appearance', label: 'Appearance' },
-                        { id: 'about',      label: 'About' },
+                        { id: 'extension',     label: 'API Keys' },
+                        { id: 'notifications', label: 'Notifications' },
+                        { id: 'appearance',    label: 'Appearance' },
+                        { id: 'about',         label: 'About' },
                     ].map(tab => (
                         <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
                             background: 'transparent', border: 'none', padding: '0.5rem 1.1rem', cursor: 'pointer',
@@ -422,6 +431,31 @@ const Settings = ({ theme: externalTheme, onThemeChange, setScreen }) => {
                         </div>
                     </div>
 
+                    <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                        <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--primary)' }}>notifications</span>
+                                Notification Display Duration
+                            </span>
+                            <span>{uiConfig.notification_duration || 8}s</span>
+                        </label>
+                        <input
+                            type="range" min="3" max="30" step="1"
+                            value={uiConfig.notification_duration || 8}
+                            onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setUiConfig({ ...uiConfig, notification_duration: val });
+                            }}
+                            style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--primary-light)' }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                            <span>3s (Quick)</span><span>8s (Default)</span><span>30s (Persistent)</span>
+                        </div>
+                        <p style={{ margin: '0.5rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                            How long toast notifications stay visible before auto-dismissing. You can always view past notifications from the sidebar bell icon.
+                        </p>
+                    </div>
+
                     <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
                         <button className="btn btn-primary" onClick={saveConfig} disabled={loading}>
                             {loading ? 'Saving...' : 'Save Appearance'}
@@ -429,6 +463,152 @@ const Settings = ({ theme: externalTheme, onThemeChange, setScreen }) => {
                     </div>
                 </div>
             )}
+
+            {/* ── Notifications Tab ──────────────────────────────────────────── */}
+            {activeTab === 'notifications' && (() => {
+                const prefs = uiConfig.notification_prefs || defaultNotifPrefs;
+                const categories = [
+                    { id: 'success', icon: 'check_circle', color: '#22c55e', label: 'Success',     desc: 'Tasks completed successfully' },
+                    { id: 'info',    icon: 'info',         color: '#3b82f6', label: 'Information',  desc: 'General informational alerts' },
+                    { id: 'warning', icon: 'warning',      color: '#f59e0b', label: 'Warning',      desc: 'Something needs attention' },
+                    { id: 'error',   icon: 'error',        color: '#ef4444', label: 'Error',        desc: 'Something failed or went wrong' },
+                    { id: 'action',  icon: 'touch_app',    color: '#8b5cf6', label: 'Action Required', desc: 'User needs to review or act' },
+                    { id: 'update',  icon: 'sync',         color: '#06b6d4', label: 'Update',       desc: 'Background data was changed' },
+                ];
+
+                const togglePref = (catId, field) => {
+                    setUiConfig(prev => ({
+                        ...prev,
+                        notification_prefs: {
+                            ...prev.notification_prefs,
+                            [catId]: {
+                                ...(prev.notification_prefs || defaultNotifPrefs)[catId],
+                                [field]: !(prev.notification_prefs || defaultNotifPrefs)[catId]?.[field] ?? true,
+                            }
+                        }
+                    }));
+                };
+
+                return (
+                    <div className="card">
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>notifications_active</span>
+                            Notification Preferences
+                        </h3>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+                            Control which notification categories appear in your unread badge count and as popup toast alerts.
+                        </p>
+
+                        {/* Header Row */}
+                        <div style={{
+                            display: 'grid', gridTemplateColumns: '1fr 90px 90px',
+                            gap: '0.75rem', padding: '0 0.5rem 0.75rem',
+                            borderBottom: '1px solid var(--border-color)',
+                            marginBottom: '0.5rem',
+                        }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>
+                                Category
+                            </span>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', textAlign: 'center' }}>
+                                Badge
+                            </span>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', textAlign: 'center' }}>
+                                Toast
+                            </span>
+                        </div>
+
+                        {/* Category Rows */}
+                        {categories.map(cat => {
+                            const catPref = prefs[cat.id] || { badge: true, toast: true };
+                            return (
+                                <div
+                                    key={cat.id}
+                                    style={{
+                                        display: 'grid', gridTemplateColumns: '1fr 90px 90px',
+                                        gap: '0.75rem', alignItems: 'center',
+                                        padding: '0.75rem 0.5rem', borderRadius: '0.625rem',
+                                        transition: 'background 0.15s',
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                    {/* Category Info */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div style={{
+                                            width: '2.25rem', height: '2.25rem', borderRadius: '0.6rem', flexShrink: 0,
+                                            background: `${cat.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        }}>
+                                            <span className="material-symbols-outlined" style={{
+                                                fontSize: '1.15rem', color: cat.color, fontVariationSettings: "'FILL' 1",
+                                            }}>{cat.icon}</span>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3 }}>
+                                                {cat.label}
+                                            </div>
+                                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3, marginTop: '0.1rem' }}>
+                                                {cat.desc}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Badge Toggle */}
+                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                        <button
+                                            onClick={() => togglePref(cat.id, 'badge')}
+                                            style={{
+                                                width: '44px', height: '24px', borderRadius: '12px', border: 'none',
+                                                cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
+                                                background: catPref.badge !== false ? cat.color : 'var(--bg-tertiary)',
+                                            }}
+                                            title={catPref.badge !== false ? 'Click to exclude from unread badge' : 'Click to include in unread badge'}
+                                        >
+                                            <div style={{
+                                                width: '18px', height: '18px', borderRadius: '50%',
+                                                background: 'white', position: 'absolute', top: '3px',
+                                                left: catPref.badge !== false ? '23px' : '3px',
+                                                transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                                            }} />
+                                        </button>
+                                    </div>
+
+                                    {/* Toast Toggle */}
+                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                        <button
+                                            onClick={() => togglePref(cat.id, 'toast')}
+                                            style={{
+                                                width: '44px', height: '24px', borderRadius: '12px', border: 'none',
+                                                cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
+                                                background: catPref.toast !== false ? cat.color : 'var(--bg-tertiary)',
+                                            }}
+                                            title={catPref.toast !== false ? 'Click to disable popup alerts' : 'Click to enable popup alerts'}
+                                        >
+                                            <div style={{
+                                                width: '18px', height: '18px', borderRadius: '50%',
+                                                background: 'white', position: 'absolute', top: '3px',
+                                                left: catPref.toast !== false ? '23px' : '3px',
+                                                transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                                            }} />
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {/* Info note */}
+                        <p style={{ margin: '1.25rem 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.5, padding: '0.75rem', background: 'var(--bg-tertiary)', borderRadius: '0.5rem' }}>
+                            <strong>Badge:</strong> Include this category in the unread notification count shown on the sidebar bell icon.<br />
+                            <strong>Toast:</strong> Show floating popup alerts when notifications of this category arrive.
+                        </p>
+
+                        <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button className="btn btn-primary" onClick={saveConfig} disabled={loading}>
+                                {loading ? 'Saving...' : 'Save Preferences'}
+                            </button>
+                        </div>
+                    </div>
+                );
+            })()}
 
             {/* ── About Tab ─────────────────────────────────────────────────── */}
             {activeTab === 'about' && (

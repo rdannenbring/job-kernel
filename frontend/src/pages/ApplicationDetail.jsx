@@ -747,9 +747,6 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     const [showCLModal, setShowCLModal] = React.useState(false);
     const [resumeInstructions, setResumeInstructions] = React.useState('');
     const [clInstructions, setClInstructions] = React.useState('');
-    const [showInstructionsModal, setShowInstructionsModal] = React.useState(false);
-    const [modalResumeInstructions, setModalResumeInstructions] = React.useState('');
-    const [modalClInstructions, setModalClInstructions] = React.useState('');
 
     
     const [showResumeOverrideConfirm, setShowResumeOverrideConfirm] = React.useState(false);
@@ -2516,114 +2513,6 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
 
             {/* Main Content Areas — padded wrapper */}
             <div style={{ padding: '3rem', paddingTop: '2rem' }}>
-                {needsGeneration && (
-                    <>
-                        <div style={{ marginBottom: '2rem', padding: '1.25rem', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(16, 185, 129, 0.1))', borderRadius: '1rem', border: '1px solid var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div>
-                                <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>auto_awesome</span>
-                                    Generate Documents
-                                </h3>
-                                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Use AI to tailor your resume and write a cover letter based on this job.</p>
-                            </div>
-                            <button 
-                                className="btn btn-primary" 
-                                onClick={() => setShowInstructionsModal(true)}
-                                style={{ padding: '0.75rem 1.5rem', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                            >
-                                Generate Now
-                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>arrow_forward</span>
-                            </button>
-                        </div>
-
-                        {/* Pre-launch Instructions Modal */}
-                        {showInstructionsModal && (
-                            <div style={{
-                                position: 'fixed', inset: 0, zIndex: 9000,
-                                background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}>
-                                <div style={{
-                                    background: 'var(--bg-card)', borderRadius: '1rem',
-                                    border: '1px solid var(--border-color)',
-                                    padding: '2rem', width: '100%', maxWidth: '520px',
-                                    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.6)',
-                                    display: 'flex', flexDirection: 'column', gap: '1.5rem'
-                                }}>
-                                    <div>
-                                        <h2 style={{ margin: '0 0 0.35rem', fontSize: '1.4rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>tune</span>
-                                            Any special instructions?
-                                        </h2>
-                                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6 }}>
-                                            Optionally guide the AI before it tailors your documents. Leave blank to use default settings.
-                                        </p>
-                                    </div>
-
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>description</span>
-                                            Resume Instructions
-                                        </label>
-                                        <textarea
-                                            className="form-textarea"
-                                            rows={3}
-                                            placeholder="e.g. 'Emphasize my leadership roles' or 'Highlight Python experience'"
-                                            value={modalResumeInstructions}
-                                            onChange={e => setModalResumeInstructions(e.target.value)}
-                                            style={{ resize: 'vertical', fontSize: '0.9rem' }}
-                                            autoFocus
-                                        />
-                                    </div>
-
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>mail</span>
-                                            Cover Letter Instructions
-                                        </label>
-                                        <textarea
-                                            className="form-textarea"
-                                            rows={3}
-                                            placeholder="e.g. 'Keep it under one page' or 'Formal and concise tone'"
-                                            value={modalClInstructions}
-                                            onChange={e => setModalClInstructions(e.target.value)}
-                                            style={{ resize: 'vertical', fontSize: '0.9rem' }}
-                                        />
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '0.75rem' }}>
-                                        <button
-                                            className="btn btn-secondary"
-                                            onClick={() => {
-                                                setShowInstructionsModal(false);
-                                                setModalResumeInstructions('');
-                                                setModalClInstructions('');
-                                            }}
-                                            style={{ flex: 1, justifyContent: 'center' }}
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            className="btn btn-primary"
-                                            onClick={() => {
-                                                if (onStartFullGeneration) {
-                                                    onStartFullGeneration(app, modalResumeInstructions, modalClInstructions);
-                                                }
-                                                setShowInstructionsModal(false);
-                                                setModalResumeInstructions('');
-                                                setModalClInstructions('');
-                                            }}
-                                            style={{ flex: 1, justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                                        >
-                                            <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>auto_awesome</span>
-                                            Generate
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </>
-                )}
                 {/* Phase Content from Lifecycle Component */}
             <div style={{ 
                 marginBottom: '2.5rem', 
@@ -2637,6 +2526,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     app={app}
                     activePhaseTab={activePhaseTab}
                     onUpdate={onUpdate}
+                    onStartFullGeneration={onStartFullGeneration}
                     hideHeader={true}
                     avgScore={avgScore}
                 />
