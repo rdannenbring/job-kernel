@@ -383,7 +383,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       return res;
     } catch (err) {
-      console.error('[JobKernel] fetchWithAuth network error:', err);
+      if (err.message === 'Failed to fetch' || err instanceof TypeError) {
+        console.debug(`[JobKernel] fetchWithAuth network error: Backend offline or unreachable for ${url}`);
+        extLog('WARNING', 'Backend connection failed (offline)', { url, error: err.message });
+      } else {
+        console.error('[JobKernel] fetchWithAuth network error:', err);
+        extLog('ERROR', 'fetchWithAuth exception', { url, error: err.message });
+      }
       throw err;
     }
   }
@@ -433,6 +439,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastScoredJobId = null;
   let lastScoredJobUrl = null;
   let lastScoredDescription = null;
+  let lastScoredScore = null;
+  let lastScoredDetails = null;
   let lastNetworkMatches = []; // DB matches from last renderSideConnections call
   let resolvingPhotos = new Set(); // Track URLs currently being resolved to avoid duplicates
   let batchResolving = false;
@@ -1687,16 +1695,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return data.application;
       }
     } catch (e) {
-      console.warn('[JobAutomator] check-job-url failed:', e);
+      if (e.message === 'Failed to fetch' || e instanceof TypeError) {
+        console.debug('[JobAutomator] check-job-url: Backend offline, treating as new job.');
+      } else {
+        console.warn('[JobAutomator] check-job-url failed:', e);
+      }
     }
     return null;
   }
 
   // ── Data Loading Logic ────────────────────────────────────────────────────
   const loadData = async ({ silent = false } = {}) => {
+    // Show loading immediately so there's no delay waiting for settings
+    if (!silent) showLoading('Loading Job', 'Fetching page data\u2026');
+    
     await settingsPromise;
     try {
-      if (!silent) showLoading('Loading Job', 'Fetching page data\u2026');
       
       chrome.storage.local.get(['latestJobData'], async (result) => {
         try {
@@ -1708,10 +1722,24 @@ document.addEventListener('DOMContentLoaded', () => {
             hideLoading();
             return;
           }
+          
+          if (scrapedData._isLoading) {
+            showLoading('Loading Job', 'Fetching page data\u2026');
+            return;
+          }
 
           // 1. Kick off LinkedIn Connections fetch IMMEDIATELY using scraped data
           // (Fastest possible networking start)
           checkLinkedInConnections(scrapedData);
+
+          // Restore cached score for unsaved jobs if we are re-rendering the exact same context (e.g., switched tabs)
+          const currentJobUrl = (scrapedData?.link || scrapedData?.job_url || '').split('?')[0].split('#')[0];
+          const currentDesc = (scrapedData?.description || scrapedData?.job_description || '').substring(0, 1000);
+          const isSameJobContext = (currentJobUrl && currentJobUrl === lastScoredJobUrl && currentDesc === lastScoredDescription);
+          if (isSameJobContext && lastScoredScore != null && !scrapedData.match_score) {
+              scrapedData.match_score = lastScoredScore;
+              scrapedData.match_details = lastScoredDetails;
+          }
 
           updateLoadingProgress(30, 'Checking database\u2026');
           const appRecord = await checkExistingApplication(scrapedData.link || scrapedData.job_url);
@@ -1771,8 +1799,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // 3. Kick off the heavy scoring analysis LAST (Slow/AI)
           // We use a small timeout to ensure the faster fetches above get a head start 
           // on the backend, particularly if it's single-threaded.
-          const currentJobUrl = (scrapedData?.link || scrapedData?.job_url || '').split('?')[0].split('#')[0];
-          const currentDesc = (scrapedData?.description || scrapedData?.job_description || '').substring(0, 1000); // Compare first 1000 chars for speed
+          // We already have currentJobUrl and currentDesc from earlier in this function
           const isSameJob = (currentAppRecord && currentAppRecord.id === lastScoredJobId) || 
                            (currentJobUrl && currentJobUrl === lastScoredJobUrl && currentDesc === lastScoredDescription);
 
@@ -2058,7 +2085,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function linkContact(contact, btn, options = {}) {
-        if (!currentAppRecord) return; // Silent return for automated sync
+        const appRecord = currentAppRecord;
+        if (!appRecord) return; // Silent return for automated sync
         
         const originalContent = btn?.innerHTML;
         if (btn) {
@@ -2066,7 +2094,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('syncing');
         }
         
-        console.log(`[JobKernel] Saving contact: ${contact.name} to application ${currentAppRecord.id}`);
+        console.log(`[JobKernel] Saving contact: ${contact.name} to application ${appRecord.id}`);
         try {
             // STEP 1: Sync to Global Network (linkedin_connections table)
             // This ensures they show up as "Matched" for ALL future jobs at this company
@@ -2078,17 +2106,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         name: contact.name,
                         headline: contact.headline,
                         profile_url: contact.profile_url,
-                        company_name: currentAppRecord.company,
+                        company_name: appRecord.company,
                         photo_url: contact.photo_url
                     }]
                 })
             });
 
             // STEP 2: Link to this specific Application (application_contacts table)
-            const existingContact = currentAppRecord.contacts?.find(c => c.linkedin_url === contact.profile_url);
+            const existingContact = appRecord.contacts?.find(c => c.linkedin_url === contact.profile_url);
 
             if (!existingContact) {
-                const res = await fetchWithAuth(`${API_URL}/api/applications/${currentAppRecord.id}/contacts`, {
+                const res = await fetchWithAuth(`${API_URL}/api/applications/${appRecord.id}/contacts`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2104,7 +2132,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const savedContact = await res.json();
                     console.log(`[JobKernel] Successfully linked contact: ${contact.name}`);
                     // Update local record to avoid re-syncing this render
-                    if (currentAppRecord) {
+                    if (currentAppRecord && currentAppRecord.id === appRecord.id) {
                         if (!currentAppRecord.contacts) currentAppRecord.contacts = [];
                         if (!currentAppRecord.contacts.some(c => c.linkedin_url === contact.profile_url)) {
                             currentAppRecord.contacts.push({
@@ -2118,7 +2146,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (!existingContact.photo_url && contact.photo_url) {
                 // Update existing contact with the newly discovered photo
-                const res = await fetchWithAuth(`${API_URL}/api/applications/${currentAppRecord.id}/contacts/${existingContact.id}`, {
+                const res = await fetchWithAuth(`${API_URL}/api/applications/${appRecord.id}/contacts/${existingContact.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2146,6 +2174,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (e) {
             console.error(e);
+            extLog('ERROR', `Failed to link contact: ${e.message}`, { name: contact.name, url: contact.profile_url, error: e.toString() });
             if (btn) {
                 btn.innerHTML = originalContent;
                 btn.classList.remove('syncing');
@@ -2167,7 +2196,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const newVal = changes.latestJobData.newValue;
         if (newVal) {
           console.log('[JobAutomator] latestJobData updated — reloading panel.');
-          loadData({ silent: true });
+          // Pass silent: false ONLY if we explicitly know it's a new job loading
+          loadData({ silent: !newVal._isLoading });
         }
       }
     } catch (e) {
@@ -3420,6 +3450,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update current target and global state
         target.match_score = score;
         target.match_details = result; 
+        lastScoredScore = score;
+        lastScoredDetails = result;
         if (currentAppRecord && currentAppRecord.id === appId) {
            currentAppRecord.match_score = score;
            currentAppRecord.match_details = result;
@@ -3437,7 +3469,11 @@ document.addEventListener('DOMContentLoaded', () => {
         showStatus('Match analysis failed. Check server logs.', 'error');
       }
     } catch (e) {
-      console.error('[JobKernel] Scoring error exception:', e);
+      if (e.message === 'Failed to fetch' || e instanceof TypeError) {
+        console.debug('[JobKernel] Scoring error: Backend offline.');
+      } else {
+        console.error('[JobKernel] Scoring error exception:', e);
+      }
       updateMatchScoreUI(target, 'apply', false);
       updateMatchScoreUI(target, 'details', false);
       showStatus('Scoring error. Is the server reachable?', 'error');
@@ -3549,4 +3585,8 @@ document.addEventListener('DOMContentLoaded', () => {
       triggerMagicScan();
     }
   });
+
+  // Attempt to flush any queued logs
+  chrome.runtime.sendMessage({ action: 'flush_logs' }).catch(() => {});
 });
+

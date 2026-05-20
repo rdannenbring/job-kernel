@@ -518,6 +518,7 @@ const LINKEDIN_SCRAPER = {
     const m = matchWorkplace(pageText.substring(0, 5000));
     if (m) { console.log('[JobAutomator] Workplace: E (page text)', m); return m; }
 
+    extLog('WARNING', 'Workplace extraction FAILED', { url: window.location.href });
     console.warn('[JobAutomator] Workplace extraction FAILED.');
     return null;
   },
@@ -679,6 +680,7 @@ const LINKEDIN_SCRAPER = {
       if (m) { console.log('[JobAutomator] Job Type: F (description text)', m); return m; }
     }
 
+    extLog('WARNING', 'Job Type extraction FAILED', { url: window.location.href });
     console.warn('[JobAutomator] Job Type extraction FAILED.');
     return null;
   },
@@ -1613,6 +1615,8 @@ function injectFloatingButton() {
   if (isExtValid()) {
     try {
       chrome.storage.local.get(['isPanelOpen'], r => updateButtonState(btn, !!r.isPanelOpen));
+      // Pre-enable the side panel for this tab immediately so it's ready for clicks
+      chrome.runtime.sendMessage({ action: 'pre_enable_side_panel' }).catch(() => {});
     } catch(e) {}
   }
 
@@ -1622,25 +1626,41 @@ function injectFloatingButton() {
       return;
     }
     try {
-      chrome.storage.local.get(['isPanelOpen'], (result) => {
-        const isOpen = !!result.isPanelOpen;
+      const isOpen = btn.classList.contains('panel-open');
 
-        if (isOpen) {
-          safeSendMessage({ action: 'close_side_panel' }, () => {
-            if (chrome.runtime.lastError) console.warn(chrome.runtime.lastError);
-            updateButtonState(btn, false);
-          });
-        } else {
+      if (isOpen) {
+        safeSendMessage({ action: 'close_side_panel' }, () => {
+          if (chrome.runtime.lastError) console.warn(chrome.runtime.lastError);
+          updateButtonState(btn, false);
+        });
+      } else {
+        // 1. Clear old data instantly so the panel doesn't flash the previous job.
+        // The side panel listens to this and will instantly show its loading spinner.
+        chrome.storage.local.set({ latestJobData: { _isLoading: true } });
+
+        // 2. Immediately open the panel using the user gesture
+        safeSendMessage({ action: 'open_side_panel' }, () => {
+          if (chrome.runtime.lastError) console.warn(chrome.runtime.lastError);
+          updateButtonState(btn, true);
+        });
+
+        // 2. Tell the panel we are actively scraping so it can show a loading state
+        safeSendMessage({ action: 'job_loading' });
+
+        // 3. Defer the heavy DOM scraping to the next tick. 
+        // This prevents the synchronous scrapeJobData() function from blocking
+        // the main thread and delaying the panel from sliding out.
+        setTimeout(() => {
           const jobData = scrapeJobData();
           console.log('[JobAutomator] Scraped Job Data:', jobData);
           extLog('INFO', `Scraped job data for ${jobData.company || 'Unknown Company'}`, { title: jobData.title, url: jobData.url });
-          safeSendMessage({ action: 'open_and_store', data: jobData }, () => {
+          
+          // 4. Store the data. The background script will auto-refresh the panel when done.
+          safeSendMessage({ action: 'store_job_data', data: jobData }, () => {
             if (chrome.runtime.lastError) console.warn(chrome.runtime.lastError);
-            updateButtonState(btn, true);
-            safeSendMessage({ action: 'refresh_panel_data' });
           });
-        }
-      });
+        }, 10);
+      }
     } catch(e) {
       console.error('[JobAutomator] Error expanding panel:', e);
     }
