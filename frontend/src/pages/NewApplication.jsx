@@ -140,7 +140,10 @@ function NewApplication({ onComplete }) {
                 
                 // Start processing after a brief delay to ensure state updates
                 setTimeout(() => {
-                    document.getElementById('start-new-app-form')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))
+                    const submitBtn = document.querySelector('#start-new-app-form button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.click();
+                    }
                 }, 500)
                 
                 return;
@@ -184,9 +187,9 @@ function NewApplication({ onComplete }) {
     }
 
     const handleSubmit = async (e) => {
-        e.preventDefault()
-        // No longer strictly need a resume file if Base Resume exists in profile
-        if (!resumeFile && !userProfile?.base_resume_path) {
+        e?.preventDefault()
+        // No longer strictly need a resume file if Base Resume exists in profile, or if regenerating an existing app
+        if (!resumeFile && !userProfile?.base_resume_path && !extensionMetadata?.id) {
              return setError('Please upload a resume or set a Base Resume in your profile')
         }
 
@@ -231,6 +234,11 @@ function NewApplication({ onComplete }) {
 
         try {
             const formData = new FormData()
+            
+            if (extensionMetadata?.id) {
+                formData.append('application_id', extensionMetadata.id)
+            }
+            
             if (resumeFile) {
                 formData.append('resume', resumeFile)
             } else if (userProfile?.base_resume_path) {
@@ -306,6 +314,7 @@ function NewApplication({ onComplete }) {
             // This enables OnlyOffice persistence during manual edits on the scoring screen
             try {
                 const savePayload = {
+                    application_id: extensionMetadata?.id || duplicateApp?.application_id || null,
                     job_url: jobUrl?.trim() || '',
                     job_description: jobDescription,
                     job_title: data.job_metadata?.title || "Unknown Job",
@@ -442,6 +451,7 @@ function NewApplication({ onComplete }) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    application_id: result.id,
                     resume_text: resumeText,
                     job_description: jobText,
                     base_filename: result.original_filename,
@@ -450,7 +460,10 @@ function NewApplication({ onComplete }) {
                 })
             })
 
-            if (!res.ok) throw new Error("Failed to generate cover letter")
+            if (!res.ok) {
+                const errData = await res.json()
+                throw new Error(errData.detail || "Failed to generate cover letter")
+            }
             const data = await res.json()
             setCoverLetterResult(data)
 
@@ -1202,7 +1215,7 @@ function NewApplication({ onComplete }) {
                             )}
                         </div>
                         <div className="btn-group">
-                            <button type="submit" className="btn btn-primary" disabled={isProcessing || (!resumeFile && !userProfile?.base_resume_path)} style={{ gap: '0.5rem', padding: '1rem 2rem', fontSize: '1.1rem' }}>
+                            <button type="submit" className="btn btn-primary" disabled={isProcessing || (!resumeFile && !userProfile?.base_resume_path && !extensionMetadata?.id)} style={{ gap: '0.5rem', padding: '1rem 2rem', fontSize: '1.1rem' }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '1.4rem' }}>rocket_launch</span>
                                 Tailor Resume
                             </button>
