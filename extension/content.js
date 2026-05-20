@@ -1,4 +1,50 @@
 // ─── Utility helpers ────────────────────────────────────────────────────────
+function getDynamicLeftPanel() {
+    const cards = Array.from(document.querySelectorAll('li[data-occludable-job-id], div[data-job-id], .job-card-container, [class*="job-card-list"]'));
+    const applyBtn = document.querySelector('.jobs-apply-button, button[data-control-name="jobdetails_apply_btn"]');
+    if (cards.length > 0) {
+        let parent = cards[0].parentElement;
+        let bestCandidate = null;
+        while (parent && parent !== document.body && parent !== document.documentElement) {
+            // As long as the parent doesn't contain the apply button and isn't the full screen width
+            if (!applyBtn || !parent.contains(applyBtn)) {
+                if (parent.getBoundingClientRect().width < window.innerWidth * 0.6) {
+                    bestCandidate = parent;
+                } else {
+                    break; // stop going up once it spans the screen
+                }
+            } else {
+                break; // stop going up once we hit a wrapper containing both
+            }
+            parent = parent.parentElement;
+        }
+        if (bestCandidate) return bestCandidate;
+    }
+    return document.querySelector('ul.jobs-search-results__list, [class*="scaffold-layout__list"], .jobs-search-results-list');
+}
+
+function isLeftPanel(el) {
+  if (!el || !el.closest) return false;
+  
+  // 1. Direct dynamic left panel rejection
+  const leftPanel = getDynamicLeftPanel();
+  if (leftPanel && leftPanel.contains(el)) return true;
+  
+  // 2. Direct right pane containment check
+  if (typeof getLIRoot === 'function') {
+    const rightPane = getLIRoot();
+    if (rightPane && rightPane !== document && rightPane.id !== 'workspace') {
+      const cls = rightPane.className || '';
+      if (!cls.includes('scaffold-layout__main') && !cls.includes('job-view-layout')) {
+        if (!rightPane.contains(el)) return true;
+      }
+    }
+  }
+  
+  // 3. Fallback checks
+  return !!el.closest('ul, li, [class*="jobs-search-results"], [class*="scaffold-layout__list"], [class*="job-card"], [data-job-id], [class*="job-list"]');
+}
+
 /**
  * Send a log message to the backend via the background script.
  */
@@ -17,9 +63,18 @@ extLog('INFO', 'Content script initialized', { url: window.location.href });
  */
 function firstMatch(selectors, root = document) {
   for (const sel of selectors) {
-    const el = root.querySelector(sel);
-    const text = el?.innerText?.trim();
-    if (text) return text;
+    const els = Array.from(root.querySelectorAll(sel));
+    const isGiantContainer = root === document || root.id === 'workspace' || (root.className && typeof root.className.includes === 'function' && root.className.includes('main'));
+    const iterable = isGiantContainer ? els.reverse() : els;
+    for (const el of iterable) {
+      const text = el?.innerText?.trim();
+      // Skip generic UI buttons that might get caught by broad selectors
+      if (text && /^(show more|show all|follow|save|apply|report|message|share|about)$/i.test(text)) continue;
+      // Skip left panel elements dynamically
+      if (isLeftPanel(el)) continue;
+      if (typeof isVisible === 'function' && !isVisible(el)) continue;
+      if (text && text.length > 0 && !text.includes('Be an early applicant')) return text;
+    }
   }
   return null;
 }
@@ -32,7 +87,7 @@ function findLeafText(predicate, limit = 20, root = document.body) {
   const results = [];
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
   let node;
-  while ((node = walker.nextNode()) && results.length < limit) {
+  while ((node = walker.nextNode())) {
     if (node.children.length === 0) {
       const text = node.innerText?.trim();
       if (text && predicate(text)) {
@@ -40,21 +95,89 @@ function findLeafText(predicate, limit = 20, root = document.body) {
       }
     }
   }
-  return results;
+  const isGiantContainer = root === document || root.id === 'workspace' || (root.className && typeof root.className.includes === 'function' && root.className.includes('main'));
+  if (isGiantContainer) results.reverse();
+  return results.slice(0, limit);
 }
 
-const getLIRoot = () => 
-  document.querySelector('.jobs-details') ||
-  document.querySelector('.scaffold-layout__main') ||
-  document.querySelector('[class*="description-container--two-pane"]') ||
-  document.querySelector('.job-details-jobs-unified-top-card') ||
-  document.querySelector('[class*="job-details-jobs-unified-top-card"]') ||
-  document.querySelector('[class*="jobs-unified-top-card"]') ||
-  document.querySelector('.jobs-search__job-details--container') ||
-  document.querySelector('.job-view-layout') ||
-  document.querySelector('.top-card-layout') ||
-  document.querySelector('#workspace') ||
-  document;
+function isVisible(el) {
+  if (!el) return false;
+  const style = window.getComputedStyle(el);
+  if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+  if (style.display !== 'contents') {
+     const rect = el.getBoundingClientRect();
+     if (rect.width === 0 || rect.height === 0) return false;
+  }
+  return true;
+}
+
+const getLIRoot = () => {
+  // First, identify the tightest known selectors for the right pane
+  const tightSelectors = [
+    '.scaffold-layout__detail',
+    '.jobs-details',
+    '.jobs-search__job-details--container',
+    '[class*="description-container--two-pane"]',
+    '.job-details-jobs-unified-top-card',
+    '[class*="job-details-jobs-unified-top-card"]',
+    '[class*="jobs-unified-top-card"]',
+    '.top-card-layout'
+  ];
+  
+  for (const sel of tightSelectors) {
+    const els = Array.from(document.querySelectorAll(sel));
+    for (let i = els.length - 1; i >= 0; i--) {
+      if (isVisible(els[i])) return els[i];
+    }
+  }
+  
+  // Identify the left panel so we can avoid it
+  const leftPanel = typeof getDynamicLeftPanel === "function" ? getDynamicLeftPanel() : null;
+  
+  // Dynamic fallback: Find the newest Apply button and grab its container
+  const applyBtns = Array.from(document.querySelectorAll('.jobs-apply-button, button[data-control-name="jobdetails_apply_btn"], button.jobs-apply-button--light'));
+  for (let i = applyBtns.length - 1; i >= 0; i--) {
+      if (isVisible(applyBtns[i])) {
+          let container = null;
+          let testNode = applyBtns[i].parentElement;
+          while (testNode && testNode !== document.body) {
+              if (leftPanel && testNode.contains(leftPanel)) break;
+              // If the container spans almost the whole screen, it's wrapping the left panel too.
+              if (testNode.getBoundingClientRect().width > window.innerWidth * 0.85) break;
+              container = testNode;
+              testNode = testNode.parentElement;
+          }
+          if (container) return container;
+      }
+  }
+  
+  // Dynamic fallback: Find newest h1
+  const h1s = Array.from(document.querySelectorAll('h1'));
+  for (let i = h1s.length - 1; i >= 0; i--) {
+      if (isVisible(h1s[i])) {
+          let container = null;
+          let testNode = h1s[i].parentElement;
+          while (testNode && testNode !== document.body) {
+              if (leftPanel && testNode.contains(leftPanel)) break;
+              if (testNode.getBoundingClientRect().width > window.innerWidth * 0.85) break;
+              container = testNode;
+              testNode = testNode.parentElement;
+          }
+          if (container) return container;
+      }
+  }
+  
+  // Absolute final fallbacks for standalone views (will cause bleeding if in split view, but better than document)
+  const broadSelectors = ['.scaffold-layout__main', '.job-view-layout', '#workspace'];
+  for (const sel of broadSelectors) {
+    const els = Array.from(document.querySelectorAll(sel));
+    for (let i = els.length - 1; i >= 0; i--) {
+      if (isVisible(els[i])) return els[i];
+    }
+  }
+  
+  return document;
+};
 
 /**
  * Advanced label-based extraction. Finds a label (e.g. "Location:") 
@@ -103,20 +226,59 @@ const LINKEDIN_SCRAPER = {
       !!document.querySelector('[class*="job-details-jobs-unified-top-card"]');
   },
 
-  title: () => firstMatch([
+  title: () => {
+    const root = getLIRoot();
+    const t = firstMatch([
+    'h1 a',
     '.job-details-jobs-unified-top-card__job-title h1',
+    '.job-details-jobs-unified-top-card__job-title h2',
+    '.job-details-jobs-unified-top-card__job-title-link',
+    '.job-details-jobs-unified-top-card__job-title',
     '.jobs-unified-top-card__job-title h1',
-    '.top-card-layout__title',
-    'h1.top-card-layout__title',
+    '.jobs-unified-top-card__job-title h2',
+    '.jobs-unified-top-card__job-title a',
+    '.jobs-unified-top-card__job-title',
+    '[class*="job-title"] h1',
+    '[class*="job-title"] h2',
+    '[class*="job-title"] a',
+    '[class*="job-title"]',
     'h1[class*="job-title"]',
-    'h1',
-    '#workspace h1',
-    '#workspace h2',
-    '.top-card-layout__title',
+    'h2[class*="job-title"]',
+    'h1.top-card-layout__title',
     'h2.top-card-layout__title',
-  ], getLIRoot()),
+    '.top-card-layout__title',
+    '.t-24.t-bold',
+    'h1.t-24',
+    'h2.t-24',
+    'h1',
+    '[class*="top-card"] h1',
+    '[class*="top-card"] h2',
+    '.jobs-search__job-details--container h1'
+  ], root);
+    if (t) return t;
+    
+    // Fallback: Find largest text node in right pane
+    let largest = null;
+    let maxFontSize = 0;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node.children.length === 0 && node.innerText?.trim()) {
+        if (isLeftPanel(node)) continue;
+        const style = window.getComputedStyle(node);
+        const size = parseFloat(style.fontSize) || 0;
+        if (size > maxFontSize) {
+          maxFontSize = size;
+          largest = node;
+        }
+      }
+    }
+    return largest?.innerText?.trim() || null;
+  },
 
-  company: () => firstMatch([
+  company: () => {
+    const root = getLIRoot();
+    let c = firstMatch([
     '.job-details-jobs-unified-top-card__company-name a',
     '.job-details-jobs-unified-top-card__company-name',
     '.jobs-unified-top-card__company-name a',
@@ -129,7 +291,30 @@ const LINKEDIN_SCRAPER = {
     '.top-card-layout__first-subline a',
     '[class*="company-name"] a',
     '[class*="company-name"]',
-  ], getLIRoot()),
+  ], root);
+    
+    if (!c) {
+      // Fallback: look for a company link
+      const links = Array.from(root.querySelectorAll('a[href*="/company/"]'));
+      const isGiantContainer = root === document || root.id === 'workspace' || (root.className && typeof root.className.includes === 'function' && root.className.includes('main'));
+      const iterable = isGiantContainer ? links.reverse() : links;
+      for (const link of iterable) {
+         if (isLeftPanel(link)) continue;
+         const text = link.innerText?.trim();
+         if (text && !/premium|see all|follow|show more/i.test(text)) {
+             c = text;
+             break;
+         }
+      }
+    }
+    
+    if (c) {
+        c = c.replace(/[\n\r]+/g, ' ');
+        c = c.replace(/(?:·\s*)?\d+(?:,\d+)*(?:\.\d+)?\s*(?:followers|alumni).*/i, '').trim();
+        return c;
+    }
+    return null;
+  },
 
   companyId: () => {
     // Try multiple strategies to get slug or numeric ID
@@ -176,36 +361,74 @@ const LINKEDIN_SCRAPER = {
    */
   location: () => {
     const root = getLIRoot();
-    const explicitLoc = document.querySelector('.job-details-jobs-unified-top-card__location');
-    if (explicitLoc?.innerText?.trim()) return explicitLoc.innerText.trim();
+    const explicitLocs = Array.from((root === document ? document : root).querySelectorAll('.job-details-jobs-unified-top-card__location'));
+    for (let i = explicitLocs.length - 1; i >= 0; i--) {
+        if (isVisible(explicitLocs[i]) && explicitLocs[i]?.innerText?.trim()) return explicitLocs[i].innerText.trim();
+    }
 
-    // Strategy 2: parse the primary-description row
-    const primaryDesc = root.querySelector('[class*="primary-description"]');
-
+    // Strategy 2: parse the primary-description row or find by traversing from clue nodes
+    const primaryDescs = Array.from(root.querySelectorAll('[class*="primary-description"]'));
+    const primaryDesc = primaryDescs[primaryDescs.length - 1]; // get the newest one
     if (primaryDesc) {
-      const parts = Array.from(primaryDesc.querySelectorAll('span, a'))
-        .map(s => s.innerText?.trim())
-        .filter(t => t && t !== '·' && !t.startsWith('·') && !t.endsWith('·'));
-
-      for (const part of parts) {
-        if (/\d+\s+(week|day|month|hour|minute)/i.test(part)) continue;
-        if (/applicant|follower|employee|alumni/i.test(part)) continue;
-        if (/hybrid|remote|on-site|onsite/i.test(part)) continue;
-        if (part.includes(',') || /^[A-Z][a-zA-Z\s]+$/.test(part)) return part;
-      }
-      if (parts.length > 0) return parts[0];
-      
       const text = primaryDesc.innerText || '';
       const split = text.split('·');
-      if (split.length >= 2) {
-          const loc = split[1].replace(/\((remote|hybrid|on-site)\)/gi, '').trim();
-          if (loc && !/\d/.test(loc)) return loc;
+      if (split.length >= 1) {
+          let loc = split[0].replace(/\((remote|hybrid|on-site)\)/gi, '').trim();
+          if (loc && !/\d/.test(loc) && !/reposted|promoted|applicant|apply/i.test(loc)) return loc;
       }
     }
+
+    // Strategy 2.5: Find clue words and traverse up
+    const clueNodes = findLeafText(t => /ago|applicant|reposted|promoted|clicked/i.test(t), 10, root);
+    for (const node of clueNodes) {
+        // Exclude left panel list items
+        if (isLeftPanel(node.el)) continue;
+        if (typeof isVisible === 'function' && !isVisible(node.el)) continue;
+        let parent = node.el.parentElement;
+        for (let i = 0; i < 4 && parent; i++) {
+            const text = parent.innerText || '';
+            if (text.includes('·')) {
+                const split = text.split('·');
+                if (split.length >= 1) {
+                    let loc = split[0].replace(/\((remote|hybrid|on-site)\)/gi, '').trim();
+                    // Split sometimes gives "Company Name\nLocation" if they are in the same block
+                    if (loc.includes('\n')) loc = loc.split('\n').pop().trim();
+                    if (loc && !/\d/.test(loc) && !/reposted|promoted|click|viewed|applicant|apply/i.test(loc)) return loc;
+                }
+            }
+            parent = parent.parentElement;
+        }
+    }
     
+    // Advanced Fallback: Search for common city/state formats near the top of the right pane
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+    let n;
+    const walkerNodes = [];
+    while ((n = walker.nextNode())) {
+        if (n.children.length === 0 && n.innerText?.trim()) {
+            walkerNodes.push(n);
+        }
+    }
+    const isGiant = root === document || root.id === 'workspace' || (root.className && typeof root.className.includes === 'function' && root.className.includes('main'));
+    if (isGiant) walkerNodes.reverse();
+    
+    for (const n of walkerNodes) {
+        if (isLeftPanel(n)) continue;
+        if (typeof isVisible === 'function' && !isVisible(n)) continue;
+        const t = n.innerText.trim();
+        // Matches "City, State", "City, Country", "Remote", "United States", etc.
+        // It must be relatively short to be a location
+        if (t.length > 2 && t.length < 40 && !/\d/.test(t) && !/click|apply|save|about|show|people|viewed|applicant/i.test(t)) {
+            // Check if it matches City, ST pattern or known large regions
+            if (/, \w{2}$/.test(t) || /, \w{2,}/.test(t) || /remote/i.test(t) || /united states/i.test(t)) {
+                return t.replace(/\((remote|hybrid|on-site)\)/gi, '').trim();
+            }
+        }
+    }
+
     // Strategy 3: Top-card layout flavors
-    const flavors = document.querySelectorAll('#workspace [class*="flavor"], .top-card-layout__first-subline .topcard__flavor, .topcard__flavor--bullet');
-    for (const flavor of flavors) {
+    const flavors = Array.from(document.querySelectorAll('#workspace [class*="flavor"], .top-card-layout__first-subline .topcard__flavor, .topcard__flavor--bullet'));
+    for (const flavor of flavors.reverse()) {
         const text = flavor.innerText?.trim();
         // Check for common tokens that aren't locations
         if (text && text.includes(',') && !/\d/.test(text) && !/applicant|employee|ago|hybrid|remote|on-site/i.test(text)) {
@@ -299,7 +522,9 @@ const LINKEDIN_SCRAPER = {
     return null;
   },
 
-  description: () => firstMatch([
+  description: () => {
+    const root = getLIRoot();
+    const desc = firstMatch([
     '.jobs-description__content .jobs-box__html-content',
     '.jobs-description-content__text--large',
     '.jobs-description-content__text',
@@ -309,7 +534,69 @@ const LINKEDIN_SCRAPER = {
     '[class*="job-description"]',
     '.jobs-box__html-content',
     '.jobs-details__main-content',
-  ], document), // Search from document to avoid issues with isolated roots
+  ], root);
+    if (desc) return desc;
+
+    // Fallback 1: Look for "About the job" header specifically
+    const headers = Array.from(root.querySelectorAll('h2, h3, div, span, strong, b'));
+    for (const h of headers) {
+        if (isLeftPanel(h)) continue;
+        if (typeof isVisible === 'function' && !isVisible(h)) continue;
+        const text = h.innerText?.trim()?.toLowerCase() || '';
+        if (text === 'about the job' || text === 'job description' || text === 'description') {
+            // Found the header! The description is usually the sibling, or the parent contains both
+            // Let's go up a couple levels and find the container that holds the actual paragraphs
+            let container = h.parentElement;
+            let bestText = container.innerText || '';
+            
+            // Go up until we have at least 300 characters of text, but don't go too far
+            let levels = 0;
+            while (container && container !== document.body && levels < 4) {
+                const inner = container.innerText || '';
+                // If it suddenly becomes massive (contains the whole page), stop
+                if (inner.length > 30000) break;
+                // If it contains the left panel text, stop
+                if (inner.includes('Jobs that match your profile')) break;
+                
+                bestText = inner;
+                if (bestText.length > 500) break; // Found a good sized description block
+                
+                container = container.parentElement;
+                levels++;
+            }
+            if (bestText.length > 100) return bestText.trim();
+        }
+    }
+
+    // Fallback 2: Find the element with the most text in the right pane, completely ignoring anything that touches the left side of the screen
+    let largest = null;
+    let maxLength = 0;
+    const candidates = root.querySelectorAll('div, section, article, main');
+    const applyBtn = root.querySelector('.jobs-apply-button, button[data-control-name="jobdetails_apply_btn"]');
+    const rightPaneMinX = applyBtn ? applyBtn.getBoundingClientRect().x - 400 : window.innerWidth * 0.3;
+    
+    for (const el of candidates) {
+       if (el === document.body || el.id === 'workspace' || el.tagName.toLowerCase() === 'main') continue;
+       if (el.className && typeof el.className.includes === 'function' && el.className.includes('scaffold-layout')) continue;
+       if (isLeftPanel(el)) continue;
+       if (typeof isVisible === 'function' && !isVisible(el)) continue;
+       
+       const rect = el.getBoundingClientRect();
+       if (rect.width === 0 || rect.height === 0) continue; // Ignore display:contents wrappers
+       
+       // If it's a split view (we guess based on apply button position), reject anything that starts on the far left
+       if (rightPaneMinX > 100 && rect.x < rightPaneMinX) continue;
+       
+       const text = el.innerText?.trim() || '';
+       if (text.includes('Jobs that match your profile')) continue; // Explicitly reject left panel leakage
+       
+       if (text.length > maxLength && text.length > 200 && text.length < 30000) {
+           maxLength = text.length;
+           largest = el;
+       }
+    }
+    return largest?.innerText?.trim() || null;
+  }, // Search from document to avoid issues with isolated roots
 
   type: () => {
     const root = getLIRoot();
@@ -373,6 +660,8 @@ const LINKEDIN_SCRAPER = {
     // Strategy E: Leaf-node scan of all small elements in root
     const leafEls = root.querySelectorAll('span, li, b');
     for (const el of leafEls) {
+      if (isLeftPanel(el)) continue;
+      if (typeof isVisible === 'function' && !isVisible(el)) continue;
       if (el.children.length > 0) continue;
       const t = (el.innerText || '').trim();
       if (t.length > 0 && t.length < 30) {
@@ -424,6 +713,8 @@ const LINKEDIN_SCRAPER = {
       '.ui-label, .tvm__text'
     );
     for (const el of insightEls) {
+      if (isLeftPanel(el)) continue;
+      if (typeof isVisible === 'function' && !isVisible(el)) continue;
       const text = (el.innerText || '').trim();
       if (/premium|retry|\$0/i.test(text)) continue;
 
@@ -438,7 +729,7 @@ const LINKEDIN_SCRAPER = {
     const desc = LINKEDIN_SCRAPER.description() || document.querySelector('.jobs-description-content__text')?.innerText;
     if (desc) {
       // Look for patterns like "$183,000 - $285,000" or "$100k-$150k" or "£50k-£70k" or "60,000 - 80,000 EUR"
-      const salaryRegex = /(?:[\$\£\€\¥]|USD|EUR|GBP)[\s]*[\d,]+(?:\s*[kK])?\s*(?:[-–]|to)\s*(?:[\$\£\€\¥]|USD|EUR|GBP)?[\s]*[\d,]+(?:\s*[kK])?|[\d,]+(?:\s*[kK])?[\s]*(?:[\$\£\€\¥]|USD|EUR|GBP)?(?:\s*\/\s*(?:yr|hr|month|year|hour|annum))|[\$\£\€\¥][\d,]+(?:\s*[kK])?/gi;
+      const salaryRegex = /(?:[\$\£\€\¥]|USD|EUR|GBP)?\s*[\d,]+(?:\.\d+)?\s*(?:[kK]|m|M)?\s*(?:\/(?:yr|hr|month|year|hour|annum|wk|week))?\s*(?:[-–]|to|and)\s*(?:[\$\£\€\¥]|USD|EUR|GBP)?\s*[\d,]+(?:\.\d+)?\s*(?:[kK]|m|M)?\s*(?:\/(?:yr|hr|month|year|hour|annum|wk|week))?|(?:[\$\£\€\¥]|USD|EUR|GBP)\s*[\d,]+(?:\.\d+)?\s*(?:[kK]|m|M)?\s*(?:\/(?:yr|hr|month|year|hour|annum|wk|week))?/gi;
       const matches = desc.match(salaryRegex);
       if (matches) {
         // Filter out very small numbers that might be counts (like $0 for matching)
@@ -474,7 +765,6 @@ const LINKEDIN_SCRAPER = {
   },
 
   datePosted: () => {
-    // Strategy 1: explicit selectors
     const root = getLIRoot();
     const el =
       root.querySelector('.posted-time-ago__text') ||
@@ -489,19 +779,15 @@ const LINKEDIN_SCRAPER = {
       return el.innerText?.trim() || null;
     }
 
-    const labels = root.querySelectorAll('.tvm__text--neutral, .tvm__text--positive');
-    for (const lbl of labels) {
-        if (/ago|just now/i.test(lbl.innerText)) return lbl.innerText.trim();
-    }
-
-    // Strategy 2: scan top card for "X days ago" text
-    const topCard = root.querySelector('[class*="unified-top-card"]');
-    if (topCard) {
-      const timeNodes = findLeafText(
-        t => /\d+\s+(day|week|month|hour)/i.test(t) && t.length < 60,
-        5, root
-      );
-      if (timeNodes.length) return timeNodes[0].text;
+    // Strategy 1.5: Broad scan for "ago" or "just now"
+    const timeNodes = findLeafText(
+      t => (t.includes('ago') && /\d+/.test(t)) || /just now/i.test(t),
+      15, root
+    );
+    for (const node of timeNodes) {
+        if (!isLeftPanel(node.el)) {
+            return node.text;
+        }
     }
 
     return null;
@@ -522,17 +808,24 @@ const LINKEDIN_SCRAPER = {
       '[class*="company-logo"] img',
       '[class*="entity-image"]',
     ];
+    const isGiantContainer = root === document || root.id === 'workspace' || (root.className && typeof root.className.includes === 'function' && root.className.includes('main'));
     for (const sel of selectors) {
-      const img = root.querySelector(sel);
-      if (img?.src && !img.src.includes('data:') && img.src.includes('http')) {
-        return img.src;
+      const imgs = Array.from(root.querySelectorAll(sel));
+      const iterable = isGiantContainer ? imgs.reverse() : imgs;
+      for (const img of iterable) {
+        if (isLeftPanel(img)) continue;
+        if (typeof isVisible === 'function' && !isVisible(img)) continue;
+        if (img?.src && !img.src.includes('data:') && img.src.includes('http')) {
+          return img.src;
+        }
       }
     }
     
     // Fallback block - look inside top card
-    const topCard = root.querySelector('[class*="unified-top-card"]');
+    const topCards = Array.from(root.querySelectorAll('[class*="unified-top-card"]'));
+    const topCard = topCards[topCards.length - 1];
     if (topCard) {
-      const cardImg = topCard.querySelector('img');
+      const cardImg = Array.from(topCard.querySelectorAll('img')).find(isVisible);
       if (cardImg && cardImg.src && cardImg.src.includes('http')) return cardImg.src;
     }
     return null;
@@ -1173,23 +1466,41 @@ function normaliseJobType(raw) {
 function scrapeJobData() {
   const scraper = getScraper();
 
-  const rawLocation = scraper.location?.() || '';
-  const rawWorkplaceType = scraper.workplaceType?.() || '';
-  const rawDatePosted = scraper.datePosted?.() || null;
-  const rawSalary = scraper.salary?.() || null;
-  const rawType = scraper.type?.() || null;
-  const rawTitle = scraper.title?.() || null;
-  const rawCompany = scraper.company?.() || null;
-  const rawDescription = scraper.description?.() || null;
-  const rawCompanyLogo = scraper.companyLogo?.() || null;
-  const rawApplyLink = scraper.applyLink?.() || null;
-  const rawDeadline = scraper.deadline?.() || null;
-  const rawUrl = scraper.url?.() || window.location.href;
+  const safeExtract = (key, fallback) => {
+    try {
+      if (typeof scraper[key] === 'function') {
+        const res = scraper[key]();
+        return res !== undefined && res !== null ? res : fallback;
+      }
+      return fallback;
+    } catch (e) {
+      console.error(`[JobAutomator] Extractor error for ${key}:`, e);
+      return fallback;
+    }
+  };
+
+  const rawLocation = safeExtract('location', '');
+  const rawWorkplaceType = safeExtract('workplaceType', '');
+  const rawDatePosted = safeExtract('datePosted', null);
+  const rawSalary = safeExtract('salary', null);
+  const rawType = safeExtract('type', null);
+  const rawTitle = safeExtract('title', null);
+  const rawCompany = safeExtract('company', null);
+  const rawDescription = safeExtract('description', null);
+  const rawCompanyLogo = safeExtract('companyLogo', null);
+  const rawApplyLink = safeExtract('applyLink', null);
+  const rawDeadline = safeExtract('deadline', null);
+  const rawUrl = safeExtract('url', window.location.href);
 
   const locationType = inferLocationType(rawLocation, rawWorkplaceType) || null;
   const location = cleanLocation(rawLocation);
   const datePosted = parseRelativeDate(rawDatePosted);
   const deadlineParsed = parseRelativeDate(rawDeadline) || rawDeadline;
+  
+  let cleanDescription = rawDescription?.trim() || null;
+  if (cleanDescription) {
+    cleanDescription = cleanDescription.replace(/(?:\r?\n)*(?:\.\.\.|…)?\s*(?:show)?\s*more\s*$/i, '');
+  }
 
   return {
     title: rawTitle?.trim() || null,
@@ -1200,7 +1511,7 @@ function scrapeJobData() {
     datePosted: datePosted || null,
     deadline: deadlineParsed || null,
     salaryRange: rawSalary?.trim() || null,
-    description: rawDescription?.trim() || null,
+    description: cleanDescription,
     jobType: normaliseJobType(rawType),
     locationType: locationType || null,
     location: location || null,
@@ -1409,12 +1720,9 @@ function handleJobNavigation() {
     }
     if (!isExtValid()) return;
     try {
-      safeSendMessage({ action: 'store_job_data', data: jobData }, () => {
-        if (chrome.runtime.lastError) {}
-        safeSendMessage({ action: 'refresh_panel_data' }).catch(()=>{});
-      });
+      chrome.storage.local.set({ latestJobData: jobData });
     } catch(e) {}
-  }, 1500);
+  }, 1000);
 
   // Second networking pass: LinkedIn lazy-loads images and sometimes descriptions ~2-4s after page render.
   setTimeout(() => {
@@ -2048,65 +2356,10 @@ const connectionObserver = new MutationObserver((mutations) => {
     }, THROTTLE_MS);
   }
 });
-// ── URL Observer to handle LinkedIn list clicks ───────────────────────
-
-let lastUrl = window.location.href;
-const urlObserver = new MutationObserver(() => {
-  if (window.location.href !== lastUrl) {
-    const oldId = new URLSearchParams(new URL(lastUrl).search).get('currentJobId');
-    const newId = new URLSearchParams(window.location.search).get('currentJobId');
-    lastUrl = window.location.href;
-    
-    if (newId && newId !== oldId && LINKEDIN_SCRAPER.isJobPage()) {
-      console.log('[JobAutomator] Job selection changed — re-scraping.');
-      // Give the DOM a moment to settle
-      setTimeout(() => {
-        if (!isExtValid()) return;
-        const jobData = scrapeJobData();
-        if (jobData) {
-          console.log('[JobAutomator] Auto-scraped data:', jobData);
-          extLog('INFO', `Auto-scraped data for ${jobData.company || 'Unknown'}`, { title: jobData.title });
-          chrome.storage.local.set({ latestJobData: jobData }, () => {
-            if (isExtValid() && chrome.runtime.lastError) {
-              console.log('[JobAutomator] Storage set result check: FAILED');
-            }
-          });
-          safeSendMessage({ action: 'store_job_data', data: jobData });
-        }
-      }, 1000);
-    }
-  }
-});
+// ── Initial Connection Processing ──────────────────────────────────────────
 
 if (LINKEDIN_SCRAPER.isJobPage()) {
   connectionObserver.observe(document.body, { childList: true, subtree: true });
-  urlObserver.observe(document.querySelector('title') || document.head, { childList: true });
-  
-  // Also poll slightly for URL because popstate/mutation isn't always reliable on all SPAs
-  const urlPollInterval2 = setInterval(() => {
-    if (!isExtValid()) {
-      clearInterval(urlPollInterval2);
-      return;
-    }
-    if (window.location.href !== lastUrl) {
-      const u = new URL(window.location.href);
-      const oldId = new URLSearchParams(new URL(lastUrl).search).get('currentJobId');
-      const newId = u.searchParams.get('currentJobId');
-      
-      if (newId && newId !== oldId) {
-        lastUrl = window.location.href;
-        console.log('[JobAutomator] URL change detected (poll) — re-scraping.');
-        setTimeout(() => {
-          if (!isExtValid()) return;
-          const jobData = scrapeJobData();
-          if (jobData) {
-            chrome.storage.local.set({ latestJobData: jobData });
-            safeSendMessage({ action: 'store_job_data', data: jobData });
-          }
-        }, 1200);
-      }
-    }
-  }, 1500);
 
   // Initial run
   setTimeout(processLinkedInConnections, 500);
