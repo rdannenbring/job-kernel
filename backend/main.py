@@ -25,6 +25,7 @@ from services.ai_service import AIService
 from services.scraper_service import ScraperService
 from services.database_service import DatabaseService
 from services.auth_service import AuthService, get_current_user_id, get_admin_user_id
+from routes.applied import router as applied_router
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -108,6 +109,9 @@ document_service = DocumentService()
 ai_service = AIService()
 scraper_service = ScraperService()
 database_service = DatabaseService()
+
+# Applied stage router (mounted; endpoint modules fill in routes per Phase B)
+app.include_router(applied_router)
 
 
 def run_maintenance_loop():
@@ -2486,6 +2490,32 @@ IMPORTANT:
         return {"company_research": research, "cached": False}
     except Exception as e:
         logger.error(f"Error generating company research for app {app_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/applications/{app_id}/refresh-career-matches")
+async def refresh_career_matches(app_id: int, background_tasks: BackgroundTasks, user_id: int = Depends(get_current_user_id)):
+    """Re-run the career page scraping and AI matching without regenerating the full company research."""
+    try:
+        app_data = database_service.get_application_by_id(app_id, user_id)
+        if not app_data:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        # Extract careers_url from existing research
+        research_raw = app_data.get("company_research")
+        if not research_raw:
+            raise HTTPException(status_code=400, detail="No company research found. Run full company research first.")
+
+        research = research_raw if isinstance(research_raw, dict) else json.loads(research_raw)
+        careers_url = research.get("overview", {}).get("careers_url")
+        if not careers_url:
+            raise HTTPException(status_code=400, detail="No careers URL found in company research.")
+
+        background_tasks.add_task(scan_company_jobs, app_id, careers_url, user_id)
+        return {"message": "Career matches refresh started", "careers_url": careers_url}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error refreshing career matches for app {app_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 async def scan_company_jobs(app_id: int, careers_url: str, user_id: int):
