@@ -13,9 +13,20 @@ Per-task briefs for the Applied stage initiative. Each packet is the **complete 
 | 3 | [T3.0 — Service package skeleton](T3.0-service-skeleton.md) | T2 merged | staged |
 | 4 | [T4.0 — Router scaffolding + main.py mount](T4.0-router-wireup.md) | T3.0 merged | staged |
 
-### Phase A2 — Service modules (8-way parallel; packets pending)
+### Phase A2 — Service modules (one agent per file; priority-ordered dispatch)
 
-After T4.0 merges, fan out: T3a, T3b, T3c, T3d, T3e, T3f, T3g, T3h.
+T4.0 has merged. Dispatch in priority order; T3a–T3e first, then T3f/g/h.
+
+| Priority | Packet | Owns | Depends on | Unlocks |
+|---|---|---|---|---|
+| 1 | [T3a — Derivations (pure)](T3a-derivations.md) | `services/applied/derivations.py` | T1, T2, T3.0 | T3b, T3c, T3d, T3e, T3h, T8, T13a |
+| 2 | [T3b — State assembly](T3b-state.md) | `services/applied/state.py` | T3a | T5, T12 |
+| 3 | [T3c — Submission service](T3c-submission.md) | `services/applied/submission.py` | T3a | T6 |
+| 4 | [T3d — Confirmation + receipt](T3d-confirmation.md) | `services/applied/confirmation.py` | T3a | T7a, T7b, T16 |
+| 5 | [T3e — Follow-up plan + send-log](T3e-follow-up.md) | `services/applied/follow_up.py` | T3a | T9a, T9b, T14, T17 |
+| 6 | [T3f — Templates (deterministic v1)](T3f-templates.md) | `services/applied/templates.py` | T3.0 (no T3a dep) | T10, T17 |
+| 7 | [T3g — Contact upsert](T3g-contact.md) | `services/applied/contact.py` | T3.0 (no T3a dep) | T11, T17 |
+| 8 | [T3h — Transition to Interviewing](T3h-transition.md) | `services/applied/transition.py` | T3a | T13b, T18 |
 
 ### Phase B — Endpoints (cap 4–6 concurrent per user guidance; packets pending)
 
