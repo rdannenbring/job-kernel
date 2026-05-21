@@ -7,7 +7,7 @@ requests==2.32.3
 openai==1.58.1
 reportlab==4.2.5
 python-dotenv==1.0.1
-pydantic
+pydantic[email]
 aiofiles==24.1.0
 lxml
 sqlalchemy
