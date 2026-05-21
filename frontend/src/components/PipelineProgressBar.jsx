@@ -26,7 +26,7 @@ const STAGES = {
 
 export const PIPELINE_STAGES = Object.values(STAGES);
 
-const PipelineProgressBar = ({ currentStage: stageProp, onStageClick, isArchived, completedMainStages = [] }) => {
+const PipelineProgressBar = ({ currentStage: stageProp, onStageClick, isArchived, completedMainStages = [], stageProgress = {} }) => {
   const currentStage = (stageProp || 'saved').toLowerCase();
 
   const getStatus = (id) => {
@@ -84,6 +84,9 @@ const PipelineProgressBar = ({ currentStage: stageProp, onStageClick, isArchived
     return 'future';
   };
 
+  const isStageComplete = (id) =>
+    getStatus(id) === 'completed' || completedMainStages.includes(id);
+
   const renderNode = (stage) => {
     const status = getStatus(stage.id);
     const isExplicitlyCompleted = completedMainStages.includes(stage.id);
@@ -93,53 +96,132 @@ const PipelineProgressBar = ({ currentStage: stageProp, onStageClick, isArchived
     const baseNodeColor = stage.color || 'var(--primary)';
     const nodeColor = isExplicitlyCompleted ? '#10b981' : baseNodeColor;
 
+    const prog = stageProgress?.[stage.id];
+    const hasProgress = prog && prog.total > 0;
+    const pct = hasProgress ? Math.min(1, prog.completed / prog.total) : 0;
+    const isFull = hasProgress && prog.completed >= prog.total;
+    const ringSize = isCurrent ? 56 : 48;
+    const ringRadius = (ringSize / 2) - 2;
+    const ringCircumference = 2 * Math.PI * ringRadius;
+    const ringColor = (isCompleted || isFull) ? '#10b981' : nodeColor;
+    const fractionColor = pct === 0
+      ? 'var(--text-muted)'
+      : (isCompleted || isFull) ? '#10b981' : nodeColor;
+
     return (
-      <div 
-        key={stage.id} 
+      <div
+        key={stage.id}
         onClick={() => onStageClick && onStageClick(stage.id)}
-        style={{ 
-          gridColumn: stage.col, 
+        style={{
+          gridColumn: stage.col,
           gridRow: stage.row,
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          zIndex: 2, 
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2,
           cursor: 'pointer',
           position: 'relative'
         }}
       >
-        <div style={{ 
-          width: isCurrent ? '48px' : '40px', 
-          height: isCurrent ? '48px' : '40px', 
-          borderRadius: '50%', 
-          background: (isCompleted || isCurrent) ? nodeColor : 'var(--bg-primary)', 
-          border: isFuture ? '2px solid var(--border-color-card)' : 'none',
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          color: (isCompleted || isCurrent) ? 'white' : 'var(--text-secondary)',
-          boxShadow: isCurrent ? `0 0 20px ${nodeColor}66` : 'none',
-          transition: 'all 0.3s ease'
+        <div style={{
+          position: 'relative',
+          width: `${ringSize}px`,
+          height: `${ringSize}px`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}>
-          <span className="material-symbols-outlined" style={{ fontSize: isCurrent ? '24px' : '20px' }}>
-            {isCompleted ? 'check' : stage.icon}
+          {hasProgress && (
+            <svg
+              width={ringSize}
+              height={ringSize}
+              viewBox={`0 0 ${ringSize} ${ringSize}`}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                transform: 'rotate(-90deg)',
+                pointerEvents: 'none',
+                overflow: 'visible'
+              }}
+            >
+              <circle
+                cx={ringSize / 2}
+                cy={ringSize / 2}
+                r={ringRadius}
+                fill="none"
+                stroke="rgba(148, 163, 184, 0.18)"
+                strokeWidth="2.5"
+              />
+              {pct > 0 && (
+                <circle
+                  cx={ringSize / 2}
+                  cy={ringSize / 2}
+                  r={ringRadius}
+                  fill="none"
+                  stroke={ringColor}
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeDasharray={`${pct * ringCircumference} ${ringCircumference}`}
+                  style={{ transition: 'stroke-dasharray 0.6s ease, stroke 0.3s ease' }}
+                />
+              )}
+            </svg>
+          )}
+          <div style={{
+            width: isCurrent ? '48px' : '40px',
+            height: isCurrent ? '48px' : '40px',
+            borderRadius: '50%',
+            background: (isCompleted || isCurrent) ? nodeColor : 'var(--bg-primary)',
+            border: isFuture ? '2px solid var(--border-color-card)' : 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: (isCompleted || isCurrent) ? 'white' : 'var(--text-secondary)',
+            boxShadow: isCurrent ? `0 0 20px ${nodeColor}66` : 'none',
+            transition: 'all 0.3s ease'
+          }}>
+            <span className="material-symbols-outlined" style={{ fontSize: isCurrent ? '24px' : '20px' }}>
+              {isCompleted ? 'check' : stage.icon}
+            </span>
+          </div>
+        </div>
+        <div style={{
+          position: 'absolute',
+          bottom: '2px',
+          left: 0,
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '2px',
+          pointerEvents: 'none'
+        }}>
+          {hasProgress && (
+            <span style={{
+              fontSize: '9px',
+              fontWeight: 800,
+              color: fractionColor,
+              fontVariantNumeric: 'tabular-nums',
+              lineHeight: 1,
+              opacity: pct === 0 ? 0.55 : 1,
+              transition: 'color 0.3s ease, opacity 0.3s ease'
+            }}>
+              {prog.completed}/{prog.total}
+            </span>
+          )}
+          <span style={{
+            fontSize: '9px',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: isCurrent ? nodeColor : (isCompleted ? 'var(--text-primary)' : 'var(--text-muted)'),
+            textAlign: 'center',
+            lineHeight: 1.1
+          }}>
+            {stage.label}
           </span>
         </div>
-        <span style={{ 
-          fontSize: '9px', 
-          fontWeight: 700, 
-          textTransform: 'uppercase', 
-          letterSpacing: '0.05em',
-          color: isCurrent ? nodeColor : (isCompleted ? 'var(--text-primary)' : 'var(--text-muted)'),
-          textAlign: 'center',
-          position: 'absolute',
-          bottom: '4px', // Stable position in 100px cell
-          width: '100%',
-          left: 0
-        }}>
-          {stage.label}
-        </span>
       </div>
     );
   };
@@ -191,19 +273,23 @@ const PipelineProgressBar = ({ currentStage: stageProp, onStageClick, isArchived
           </g>
 
           {/* Active Highlight Paths */}
-          <g stroke="var(--primary)" strokeWidth="3" fill="none" strokeLinecap="round" style={{ transition: 'all 0.5s ease' }}>
-             {/* Progression highlights */}
-             {getStatus('generated') !== 'future' && <path d="M 50,50 L 150,50" />}
-             {getStatus('applied') !== 'future' && <path d="M 150,50 L 250,50" />}
-             
+          <g strokeWidth="3" fill="none" strokeLinecap="round" style={{ transition: 'all 0.5s ease' }}>
+             {/* Progression highlights — green when source stage is complete */}
+             {getStatus('generated') !== 'future' && (
+                 <path d="M 50,50 L 150,50" stroke={isStageComplete('saved') ? '#10b981' : 'var(--primary)'} style={{ transition: 'stroke 0.4s ease' }} />
+             )}
+             {getStatus('applied') !== 'future' && (
+                 <path d="M 150,50 L 250,50" stroke={isStageComplete('generated') ? '#10b981' : 'var(--primary)'} style={{ transition: 'stroke 0.4s ease' }} />
+             )}
+
              {/* Interviewing path */}
              {['interviewing', 'decision', 'accepted', 'declined'].includes(currentStage) && (
-                 <path d="M 250,50 L 350,50" />
+                 <path d="M 250,50 L 350,50" stroke={isStageComplete('applied') ? '#10b981' : 'var(--primary)'} style={{ transition: 'stroke 0.4s ease' }} />
              )}
-             
+
              {/* Decision path */}
              {['decision', 'accepted', 'declined'].includes(currentStage) && (
-                 <path d="M 350,50 L 450,50" />
+                 <path d="M 350,50 L 450,50" stroke={isStageComplete('interviewing') ? '#10b981' : 'var(--primary)'} style={{ transition: 'stroke 0.4s ease' }} />
              )}
 
              {/* Outcome: Rejected */}

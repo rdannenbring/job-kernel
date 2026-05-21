@@ -3,7 +3,7 @@ import CustomDropdown from '../components/CustomDropdown';
 import LocationAutocomplete from '../components/LocationAutocomplete';
 import InterestStars from '../components/InterestStars';
 import PipelineProgressBar, { STAGE_TO_STATUS } from '../components/PipelineProgressBar';
-import ApplicationLifecycle from './ApplicationLifecycle';
+import ApplicationLifecycle, { computeStageProgress } from './ApplicationLifecycle';
 import { useAuth } from '../context/AuthContext';
 
 // Use same env logic or passed prop
@@ -2416,6 +2416,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
             <PipelineProgressBar
                 currentStage={app.pipeline_stage}
                 isArchived={isArchived}
+                stageProgress={computeStageProgress(app)}
                 onStageClick={async (newStage) => {
                     if (newStage === app.pipeline_stage) return;
                     try {

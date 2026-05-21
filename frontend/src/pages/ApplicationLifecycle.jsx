@@ -228,6 +228,36 @@ const safeParseJSON = (data, fallback = {}) => {
     try { return JSON.parse(data); } catch (e) { return fallback; }
 };
 
+const STAGE_SUBSTAGE_DEFS = {
+    saved: SAVED_SUBSTAGES,
+    generated: GENERATED_SUBSTAGES,
+    applied: APPLIED_SUBSTAGES,
+    interviewing: INTERVIEWING_SUBSTAGES,
+    decision: DECISION_SUBSTAGES,
+    accepted: ACCEPTED_SUBSTAGES,
+    rejected: REJECTED_SUBSTAGES,
+    declined: DECLINED_SUBSTAGES,
+    withdrawn: WITHDRAWN_SUBSTAGES,
+};
+
+export function computeStageProgress(app) {
+    const progress = safeParseJSON(app?.substage_progress, {});
+    const isSubstageDone = (stageId, sub) => {
+        if (stageId === 'saved' && sub.id === 'parsed') return true;
+        if (stageId === 'generated') {
+            if (sub.id === 'resume') return !!app?.tailored_resume_path;
+            if (sub.id === 'cover_letter') return !!app?.cover_letter_path;
+        }
+        return progress?.[sub.id] === true;
+    };
+    const out = {};
+    for (const [stageId, defs] of Object.entries(STAGE_SUBSTAGE_DEFS)) {
+        const completed = defs.filter(s => isSubstageDone(stageId, s)).length;
+        out[stageId] = { completed, total: defs.length };
+    }
+    return out;
+}
+
 function GeneratedSubStagePanel({ app, onRefresh, onStageChange, onStartFullGeneration, navCollapsed, onToggleNav }) {
   const { fetchWithAuth } = useAuth();
   const [activeSubStage, setActiveSubStage] = useState('resume');
@@ -1242,6 +1272,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
   const [isSavingReview, setIsSavingReview] = useState(false);
   const [isReviewEditMode, setIsReviewEditMode] = useState(false);
   const [isResearching, setIsResearching] = useState(false);
+  const [isRefreshingCareers, setIsRefreshingCareers] = useState(false);
   const [isResearchNavCollapsed, setIsResearchNavCollapsed] = useState(() => window.innerWidth < 1024);
 
   const [localPrioritization, setLocalPrioritization] = useState(() => {
@@ -2054,9 +2085,9 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
 
       case 'reviewed':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'fadeIn 0.4s ease-out' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'fadeIn 0.4s ease-out', minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+              <div style={{ minWidth: 0 }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Review Job Details</h3>
                 <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Review and fill in missing job details before proceeding.</p>
               </div>
@@ -2065,7 +2096,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                   onClick={handleApproveDetails} 
                   disabled={isSavingReview}
                   className="btn-primary" 
-                  style={{ padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontSize: '0.875rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  style={{ padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontSize: '0.875rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>{isSavingReview ? 'hourglass_empty' : 'check'}</span>
                   {isSavingReview ? 'Saving...' : 'Accept Job Details'}
@@ -2074,7 +2105,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                 <button 
                   onClick={() => setIsReviewEditMode(true)} 
                   className="btn-secondary" 
-                  style={{ padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontSize: '0.875rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  style={{ padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontSize: '0.875rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>edit</span>
                   Edit Details
@@ -2082,8 +2113,8 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
               )}
             </div>
 
-            <div className="card glass" style={{ padding: '1.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-color-card)', boxShadow: 'var(--shadow-md)' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
+            <div className="card glass" style={{ padding: '1.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-color-card)', boxShadow: 'var(--shadow-md)', maxWidth: '100%', overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.5rem' }}>
                 {[
                   { id: 'job_title', label: 'Job Title', type: 'text', colSpan: 1 },
                   { id: 'company', label: 'Company', type: 'text', colSpan: 1 },
@@ -2113,9 +2144,10 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                 ].map(field => {
                   const requiredFields = ['job_title', 'company', 'location', 'location_type', 'job_type', 'apply_url'];
                   const isMissing = requiredFields.includes(field.id) && !reviewForm[field.id];
+                  const isUrl = field.id.endsWith('_url');
                   
                   return (
-                    <div key={field.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: field.colSpan === 2 ? '1 1 100%' : '1 1 300px', minWidth: 0 }}>
+                    <div key={field.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: 0, gridColumn: field.colSpan === 2 ? '1 / -1' : undefined }}>
                       <label style={{ fontSize: '0.85rem', fontWeight: 700, color: isMissing && isReviewEditMode ? '#f87171' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         {field.label}
                         {isMissing && isReviewEditMode && <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#f87171' }}>error</span>}
@@ -2131,11 +2163,13 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
                             color: 'var(--text-primary)', 
                             fontSize: '0.95rem', 
                             minHeight: field.type === 'textarea' ? '100px' : 'auto', 
-                            whiteSpace: field.id.endsWith('_url') ? 'nowrap' : 'pre-wrap',
-                            overflow: field.id.endsWith('_url') ? 'hidden' : 'visible',
-                            textOverflow: field.id.endsWith('_url') ? 'ellipsis' : 'clip'
+                            whiteSpace: isUrl ? 'nowrap' : 'pre-wrap',
+                            overflow: 'hidden',
+                            textOverflow: isUrl ? 'ellipsis' : 'clip',
+                            wordBreak: isUrl ? 'break-all' : 'break-word',
+                            maxWidth: '100%'
                           }}
-                          title={field.id.endsWith('_url') ? (app[field.id] || '') : undefined}
+                          title={isUrl ? (app[field.id] || '') : undefined}
                         >
                           {app[field.id] || '—'}
                         </div>
@@ -2450,25 +2484,62 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
           );
         }
 
+
+        const handleRefreshCareerMatches = async () => {
+          setIsRefreshingCareers(true);
+          try {
+            const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}/refresh-career-matches`, { method: 'POST' });
+            if (res.ok) {
+              // Background task started — switch to careers tab so user sees the update when it arrives
+              setCompanyView('careers');
+              // Poll for update after a delay to catch the background task completion
+              setTimeout(async () => {
+                await onRefresh();
+                setIsRefreshingCareers(false);
+              }, 5000);
+            } else {
+              const errData = await res.json().catch(() => ({ detail: 'Unknown error' }));
+              alert(`Career matches refresh failed: ${errData.detail || 'Server returned an error'}`);
+              setIsRefreshingCareers(false);
+            }
+          } catch (e) {
+            console.error('Career matches refresh failed', e);
+            alert(`Career matches refresh error: ${e.message}`);
+            setIsRefreshingCareers(false);
+          }
+        };
+
         // ── Full research view ────────────────────────────────────────────────
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'fadeIn 0.4s ease-out' }}>
             {/* Header with refresh */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Company Research</h3>
                 <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{app?.company || 'Target Company'}</p>
               </div>
-              <button
-                className="btn-secondary"
-                onClick={() => handleRunResearch(true)}
-                disabled={isResearching}
-                style={{ padding: '0.5rem 1rem', borderRadius: '0.625rem', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid var(--border-color)' }}
-                title="Refresh company research with latest AI data"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>refresh</span>
-                REFRESH
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  className="btn-secondary"
+                  onClick={handleRefreshCareerMatches}
+                  disabled={isRefreshingCareers || isResearching}
+                  style={{ padding: '0.5rem 1rem', borderRadius: '0.625rem', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid var(--border-color)' }}
+                  title="Re-scan the careers page and refresh career matches only"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>{isRefreshingCareers ? 'hourglass_empty' : 'work_update'}</span>
+                  {isRefreshingCareers ? 'SCANNING...' : 'REFRESH CAREER MATCHES'}
+                </button>
+                <button
+                  className="btn-secondary"
+                  onClick={() => handleRunResearch(true)}
+                  disabled={isResearching || isRefreshingCareers}
+                  style={{ padding: '0.5rem 1rem', borderRadius: '0.625rem', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid var(--border-color)' }}
+                  title="Regenerate all company research with latest AI data"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>refresh</span>
+                  REFRESH ALL COMPANY RESEARCH
+                </button>
+              </div>
             </div>
 
             <div className={`research-layout-grid ${isResearchNavCollapsed ? 'research-nav-collapsed' : ''}`}>
@@ -2994,7 +3065,9 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
         border: '1px solid var(--border-color)',
         minHeight: 'calc(100vh - 130px)',
         paddingBottom: '4rem',
-        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+        minWidth: 0,
+        overflow: 'hidden'
       }}>
         {renderContent()}
       </div>
@@ -3005,6 +3078,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AppliedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
+  const { fetchWithAuth } = useAuth();
   const [activeSubStage, setActiveSubStage] = useState('submitted');
   const isFirstRender = useRef(true);
   useEffect(() => {
@@ -3027,6 +3101,57 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onT
   const isComplete = (id) => {
     const progress = safeParseJSON(app?.substage_progress, {});
     return progress?.[id] === true;
+  };
+
+  const getCompletedCount = () => {
+    const progress = safeParseJSON(app?.substage_progress, {});
+    return APPLIED_SUBSTAGES.filter(s => progress?.[s.id] === true).length;
+  };
+
+  const updateSubStageProgress = async (subStageId, complete) => {
+    try {
+      const progress = safeParseJSON(app?.substage_progress, {});
+      if (progress[subStageId] === complete) return;
+
+      const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          substage_progress: { ...progress, [subStageId]: complete }
+        })
+      });
+      if (res.ok) {
+        onRefresh();
+      }
+    } catch (e) {
+      console.error(`Failed to update progress for ${subStageId}`, e);
+    }
+  };
+
+  useEffect(() => {
+    const progress = safeParseJSON(app?.substage_progress, {});
+    if (!progress.submitted) {
+      updateSubStageProgress('submitted', true);
+    }
+  }, [app?.pipeline_stage]);
+
+  const handleMoveToInterviewing = () => {
+    APPLIED_SUBSTAGES.forEach(s => {
+      if (!isComplete(s.id)) {
+        updateSubStageProgress(s.id, true);
+      }
+    });
+    onStageChange('interviewing');
+  };
+
+  const handleConfirmReceipt = async () => {
+    await updateSubStageProgress('confirmed', true);
+    setActiveSubStage('follow_up_due');
+  };
+
+  const handleMarkFollowUpSent = async () => {
+    await updateSubStageProgress('follow_up_due', true);
+    await updateSubStageProgress('follow_up_sent', true);
   };
 
   const navStyle = (id) => ({
@@ -3198,7 +3323,7 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onT
                       <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Supports PNG, JPG, PDF.</p>
                     </div>
                   </div>
-                  <button className="btn-primary" style={{ padding: '1rem', borderRadius: '0.75rem', fontWeight: 800 }}>Save Receipt Details</button>
+                  <button className="btn-primary" onClick={handleConfirmReceipt} style={{ padding: '1rem', borderRadius: '0.75rem', fontWeight: 800 }}>Save Receipt Details</button>
                 </div>
 
                 {/* Right Column: SLA Tracker */}
@@ -3280,10 +3405,10 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onT
                       </div>
                       <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Scheduled for Oct 22 (3 days ago)</p>
                     </div>
-                    <button className="btn-primary" style={{ padding: '0.75rem', borderRadius: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>save</span>
-                      Update Schedule
-                    </button>
+                     <button className="btn-primary" onClick={handleMarkFollowUpSent} style={{ padding: '0.75rem', borderRadius: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                       <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>send</span>
+                       Mark Follow-up Sent
+                     </button>
                   </div>
 
                   <div className="card glass" style={{ padding: '1.5rem', borderRadius: '1.5rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -3367,19 +3492,19 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onT
                </div>
              </div>
 
-             <div className="card glass" style={{ padding: '1.5rem 2rem', borderRadius: '1.5rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                 <p style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Applied Phase Completion</p>
-                 <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary-color)' }}>100%</p>
-               </div>
-               <div style={{ height: '0.5rem', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '1rem', overflow: 'hidden' }}>
-                 <div style={{ width: '100%', height: '100%', background: 'var(--primary-color)', boxShadow: '0 0 10px var(--primary-color)' }}></div>
-               </div>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary-color)' }}>
-                 <span className="material-symbols-outlined" style={{ fontSize: '1rem', fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                 <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>Ready to transition to Interviewing</span>
-               </div>
-             </div>
+              <div className="card glass" style={{ padding: '1.5rem 2rem', borderRadius: '1.5rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <p style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Applied Phase Completion</p>
+                  <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary-color)' }}>{Math.round((getCompletedCount() / APPLIED_SUBSTAGES.length) * 100)}%</p>
+                </div>
+                <div style={{ height: '0.5rem', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '1rem', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.round((getCompletedCount() / APPLIED_SUBSTAGES.length) * 100)}%`, height: '100%', background: 'var(--primary-color)', boxShadow: '0 0 10px var(--primary-color)' }}></div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: getCompletedCount() === APPLIED_SUBSTAGES.length ? 'var(--primary-color)' : 'var(--text-muted)' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '1rem', fontVariationSettings: getCompletedCount() === APPLIED_SUBSTAGES.length ? "'FILL' 1" : "'FILL' 0" }}>check_circle</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{getCompletedCount() === APPLIED_SUBSTAGES.length ? 'Ready to transition to Interviewing' : `${getCompletedCount()} of ${APPLIED_SUBSTAGES.length} sub-stages complete`}</span>
+                </div>
+              </div>
 
              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2rem' }}>
                 {/* Left Column: Activity Log */}
@@ -3435,7 +3560,7 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onT
                     </div>
                     <div style={{ height: '1px', background: 'var(--border-color)' }}></div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      <button className="btn-primary" style={{ padding: '0.875rem', borderRadius: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 0 20px rgba(37, 106, 244, 0.2)' }}>
+                      <button className="btn-primary" onClick={handleMoveToInterviewing} style={{ padding: '0.875rem', borderRadius: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 0 20px rgba(37, 106, 244, 0.2)' }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>forward</span>
                         Move to Interviewing
                       </button>
@@ -6276,6 +6401,8 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, onStartFullGe
     completedMainStages.push('generated');
   }
 
+  const stageProgress = computeStageProgress(app);
+
   return (
     <div className="lifecycle-container" style={{ padding: hideHeader ? '0' : '2rem', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Header */}
@@ -6317,11 +6444,12 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, onStartFullGe
 
       {/* Progress Bar */}
       {!hideHeader && (
-        <PipelineProgressBar 
-          currentStage={app?.pipeline_stage || 'saved'} 
-          onStageClick={updateStage} 
+        <PipelineProgressBar
+          currentStage={app?.pipeline_stage || 'saved'}
+          onStageClick={updateStage}
           isArchived={app?.is_archived === 'true'}
           completedMainStages={completedMainStages}
+          stageProgress={stageProgress}
         />
       )}
 
