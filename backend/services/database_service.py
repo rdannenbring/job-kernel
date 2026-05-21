@@ -104,10 +104,19 @@ class Application(Base):
     company_research = Column(Text, nullable=True)    # JSON: AI-generated company research (overview, financials, competitors, detailed)
     prioritization_ranking = Column(Text, nullable=True) # JSON: User-defined prioritization scoring
 
+    # Applied stage (added 2026-05-21)
+    applied_substage = Column(String(64), nullable=True)
+    submission_record_json = Column(Text, nullable=True)
+    submission_snapshot_json = Column(Text, nullable=True)
+    confirmation_record_json = Column(Text, nullable=True)
+    follow_up_plan_json = Column(Text, nullable=True)
+    sla_tracker_json = Column(Text, nullable=True)
+
     # Relationships
     sub_steps = relationship("ApplicationSubStep", back_populates="application", cascade="all, delete-orphan")
     contacts = relationship("ApplicationContact", back_populates="application", cascade="all, delete-orphan")
     events = relationship("ApplicationEvent", back_populates="application", cascade="all, delete-orphan")
+    applied_assets = relationship("AppliedAsset", back_populates="application", cascade="all, delete-orphan")
     user = relationship("User", back_populates="applications")
 
 
@@ -135,6 +144,9 @@ class ApplicationContact(Base):
     company = Column(String)
     how_we_know = Column(String)
     photo_url = Column(String)
+    # Applied stage (added 2026-05-21)
+    is_hiring_manager = Column(Boolean, default=False)
+    source = Column(String, nullable=True)
     application = relationship("Application", back_populates="contacts")
 
 class ApplicationEvent(Base):
@@ -144,7 +156,29 @@ class ApplicationEvent(Base):
     event_type = Column(String)
     description = Column(Text)
     timestamp = Column(String)
+    # Applied stage (added 2026-05-21)
+    actor = Column(String(32), nullable=True)            # 'user' | 'agent' | 'system'
+    title = Column(String(255), nullable=True)
+    metadata_json = Column(Text, nullable=True)
+    related_asset_id = Column(Integer, nullable=True)
+    substage = Column(String(64), nullable=True)
     application = relationship("Application", back_populates="events")
+
+
+class AppliedAsset(Base):
+    __tablename__ = 'applied_assets'
+
+    id = Column(Integer, primary_key=True)
+    application_id = Column(Integer, ForeignKey('applications.id'), nullable=False, index=True)
+    asset_type = Column(String(64), nullable=False)              # 'receipt', 'screenshot', etc.
+    file_path = Column(String(1024), nullable=False)
+    mime_type = Column(String(128), nullable=False)
+    original_filename = Column(String(255), nullable=False)
+    file_hash = Column(String(128), nullable=False)              # 'sha256:<hex>'
+    uploaded_at = Column(String(64), nullable=False)             # ISO-8601 UTC
+    created_by_user_id = Column(Integer, nullable=True)
+
+    application = relationship("Application", back_populates="applied_assets")
 
 
 class UserProfile(Base):
@@ -711,7 +745,41 @@ class DatabaseService:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """,
-            "ALTER TABLE notifications ADD COLUMN link_anchor TEXT"
+            "ALTER TABLE notifications ADD COLUMN link_anchor TEXT",
+
+            # ── Applied stage (added 2026-05-21) ──────────────────────────
+            "ALTER TABLE applications ADD COLUMN applied_substage TEXT",
+            "ALTER TABLE applications ADD COLUMN submission_record_json TEXT",
+            "ALTER TABLE applications ADD COLUMN submission_snapshot_json TEXT",
+            "ALTER TABLE applications ADD COLUMN confirmation_record_json TEXT",
+            "ALTER TABLE applications ADD COLUMN follow_up_plan_json TEXT",
+            "ALTER TABLE applications ADD COLUMN sla_tracker_json TEXT",
+
+            "ALTER TABLE application_events ADD COLUMN actor TEXT",
+            "ALTER TABLE application_events ADD COLUMN title TEXT",
+            "ALTER TABLE application_events ADD COLUMN metadata_json TEXT",
+            "ALTER TABLE application_events ADD COLUMN related_asset_id INTEGER",
+            "ALTER TABLE application_events ADD COLUMN substage TEXT",
+
+            # Per decision D1: keep existing `role` column; expose as `title` via Pydantic alias in T2.
+            "ALTER TABLE application_contacts ADD COLUMN is_hiring_manager INTEGER DEFAULT 0",
+            "ALTER TABLE application_contacts ADD COLUMN source TEXT",
+
+            """
+            CREATE TABLE IF NOT EXISTS applied_assets (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              application_id INTEGER NOT NULL,
+              asset_type TEXT NOT NULL,
+              file_path TEXT NOT NULL,
+              mime_type TEXT NOT NULL,
+              original_filename TEXT NOT NULL,
+              file_hash TEXT NOT NULL,
+              uploaded_at TEXT NOT NULL,
+              created_by_user_id INTEGER,
+              FOREIGN KEY(application_id) REFERENCES applications(id)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_applied_assets_app ON applied_assets(application_id)",
         ]
         with self.engine.connect() as conn:
             for sql in migrations:
