@@ -6,8 +6,10 @@ phase: A1
 owner: backend
 single_writer: backend/services/database_service.py
 estimated_loc: ~80 added (no edits to existing)
-status: ready
-dispatchable: pending user review
+status: merged
+dispatchable: complete
+merged_commit: b92938d117b46b0ca8399df7550852216faf859a
+merged_at: 2026-05-21T17:48:36.000Z
 ---
 # T1 — Schema + SQLAlchemy model deltas
 

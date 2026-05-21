@@ -33,6 +33,10 @@ T15.0 first (single-writer refactor on `ApplicationLifecycle.jsx`), then T15–T
 
 T19a–T19f, each parallel after its dep.
 
+## Verification conventions (lessons learned)
+
+- **Pin DB path in §5 commands that inspect SQLite schema.** `DatabaseService` resolves `sqlite:///applications.db` against the *current working directory*, so `cd backend && python …` and `cd repo-root && python …` write to different files. Future packets that include a `PRAGMA table_info(...)` or `.schema` step must either `export DATABASE_URL=sqlite:///$(pwd)/applications.db` first or sqlite3 the explicit absolute path. (Discovered while verifying T1.)
+
 ## Packet format conventions
 
 Every packet contains:

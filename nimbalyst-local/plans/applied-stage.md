@@ -33,7 +33,7 @@ Phase 0 — Decisions (blocking; see §13.3)
 - [ ] D7: Frontend transition-gate UX when `can_transition: false`
 
 Phase A — Foundations
-- [ ] T1: Schema + SQLAlchemy model deltas (single-writer: `database_service.py`)
+- [x] T1: Schema + SQLAlchemy model deltas (single-writer: `database_service.py`) — merged b92938d
 - [ ] T2: Pydantic models module (`backend/models/applied_models.py`)
 - [ ] T3.0: Service-package skeleton + region anchors (`backend/services/applied/`)
 - [ ] T3a: Derivations (pure functions) — `applied/derivations.py`
