@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import PipelineProgressBar, { PIPELINE_STAGES, STAGE_TO_STATUS } from '../components/PipelineProgressBar';
 import { useAuth } from '../context/AuthContext';
@@ -3158,6 +3158,24 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onT
     await updateSubStageProgress('follow_up_sent', true);
   };
 
+  // ── Shared Applied-stage state (T15-T18) ────────────────────────────────
+  // Fetched once at this level so the four substage tabs do not 4x the
+  // GET /applied call per render. Mutations in child tabs trigger
+  // refreshAppliedState() to keep the UI in sync.
+  const [appliedState, setAppliedState] = useState(null);
+  const fetchAppliedState = useCallback(async () => {
+    if (!app?.id) return;
+    try {
+      const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}/applied`);
+      if (res.ok) {
+        setAppliedState(await res.json());
+      }
+    } catch (e) {
+      console.error('Failed to fetch Applied state', e);
+    }
+  }, [app?.id, fetchWithAuth]);
+  useEffect(() => { fetchAppliedState(); }, [fetchAppliedState]);
+
   const navStyle = (id) => ({
     display: 'flex',
     alignItems: 'center',
@@ -3177,17 +3195,49 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onT
   const renderContent = () => {
     switch (activeSubStage) {
       case 'submitted':
-        return <SubmittedTab app={app} />;
+        return (
+          <SubmittedTab
+            app={app}
+            appliedState={appliedState}
+            refreshAppliedState={fetchAppliedState}
+            apiUrl={API_URL}
+            fetchWithAuth={fetchWithAuth}
+          />
+        );
       case 'confirmed':
-        return <ConfirmedTab onConfirmReceipt={handleConfirmReceipt} />;
+        return (
+          <ConfirmedTab
+            app={app}
+            appliedState={appliedState}
+            refreshAppliedState={fetchAppliedState}
+            apiUrl={API_URL}
+            fetchWithAuth={fetchWithAuth}
+            onConfirmReceipt={handleConfirmReceipt}
+          />
+        );
       case 'follow_up_due':
-        return <FollowUpDueTab onMarkFollowUpSent={handleMarkFollowUpSent} />;
+        return (
+          <FollowUpDueTab
+            app={app}
+            appliedState={appliedState}
+            refreshAppliedState={fetchAppliedState}
+            apiUrl={API_URL}
+            fetchWithAuth={fetchWithAuth}
+            onMarkFollowUpSent={handleMarkFollowUpSent}
+          />
+        );
       case 'follow_up_sent':
         return (
           <FollowUpSentTab
+            app={app}
+            appliedState={appliedState}
+            refreshAppliedState={fetchAppliedState}
+            apiUrl={API_URL}
+            fetchWithAuth={fetchWithAuth}
             completedCount={getCompletedCount()}
             totalSubstages={APPLIED_SUBSTAGES.length}
             onMoveToInterviewing={handleMoveToInterviewing}
+            onStageChange={onStageChange}
           />
         );
       default:
