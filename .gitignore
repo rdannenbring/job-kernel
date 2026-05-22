@@ -75,6 +75,8 @@ compare_*.py
 head_diff.py
 diff_xml.py
 backend/test_*.py
+# Re-include the proper pytest suite under backend/tests/
+!backend/tests/**/test_*.py
 backend/check_*.py
 backend/fix_*.py
 backend/migrate_*.py
