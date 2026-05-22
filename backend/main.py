@@ -174,6 +174,10 @@ def run_maintenance_loop():
 # Start background maintenance thread
 threading.Thread(target=run_maintenance_loop, daemon=True).start()
 
+# Start the Applied-stage sweeper (overdue follow-up + SLA milestone notifications)
+from jobs.applied_jobs import run_applied_sweeper_loop
+threading.Thread(target=run_applied_sweeper_loop, daemon=True).start()
+
 
 
 def calculate_commute_for_app(app_id: int):
