@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, text, Float, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import os
 from typing import Dict, List, Any
@@ -2083,7 +2083,7 @@ class DatabaseService:
                 application_id=app_id,
                 event_type=event_type,
                 description=description,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now(timezone.utc).isoformat()
             )
             session.add(event)
             if own_session:
