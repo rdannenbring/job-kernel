@@ -262,9 +262,10 @@ export function computeStageProgress(app) {
     return out;
 }
 
-function GeneratedSubStagePanel({ app, onRefresh, onStageChange, onStartFullGeneration, navCollapsed, onToggleNav }) {
+function GeneratedSubStagePanel({ app, onRefresh, onStageChange, onStartFullGeneration, navCollapsed, onToggleNav, initialSubStage, hideNav }) {
   const { fetchWithAuth } = useAuth();
-  const [activeSubStage, setActiveSubStage] = useState('resume');
+  const [activeSubStage, setActiveSubStage] = useState(initialSubStage || 'resume');
+  useEffect(() => { if (initialSubStage) setActiveSubStage(initialSubStage); }, [initialSubStage]);
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
@@ -917,7 +918,7 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, onStartFullGene
   }
 
   return (
-    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+    <div className={`substage-grid ${hideNav ? 'nav-hidden' : navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
       {/* Left: Navigation */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
         <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
@@ -1212,7 +1213,7 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, onStartFullGene
   );
 }
 
-function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connections = [], onAddContact, onSearchPeople, handleGenerateOutreach, generatingOutreach, outreachScript, setOutreachScript, openEditContact, handleDeleteContact, navCollapsed, onToggleNav, initialSubStage, onAnchorConsumed }) {
+function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connections = [], onAddContact, onSearchPeople, handleGenerateOutreach, generatingOutreach, outreachScript, setOutreachScript, openEditContact, handleDeleteContact, navCollapsed, onToggleNav, initialSubStage, onAnchorConsumed, hideNav }) {
   const { fetchWithAuth } = useAuth();
   const [activeSubStage, setActiveSubStage] = useState(initialSubStage || 'parsed');
   const isFirstRender = useRef(true);
@@ -3015,7 +3016,7 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
     }
   };
   return (
-    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+    <div className={`substage-grid ${hideNav ? 'nav-hidden' : navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
       {/* Left: Navigation */}
       <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
         <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
@@ -3081,9 +3082,10 @@ function SavedSubStagePanel({ app, onRefresh, avgScore, onStageChange, connectio
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-function AppliedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
+function AppliedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav, initialSubStage, hideNav }) {
   const { fetchWithAuth } = useAuth();
-  const [activeSubStage, setActiveSubStage] = useState('submitted');
+  const [activeSubStage, setActiveSubStage] = useState(initialSubStage || 'submitted');
+  useEffect(() => { if (initialSubStage) setActiveSubStage(initialSubStage); }, [initialSubStage]);
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
@@ -3246,7 +3248,7 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onT
   };
 
   return (
-    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+    <div className={`substage-grid ${hideNav ? 'nav-hidden' : navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
       <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
         <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
           <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
@@ -3295,8 +3297,9 @@ function AppliedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onT
 // ─────────────────────────────────────────────────────────────────────────────
 
 
-function InterviewingSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
-  const [activeSubStage, setActiveSubStage] = useState('recruiter_screen');
+function InterviewingSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav, initialSubStage, hideNav }) {
+  const [activeSubStage, setActiveSubStage] = useState(initialSubStage || 'recruiter_screen');
+  useEffect(() => { if (initialSubStage) setActiveSubStage(initialSubStage); }, [initialSubStage]);
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
@@ -3881,7 +3884,7 @@ function InterviewingSubStagePanel({ app, onRefresh, onStageChange, navCollapsed
   };
 
   return (
-    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+    <div className={`substage-grid ${hideNav ? 'nav-hidden' : navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
       <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
         <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
           <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
@@ -3927,8 +3930,9 @@ function InterviewingSubStagePanel({ app, onRefresh, onStageChange, navCollapsed
   );
 }
 
-function DecisionSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
-  const [activeSubStage, setActiveSubStage] = useState('awaiting_decision');
+function DecisionSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav, initialSubStage, hideNav }) {
+  const [activeSubStage, setActiveSubStage] = useState(initialSubStage || 'awaiting_decision');
+  useEffect(() => { if (initialSubStage) setActiveSubStage(initialSubStage); }, [initialSubStage]);
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
@@ -4674,7 +4678,7 @@ function DecisionSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, on
   };
 
   return (
-    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+    <div className={`substage-grid ${hideNav ? 'nav-hidden' : navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
       <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
         <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
           <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
@@ -4720,7 +4724,7 @@ function DecisionSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, on
   );
 }
 
-function AcceptedSubStagePanel({ app, onRefresh, onStageChange, initialSubStage = 'offer_received', navCollapsed, onToggleNav }) {
+function AcceptedSubStagePanel({ app, onRefresh, onStageChange, initialSubStage = 'offer_received', navCollapsed, onToggleNav, hideNav }) {
   const [activeSubStage, setActiveSubStage] = useState(initialSubStage);
   const isFirstRender = useRef(true);
   useEffect(() => {
@@ -5258,7 +5262,7 @@ function AcceptedSubStagePanel({ app, onRefresh, onStageChange, initialSubStage 
   };
 
   return (
-    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+    <div className={`substage-grid ${hideNav ? 'nav-hidden' : navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
       <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
         <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
           <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
@@ -5304,8 +5308,9 @@ function AcceptedSubStagePanel({ app, onRefresh, onStageChange, initialSubStage 
   );
 }
 
-function RejectedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
-  const [activeSubStage, setActiveSubStage] = useState('rejection_received');
+function RejectedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav, initialSubStage, hideNav }) {
+  const [activeSubStage, setActiveSubStage] = useState(initialSubStage || 'rejection_received');
+  useEffect(() => { if (initialSubStage) setActiveSubStage(initialSubStage); }, [initialSubStage]);
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
@@ -5445,7 +5450,7 @@ function RejectedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, on
   };
 
   return (
-    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+    <div className={`substage-grid ${hideNav ? 'nav-hidden' : navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
       <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
         <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
           <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
@@ -5491,8 +5496,9 @@ function RejectedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, on
   );
 }
 
-function DeclinedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
-  const [activeSubStage, setActiveSubStage] = useState('offer_review');
+function DeclinedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav, initialSubStage, hideNav }) {
+  const [activeSubStage, setActiveSubStage] = useState(initialSubStage || 'offer_review');
+  useEffect(() => { if (initialSubStage) setActiveSubStage(initialSubStage); }, [initialSubStage]);
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
@@ -5578,7 +5584,7 @@ function DeclinedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, on
   };
 
   return (
-    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+    <div className={`substage-grid ${hideNav ? 'nav-hidden' : navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
       <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
         <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
           <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
@@ -5624,8 +5630,9 @@ function DeclinedSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, on
   );
 }
 
-function WithdrawnSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav }) {
-  const [activeSubStage, setActiveSubStage] = useState('decision_made');
+function WithdrawnSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, onToggleNav, initialSubStage, hideNav }) {
+  const [activeSubStage, setActiveSubStage] = useState(initialSubStage || 'decision_made');
+  useEffect(() => { if (initialSubStage) setActiveSubStage(initialSubStage); }, [initialSubStage]);
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
@@ -5753,7 +5760,7 @@ function WithdrawnSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, o
   };
 
   return (
-    <div className={`substage-grid ${navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
+    <div className={`substage-grid ${hideNav ? 'nav-hidden' : navCollapsed ? 'is-collapsed' : 'is-expanded'}`}>
       <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: '130px', height: 'fit-content', zIndex: 100 }}>
         <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'flex-end', padding: '0 0.5rem', marginBottom: '0.5rem' }}>
           <button className="substage-nav-toggle-btn" onClick={onToggleNav} title={navCollapsed ? "Expand menu" : "Collapse menu"}>
@@ -5799,7 +5806,7 @@ function WithdrawnSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, o
   );
 }
 
-function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, onStartFullGeneration, hideHeader = false, activePhaseTab, avgScore, notificationAnchor, onAnchorConsumed }) {
+function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, onStartFullGeneration, hideHeader = false, activePhaseTab, avgScore, notificationAnchor, onAnchorConsumed, externalSubStage }) {
 
 
   const { fetchWithAuth } = useAuth();
@@ -6106,11 +6113,11 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, onStartFullGe
 
       {/* Main Content Areas */}
       {((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'saved') ? (
-        <SavedSubStagePanel 
-          app={app} 
-          onRefresh={refreshApp} 
-          avgScore={avgScore} 
-          onStageChange={updateStage} 
+        <SavedSubStagePanel
+          app={app}
+          onRefresh={refreshApp}
+          avgScore={avgScore}
+          onStageChange={updateStage}
           connections={connections}
           onAddContact={handleAddContact}
           onSearchPeople={() => setShowAddContact(true)}
@@ -6122,34 +6129,37 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, onStartFullGe
           handleDeleteContact={handleDeleteContact}
           navCollapsed={navCollapsed}
           onToggleNav={() => setNavCollapsed(!navCollapsed)}
-          initialSubStage={notificationAnchor}
+          initialSubStage={externalSubStage || notificationAnchor}
           onAnchorConsumed={onAnchorConsumed}
+          hideNav={true}
         />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'generated') ? (
-        <GeneratedSubStagePanel 
-          app={app} 
-          onRefresh={refreshApp} 
-          onStageChange={updateStage} 
+        <GeneratedSubStagePanel
+          app={app}
+          onRefresh={refreshApp}
+          onStageChange={updateStage}
           onStartFullGeneration={onStartFullGeneration}
-          navCollapsed={navCollapsed} 
-          onToggleNav={() => setNavCollapsed(!navCollapsed)} 
+          navCollapsed={navCollapsed}
+          onToggleNav={() => setNavCollapsed(!navCollapsed)}
+          initialSubStage={externalSubStage}
+          hideNav={true}
         />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'applied') ? (
-        <AppliedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
+        <AppliedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} initialSubStage={externalSubStage} hideNav={true} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'interviewing') ? (
-        <InterviewingSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
+        <InterviewingSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} initialSubStage={externalSubStage} hideNav={true} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'decision') ? (
-        <DecisionSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
+        <DecisionSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} initialSubStage={externalSubStage} hideNav={true} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'offered') ? (
-        <AcceptedSubStagePanel key="offered" app={app} onRefresh={refreshApp} onStageChange={updateStage} initialSubStage="offer_received" navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
+        <AcceptedSubStagePanel key="offered" app={app} onRefresh={refreshApp} onStageChange={updateStage} initialSubStage={externalSubStage || "offer_received"} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} hideNav={true} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'accepted') ? (
-        <AcceptedSubStagePanel key="accepted" app={app} onRefresh={refreshApp} onStageChange={updateStage} initialSubStage="formal_acceptance" navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
+        <AcceptedSubStagePanel key="accepted" app={app} onRefresh={refreshApp} onStageChange={updateStage} initialSubStage={externalSubStage || "formal_acceptance"} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} hideNav={true} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'rejected') ? (
-        <RejectedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
+        <RejectedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} initialSubStage={externalSubStage} hideNav={true} />
       ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'declined') ? (
-        <DeclinedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
+        <DeclinedSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} initialSubStage={externalSubStage} hideNav={true} />
 ) : ((activePhaseTab || app?.pipeline_stage || 'saved').toLowerCase() === 'withdrawn') ? (
-        <WithdrawnSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} />
+        <WithdrawnSubStagePanel app={app} onRefresh={refreshApp} onStageChange={updateStage} navCollapsed={navCollapsed} onToggleNav={() => setNavCollapsed(!navCollapsed)} initialSubStage={externalSubStage} hideNav={true} />
       ) : (
 
 

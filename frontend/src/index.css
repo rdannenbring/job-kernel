@@ -1675,6 +1675,14 @@ input::placeholder, textarea::placeholder {
   display: inline-flex !important;
 }
 
+/* Rail-driven mode: hide the internal left nav entirely */
+.substage-grid.nav-hidden {
+  grid-template-columns: 1fr !important;
+}
+.substage-grid.nav-hidden > *:first-child {
+  display: none !important;
+}
+
 .substage-nav-toggle-btn {
   display: flex;
   align-items: center;

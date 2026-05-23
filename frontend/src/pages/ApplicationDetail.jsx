@@ -3,6 +3,7 @@ import CustomDropdown from '../components/CustomDropdown';
 import LocationAutocomplete from '../components/LocationAutocomplete';
 import InterestStars from '../components/InterestStars';
 import PipelineProgressBar, { STAGE_TO_STATUS } from '../components/PipelineProgressBar';
+import VerticalPipelineRail from '../components/VerticalPipelineRail';
 import ApplicationLifecycle, { computeStageProgress } from './ApplicationLifecycle';
 import { useAuth } from '../context/AuthContext';
 
@@ -693,19 +694,20 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
         if (!scrollContainer) return;
 
         const handleScroll = () => {
-            // Trigger the mini header after scrolling 150px (enough to clear the main title)
-            const shouldShow = scrollContainer.scrollTop > 150;
-            if (shouldShow !== showStickyHeaderSummary) {
-                setShowStickyHeaderSummary(shouldShow);
-            }
+            const shouldShow = scrollContainer.scrollTop > 50;
+            setShowStickyHeaderSummary(prev => {
+                if (prev !== shouldShow) {
+                    return shouldShow;
+                }
+                return prev;
+            });
         };
 
         scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
-        // Initial check
         handleScroll();
 
         return () => scrollContainer.removeEventListener('scroll', handleScroll);
-    }, [showStickyHeaderSummary]);
+    }, []);
 
     const { fetchWithAuth } = useAuth();
     const [profileDocs, setProfileDocs] = React.useState([]);
@@ -726,6 +728,17 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     const [regeneratingCL, setRegeneratingCL] = React.useState(false);
     const [activePhaseTab, setActivePhaseTab] = React.useState('Saved');
 
+    // Default first sub-stage per stage — keeps externalSubStage always wired
+    const DEFAULT_SUBSTAGES = {
+        saved: 'parsed', generated: 'resume', applied: 'submitted',
+        interviewing: 'recruiter_screen', decision: 'awaiting_decision',
+        accepted: 'offer_received', offered: 'offer_received',
+        rejected: 'rejection_received', declined: 'offer_review', withdrawn: 'decision_made',
+    };
+    const getDefaultSubStage = (stage) => DEFAULT_SUBSTAGES[(stage || 'saved').toLowerCase()] || 'parsed';
+
+    const [activeSubStage, setActiveSubStage] = React.useState(() => getDefaultSubStage(app?.pipeline_stage));
+    const [isJobDescExpanded, setIsJobDescExpanded] = React.useState(false);
 
     React.useEffect(() => {
         if (app?.pipeline_stage) {
@@ -740,6 +753,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                 setActivePhaseTab(s.charAt(0).toUpperCase() + s.slice(1));
             } else setActivePhaseTab('Saved');
         }
+        setActiveSubStage(getDefaultSubStage(app?.pipeline_stage));
     }, [app?.pipeline_stage]);
     const [expandedResume, setExpandedResume] = React.useState(false);
     const [expandedCL, setExpandedCL] = React.useState(false);
@@ -1295,864 +1309,287 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
 
     return (
         <div style={{ maxWidth: '1600px', width: '100%', margin: '0 auto', background: 'var(--bg-primary)', position: 'relative' }}>
-            {/* Sticky Mini Header — Logo and Title (At root level to prevent clipping) */}
+            {/* Sticky Mini Header — CSS media queries for responsive metadata visibility and theme variables */}
+            <style>{`
+                :root {
+                    --bg-glass-custom: rgba(15, 23, 42, 0.85);
+                    --badge-bg-custom: rgba(255, 255, 255, 0.04);
+                    --salary-not-listed-bg-custom: rgba(255, 255, 255, 0.02);
+                    --btn-hover-bg: rgba(255, 255, 255, 0.06);
+                }
+                :root[data-theme="light"] {
+                    --bg-glass-custom: rgba(255, 255, 255, 0.85);
+                    --badge-bg-custom: rgba(15, 23, 42, 0.04);
+                    --salary-not-listed-bg-custom: rgba(15, 23, 42, 0.02);
+                    --btn-hover-bg: rgba(15, 23, 42, 0.06);
+                }
+                @media (max-width: 1400px) {
+                    .sticky-interest {
+                        display: none !important;
+                    }
+                }
+                @media (max-width: 1280px) {
+                    .sticky-job-type {
+                        display: none !important;
+                    }
+                }
+                @media (max-width: 1180px) {
+                    .sticky-location {
+                        display: none !important;
+                    }
+                }
+                @media (max-width: 1080px) {
+                    .sticky-salary {
+                        display: none !important;
+                    }
+                }
+                @media (max-width: 980px) {
+                    .sticky-score {
+                        display: none !important;
+                    }
+                }
+                @media (max-width: 880px) {
+                    .sticky-stage {
+                        display: none !important;
+                    }
+                }
+                @media (max-width: 768px) {
+                    .sticky-title-info, .sticky-divider-info {
+                        display: none !important;
+                    }
+                    .sticky-btn-text {
+                        display: none !important;
+                    }
+                    .sticky-btn {
+                        padding: 0 !important;
+                        width: 32px !important;
+                        height: 32px !important;
+                        justify-content: center !important;
+                        border-radius: 50% !important;
+                        gap: 0 !important;
+                    }
+                }
+            `}</style>
+
+            {/* Sticky Mini Header — Logo, Title, Actions, and Rich Metadata (zero-height outer wrapper to prevent layout shift) */}
             <div style={{
                 position: 'sticky',
                 top: 0,
+                left: 0,
+                right: 0,
+                width: '100%',
+                height: 0,
+                overflow: 'visible',
                 zIndex: 10001,
-                background: 'var(--bg-primary)',
-                borderBottom: showStickyHeaderSummary ? '1px solid var(--border-color)' : 'none',
-                height: '70px',
-                visibility: showStickyHeaderSummary ? 'visible' : 'hidden',
-                opacity: showStickyHeaderSummary ? 1 : 0,
-                transform: showStickyHeaderSummary ? 'translateY(0)' : 'translateY(-10px)',
-                overflow: 'hidden',
-                transition: 'opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease',
-                pointerEvents: showStickyHeaderSummary ? 'auto' : 'none',
-                boxShadow: showStickyHeaderSummary ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
-                marginBottom: showStickyHeaderSummary ? '0' : '-70px', /* Avoid taking space when hidden */
             }}>
-                <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '1rem', 
-                    padding: '0.75rem 3rem',
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '64px',
+                    background: 'var(--bg-glass-custom)',
+                    backdropFilter: 'blur(16px) saturate(120%)',
+                    WebkitBackdropFilter: 'blur(16px) saturate(120%)',
+                    borderBottom: '1px solid var(--border-color)',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0 24px',
+                    transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, visibility 0.4s ease',
+                    transform: showStickyHeaderSummary ? 'translateY(0)' : 'translateY(-100%)',
+                    opacity: showStickyHeaderSummary ? 1 : 0,
+                    visibility: showStickyHeaderSummary ? 'visible' : 'hidden',
+                    pointerEvents: showStickyHeaderSummary ? 'auto' : 'none',
                 }}>
-                    {app.company_logo && (
-                        <img 
-                            src={app.company_logo} 
-                            alt={app.company} 
-                            style={{ 
-                                width: '1.75rem', 
-                                height: '1.75rem', 
-                                objectFit: 'contain', 
-                                borderRadius: '4px',
-                                background: 'rgba(255,255,255,0.03)',
-                                padding: '2px',
-                                transition: 'transform 0.3s ease',
-                                transform: showStickyHeaderSummary ? 'scale(1)' : 'scale(0.8)'
-                            }} 
-                        />
-                    )}
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                        <span style={{ 
-                            fontSize: '0.85rem', 
-                            fontWeight: 800, 
-                            color: 'var(--text-primary)', 
-                            whiteSpace: 'nowrap', 
-                            overflow: 'hidden', 
-                            textOverflow: 'ellipsis',
-                            lineHeight: 1.2
-                        }}>
-                            {app.job_title}
-                        </span>
-                        <span style={{ 
-                            fontSize: '0.7rem', 
-                            fontWeight: 600, 
-                            color: 'var(--text-secondary)', 
-                            whiteSpace: 'nowrap', 
-                            overflow: 'hidden', 
-                            textOverflow: 'ellipsis',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
-                        }}>
-                            {app.company}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Main Header & Controls — padded wrapper */}
-            <div style={{ padding: '3rem', paddingBottom: '0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <button
-                    onClick={onBack}
-                    style={{
-                        background: 'none', border: 'none', color: 'var(--text-secondary)',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: 0
-                    }}
-                >
-                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>arrow_back</span>
-                    Back to Dashboard
-                </button>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    {/* Button removed in favor of tabs */}
-                    <button
-                        onClick={() => {
-                            if (isEditing) handleSave();
-                            else {
-                                setFormData({ ...app });
-                                setIsEditing(true);
-                            }
-                        }}
-                        disabled={saving}
-                        className={`btn-util ${isEditing ? 'active' : ''}`}
-                    >
-                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>{isEditing ? 'save' : 'edit'}</span>
-                        {isEditing ? (saving ? 'Saving...' : 'Save Changes') : 'Edit Info'}
-                    </button>
-                    {isEditing && (
+                    {/* Left Section: Back, Logo, Title, Stage, Score */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flexShrink: 0 }}>
                         <button
-                            onClick={() => {
-                                setIsEditing(false);
-                                setFormData({ ...app });
-                            }}
+                            onClick={onBack}
                             style={{
-                                display: 'flex', alignItems: 'center', gap: '0.4rem',
-                                padding: '0.4rem 0.9rem', borderRadius: '0.5rem',
-                                background: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
-                                color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500,
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '6px',
+                                transition: 'background 0.2s, color 0.2s',
                             }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--btn-hover-bg)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                            title="Back to Dashboard"
                         >
-                            Cancel
+                            <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>arrow_back</span>
                         </button>
-                    )}
-                    {/* Archive / Unarchive button */}
-                    <button
-                        onClick={() => handleArchive(!isArchived)}
-                        disabled={archiving}
-                        className={`btn-util ${isArchived ? 'btn-warning' : ''}`}
-                    >
-                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>{isArchived ? 'unarchive' : 'archive'}</span>
-                        {isArchived ? 'Unarchive' : 'Archive'}
-                    </button>
-                    {/* Delete button */}
-                    <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="btn-util btn-danger"
-                    >
-                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>delete</span>
-                        Delete
-                    </button>
-                </div>
-            </div>
+                        
+                        <div className="sticky-divider-info" style={{ width: '1px', height: '20px', background: 'var(--border-color)', flexShrink: 0 }} />
 
-            {/* Archived banner */}
-            {isArchived && (
-                <div style={{
-                    display: 'flex', alignItems: 'center', gap: '0.6rem',
-                    padding: '0.6rem 1rem', marginBottom: '1.25rem',
-                    background: 'var(--shadow-glow)', border: '1px solid var(--warning)',
-                    borderRadius: '0.6rem', color: 'var(--warning)', fontSize: '0.875rem',
-                }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>archive</span>
-                    This application is archived. It won’t appear in your main dashboard view.
-                </div>
-            )}
-
-            {/* Delete Confirmation Modal */}
-            {showDeleteConfirm && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    zIndex: 9999, backdropFilter: 'blur(6px)'
-                }}>
-                    <div style={{
-                        background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem',
-                        border: '1px solid rgba(239,68,68,0.3)', maxWidth: '440px', width: '90%',
-                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                            <span className="material-symbols-outlined" style={{ color: '#f87171', fontSize: '1.5rem' }}>warning</span>
-                            <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Delete Application?</h2>
-                        </div>
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-                            This will permanently delete <strong>{app.job_title}</strong> at <strong>{app.company}</strong>.
-                            This action cannot be undone.
-                        </p>
-                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                            <button
-                                onClick={() => setShowDeleteConfirm(false)}
-                                style={{
-                                    padding: '0.5rem 1.2rem', background: 'transparent',
-                                    border: '1px solid var(--border-color)', color: 'var(--text-secondary)',
-                                    borderRadius: '0.5rem', cursor: 'pointer'
-                                }}
-                            >Cancel</button>
-                            <button
-                                onClick={handleDelete}
-                                disabled={deleting}
-                                style={{
-                                    padding: '0.5rem 1.2rem', background: '#ef4444',
-                                    border: 'none', color: 'white', borderRadius: '0.5rem',
-                                    cursor: deleting ? 'not-allowed' : 'pointer', fontWeight: 600,
-                                    opacity: deleting ? 0.7 : 1
-                                }}
-                            >{deleting ? 'Deleting...' : 'Yes, Delete'}</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Resume Override Confirmation Modal */}
-            {showResumeOverrideConfirm && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    zIndex: 9999, backdropFilter: 'blur(6px)'
-                }}>
-                    <div style={{
-                        background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem',
-                        border: '1px solid var(--primary)', maxWidth: '440px', width: '90%',
-                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                            <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.5rem' }}>info</span>
-                            <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Use Override Resume?</h2>
-                        </div>
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-                            You are about to upload a final override version of your resume. 
-                            <strong> This version will be used by the Chrome extension when applying for this job.</strong>
-                            <br/><br/>
-                            We will also process this document to update your profile snapshot for this application.
-                        </p>
-                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                            <button
-                                onClick={() => {
-                                    setShowResumeOverrideConfirm(false);
-                                    setPendingResumeFile(null);
-                                }}
-                                style={{
-                                    padding: '0.5rem 1.2rem', background: 'transparent',
-                                    border: '1px solid var(--border-color)', color: 'var(--text-secondary)',
-                                    borderRadius: '0.5rem', cursor: 'pointer'
-                                }}
-                            >Cancel</button>
-                            <button
-                                onClick={() => confirmOverride('resume')}
-                                disabled={uploadingOverride}
-                                style={{
-                                    padding: '0.5rem 1.2rem', background: 'var(--primary)',
-                                    border: 'none', color: 'white', borderRadius: '0.5rem',
-                                    cursor: uploadingOverride ? 'not-allowed' : 'pointer', fontWeight: 600,
-                                    opacity: uploadingOverride ? 0.7 : 1
-                                }}
-                            >{uploadingOverride ? 'Uploading...' : 'Confirm & Use'}</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Cover Letter Override Confirmation Modal */}
-            {showCLOverrideConfirm && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    zIndex: 9999, backdropFilter: 'blur(6px)'
-                }}>
-                    <div style={{
-                        background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem',
-                        border: '1px solid var(--primary)', maxWidth: '440px', width: '90%',
-                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                            <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.5rem' }}>info</span>
-                            <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Use Override Cover Letter?</h2>
-                        </div>
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-                            You are about to upload a final override version of your cover letter. 
-                            <strong> This version will be used by the Chrome extension when applying for this job.</strong>
-                        </p>
-                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                            <button
-                                onClick={() => {
-                                    setShowCLOverrideConfirm(false);
-                                    setPendingCLFile(null);
-                                }}
-                                style={{
-                                    padding: '0.5rem 1.2rem', background: 'transparent',
-                                    border: '1px solid var(--border-color)', color: 'var(--text-secondary)',
-                                    borderRadius: '0.5rem', cursor: 'pointer'
-                                }}
-                            >Cancel</button>
-                            <button
-                                onClick={() => confirmOverride('cover_letter')}
-                                disabled={uploadingOverride}
-                                style={{
-                                    padding: '0.5rem 1.2rem', background: 'var(--primary)',
-                                    border: 'none', color: 'white', borderRadius: '0.5rem',
-                                    cursor: uploadingOverride ? 'not-allowed' : 'pointer', fontWeight: 600,
-                                    opacity: uploadingOverride ? 0.7 : 1
-                                }}
-                            >{uploadingOverride ? 'Uploading...' : 'Confirm & Use'}</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <header style={{ marginBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                        {/* Clickable logo zone — click to open logo picker */}
-                        <div
-                            onClick={() => setShowLogoPicker(true)}
-                            title="Click to set a logo"
-                            style={{
-                                width: '72px', height: '72px', borderRadius: '12px', flexShrink: 0,
-                                background: logoUrl ? 'transparent' : 'rgba(255,255,255,0.05)',
-                                padding: '0',
-                                border: '1px dashed var(--border-color)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                cursor: 'pointer', overflow: 'hidden', position: 'relative',
-                                transition: 'border-color 0.2s',
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
-                            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
-                        >
-                            {isEnrichingGlobal ? (
-                                <div className="skeleton-shimmer" style={{ width: '100%', height: '100%', borderRadius: '4px' }} />
-                            ) : logoUrl ? (
-                                <img src={logoUrl} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={() => setLogoUrl(null)} />
-                            ) : (
-                                <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '2rem' }}>add_photo_alternate</span>
-                            )}
-                            {/* Hover overlay */}
+                        {app.company_logo ? (
+                            <img 
+                                src={app.company_logo} 
+                                alt={app.company} 
+                                style={{ 
+                                    width: '32px', 
+                                    height: '32px', 
+                                    objectFit: 'contain', 
+                                    borderRadius: '6px',
+                                    background: 'rgba(255,255,255,0.03)',
+                                    padding: '2px',
+                                    border: '1px solid var(--border-color)',
+                                    flexShrink: 0
+                                }} 
+                            />
+                        ) : (
                             <div style={{
-                                position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                opacity: 0, transition: 'opacity 0.2s',
-                            }}
-                                onMouseEnter={e => e.currentTarget.style.opacity = 1}
-                                onMouseLeave={e => e.currentTarget.style.opacity = 0}
-                            >
-                                <span className="material-symbols-outlined" style={{ color: 'white', fontSize: '1.25rem' }}>edit</span>
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '6px',
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid var(--border-color)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0
+                            }}>
+                                <span style={{ color: 'var(--text-muted)', fontWeight: 800, fontSize: '11px' }}>
+                                    {(app.company || '?').split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('')}
+                                </span>
                             </div>
+                        )}
+
+                        <div className="sticky-title-info" style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                            <span style={{ 
+                                fontSize: '0.875rem', 
+                                fontWeight: 800, 
+                                color: 'var(--text-primary)', 
+                                whiteSpace: 'nowrap', 
+                                overflow: 'hidden', 
+                                textOverflow: 'ellipsis',
+                                lineHeight: 1.25
+                            }}>
+                                {app.job_title}
+                            </span>
+                            <span style={{ 
+                                fontSize: '0.75rem', 
+                                fontWeight: 600, 
+                                color: 'var(--text-secondary)', 
+                                whiteSpace: 'nowrap', 
+                                overflow: 'hidden', 
+                                textOverflow: 'ellipsis',
+                            }}>
+                                {app.company}
+                            </span>
                         </div>
-                        {/* Hidden file input kept for legacy compatibility */}
-                        <input type="file" ref={logoInputRef} accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
-                        <input type="file" ref={resumeOverrideInputRef} accept=".docx,.pdf,.txt" style={{ display: 'none' }} onChange={(e) => onFileSelected(e, 'resume')} />
-                        <input type="file" ref={clOverrideInputRef} accept=".docx,.pdf,.txt" style={{ display: 'none' }} onChange={(e) => onFileSelected(e, 'cover_letter')} />
-                        <div style={{ flex: 1 }}>
-                            {isEditing ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <input
-                                        type="text"
-                                        value={formData.job_title}
-                                        onChange={e => setFormData({ ...formData, job_title: e.target.value })}
-                                        style={{ fontSize: '2.5rem', fontWeight: 800, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.5rem', color: 'var(--text-primary)', width: '100%', padding: '0.25rem 0.75rem' }}
-                                    />
-                                    <input
-                                        type="text"
-                                        value={formData.company}
-                                        onChange={e => setFormData({ ...formData, company: e.target.value })}
-                                        style={{ fontSize: '1.5rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.5rem', color: 'var(--text-secondary)', width: '100%', padding: '0.25rem 0.75rem' }}
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="Company Website URL"
-                                        value={formData.company_url || ''}
-                                        onChange={e => setFormData({ ...formData, company_url: e.target.value })}
-                                        style={{ fontSize: '1rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.5rem', color: 'var(--text-secondary)', width: '100%', padding: '0.25rem 0.75rem', marginTop: '0.5rem' }}
-                                    />
-                                </div>
-                            ) : (
-                                <>
-                                    <h1 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '0.25rem', lineHeight: '1.2', letterSpacing: '-0.02em' }}>{app.job_title}</h1>
-                                    <div style={{ fontSize: '1.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                                        {isEnrichingGlobal ? (
-                                            <span className="text-shimmer" style={{ fontSize: '1.75rem', fontWeight: 500 }}>{app.company}</span>
-                                        ) : app.company_url ? (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                                                <a 
-                                                    href={app.company_url.startsWith('http') ? app.company_url : `https://${app.company_url}`} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer" 
-                                                    style={{ color: 'inherit', textDecoration: 'none', borderBottom: '1px dashed transparent', transition: 'all 0.2s' }}
-                                                    onMouseOver={(e) => e.currentTarget.style.borderBottomColor = 'var(--primary)'}
-                                                    onMouseOut={(e) => e.currentTarget.style.borderBottomColor = 'transparent'}
-                                                >
-                                                    {app.company}
-                                                </a>
-                                                <a 
-                                                    href={app.company_url.startsWith('http') ? app.company_url : `https://${app.company_url}`} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
-                                                    style={{ color: 'var(--primary)', opacity: 0.6, display: 'flex', textDecoration: 'none' }}
-                                                >
-                                                    <span className="material-symbols-outlined" style={{ fontSize: '1.4rem' }}>arrow_outward</span>
-                                                </a>
+
+                        {/* Stage Pill */}
+                        {(() => {
+                            const stickyStage = (app.pipeline_stage || 'saved').toLowerCase();
+                            const stickyStatusColorMap = {
+                                saved: 'var(--primary)', generated: 'var(--primary)', applied: 'var(--primary)',
+                                interviewing: 'var(--warning)', decision: 'var(--warning)',
+                                accepted: 'var(--success)', offered: 'var(--success)',
+                                rejected: 'var(--error)', declined: 'var(--error)', withdrawn: 'var(--error)',
+                            };
+                            const stickyPillColor = stickyStatusColorMap[stickyStage] || 'var(--primary)';
+                            const stickyPillBg = stickyStage === 'accepted' || stickyStage === 'offered'
+                                ? 'rgba(16,185,129,0.1)'
+                                : stickyStage === 'interviewing' || stickyStage === 'decision'
+                                ? 'rgba(245,158,11,0.1)'
+                                : stickyStage === 'rejected' || stickyStage === 'declined' || stickyStage === 'withdrawn'
+                                ? 'rgba(239,68,68,0.1)'
+                                : 'rgba(37,106,244,0.1)';
+
+                            return (
+                                <span className="sticky-stage" style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                                    padding: '2px 8px', borderRadius: 999,
+                                    background: stickyPillBg, color: stickyPillColor,
+                                    fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+                                    marginLeft: '8px',
+                                    flexShrink: 0
+                                }}>
+                                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: stickyPillColor, flexShrink: 0 }} />
+                                    {app.pipeline_stage || 'Saved'}
+                                </span>
+                            );
+                        })()}
+
+                        {/* Match Score */}
+                        {app.match_score != null && (
+                            <div className="sticky-score" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '12px', flexShrink: 0 }}>
+                                {(() => {
+                                    const score = app.match_score;
+                                    const scoreColor = score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--warning)' : 'var(--error)';
+                                    const size = 32, stroke = 2.5;
+                                    const r = (size - stroke) / 2;
+                                    const circ = 2 * Math.PI * r;
+                                    const dash = (score / 100) * circ;
+                                    return (
+                                        <div style={{ position: 'relative', width: size, height: size }}>
+                                            <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+                                                <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--border-color)" strokeWidth={stroke} />
+                                                <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={scoreColor} strokeWidth={stroke} strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round" />
+                                            </svg>
+                                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: scoreColor }}>
+                                                {score}
                                             </div>
-                                        ) : (
-                                            app.company
-                                        )}
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-                        {connections && connections.length > 0 && (
-                            <button
-                                onClick={() => {
-                                    document.getElementById('networking-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }}
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                    padding: '0.4rem 0.8rem', borderRadius: '2rem',
-                                    background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.4)',
-                                    color: '#10b981', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
-                                    transition: 'all 0.2s', whiteSpace: 'nowrap'
-                                }}
-                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.2)'; e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.6)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)'; }}
-                                title="Scroll to networking contacts"
-                            >
-                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>group</span>
-                                {connections.length} Network {connections.length === 1 ? 'Connection' : 'Connections'}
-                            </button>
-                        )}
-                        {app?.match_score != null && (() => {
-                            const scoreColors = getScoreColors(app.match_score);
-                            const cmp = getScoreComparison(app.match_score, avgScore);
-                            const tooltipText = cmp
-                                ? cmp.isAbove
-                                    ? `Match Score: ${app.match_score} \u2014 \u2191 ${cmp.absDiff} pts above your avg (${cmp.avg})`
-                                    : cmp.isBelow
-                                        ? `Match Score: ${app.match_score} \u2014 \u2193 ${cmp.absDiff} pts below your avg (${cmp.avg})`
-                                        : `Match Score: ${app.match_score} \u2014 equal to your avg (${cmp.avg})`
-                                : `Match Score: ${app.match_score}`;
-                            return (
-                                <button
-                                    onClick={() => {
-                                        setShowDetails(true);
-                                        setTimeout(() => {
-                                            document.getElementById('compatibility-score-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                        }, 50);
-                                    }}
-                                    style={{
-                                        display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                        padding: '0.35rem 0.75rem 0.35rem 0.35rem',
-                                        borderRadius: '2rem',
-                                        background: scoreColors.bg,
-                                        border: `1px solid ${scoreColors.border}`,
-                                        color: scoreColors.text,
-                                        cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
-                                        transition: 'all 0.2s', whiteSpace: 'nowrap'
-                                    }}
-                                    onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
-                                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                                    title={tooltipText}
-                                >
-                                    {/* Score circle with arrow indicator */}
-                                    <div style={{ position: 'relative', flexShrink: 0 }}>
-                                        <div style={{
-                                            width: '28px', height: '28px', borderRadius: '50%',
-                                            background: scoreColors.bg,
-                                            border: `2px solid ${scoreColors.border}`,
-                                            color: scoreColors.text,
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            fontSize: '0.75rem', fontWeight: 800,
-                                        }}>
-                                            {app.match_score}
                                         </div>
-                                        {cmp && (cmp.isAbove || cmp.isBelow) && (
-                                            <span style={{
-                                                position: 'absolute', bottom: -2, right: -2,
-                                                width: 11, height: 11, borderRadius: '50%',
-                                                background: cmp.isAbove ? '#10b981' : '#ef4444',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                fontSize: '7px', fontWeight: 900, color: 'white',
-                                                border: '1px solid rgba(0,0,0,0.25)', lineHeight: 1,
-                                            }}>
-                                                {cmp.isAbove ? '\u25b2' : '\u25bc'}
-                                            </span>
-                                        )}
-                                    </div>
-                                    {cmp && (cmp.isAbove || cmp.isBelow)
-                                        ? `${cmp.isAbove ? '\u2191' : '\u2193'} ${cmp.absDiff} vs avg`
-                                        : 'Match Score'
-                                    }
-                                </button>
-                            );
-                        })()}
-                        <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', alignSelf: 'flex-end', marginTop: connections && connections.length > 0 ? '0.5rem' : '0' }}>Status</label>
-                        <CustomDropdown
-                            value={app.status || 'Applied'}
-                            onChange={(val) => onStatusUpdate(app.id, val)}
-                            options={[
-                                { value: "Saved", label: "Saved" },
-                                { value: "Generated", label: "Generated" },
-                                { value: "Applied", label: "Applied" },
-                                { value: "Interviewing", label: "Interviewing" },
-                                { value: "Rejected", label: "Rejected" },
-                                { value: "Offered", label: "Offered" },
-                                { value: "Accepted", label: "Accepted" },
-                                { value: "Withdrawn/Cancelled", label: "Withdrawn/Cancelled" }
-                            ]}
-                            className="bg-tertiary"
-                            style={{ width: '150px' }}
-                        />
-                    </div>
-                </div>
-
-                <div ref={headerSentinelRef} style={{ height: '1px', width: '100%' }} />
-
-
-
-
-
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                    gap: '2rem',
-                    marginBottom: '2.5rem',
-                    background: 'transparent',
-                    padding: '2rem',
-                    borderRadius: '1rem',
-                    border: '1px solid var(--border-color)'
-                }}>
-
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Job Link</div>
-                        {isEditing ? (
-                            <input
-                                type="text"
-                                value={formData.job_url || ''}
-                                onChange={e => setFormData({ ...formData, job_url: e.target.value })}
-                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
-                            />
-                        ) : (
-                            app.job_url ? (
-                                <a href={app.job_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 500, wordBreak: 'break-all', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                    Visit Listing <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>open_in_new</span>
-                                </a>
-                            ) : <span style={{ color: 'var(--text-muted)' }}>N/A</span>
-                        )}
-                    </div>
-
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Apply Link</div>
-                        {isEditing ? (
-                            <input
-                                type="text"
-                                value={formData.apply_url || ''}
-                                onChange={e => setFormData({ ...formData, apply_url: e.target.value })}
-                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
-                            />
-                        ) : (
-                            app.apply_url ? (
-                                <a href={app.apply_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 500, wordBreak: 'break-all', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                    Direct Apply <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>rocket_launch</span>
-                                </a>
-                            ) : <span style={{ color: 'var(--text-muted)' }}>N/A</span>
-                        )}
-                    </div>
-
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Salary Range</div>
-                        {isEditing ? (
-                            <input
-                                type="text"
-                                value={formData.salary_range || ''}
-                                onChange={e => setFormData({ ...formData, salary_range: e.target.value })}
-                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
-                            />
-                        ) : (() => {
-                            let matchNode = null;
-                            if (app.salary_range && profilePrefs) {
-                                const jobSalaries = extractSalaryNumbers(app.salary_range);
-                                if (jobSalaries.length > 0) {
-                                    const jobMin = Math.min(...jobSalaries);
-                                    const jobMax = Math.max(...jobSalaries);
-                                    
-                                    const userMin = profilePrefs.min_salary ? Number(profilePrefs.min_salary) : null;
-                                    const userMax = profilePrefs.max_salary ? Number(profilePrefs.max_salary) : null;
-                                    
-                                    if (userMin || userMax) {
-                                        const matchesMin = userMin ? jobMax >= userMin : true;
-                                        const matchesMax = userMax ? jobMin <= userMax : true;
-                                        
-                                        if (matchesMin && matchesMax) {
-                                            matchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#10b981' }} title="Matches your salary preferences">check_circle</span>;
-                                        } else {
-                                            matchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#ef4444' }} title="Does not meet your salary preferences">cancel</span>;
-                                        }
-                                    }
-                                }
-                            }
-                            return (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    <div style={{ fontWeight: 500, color: app.salary_range ? '#fbbf24' : 'inherit', wordBreak: 'break-word', hyphens: 'auto' }} title={String(app.salary_range)}>{app.salary_range ? formatCompensation(app.salary_range) : 'Not Listed'}</div>
-                                    {matchNode}
-                                </div>
-                            );
-                        })()}
-                    </div>
-
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Deadline</div>
-                        {isEditing ? (
-                            <input
-                                type="date"
-                                value={formData.deadline || ''}
-                                onChange={e => setFormData({ ...formData, deadline: e.target.value })}
-                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
-                            />
-                        ) : (
-                            <div style={{ fontWeight: 500, color: app.deadline ? '#ef4444' : 'inherit' }}>{app.deadline || 'None'}</div>
-                        )}
-                    </div>
-
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Job Type</div>
-                        {isEditing ? (
-                            <CustomDropdown
-                                value={formData.job_type === 'N/A' || !formData.job_type ? '' : formData.job_type}
-                                onChange={(val) => setFormData({ ...formData, job_type: val })}
-                                options={[
-                                    { value: '', label: 'Not Provided' },
-                                    { value: 'Full-time', label: 'Full-time' },
-                                    { value: 'Part-time', label: 'Part-time' },
-                                    { value: 'Contract', label: 'Contract' },
-                                    { value: 'Internship', label: 'Internship' },
-                                    { value: 'Temporary', label: 'Temporary' }
-                                ]}
-                                className="bg-tertiary"
-                                style={{ width: '100%' }}
-                            />
-                        ) : (() => {
-                            let jobMatchNode = null;
-                            if (profilePrefs) {
-                                const userJobTypes = profilePrefs.job_types || [];
-                                const userArray = Array.isArray(userJobTypes) ? userJobTypes : (userJobTypes ? [userJobTypes] : []);
-                                if (userArray.length === 0) {
-                                    jobMatchNode = <a href="#profile" title="Job Type preference missing. Click to set." style={{ color: 'var(--text-muted)' }}><span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>info</span></a>;
-                                } else {
-                                    const jobTypeField = app.job_type || '';
-                                    if (jobTypeField && jobTypeField.trim() !== '' && jobTypeField.toUpperCase() !== 'N/A') {
-                                        const isMatch = userArray.some(setting => jobTypeField.toLowerCase().includes(setting.toLowerCase()));
-                                        if (isMatch) {
-                                            jobMatchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#10b981' }} title={`Matches your preference (${userArray.join(', ')})`}>check_circle</span>;
-                                        } else {
-                                            jobMatchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#ef4444' }} title={`Does not match preference (${userArray.join(', ')})`}>cancel</span>;
-                                        }
-                                    }
-                                }
-                            }
-                            return (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    <div style={{ fontWeight: 500 }}>{app.job_type || 'Full-time'}</div>
-                                    {jobMatchNode}
-                                </div>
-                            );
-                        })()}
-                    </div>
-
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Location Type</div>
-                        {isEditing ? (
-                            <CustomDropdown
-                                value={formData.location_type === 'N/A' || !formData.location_type ? '' : formData.location_type}
-                                onChange={(val) => setFormData({ ...formData, location_type: val })}
-                                options={[
-                                    { value: '', label: 'Not Provided' },
-                                    { value: 'On-site', label: 'On-site' },
-                                    { value: 'Hybrid', label: 'Hybrid' },
-                                    { value: 'Remote', label: 'Remote' }
-                                ]}
-                                className="bg-tertiary"
-                                style={{ width: '100%' }}
-                            />
-                        ) : (() => {
-                            let wsMatchNode = null;
-                            if (profilePrefs) {
-                                const userSetting = profilePrefs.work_setting || [];
-                                const userArray = Array.isArray(userSetting) ? userSetting : (userSetting ? [userSetting] : []);
-                                if (userArray.length === 0) {
-                                    wsMatchNode = <a href="#profile" title="Location Type preference missing. Click to set." style={{ color: 'var(--text-muted)' }}><span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>info</span></a>;
-                                } else {
-                                    const jobType = app.location_type || '';
-                                    if (jobType && jobType.trim() !== '' && jobType.toUpperCase() !== 'N/A') {
-                                        const isMatch = userArray.some(setting =>
-                                            setting === 'Any' ||
-                                            (setting.toLowerCase() === 'remote' && jobType.toLowerCase() === 'hybrid') ||
-                                            jobType.toLowerCase().includes(setting.toLowerCase())
-                                        );
-                                        if (isMatch) {
-                                            wsMatchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#10b981' }} title={`Matches your preference (${userArray.join(', ')})`}>check_circle</span>;
-                                        } else {
-                                            wsMatchNode = <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#ef4444' }} title={`Does not match preference (${userArray.join(', ')})`}>cancel</span>;
-                                        }
-                                    }
-                                }
-                            }
-                            return (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    <div style={{ fontWeight: 500 }}>{app.location_type || 'N/A'}</div>
-                                    {wsMatchNode}
-                                </div>
-                            );
-                        })()}
-                    </div>
-
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Location</div>
-                        {isEditing ? (
-                            <LocationAutocomplete
-                                value={formData.location || ''}
-                                onChange={(val) => setFormData({ ...formData, location: val })}
-                            />
-                        ) : (
-                            app.location && app.location !== 'Remote' ? (
-                                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(app.location)}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                                    {app.location} <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>map</span>
-                                </a>
-                            ) : (
-                                <div style={{ fontWeight: 500 }}>{app.location || 'Remote'}</div>
-                            )
-                        )}
-                    </div>
-
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Estimated Commute</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                {commuteInfo.url ? (
-                                    <a href={commuteInfo.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                                        {commuteInfo.text} <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>
-                                            {commuteInfo.type === 'Walking' ? 'directions_walk' :
-                                             commuteInfo.type === 'Bicycle' ? 'directions_bike' :
-                                             commuteInfo.type === 'Public Transportation' ? 'directions_bus' :
-                                             commuteInfo.type === 'Flight' ? 'flight' : 'directions_car'}
-                                        </span>
-                                    </a>
-                                ) : (
-                                    <span style={{ color: 'var(--primary)' }}>{commuteInfo.text}</span>
-                                )}
-                                {commuteInfo.isOverLimit && (
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: '#ef4444' }} title={`Exceeds preferred max commute: ${commuteInfo.maxMins} mins`}>
-                                        warning
-                                    </span>
-                                )}
-                                {commuteInfo.url && !commuteInfo.isOverLimit && profilePrefs?.max_commute && (
-                                    <span className="material-symbols-outlined" style={{ fontSize: '1.2rem', color: '#10b981' }} title="Within preferred max commute limit">
-                                        check_circle
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Commute Type Toggles */}
-                            {allCommutes && Object.keys(allCommutes).length > 1 && (
-                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-                                    {['Driving', 'Public Transportation', 'Bicycle', 'Walking', 'Flight'].map(type => {
-                                        if (!allCommutes[type]) return null;
-                                        const iconMap = {
-                                            'Driving': 'directions_car',
-                                            'Public Transportation': 'directions_bus',
-                                            'Bicycle': 'directions_bike',
-                                            'Walking': 'directions_walk',
-                                            'Flight': 'flight'
-                                        };
-                                        const isSelected = currentCommuteType === type;
-                                        const maxCommuteMinsValue = commuteInfo.maxMins;
-                                        const mMins = allCommutes[type].mins;
-                                        const mIsOverLimit = maxCommuteMinsValue !== null && mMins > maxCommuteMinsValue;
-                                        const statusColor = mIsOverLimit ? '#ef4444' : '#10b981';
-                                        const statusFaint = mIsOverLimit ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)';
-
-                                        return (
-                                            <button
-                                                key={type}
-                                                onClick={() => {
-                                                    setCurrentCommuteType(type);
-                                                    const data = allCommutes[type];
-                                                    const mins = data.mins;
-                                                    const dist = data.distance;
-                                                    const isOverLimit = maxCommuteMinsValue !== null && mins > maxCommuteMinsValue;
-
-                                                    // Re-generate Google Maps URL with correct travel mode
-                                                    const urlBase = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(profilePrefs?.address_line1 || '')}+${encodeURIComponent(profilePrefs?.city || '')}&destination=${encodeURIComponent(app.location || '')}`;
-                                                    let travelMode = 'driving';
-                                                    if (type === 'Walking') travelMode = 'walking';
-                                                    else if (type === 'Bicycle') travelMode = 'bicycling';
-                                                    else if (type === 'Public Transportation') travelMode = 'transit';
-
-                                                    setCommuteInfo(prev => ({
-                                                        ...prev,
-                                                        text: `${mins} min ${type.toLowerCase()} (${dist || 0} mi)`,
-                                                        isOverLimit,
-                                                        type: type,
-                                                        url: `${urlBase}&travelmode=${travelMode}`
-                                                     }));
-                                                }}
-                                                title={`${type}: ${mMins} mins`}
-                                                style={{
-                                                    background: isSelected ? statusColor : statusFaint,
-                                                    border: `1px solid ${isSelected ? statusColor : statusColor}`,
-                                                    color: isSelected ? 'white' : statusColor,
-                                                    borderRadius: '4px',
-                                                    width: '32px',
-                                                    height: '32px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    cursor: 'pointer',
-                                                    padding: 0,
-                                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-                                                }}
-                                            >
-                                                <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>{iconMap[type]}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Date Captured</div>
-                        <div style={{ fontWeight: 500 }}>{new Date(app.date_saved).toLocaleDateString()}</div>
-                    </div>
-
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Date Posted</div>
-                        {isEditing ? (
-                            <input
-                                type="date"
-                                value={formData.date_posted || ''}
-                                onChange={e => setFormData({ ...formData, date_posted: e.target.value })}
-                                style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.4rem', color: 'var(--text-primary)', width: '100%', padding: '0.4rem' }}
-                            />
-                        ) : (
-                            <div style={{ fontWeight: 500 }}>{app.date_posted || 'Unknown'}</div>
-                        )}
-                    </div>
-
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Relocation</div>
-                        {isEditing ? (
-                            <CustomDropdown
-                                value={formData.relocation === 'true' || formData.relocation === true || formData.relocation === 'True' ? 'true' : (formData.relocation === 'false' || formData.relocation === false || formData.relocation === 'False' ? 'false' : '')}
-                                onChange={(val) => setFormData({ ...formData, relocation: val === '' ? null : val })}
-                                options={[
-                                    { value: '', label: 'Not Provided' },
-                                    { value: 'true', label: 'Required' },
-                                    { value: 'false', label: 'Not Required' }
-                                ]}
-                                className="bg-tertiary"
-                                style={{ width: '100%' }}
-                            />
-                        ) : (
-                            <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                {app.relocation === 'true' || app.relocation === 'True' || app.relocation === true ? (
-                                    'Required'
-                                ) : app.relocation === 'false' || app.relocation === 'False' || app.relocation === false ? (
-                                    'Not Required'
-                                ) : (
-                                    'Not Provided'
-                                )}
+                                    );
+                                })()}
+                                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Match</span>
                             </div>
                         )}
                     </div>
 
-                    <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Interest Level</div>
-                        <div style={{ marginTop: '0.25rem' }}>
+                    {/* Middle Section: Metadata Details */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        minWidth: 0,
+                        fontSize: '0.8rem',
+                        color: 'var(--text-secondary)',
+                    }}>
+                        {/* Salary */}
+                        {app.salary_range && app.salary_range !== 'Not Listed' ? (
+                            <div className="sticky-salary" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', color: 'var(--success)', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '13px', fontVariationSettings: "'FILL' 1" }}>payments</span>
+                                <span>{app.salary_range}</span>
+                            </div>
+                        ) : (
+                            <div className="sticky-salary" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--salary-not-listed-bg-custom)', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>payments</span>
+                                <span>Salary not listed</span>
+                            </div>
+                        )}
+
+                        {/* Location & Location Type */}
+                        {app.location && (
+                            <div className="sticky-location" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--badge-bg-custom)', border: '1px solid var(--border-color)', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '13px', color: 'var(--text-muted)' }}>location_on</span>
+                                <span>{app.location}{app.location_type ? ` (${app.location_type})` : ''}</span>
+                            </div>
+                        )}
+
+                        {/* Job Type */}
+                        {app.job_type && app.job_type !== 'N/A' && (
+                            <div className="sticky-job-type" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--badge-bg-custom)', border: '1px solid var(--border-color)', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: '13px', color: 'var(--text-muted)' }}>work</span>
+                                <span>{app.job_type}</span>
+                            </div>
+                        )}
+
+                        {/* Interest Level */}
+                        <div className="sticky-interest" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--badge-bg-custom)', border: '1px solid var(--border-color)', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)' }}>Interest</span>
                             <InterestStars
                                 level={isEditing ? formData.interest_level : app.interest_level}
-                                size="1.4rem"
+                                size="12px"
                                 onChange={async (newLevel) => {
                                     if (isEditing) {
                                         setFormData({ ...formData, interest_level: newLevel });
@@ -2164,377 +1601,583 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                                                 body: JSON.stringify({ interest_level: newLevel })
                                             });
                                             if (res.ok && onUpdate) onUpdate(app.id, { interest_level: newLevel });
-                                        } catch (err) {
-                                            console.error(err);
-                                        }
+                                        } catch (err) { console.error(err); }
                                     }
                                 }}
                             />
                         </div>
                     </div>
 
-                    <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem', marginTop: '0.5rem' }}>
-                        <div style={{ flex: '1 1 360px', minWidth: 0 }}>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Personal Remarks & Notes</div>
-                            {isEditing ? (
-                                <textarea
-                                    value={formData.remarks || ''}
-                                    onChange={e => setFormData({ ...formData, remarks: e.target.value })}
-                                    rows={2}
-                                    placeholder="Add your own notes here..."
-                                    style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '0.5rem', color: 'var(--text-primary)', width: '100%', padding: '0.75rem', fontSize: '0.9rem', outline: 'none', resize: 'vertical' }}
-                                />
-                            ) : (
-                                <div style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontStyle: app.remarks ? 'italic' : 'normal', lineHeight: '1.6' }}>
-                                    {app.remarks ? `"${app.remarks}"` : <span style={{ opacity: 0.5 }}>No notes added yet. Click edit to add remarks.</span>}
-                                </div>
-                            )}
-                        </div>
-
-
-                    </div>
-                </div>
-
-                {/* --- Document Hub Section --- */}
-                <div style={{ gridColumn: '1 / -1', marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', paddingBottom: '0.5rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Application Documents</div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
-                        {/* Active Resume Card */}
-                        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                                <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.3rem' }}>description</span>
-                                <span style={{ fontWeight: 600, fontSize: '1.05rem' }}>Active Resume</span>
-                            </div>
-                            {(() => {
-                                const isActiveOverride = app.active_resume_type === 'override' && app.override_resume_path;
-                                const isActiveGenerated = app.active_resume_type === 'generated' || (!isActiveOverride && app.tailored_resume_path && app.active_resume_type !== 'original');
-                                let path = app.original_resume_path || profileBaseResume;
-                                let label = "Profile Base Resume";
-                                let icon = "attach_file";
-                                let type = "original";
-                                let isMissing = false;
-
-                                if (isActiveOverride) {
-                                    path = app.override_resume_path;
-                                    label = "Custom Final";
-                                    icon = "verified";
-                                    type = "override";
-                                } else if (isActiveGenerated && app.tailored_resume_path) {
-                                    path = app.tailored_resume_path;
-                                    label = "Tailored Resume";
-                                    icon = "auto_awesome";
-                                    type = "tailored";
-                                } else if (!path) {
-                                    isMissing = true;
-                                    label = "Missing Profile Resume";
-                                    icon = "warning";
-                                }
-
-                                return (
-                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                        <div 
-                                            onClick={() => !isMissing && handlePreview(type, path)}
-                                            style={{ cursor: isMissing ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: isMissing ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-card)', borderRadius: '0.5rem', border: isMissing ? '1px dashed var(--danger)' : '1px solid var(--border-color)', transition: 'background-color 0.2s' }}
-                                            onMouseOver={(e) => !isMissing && (e.currentTarget.style.backgroundColor = 'var(--bg-secondary)')}
-                                            onMouseOut={(e) => !isMissing && (e.currentTarget.style.backgroundColor = 'var(--bg-card)')}
-                                        >
-                                            <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: isMissing ? 'var(--danger)' : 'var(--text-secondary)' }}>{icon}</span>
-                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: isMissing ? 'var(--danger)' : 'inherit' }}>{label}</div>
-                                                <div style={{ fontSize: '0.75rem', color: isMissing ? 'var(--danger)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '0.15rem', opacity: isMissing ? 0.8 : 1 }}>
-                                                    {isMissing ? 'Please upload a resume or generate one' : (path?.split('/').pop() || 'Not available')}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
-                                            <button className="btn-util" style={{ flex: 1, padding: '0.6rem' }} onClick={() => handlePreview(type, path)} disabled={!path}>
-                                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>visibility</span> Preview
-                                            </button>
-                                            <button className="btn-util" style={{ flex: 1, padding: '0.6rem', background: isMissing ? 'rgba(239, 68, 68, 0.1)' : 'rgba(99, 102, 241, 0.1)', color: isMissing ? 'var(--danger)' : 'var(--primary)', borderColor: isMissing ? 'rgba(239, 68, 68, 0.3)' : 'rgba(99, 102, 241, 0.3)' }} onClick={() => setShowResumeModal(true)}>
-                                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>{isMissing ? 'add_circle' : 'swap_horiz'}</span> {isMissing ? 'Add' : 'Change'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-                        </div>
-
-                        {/* Active Cover Letter Card */}
-                        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                                <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.3rem' }}>mail</span>
-                                <span style={{ fontWeight: 600, fontSize: '1.05rem' }}>Active Cover Letter</span>
-                            </div>
-                            {(() => {
-                                const isActiveOverride = app.active_cover_letter_type === 'override' && app.override_cover_letter_path;
-                                const isActiveGenerated = app.active_cover_letter_type === 'generated' || (!isActiveOverride && app.cover_letter_path);
-                                let path = app.original_cover_letter_path || null;
-                                let label = "Cover Letter";
-                                let icon = "mail";
-                                let type = "cover";
-                                let isMissing = false;
-
-                                if (isActiveOverride) {
-                                    path = app.override_cover_letter_path;
-                                    label = "Custom Final";
-                                    icon = "verified";
-                                    type = "override_cl";
-                                } else if (isActiveGenerated && app.cover_letter_path) {
-                                    path = app.cover_letter_path;
-                                    label = "Generated Letter";
-                                    icon = "edit_note";
-                                    type = "cover";
-                                } else if (!path) {
-                                    isMissing = true;
-                                    label = "Missing Cover Letter";
-                                    icon = "warning";
-                                }
-
-                                return (
-                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                        <div 
-                                            onClick={() => !isMissing && handlePreview(type, path)}
-                                            style={{ cursor: isMissing ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: isMissing ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-card)', borderRadius: '0.5rem', border: isMissing ? '1px dashed var(--danger)' : '1px solid var(--border-color)', transition: 'background-color 0.2s' }}
-                                            onMouseOver={(e) => !isMissing && (e.currentTarget.style.backgroundColor = 'var(--bg-secondary)')}
-                                            onMouseOut={(e) => !isMissing && (e.currentTarget.style.backgroundColor = 'var(--bg-card)')}
-                                        >
-                                            <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: isMissing ? 'var(--danger)' : 'var(--text-secondary)' }}>{icon}</span>
-                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: isMissing ? 'var(--danger)' : 'inherit' }}>{label}</div>
-                                                <div style={{ fontSize: '0.75rem', color: isMissing ? 'var(--danger)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '0.15rem', opacity: isMissing ? 0.8 : 1 }}>
-                                                    {isMissing ? 'Please upload or generate a letter' : (path?.split('/').pop() || 'Not available')}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
-                                            <button className="btn-util" style={{ flex: 1, padding: '0.6rem' }} onClick={() => handlePreview(type, path)} disabled={!path}>
-                                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>visibility</span> Preview
-                                            </button>
-                                            <button className="btn-util" style={{ flex: 1, padding: '0.6rem', background: isMissing ? 'rgba(239, 68, 68, 0.1)' : 'rgba(99, 102, 241, 0.1)', color: isMissing ? 'var(--danger)' : 'var(--primary)', borderColor: isMissing ? 'rgba(239, 68, 68, 0.3)' : 'rgba(99, 102, 241, 0.3)' }} onClick={() => setShowCLModal(true)}>
-                                                <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>{isMissing ? 'add_circle' : 'swap_horiz'}</span> {isMissing ? 'Add' : 'Change'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-                        </div>
-
-                        {/* Additional Documents Card */}
-                        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                                <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.3rem' }}>folder_open</span>
-                                <span style={{ fontWeight: 600, fontSize: '1.05rem' }}>Additional Context</span>
-                            </div>
-                            
-                            <input 
-                                type="file" 
-                                ref={docInputRef} 
-                                style={{ display: 'none' }} 
-                                onChange={handleUploadAppDoc} 
-                            />
-
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                {(() => {
-                                    const jobDocs = safeParseJSON(app.additional_docs, []);
-                                    const excludedPaths = safeParseJSON(app.excluded_profile_docs, []);
-                                    const filteredProfileDocs = profileDocs.filter(d => !excludedPaths.includes(d.path));
-                                    
-                                    const allDocs = [
-                                        ...filteredProfileDocs.map(d => ({ ...d, source: 'From Profile' })),
-                                        ...jobDocs.map(d => ({ ...d, source: 'Job Specific' }))
-                                    ];
-
-                                    if (allDocs.length === 0) {
-                                        return (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'var(--bg-card)', borderRadius: '0.5rem', border: '1px dashed var(--border-color)', opacity: 0.8 }}>
-                                                <div style={{ flex: 1, minWidth: 0, textAlign: 'center' }}>
-                                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>No additional documents</div>
-                                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', opacity: 0.7, marginTop: '0.2rem' }}>Used for AI generation context</div>
-                                                </div>
-                                            </div>
-                                        );
-                                    }
-
-                                    return allDocs.map((doc, idx) => (
-                                        <div key={idx} className="doc-row" style={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            gap: '0.75rem', 
-                                            padding: '0.6rem 0.75rem', 
-                                            background: 'var(--bg-card)', 
-                                            borderRadius: '0.5rem', 
-                                            border: '1px solid var(--border-color)',
-                                            transition: 'transform 0.2s, box-shadow 0.2s',
-                                        }}>
-                                            <span className="material-symbols-outlined" style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>
-                                                {doc.filename?.endsWith('.pdf') ? 'picture_as_pdf' : 'description'}
-                                            </span>
-                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontSize: '0.85rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                    {doc.filename}
-                                                </div>
-                                                <div style={{ fontSize: '0.65rem', color: doc.source === 'From Profile' ? 'var(--primary)' : 'var(--success)', fontWeight: 700, textTransform: 'uppercase' }}>
-                                                    {doc.source}
-                                                </div>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                                <button className="btn-util" onClick={() => handleViewDoc(doc.path)} title="View Document">
-                                                    <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>visibility</span>
-                                                </button>
-                                                <button className="btn-util btn-danger" onClick={() => handleRemoveDoc(doc.path, doc.source === 'From Profile')} title="Remove from Job">
-                                                    <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>close</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ));
-                                })()}
-
-                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                    <button 
-                                        className="btn-util" 
-                                        style={{ width: '100%', padding: '0.6rem', borderStyle: 'dashed' }} 
-                                        onClick={() => docInputRef.current?.click()}
-                                        disabled={uploadingDoc}
-                                    >
-                                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>
-                                            {uploadingDoc ? 'sync' : 'add'}
-                                        </span> 
-                                        {uploadingDoc ? 'Uploading...' : 'Add Job-Specific Document'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-</header>
-
-
-
-
-            <PipelineProgressBar
-                currentStage={app.pipeline_stage}
-                isArchived={isArchived}
-                stageProgress={computeStageProgress(app)}
-                onStageClick={async (newStage) => {
-                    if (newStage === app.pipeline_stage) return;
-                    try {
-                        const newStatus = STAGE_TO_STATUS[newStage] || app.status;
-                        const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ...app, pipeline_stage: newStage, status: newStatus, force: true })
-                        });
-                        if (res.ok && onUpdate) {
-                            onUpdate(app.id, { pipeline_stage: newStage, status: newStatus });
-                        }
-                    } catch (e) {
-                        console.error("Failed to update pipeline stage", e);
-                    }
-                }}
-            />
-            </div> {/* End Header Padded Wrapper */}
-
-            {/* Phase Tabs — sticks below the mini header (Outside header to prevent clipping) */}
-            <div style={{
-                position: 'sticky',
-                top: 70, // Always target 70px to avoid gaps when mini header is visible
-                zIndex: 10000,
-                background: 'var(--bg-primary)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                borderBottom: '1px solid var(--border-color)',
-                marginTop: '1.5rem',
-                display: 'flex',
-                gap: '0.2rem',
-                paddingLeft: '3rem',
-                paddingRight: '3rem',
-                paddingTop: '0.75rem',
-                paddingBottom: '0.5rem',
-            }}>
-                {[
-                    { id: 'Saved', label: 'Saved' },
-                    { id: 'Generated', label: 'Generated' },
-                    { id: 'Applied', label: 'Applied' },
-                    { id: 'Interviewing', label: 'Interviewing' },
-                    { id: 'Decision', label: 'Decision' },
-                    { id: 'Offered', label: 'Offered' },
-                    { id: 'Accepted', label: 'Accepted' },
-                    { id: 'Rejected', label: 'Rejected' },
-                    { id: 'Declined', label: 'Declined' },
-                    { id: 'Withdrawn', label: 'Withdrawn' }
-                ].map(tab => {
-                    const isTabActive = activePhaseTab === tab.id;
-                    return (
+                    {/* Right Section: Compact Actions */}
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
                         <button
-                            key={tab.id}
-                            onClick={() => setActivePhaseTab(tab.id)}
-                            style={{
-                                padding: '0.75rem 1.25rem',
-                                fontSize: '0.65rem',
-                                fontWeight: isTabActive ? 800 : 600,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.08em',
-                                color: isTabActive ? 'var(--primary)' : 'var(--text-muted)',
-                                background: isTabActive ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
-                                backdropFilter: isTabActive ? 'blur(12px)' : 'none',
-                                border: '1px solid ' + (isTabActive ? 'var(--border-color)' : 'transparent'),
-                                borderBottom: isTabActive ? '1px solid rgba(255, 255, 255, 0.03)' : 'none',
-                                borderRadius: '0.5rem 0.5rem 0 0',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease',
-                                marginBottom: '-1px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                position: 'relative',
-                                zIndex: isTabActive ? 2 : 1
-                            }}
-                            onMouseOver={(e) => { 
-                                if (!isTabActive) {
-                                    e.currentTarget.style.color = 'var(--text-primary)';
-                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                                }
-                            }}
-                            onMouseOut={(e) => { 
-                                if (!isTabActive) {
-                                    e.currentTarget.style.color = 'var(--text-muted)';
-                                    e.currentTarget.style.background = 'transparent';
-                                }
-                            }}
+                            onClick={() => { if (isEditing) handleSave(); else { setFormData({ ...app }); setIsEditing(true); } }}
+                            disabled={saving}
+                            className="sticky-btn btn-util"
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}
                         >
-                            {isTabActive && <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--primary)' }}></div>}
-                            {tab.label}
+                            <span className="material-symbols-outlined" style={{ fontSize: '0.95rem' }}>{isEditing ? 'save' : 'edit'}</span>
+                            <span className="sticky-btn-text">{isEditing ? (saving ? 'Saving...' : 'Save') : 'Edit'}</span>
                         </button>
+                        {isEditing && (
+                            <button
+                                onClick={() => { setIsEditing(false); setFormData({ ...app }); }}
+                                className="sticky-btn"
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 500 }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '0.95rem' }}>close</span>
+                                <span className="sticky-btn-text">Cancel</span>
+                            </button>
+                        )}
+                        <button 
+                            onClick={() => handleArchive(!isArchived)} 
+                            disabled={archiving} 
+                            className={`sticky-btn btn-util ${isArchived ? 'btn-warning' : ''}`}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                        >
+                            <span className="material-symbols-outlined" style={{ fontSize: '0.95rem' }}>{isArchived ? 'unarchive' : 'archive'}</span>
+                            <span className="sticky-btn-text">{isArchived ? 'Unarchive' : 'Archive'}</span>
+                        </button>
+                        <button 
+                            onClick={() => setShowDeleteConfirm(true)} 
+                            className="sticky-btn btn-util btn-danger"
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                        >
+                            <span className="material-symbols-outlined" style={{ fontSize: '0.95rem' }}>delete</span>
+                            <span className="sticky-btn-text">Delete</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main layout — compact header + two-column workspace */}
+            <div style={{ padding: '16px 24px 24px 24px', overflowX: 'hidden' }}>
+                {/* Delete Confirmation Modal */}
+                {showDeleteConfirm && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        zIndex: 9999, backdropFilter: 'blur(6px)'
+                    }}>
+                        <div style={{
+                            background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem',
+                            border: '1px solid rgba(239,68,68,0.3)', maxWidth: '440px', width: '90%',
+                            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                                <span className="material-symbols-outlined" style={{ color: '#f87171', fontSize: '1.5rem' }}>warning</span>
+                                <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Delete Application?</h2>
+                            </div>
+                            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+                                This will permanently delete <strong>{app.job_title}</strong> at <strong>{app.company}</strong>.
+                                This action cannot be undone.
+                            </p>
+                            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                                <button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    style={{
+                                        padding: '0.5rem 1.2rem', background: 'transparent',
+                                        border: '1px solid var(--border-color)', color: 'var(--text-secondary)',
+                                        borderRadius: '0.5rem', cursor: 'pointer'
+                                    }}
+                                >Cancel</button>
+                                <button
+                                    onClick={handleDelete}
+                                    disabled={deleting}
+                                    style={{
+                                        padding: '0.5rem 1.2rem', background: '#ef4444',
+                                        border: 'none', color: 'white', borderRadius: '0.5rem',
+                                        cursor: deleting ? 'not-allowed' : 'pointer', fontWeight: 600,
+                                        opacity: deleting ? 0.7 : 1
+                                    }}
+                                >{deleting ? 'Deleting...' : 'Yes, Delete'}</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Resume Override Confirmation Modal */}
+                {showResumeOverrideConfirm && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        zIndex: 9999, backdropFilter: 'blur(6px)'
+                    }}>
+                        <div style={{
+                            background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem',
+                            border: '1px solid var(--primary)', maxWidth: '440px', width: '90%',
+                            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                                <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.5rem' }}>info</span>
+                                <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Use Override Resume?</h2>
+                            </div>
+                            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+                                You are about to upload a final override version of your resume.
+                                <strong> This version will be used by the Chrome extension when applying for this job.</strong>
+                                <br/><br/>
+                                We will also process this document to update your profile snapshot for this application.
+                            </p>
+                            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                                <button
+                                    onClick={() => { setShowResumeOverrideConfirm(false); setPendingResumeFile(null); }}
+                                    style={{ padding: '0.5rem 1.2rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', borderRadius: '0.5rem', cursor: 'pointer' }}
+                                >Cancel</button>
+                                <button
+                                    onClick={() => confirmOverride('resume')}
+                                    disabled={uploadingOverride}
+                                    style={{ padding: '0.5rem 1.2rem', background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '0.5rem', cursor: uploadingOverride ? 'not-allowed' : 'pointer', fontWeight: 600, opacity: uploadingOverride ? 0.7 : 1 }}
+                                >{uploadingOverride ? 'Uploading...' : 'Confirm & Use'}</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Cover Letter Override Confirmation Modal */}
+                {showCLOverrideConfirm && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'var(--bg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        zIndex: 9999, backdropFilter: 'blur(6px)'
+                    }}>
+                        <div style={{
+                            background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem',
+                            border: '1px solid var(--primary)', maxWidth: '440px', width: '90%',
+                            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.7)'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                                <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '1.5rem' }}>info</span>
+                                <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Use Override Cover Letter?</h2>
+                            </div>
+                            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+                                You are about to upload a final override version of your cover letter.
+                                <strong> This version will be used by the Chrome extension when applying for this job.</strong>
+                            </p>
+                            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                                <button
+                                    onClick={() => { setShowCLOverrideConfirm(false); setPendingCLFile(null); }}
+                                    style={{ padding: '0.5rem 1.2rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', borderRadius: '0.5rem', cursor: 'pointer' }}
+                                >Cancel</button>
+                                <button
+                                    onClick={() => confirmOverride('cover_letter')}
+                                    disabled={uploadingOverride}
+                                    style={{ padding: '0.5rem 1.2rem', background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '0.5rem', cursor: uploadingOverride ? 'not-allowed' : 'pointer', fontWeight: 600, opacity: uploadingOverride ? 0.7 : 1 }}
+                                >{uploadingOverride ? 'Uploading...' : 'Confirm & Use'}</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* File inputs */}
+                <input type="file" ref={logoInputRef} accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
+                <input type="file" ref={resumeOverrideInputRef} accept=".docx,.pdf,.txt" style={{ display: 'none' }} onChange={(e) => onFileSelected(e, 'resume')} />
+                <input type="file" ref={clOverrideInputRef} accept=".docx,.pdf,.txt" style={{ display: 'none' }} onChange={(e) => onFileSelected(e, 'cover_letter')} />
+                <input type="file" ref={docInputRef} style={{ display: 'none' }} onChange={handleUploadAppDoc} />
+
+                {/* Action bar */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <button
+                        onClick={onBack}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: 0 }}
+                    >
+                        <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>arrow_back</span>
+                        Back to Dashboard
+                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                            onClick={() => { if (isEditing) handleSave(); else { setFormData({ ...app }); setIsEditing(true); } }}
+                            disabled={saving}
+                            className={`btn-util ${isEditing ? 'active' : ''}`}
+                        >
+                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>{isEditing ? 'save' : 'edit'}</span>
+                            {isEditing ? (saving ? 'Saving...' : 'Save Changes') : 'Edit Info'}
+                        </button>
+                        {isEditing && (
+                            <button
+                                onClick={() => { setIsEditing(false); setFormData({ ...app }); }}
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.9rem', borderRadius: '0.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500 }}
+                            >Cancel</button>
+                        )}
+                        <button onClick={() => handleArchive(!isArchived)} disabled={archiving} className={`btn-util ${isArchived ? 'btn-warning' : ''}`}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>{isArchived ? 'unarchive' : 'archive'}</span>
+                            {isArchived ? 'Unarchive' : 'Archive'}
+                        </button>
+                        <button onClick={() => setShowDeleteConfirm(true)} className="btn-util btn-danger">
+                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>delete</span>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+
+                {/* Archived banner */}
+                {isArchived && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 1rem', marginBottom: '12px', background: 'var(--shadow-glow)', border: '1px solid var(--warning)', borderRadius: '0.6rem', color: 'var(--warning)', fontSize: '0.875rem' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>archive</span>
+                        This application is archived. It won't appear in your main dashboard view.
+                    </div>
+                )}
+
+                {/* ── Header card ──────────────────────────────────────────────────── */}
+                {(() => {
+                    const stage = (app.pipeline_stage || 'saved').toLowerCase();
+                    const statusColorMap = {
+                        saved: 'var(--primary)', generated: 'var(--primary)', applied: 'var(--primary)',
+                        interviewing: 'var(--warning)', decision: 'var(--warning)',
+                        accepted: 'var(--success)', offered: 'var(--success)',
+                        rejected: 'var(--error)', declined: 'var(--error)', withdrawn: 'var(--error)',
+                    };
+                    const pillColor = statusColorMap[stage] || 'var(--primary)';
+                    const pillBg = stage === 'accepted' || stage === 'offered'
+                        ? 'rgba(16,185,129,0.1)'
+                        : stage === 'interviewing' || stage === 'decision'
+                        ? 'rgba(245,158,11,0.1)'
+                        : stage === 'rejected' || stage === 'declined' || stage === 'withdrawn'
+                        ? 'rgba(239,68,68,0.1)'
+                        : 'rgba(37,106,244,0.1)';
+
+                    const resumeState = app.tailored_resume_path ? 'ok'
+                        : (app.original_resume_path || profileBaseResume) ? 'attention'
+                        : 'missing';
+                    const coverState = app.cover_letter_path ? 'ok' : 'missing';
+                    const docList = [
+                        { id: 'resume', name: 'Resume', icon: 'description', state: resumeState },
+                        { id: 'cover', name: 'Cover', icon: 'mail', state: coverState },
+                        { id: 'ctx', name: 'Context', icon: 'folder', state: 'ok' },
+                    ];
+                    const docStateColor = { ok: 'var(--success)', attention: 'var(--warning)', missing: 'var(--error)' };
+                    const docStateBg = { ok: 'rgba(16,185,129,0.08)', attention: 'rgba(245,158,11,0.08)', missing: 'rgba(239,68,68,0.08)' };
+                    const docStateBorder = { ok: 'rgba(16,185,129,0.2)', attention: 'rgba(245,158,11,0.25)', missing: 'rgba(239,68,68,0.25)' };
+                    const docStateLabel = { ok: 'OK', attention: 'Tailor', missing: 'Missing' };
+                    const docStateIcon = { ok: 'check_circle', attention: 'priority_high', missing: 'add' };
+
+                    const score = app.match_score;
+                    const scoreColor = score == null ? 'var(--text-muted)' : score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--warning)' : 'var(--error)';
+                    const cmp = score != null ? getScoreComparison(score, avgScore) : null;
+
+                    const initials = (app.company || '?').split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('');
+
+                    return (
+                        <div style={{
+                            background: 'var(--bg-card)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: 14,
+                            padding: 18,
+                            marginBottom: 14,
+                            boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
+                        }}>
+                            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+
+                                {/* 1a. Company logo */}
+                                <div
+                                    onClick={() => setShowLogoPicker(true)}
+                                    title="Click to set a logo"
+                                    style={{
+                                        width: 52, height: 52, borderRadius: 12, flexShrink: 0,
+                                        background: logoUrl ? 'transparent' : 'rgba(255,255,255,0.04)',
+                                        border: '1px dashed var(--border-color)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        cursor: 'pointer', overflow: 'hidden', position: 'relative',
+                                        transition: 'border-color 0.2s',
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
+                                    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
+                                >
+                                    {isEnrichingGlobal ? (
+                                        <div className="skeleton-shimmer" style={{ width: '100%', height: '100%' }} />
+                                    ) : logoUrl ? (
+                                        <img src={logoUrl} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={() => setLogoUrl(null)} />
+                                    ) : (
+                                        <span style={{ color: 'var(--text-muted)', fontWeight: 800, fontSize: 16 }}>{initials}</span>
+                                    )}
+                                </div>
+
+                                {/* 1b. Identity column */}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+
+                                    {/* Title row + status pill */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                value={formData.job_title}
+                                                onChange={e => setFormData({ ...formData, job_title: e.target.value })}
+                                                style={{ fontSize: 20, fontWeight: 800, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 6, color: 'var(--text-primary)', padding: '2px 8px', flex: 1 }}
+                                            />
+                                        ) : (
+                                            <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, lineHeight: 1.2, color: 'var(--text-primary)' }}>
+                                                {app.job_title}
+                                            </h1>
+                                        )}
+                                        <span style={{
+                                            display: 'inline-flex', alignItems: 'center', gap: 5,
+                                            padding: '3px 10px', borderRadius: 999,
+                                            background: pillBg, color: pillColor,
+                                            fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em',
+                                        }}>
+                                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: pillColor, flexShrink: 0 }} />
+                                            {app.pipeline_stage || 'Saved'}
+                                        </span>
+                                    </div>
+
+                                    {/* Company + salary + interest */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                value={formData.company}
+                                                onChange={e => setFormData({ ...formData, company: e.target.value })}
+                                                style={{ fontSize: 13, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 6, color: 'var(--text-primary)', padding: '2px 8px' }}
+                                            />
+                                        ) : (
+                                            app.company_url ? (
+                                                <a href={app.company_url.startsWith('http') ? app.company_url : `https://${app.company_url}`} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
+                                                    {app.company}
+                                                    <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'var(--primary)', opacity: 0.7 }}>arrow_outward</span>
+                                                </a>
+                                            ) : (
+                                                <span>{app.company}</span>
+                                            )
+                                        )}
+
+                                        {/* Salary chip */}
+                                        {app.salary_range && app.salary_range !== 'Not Listed' ? (
+                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '3px 10px', borderRadius: 999, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', color: 'var(--success)', fontSize: 12, fontWeight: 800 }}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: 13, fontVariationSettings: "'FILL' 1" }}>payments</span>
+                                                {app.salary_range}
+                                            </span>
+                                        ) : (
+                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '3px 10px', borderRadius: 999, background: 'transparent', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: 13 }}>payments</span>
+                                                Salary not listed
+                                            </span>
+                                        )}
+
+                                        {/* Interest stars */}
+                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                            <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Interest</span>
+                                            <InterestStars
+                                                level={isEditing ? formData.interest_level : app.interest_level}
+                                                size="14px"
+                                                onChange={async (newLevel) => {
+                                                    if (isEditing) {
+                                                        setFormData({ ...formData, interest_level: newLevel });
+                                                    } else {
+                                                        try {
+                                                            const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
+                                                                method: 'PUT',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({ interest_level: newLevel })
+                                                            });
+                                                            if (res.ok && onUpdate) onUpdate(app.id, { interest_level: newLevel });
+                                                        } catch (err) { console.error(err); }
+                                                    }
+                                                }}
+                                            />
+                                        </span>
+                                    </div>
+
+                                    {/* Meta row */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
+                                        {app.location && (
+                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: 14, color: 'var(--text-muted)' }}>location_on</span>
+                                                {app.location}
+                                            </span>
+                                        )}
+                                        {app.location && (app.job_type || app.job_url || app.apply_url) && (
+                                            <span style={{ color: 'var(--text-muted)' }}>·</span>
+                                        )}
+                                        {app.job_type && app.job_type !== 'N/A' && (
+                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: 14, color: 'var(--text-muted)' }}>work</span>
+                                                {app.job_type}
+                                            </span>
+                                        )}
+                                        {app.job_type && app.job_type !== 'N/A' && (app.job_url || app.apply_url) && (
+                                            <span style={{ color: 'var(--text-muted)' }}>·</span>
+                                        )}
+                                        {app.job_url && (
+                                            <a href={app.job_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>open_in_new</span>
+                                                Visit Listing
+                                            </a>
+                                        )}
+                                        {app.job_url && app.apply_url && <span style={{ color: 'var(--text-muted)' }}>·</span>}
+                                        {app.apply_url && (
+                                            <a href={app.apply_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
+                                                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>rocket_launch</span>
+                                                Direct Apply
+                                            </a>
+                                        )}
+                                    </div>
+
+                                    {/* Divider */}
+                                    <div style={{ height: 1, background: 'var(--border-color)', marginBottom: 10 }} />
+
+                                    {/* Docs cluster + view full details */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                        <span style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Docs</span>
+                                        {docList.map(doc => (
+                                            <button
+                                                key={doc.id}
+                                                onClick={() => {
+                                                    if (doc.id === 'resume') setShowResumeModal(true);
+                                                    else if (doc.id === 'cover') setShowCLModal(true);
+                                                    else docInputRef.current?.click();
+                                                }}
+                                                style={{
+                                                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                                                    padding: '4px 4px 4px 10px', borderRadius: 999,
+                                                    background: 'var(--bg-card)',
+                                                    border: `1px solid ${docStateBorder[doc.state]}`,
+                                                    cursor: 'pointer',
+                                                    transition: 'background 0.15s',
+                                                }}
+                                                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                                                onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
+                                            >
+                                                <span className="material-symbols-outlined" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{doc.icon}</span>
+                                                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{doc.name}</span>
+                                                <span style={{
+                                                    display: 'inline-flex', alignItems: 'center', gap: 3,
+                                                    padding: '2px 7px', borderRadius: 999,
+                                                    background: docStateBg[doc.state],
+                                                    color: docStateColor[doc.state],
+                                                    fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em',
+                                                }}>
+                                                    <span className="material-symbols-outlined" style={{ fontSize: 9, fontVariationSettings: "'FILL' 1" }}>{docStateIcon[doc.state]}</span>
+                                                    {docStateLabel[doc.state]}
+                                                </span>
+                                            </button>
+                                        ))}
+
+                                        {/* View full job details */}
+                                        <button
+                                            onClick={() => setIsJobDescExpanded(v => !v)}
+                                            style={{
+                                                marginLeft: 'auto',
+                                                display: 'inline-flex', alignItems: 'center', gap: 4,
+                                                padding: '5px 10px', borderRadius: 8,
+                                                background: 'rgba(37,106,244,0.08)',
+                                                border: '1px solid rgba(37,106,244,0.18)',
+                                                color: 'var(--primary)',
+                                                fontSize: 12, cursor: 'pointer',
+                                                transition: 'background 0.15s',
+                                            }}
+                                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(37,106,244,0.16)'; e.currentTarget.style.borderColor = 'var(--primary)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(37,106,244,0.08)'; e.currentTarget.style.borderColor = 'rgba(37,106,244,0.18)'; }}
+                                        >
+                                            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>article</span>
+                                            {isJobDescExpanded ? 'Hide details' : 'View full job details'}
+                                            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                                                {isJobDescExpanded ? 'expand_less' : 'chevron_right'}
+                                            </span>
+                                        </button>
+                                    </div>
+
+                                    {/* Expandable job description */}
+                                    {isJobDescExpanded && (
+                                        <div style={{ marginTop: 12 }}>
+                                            <JobDescriptionContent text={app.job_description} />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 1c. Score ring */}
+                                {score != null && (
+                                    <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                                        {(() => {
+                                            const size = 60, stroke = 4;
+                                            const r = (size - stroke) / 2;
+                                            const circ = 2 * Math.PI * r;
+                                            const dash = (score / 100) * circ;
+                                            return (
+                                                <div style={{ position: 'relative', width: size, height: size }}>
+                                                    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+                                                        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--border-color)" strokeWidth={stroke} />
+                                                        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={scoreColor} strokeWidth={stroke} strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round" />
+                                                    </svg>
+                                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: scoreColor }}>
+                                                        {score}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                        {cmp && (
+                                            <div style={{ fontSize: 10, fontWeight: 700, color: cmp.isAbove ? 'var(--success)' : 'var(--error)', background: cmp.isAbove ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', padding: '2px 7px', borderRadius: 999, whiteSpace: 'nowrap' }}>
+                                                {cmp.isAbove ? '↑' : '↓'} {cmp.absDiff} vs avg
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     );
-                })}
+                })()}
+
+                {/* ── Two-column workspace: pipeline rail + lifecycle content ── */}
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+
+                    {/* Vertical pipeline rail */}
+                    <VerticalPipelineRail
+                        currentStage={app.pipeline_stage}
+                        stageProgress={computeStageProgress(app)}
+                        substageProgress={safeParseJSON(app.substage_progress, {})}
+                        activePhaseTab={activePhaseTab}
+                        activeSubStage={activeSubStage}
+                        onSubStageChange={(subId) => setActiveSubStage(subId)}
+                        onStageChange={async (newStage) => {
+                            const tabLabel = newStage.charAt(0).toUpperCase() + newStage.slice(1);
+                            setActivePhaseTab(tabLabel);
+                            setActiveSubStage(getDefaultSubStage(newStage));
+                            if (newStage === (app.pipeline_stage || '').toLowerCase()) return;
+                            try {
+                                const newStatus = STAGE_TO_STATUS[newStage] || app.status;
+                                const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ ...app, pipeline_stage: newStage, status: newStatus, force: true })
+                                });
+                                if (res.ok && onUpdate) onUpdate(app.id, { pipeline_stage: newStage, status: newStatus });
+                            } catch (e) {
+                                console.error('Failed to update pipeline stage', e);
+                            }
+                        }}
+                        onEndStateSelect={async (endState) => {
+                            if (!window.confirm(`Move this application to "${endState.charAt(0).toUpperCase() + endState.slice(1)}"?`)) return;
+                            const tabLabel = endState.charAt(0).toUpperCase() + endState.slice(1);
+                            setActivePhaseTab(tabLabel);
+                            setActiveSubStage(getDefaultSubStage(endState));
+                            try {
+                                const newStatus = STAGE_TO_STATUS[endState] || endState;
+                                const res = await fetchWithAuth(`${API_URL}/api/applications/${app.id}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ ...app, pipeline_stage: endState, status: newStatus, force: true })
+                                });
+                                if (res.ok && onUpdate) onUpdate(app.id, { pipeline_stage: endState, status: newStatus });
+                            } catch (e) {
+                                console.error('Failed to update end state', e);
+                            }
+                        }}
+                    />
+
+                    {/* Workspace — phase content driven by rail sub-stage selection */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <ApplicationLifecycle
+                            app={app}
+                            activePhaseTab={activePhaseTab}
+                            onUpdate={onUpdate}
+                            onStartFullGeneration={onStartFullGeneration}
+                            hideHeader={true}
+                            avgScore={avgScore}
+                            externalSubStage={activeSubStage}
+                        />
+                    </div>
+                </div>
             </div>
 
 
-            {/* Main Content Areas — padded wrapper */}
-            <div style={{ padding: '3rem', paddingTop: '2rem' }}>
-                {/* Phase Content from Lifecycle Component */}
-            <div style={{ 
-                marginBottom: '2.5rem', 
-                borderRadius: '0 1rem 1rem 1rem',
-                padding: '2rem',
-                background: 'transparent',
-                border: '1px solid var(--border-color)',
-                position: 'relative'
-            }}>
-                <ApplicationLifecycle
-                    app={app}
-                    activePhaseTab={activePhaseTab}
-                    onUpdate={onUpdate}
-                    onStartFullGeneration={onStartFullGeneration}
-                    hideHeader={true}
-                    avgScore={avgScore}
-                />
-            </div>
-
-
-        </div>
 
             <style>{`
                 .doc-row-btn {

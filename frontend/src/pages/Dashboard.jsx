@@ -112,8 +112,9 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
     const [filterInterestLevels, setFilterInterestLevels] = useState(saved.filterInterestLevels || []);
     const [filterRelocation, setFilterRelocation] = useState(saved.filterRelocation || []);
     const [showArchived, setShowArchived] = useState(saved.showArchived || false);
-    const [showAcceptedColumn, setShowAcceptedColumn] = useState(saved.showAcceptedColumn || false);
-    const [showCancelledColumn, setShowCancelledColumn] = useState(saved.showCancelledColumn || false);
+    const [showRejectedColumn, setShowRejectedColumn] = useState(saved.showRejectedColumn || false);
+    const [showDeclinedColumn, setShowDeclinedColumn] = useState(saved.showDeclinedColumn || false);
+    const [showWithdrawnColumn, setShowWithdrawnColumn] = useState(saved.showWithdrawnColumn || false);
     const [profilePrefs, setProfilePrefs] = useState(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef(null);
@@ -133,9 +134,9 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         sessionStorage.setItem(DASH_STORAGE_KEY, JSON.stringify({ 
             viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, 
             filterLocationTypes, filterInterestLevels, filterRelocation, showArchived,
-            filterHasConnections, filterMinScore, showAcceptedColumn, showCancelledColumn
+            filterHasConnections, filterMinScore, showRejectedColumn, showDeclinedColumn, showWithdrawnColumn
         }));
-    }, [viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, filterLocationTypes, filterInterestLevels, filterRelocation, showArchived, filterHasConnections, filterMinScore, showAcceptedColumn, showCancelledColumn]);
+    }, [viewMode, searchTerm, sortBy, filterStatuses, filterJobTypes, filterLocationTypes, filterInterestLevels, filterRelocation, showArchived, filterHasConnections, filterMinScore, showRejectedColumn, showDeclinedColumn, showWithdrawnColumn]);
 
     useEffect(() => {
         fetchWithAuth(`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/profile`)
@@ -193,7 +194,8 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const KANBAN_COLUMNS = ['Saved', 'Generated', 'Applied', 'Interviewing', 'Rejected', 'Offered', 'Accepted', 'Withdrawn/Cancelled'];
+    const KANBAN_COLUMNS = ['Saved', 'Generated', 'Applied', 'Interviewing', 'Decision', 'Accepted', 'Rejected', 'Declined', 'Withdrawn'];
+    const TERMINAL_COLUMNS = ['Rejected', 'Declined', 'Withdrawn'];
     const JOB_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship'];
     const LOCATION_TYPES = ['On-site', 'Remote', 'Hybrid'];
     const INTEREST_LEVELS = ['High', 'Medium', 'Low'];
@@ -209,15 +211,22 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20';
     };
 
-    const getStatusText = (status) => {
-        if (!status) return 'Applied';
-        const s = status.toLowerCase();
-        for (let col of KANBAN_COLUMNS) {
-            if (s.includes(col.toLowerCase()) || (col === 'Interviewing' && s.includes('interview'))) {
-                return col;
-            }
-        }
-        return status;
+    const getStatusText = (app) => {
+        // Prefer pipeline_stage as the canonical field
+        const stage = (app.pipeline_stage || '').toLowerCase();
+        const status = (app.status || '').toLowerCase();
+        const s = stage || status;
+        if (!s) return 'Saved';
+        if (s === 'saved' || s.includes('saved')) return 'Saved';
+        if (s === 'generated' || s.includes('generated')) return 'Generated';
+        if (s === 'applied' || s.includes('applied')) return 'Applied';
+        if (s === 'interviewing' || s.includes('interview')) return 'Interviewing';
+        if (s === 'decision' || s.includes('decision')) return 'Decision';
+        if (s === 'accepted' || s.includes('accepted') || s.includes('offered')) return 'Accepted';
+        if (s === 'rejected' || s.includes('reject')) return 'Rejected';
+        if (s === 'declined' || s.includes('declin')) return 'Declined';
+        if (s === 'withdrawn' || s.includes('withdraw') || s.includes('cancel')) return 'Withdrawn';
+        return 'Saved';
     };
 
     // Average match score across all apps that have one
@@ -320,16 +329,23 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         return 0;
     });
 
-    const columnsToShow = filterStatuses.length > 0 
-        ? KANBAN_COLUMNS.filter(c => filterStatuses.includes(c)) 
+    // Always compute counts for all columns (including hidden) for toggle button badges
+    const allAppsByColumn = KANBAN_COLUMNS.reduce((acc, col) => {
+        acc[col] = processedApps.filter(app => getStatusText(app) === col);
+        return acc;
+    }, {});
+
+    const columnsToShow = filterStatuses.length > 0
+        ? KANBAN_COLUMNS.filter(c => filterStatuses.includes(c))
         : KANBAN_COLUMNS.filter(c => {
-            if (c === 'Accepted' && !showAcceptedColumn) return false;
-            if (c === 'Withdrawn/Cancelled' && !showCancelledColumn) return false;
+            if (c === 'Rejected' && !showRejectedColumn) return false;
+            if (c === 'Declined' && !showDeclinedColumn) return false;
+            if (c === 'Withdrawn' && !showWithdrawnColumn) return false;
             return true;
         });
 
     const appsByColumn = columnsToShow.reduce((acc, col) => {
-        acc[col] = processedApps.filter(app => getStatusText(app.status) === col);
+        acc[col] = processedApps.filter(app => getStatusText(app) === col);
         return acc;
     }, {});
 
@@ -789,33 +805,34 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                         </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {/* Accepted column toggle */}
-                        <button
-                            onClick={() => setShowAcceptedColumn(v => !v)}
-                            title={showAcceptedColumn ? 'Hide Accepted column' : 'Show Accepted column'}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                                showAcceptedColumn
-                                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-300'
-                                    : 'bg-slate-200 dark:bg-white/5 border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:border-slate-400 dark:hover:border-white/20'
-                            }`}
-                        >
-                            <span className="material-symbols-outlined text-[16px]">{showAcceptedColumn ? 'visibility' : 'visibility_off'}</span>
-                            <span className="max-md:hidden">Accepted</span>
-                        </button>
-
-                        {/* Cancelled column toggle */}
-                        <button
-                            onClick={() => setShowCancelledColumn(v => !v)}
-                            title={showCancelledColumn ? 'Hide Declined/Cancelled column' : 'Show Declined/Cancelled column'}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                                showCancelledColumn
-                                    ? 'bg-slate-500/15 border-slate-500/40 text-slate-600 dark:text-slate-300'
-                                    : 'bg-slate-200 dark:bg-white/5 border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:border-slate-400 dark:hover:border-white/20'
-                            }`}
-                        >
-                            <span className="material-symbols-outlined text-[16px]">{showCancelledColumn ? 'visibility' : 'visibility_off'}</span>
-                            <span className="max-md:hidden">Declined/Cancelled</span>
-                        </button>
+                        {/* Terminal stage column toggles with item counts */}
+                        {[
+                            { key: 'Rejected',  show: showRejectedColumn,  set: setShowRejectedColumn,  activeClass: 'bg-rose-500/15 border-rose-500/40 text-rose-600 dark:text-rose-300' },
+                            { key: 'Declined',  show: showDeclinedColumn,  set: setShowDeclinedColumn,  activeClass: 'bg-orange-500/15 border-orange-500/40 text-orange-600 dark:text-orange-300' },
+                            { key: 'Withdrawn', show: showWithdrawnColumn, set: setShowWithdrawnColumn, activeClass: 'bg-slate-500/15 border-slate-500/40 text-slate-600 dark:text-slate-300' },
+                        ].map(({ key, show, set, activeClass }) => {
+                            const count = (allAppsByColumn[key] || []).length;
+                            return (
+                                <button
+                                    key={key}
+                                    onClick={() => set(v => !v)}
+                                    title={show ? `Hide ${key} column` : `Show ${key} column`}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                                        show
+                                            ? activeClass
+                                            : 'bg-slate-200 dark:bg-white/5 border-slate-300 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:border-slate-400 dark:hover:border-white/20'
+                                    }`}
+                                >
+                                    <span className="material-symbols-outlined text-[16px]">{show ? 'visibility' : 'visibility_off'}</span>
+                                    <span className="max-md:hidden">{key}</span>
+                                    {count > 0 && (
+                                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${show ? 'bg-white/20' : 'bg-slate-400/20 dark:bg-white/10'}`}>
+                                            {count}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
 
                         {/* Archived toggle */}
                         <button
@@ -935,8 +952,9 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
     <div className="flex gap-4 2xl:gap-6 h-full">
         {columnsToShow.map((col, idx) => {
             const colColors = [
-                "bg-slate-500", "bg-amber-500", "bg-blue-500", 
-                "bg-purple-500", "bg-rose-500", "bg-emerald-500", "bg-emerald-600", "bg-slate-700"
+                "bg-slate-500", "bg-amber-500", "bg-blue-500",
+                "bg-purple-500", "bg-violet-500", "bg-emerald-500",
+                "bg-rose-500", "bg-orange-500", "bg-slate-600"
             ];
             const colorClass = colColors[KANBAN_COLUMNS.indexOf(col) % colColors.length];
             return (
