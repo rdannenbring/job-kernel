@@ -3,6 +3,7 @@ import './Dashboard.css';
 import InterestStars from '../components/InterestStars';
 import { useAuth } from '../context/AuthContext';
 import Kanban from '../components/Kanban/index.jsx';
+import ListView from '../components/List/index.jsx';
 import { lastActivityDate } from '../components/Kanban/stages.js';
 
 const DASH_STORAGE_KEY = 'dashboard_state';
@@ -557,7 +558,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                 </div>
             </header>
             
-            {viewMode !== 'kanban' && <div className="px-4 sm:px-6 md:px-8 py-6 flex flex-col gap-4 shrink-0">
+            {viewMode !== 'kanban' && viewMode !== 'list' && <div className="px-4 sm:px-6 md:px-8 py-6 flex flex-col gap-4 shrink-0">
                 <div className="flex items-center justify-between">
                     <div className="flex gap-3 flex-wrap items-center">
                         {/* Search */}
@@ -966,97 +967,12 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                     />
                 )}
                 {viewMode === 'list' && (
-                    <div className="flex-1 overflow-auto px-4 sm:px-6 md:px-8 pb-8">
-                        <div className="flex flex-col gap-4">
-                            {processedApps.map(app => (
-                                <div key={app.id} onClick={() => onViewApp(app)} className="glass-card p-4 rounded-xl flex flex-col sm:flex-row gap-4 cursor-pointer group shadow-sm hover:shadow-md transition-all border border-slate-200/60 dark:border-white/10" style={{ position: 'relative' }}>
-                                    <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10, pointerEvents: 'none', display: 'flex', gap: '8px' }}>
-                                        {app.match_score != null && (
-                                            renderScoreBadge(app.match_score, avgScore, { width: 36, height: 36, fontSize: '0.72rem' })
-                                        )}
-                                        {(() => {
-                                            const prio = typeof app.prioritization_ranking === 'string' 
-                                                ? JSON.parse(app.prioritization_ranking || '{}') 
-                                                : (app.prioritization_ranking || {});
-                                            if (prio.score) {
-                                                return (
-                                                    <div style={{ 
-                                                        width: 36, height: 36, borderRadius: '50%', 
-                                                        background: 'rgba(37, 106, 244, 0.1)', 
-                                                        border: '2px solid rgba(37, 106, 244, 0.4)', 
-                                                        color: 'var(--primary)',
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        fontSize: '0.72rem', fontWeight: 900,
-                                                        boxShadow: '0 0 10px rgba(37, 106, 244, 0.2)',
-                                                        backdropFilter: 'blur(4px)',
-                                                        position: 'relative'
-                                                    }}>
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '12px', position: 'absolute', top: -4, right: -4, background: 'var(--primary)', color: 'white', borderRadius: '50%', padding: '2px' }}>bolt</span>
-                                                        {prio.score}
-                                                    </div>
-                                                );
-                                            }
-                                            return null;
-                                        })()}
-                                    </div>
-                                    <div className="flex items-start gap-4 flex-1">
-                                        <div className="size-11 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
-                                            {app.company_logo
-                                                ? <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'transparent', padding: '0' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'block'; }} />
-                                                : null}
-                                            <span className="material-symbols-outlined text-slate-400 dark:text-white text-lg" style={{ display: app.company_logo ? 'none' : 'block' }}>corporate_fare</span>
-                                        </div>
-                                        <div className="flex flex-col gap-0.5 flex-1">
-                                            <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                                                <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 group-hover:text-primary transition-colors leading-tight">{app.job_title || 'Unknown'}</h3>
-                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getStatusStyle(app.status)}`}>{getStatusText(app.status)}</span>
-                                                {connectionCounts[app.company] > 0 && (
-                                                    <div className="flex items-center gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                                                        <span className="material-symbols-outlined text-[14px]">group</span>
-                                                        {connectionCounts[app.company]} Connection{connectionCounts[app.company] > 1 ? 's' : ''}
-                                                    </div>
-                                                )}
-                                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                                                    <InterestStars level={app.interest_level} size="0.9rem" />
-                                                    {app.interest_level && (
-                                                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 capitalize">
-                                                            {app.interest_level}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">{app.company || 'Unknown'}</p>
-                                            
-                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500">
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className="material-symbols-outlined text-[14px]">location_on</span>
-                                                    <span>{app.location || 'Remote'}{app.location_type ? ` (${app.location_type})` : ''}</span>
-                                                    {app.matchLocType === 'green' && <span className="material-symbols-outlined text-[14px] text-emerald-500">check_circle</span>}
-                                                    {app.matchLocType === 'red' && <span className="material-symbols-outlined text-[14px] text-rose-500">cancel</span>}
-                                                </div>
-                                                {app.job_type && (
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className="material-symbols-outlined text-[14px]">work</span>
-                                                        <span>{app.job_type}</span>
-                                                        {app.matchJobType === 'green' && <span className="material-symbols-outlined text-[14px] text-emerald-500">check_circle</span>}
-                                                        {app.matchJobType === 'red' && <span className="material-symbols-outlined text-[14px] text-rose-500">cancel</span>}
-                                                    </div>
-                                                )}
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className="material-symbols-outlined text-[14px]">payments</span>
-                                                    <span className="font-semibold text-slate-600 dark:text-slate-200 text-wrap" style={{ wordBreak: 'break-word', hyphens: 'auto' }} title={app.salary_range}>{formatCompensation(app.salary_range)}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1.5 text-slate-400">
-                                                    <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                                                    <span>{new Date(app.date_saved).toLocaleDateString()}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <ListView
+                        apps={processedApps}
+                        onViewApp={onViewApp}
+                        onUpdate={onUpdate}
+                        onStartNew={onStartNew}
+                    />
                 )}
                 {viewMode === 'table' && 
 <div className="flex-1 overflow-auto px-4 sm:px-6 md:px-8 pb-8">
