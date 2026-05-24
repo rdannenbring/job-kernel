@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import './Dashboard.css';
 import InterestStars from '../components/InterestStars';
 import { useAuth } from '../context/AuthContext';
+import Kanban from '../components/Kanban/index.jsx';
+import { lastActivityDate } from '../components/Kanban/stages.js';
 
 const DASH_STORAGE_KEY = 'dashboard_state';
 
@@ -105,7 +107,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
     const [viewMode, setViewMode] = useState(saved.viewMode || 'kanban');
     const [draggedOverCol, setDraggedOverCol] = useState(null);
     const [searchTerm, setSearchTerm] = useState(saved.searchTerm || '');
-    const [sortBy, setSortBy] = useState(saved.sortBy || 'newest');
+    const [sortBy, setSortBy] = useState(saved.sortBy || 'last_activity');
     const [filterStatuses, setFilterStatuses] = useState(saved.filterStatuses || []);
     const [filterJobTypes, setFilterJobTypes] = useState(saved.filterJobTypes || []);
     const [filterLocationTypes, setFilterLocationTypes] = useState(saved.filterLocationTypes || []);
@@ -295,6 +297,9 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
     }).sort((a, b) => {
         if (sortBy === 'custom') {
             return (a.kanban_order || 0) - (b.kanban_order || 0);
+        }
+        if (sortBy === 'last_activity') {
+            return lastActivityDate(b) - lastActivityDate(a);
         }
         if (sortBy === 'newest') {
             return new Date(b.date_saved) - new Date(a.date_saved);
@@ -535,7 +540,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
 
     return (
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 h-full">
-            <header className="flex items-center justify-between px-8 py-4 border-b border-slate-200 dark:border-slate-200/10 glass-panel shrink-0">
+            <header className="flex items-center justify-between px-4 sm:px-6 md:px-8 py-4 border-b border-slate-200 dark:border-slate-200/10 glass-panel shrink-0">
                 <div className="flex items-center gap-6 flex-1">
                     <h2 className="text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100">Dashboard</h2>
                     <div className="flex items-center bg-slate-200 dark:bg-[var(--bg-tertiary)] rounded-lg p-1 border border-slate-300 dark:border-[var(--border-color)]">
@@ -552,7 +557,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                 </div>
             </header>
             
-            <div className="px-8 py-6 flex flex-col gap-4 shrink-0">
+            {viewMode !== 'kanban' && <div className="px-4 sm:px-6 md:px-8 py-6 flex flex-col gap-4 shrink-0">
                 <div className="flex items-center justify-between">
                     <div className="flex gap-3 flex-wrap items-center">
                         {/* Search */}
@@ -926,10 +931,10 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                         <button onClick={clearAllFilters} className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white ml-2 text-xs uppercase tracking-wider font-bold transition-colors">Clear All</button>
                     </div>
                 )}
-            </div>
+            </div>}
 
             {apps.length === 0 ? (
-                <div className="px-8 flex-1 flex flex-col items-center justify-center">
+                <div className="px-4 sm:px-6 md:px-8 flex-1 flex flex-col items-center justify-center">
                     <div className="glass-card flex flex-col items-center justify-center p-12 rounded-2xl border border-slate-200 dark:border-white/10 shadow-lg">
                         <span className="material-symbols-outlined text-6xl mb-4 text-slate-300 dark:text-slate-600">inbox</span>
                         <h3 className="text-xl font-bold mb-2">No applications yet</h3>
@@ -939,153 +944,29 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                 </div>
             ) : (
                 <>
-                {viewMode === 'kanban' && 
-<div 
-    ref={boardRef}
-    className="flex-1 overflow-x-auto p-6 pt-2 select-none" 
-    style={{ paddingBottom: '2rem', cursor: isPanning ? 'grabbing' : 'default' }}
-    onMouseDown={onMouseDown}
-    onMouseMove={onMouseMove}
-    onMouseUp={onMouseUp}
-    onMouseLeave={onMouseUp}
->
-    <div className="flex gap-4 2xl:gap-6 h-full">
-        {columnsToShow.map((col, idx) => {
-            const colColors = [
-                "bg-slate-500", "bg-amber-500", "bg-blue-500",
-                "bg-purple-500", "bg-violet-500", "bg-emerald-500",
-                "bg-rose-500", "bg-orange-500", "bg-slate-600"
-            ];
-            const colorClass = colColors[KANBAN_COLUMNS.indexOf(col) % colColors.length];
-            return (
-                <div key={col} 
-                    className={`flex-1 min-w-[200px] max-w-[350px] flex flex-col gap-4 p-2 -mx-2 rounded-2xl transition-all duration-200 border-2 ${draggedOverCol === col ? 'border-primary/50 bg-primary/10 shadow-[0_0_30px_rgba(37,106,244,0.15)] scale-[1.01]' : 'border-transparent'}`} 
-                    onDrop={(e) => onDrop(e, col)} 
-                    onDragOver={(e) => onDragOver(e, col)}
-                    onDragLeave={onDragLeave}
-                >
-                    <div className="flex items-center justify-between px-2">
-                        <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                            <span className={`size-2 rounded-full ${colorClass}`}></span>
-                            {col} <span className="text-xs font-normal ml-1 opacity-50">({appsByColumn[col].length})</span>
-                        </h3>
-                        <button className="text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300"><span className="material-symbols-outlined">more_horiz</span></button>
-                    </div>
-                    <div className="flex flex-col gap-3 overflow-y-auto px-2" style={{ minHeight: '400px' }}>
-                        {appsByColumn[col].map((app, index) => {
-                            const isDragging = app.id === draggedAppId;
-                            return (
-                                <React.Fragment key={app.id}>
-                                    {dropPlaceholder.column === col && dropPlaceholder.index === index && (
-                                        <div className="w-full h-24 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 flex items-center justify-center animate-pulse transition-all duration-200 shrink-0">
-                                            <div className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">Drop Here</div>
-                                        </div>
-                                    )}
-                                    <div 
-                                        draggable 
-                                        onDragStart={(e) => onDragStart(e, app.id)} 
-                                        onDragEnd={onDragEnd}
-                                        onDragOver={(e) => onCardDragOver(e, col, index)}
-                                        onDrop={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            onDrop(e, col);
-                                        }}
-                                        onClick={() => onViewApp(app)}
-                                        className={`glass-card p-3 rounded-xl flex flex-col gap-2 cursor-pointer shadow-sm hover:shadow-md transition-all hover:-translate-y-1 border border-slate-200/60 dark:border-white/10 active:cursor-grabbing ${isDragging ? 'invisible h-0 opacity-0 overflow-hidden py-0 my-0 border-0' : ''}`}
-                                        style={{ position: 'relative' }}>
-                                        {!isDragging && (
-                                            <>
-                                            <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 10, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                {app.match_score != null && (
-                                                    renderScoreBadge(app.match_score, avgScore, { width: 32, height: 32, fontSize: '0.68rem' })
-                                                )}
-                                                {(() => {
-                                                    const prio = typeof app.prioritization_ranking === 'string' 
-                                                        ? JSON.parse(app.prioritization_ranking || '{}') 
-                                                        : (app.prioritization_ranking || {});
-                                                    if (prio.score) {
-                                                        return (
-                                                            <div style={{ 
-                                                                width: 32, height: 32, borderRadius: '50%', 
-                                                                background: 'rgba(37, 106, 244, 0.1)', 
-                                                                border: '2px solid rgba(37, 106, 244, 0.4)', 
-                                                                color: 'var(--primary)',
-                                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                                fontSize: '0.68rem', fontWeight: 900,
-                                                                boxShadow: '0 0 10px rgba(37, 106, 244, 0.2)',
-                                                                backdropFilter: 'blur(4px)',
-                                                                position: 'relative'
-                                                            }}>
-                                                                <span className="material-symbols-outlined" style={{ fontSize: '10px', position: 'absolute', top: -4, right: -4, background: 'var(--primary)', color: 'white', borderRadius: '50%', padding: '2px' }}>bolt</span>
-                                                                {prio.score}
-                                                            </div>
-                                                        );
-                                                    }
-                                                    return null;
-                                                })()}
-                                            </div>
-                                            <div className="flex justify-between items-start pointer-events-none" style={{ paddingRight: (app.match_score != null || (typeof app.prioritization_ranking === 'string' ? JSON.parse(app.prioritization_ranking || '{}') : (app.prioritization_ranking || {})).score) ? '44px' : 0 }}>
-                                                <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-                                                    {app.company_logo
-                                                        ? <img src={app.company_logo} alt={app.company} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'transparent', padding: '0' }} onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'block'; }} />
-                                                        : null}
-                                                    <span className="material-symbols-outlined text-slate-400 dark:text-white text-base" style={{ display: app.company_logo ? 'none' : 'block' }}>corporate_fare</span>
-                                                </div>
-                                                <div className="flex flex-col gap-1 items-end min-w-0">
-                                                    <div className="flex flex-wrap justify-end items-center gap-1.5">
-                                                        {connectionCounts[app.company] > 0 && (
-                                                            <div className="flex items-center gap-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded-full text-[9px] font-bold" title={`${connectionCounts[app.company]} LinkedIn Connection(s)`}>
-                                                                <span className="material-symbols-outlined text-[11px]">group</span>
-                                                                {connectionCounts[app.company]}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="mt-auto">
-                                                        <InterestStars level={app.interest_level} size="0.9rem" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col gap-0.5 pointer-events-none" style={{ paddingRight: (app.match_score != null || (typeof app.prioritization_ranking === 'string' ? JSON.parse(app.prioritization_ranking || '{}') : (app.prioritization_ranking || {})).score) ? '44px' : 0 }}>
-                                                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight line-clamp-2">{app.job_title || 'Unknown Role'}</h4>
-                                                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">{app.company || 'Unknown'}</p>
-                                            </div>
-                                            <div className="flex flex-col gap-1 border-t border-slate-200 dark:border-white/10 pt-2 pointer-events-none">
-                                                <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                                                    <span className="material-symbols-outlined text-[12px]">location_on</span>
-                                                    <span className="truncate">{app.location || 'Remote'}{app.location_type ? ` (${app.location_type})` : ''}</span>
-                                                    {app.matchLocType === 'green' && <span className="material-symbols-outlined text-[12px] text-emerald-500">check_circle</span>}
-                                                    {app.matchLocType === 'red' && <span className="material-symbols-outlined text-[12px] text-rose-500">cancel</span>}
-                                                </div>
-                                                <div className="flex items-center justify-between text-[10px]">
-                                                    <span className="font-bold text-primary text-wrap" style={{ wordBreak: 'break-word', hyphens: 'auto' }} title={app.salary_range}>{formatCompensation(app.salary_range)}</span>
-                                                    <div className="flex items-center gap-1">
-                                                        {app.matchJobType === 'green' && <span className="material-symbols-outlined text-[12px] text-emerald-500">check_circle</span>}
-                                                        {app.matchJobType === 'red' && <span className="material-symbols-outlined text-[12px] text-rose-500">cancel</span>}
-                                                        <span className="text-slate-400 dark:text-slate-500">{app.job_type || 'Full-time'}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            </>
-                                        )}
-                                    </div>
-                                </React.Fragment>
-                            );
-                        })}
-                        {dropPlaceholder.column === col && dropPlaceholder.index === (appsByColumn[col] || []).length && (
-                            <div className="w-full h-24 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 flex items-center justify-center animate-pulse transition-all duration-200 shrink-0">
-                                <div className="text-[10px] font-bold text-primary/40 uppercase tracking-widest">Drop Here</div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )
-        })}
-    </div>
-</div>
-}
+                {viewMode === 'kanban' && (
+                    <Kanban
+                        apps={processedApps}
+                        allAppsCount={apps.filter(a => (showArchived ? a.is_archived === 'true' || a.is_archived === true : a.is_archived !== 'true' && a.is_archived !== true) && a.status !== 'Draft').length}
+                        onUpdate={onUpdate}
+                        onViewApp={onViewApp}
+                        onStartNew={onStartNew}
+                        updateAppOrders={updateAppOrders}
+                        connectionCounts={connectionCounts}
+                        avgScore={avgScore}
+                        sortBy={sortBy}
+                        setSortBy={setSortBy}
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        filterMinScore={filterMinScore}
+                        setFilterMinScore={setFilterMinScore}
+                        filterHasConnections={filterHasConnections}
+                        setFilterHasConnections={setFilterHasConnections}
+                        onClearAllFilters={clearAllFilters}
+                    />
+                )}
                 {viewMode === 'list' && (
-                    <div className="flex-1 overflow-auto px-8 pb-8">
+                    <div className="flex-1 overflow-auto px-4 sm:px-6 md:px-8 pb-8">
                         <div className="flex flex-col gap-4">
                             {processedApps.map(app => (
                                 <div key={app.id} onClick={() => onViewApp(app)} className="glass-card p-4 rounded-xl flex flex-col sm:flex-row gap-4 cursor-pointer group shadow-sm hover:shadow-md transition-all border border-slate-200/60 dark:border-white/10" style={{ position: 'relative' }}>
@@ -1178,7 +1059,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                     </div>
                 )}
                 {viewMode === 'table' && 
-<div className="flex-1 overflow-auto px-8 pb-8">
+<div className="flex-1 overflow-auto px-4 sm:px-6 md:px-8 pb-8">
     <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-xl">
         <table className="w-full text-left border-collapse">
             <thead>
