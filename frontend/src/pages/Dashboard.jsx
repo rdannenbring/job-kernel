@@ -105,7 +105,9 @@ function loadDashState() {
 const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) => {
     const { fetchWithAuth } = useAuth();
     const saved = loadDashState();
-    const [viewMode, setViewMode] = useState(saved.viewMode || 'kanban');
+    // Default to 'kanban' if the saved view mode is 'table' (which is hidden)
+    const initialViewMode = (saved.viewMode === 'table') ? 'kanban' : (saved.viewMode || 'kanban');
+    const [viewMode, setViewMode] = useState(initialViewMode);
     const [draggedOverCol, setDraggedOverCol] = useState(null);
     const [searchTerm, setSearchTerm] = useState(saved.searchTerm || '');
     const [sortBy, setSortBy] = useState(saved.sortBy || 'last_activity');
@@ -547,7 +549,8 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                     <div className="flex items-center bg-slate-200 dark:bg-[var(--bg-tertiary)] rounded-lg p-1 border border-slate-300 dark:border-[var(--border-color)]">
                         <button onClick={() => setViewMode('kanban')} className={`px-4 py-1.5 text-sm transition-colors rounded-md ${viewMode === 'kanban' ? 'font-semibold text-white bg-primary shadow-lg shadow-primary/20' : 'font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'}`}>Board</button>
                         <button onClick={() => setViewMode('list')} className={`px-4 py-1.5 text-sm transition-colors rounded-md ${viewMode === 'list' ? 'font-semibold text-white bg-primary shadow-lg shadow-primary/20' : 'font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'}`}>List</button>
-                        <button onClick={() => setViewMode('table')} className={`px-4 py-1.5 text-sm transition-colors rounded-md ${viewMode === 'table' ? 'font-semibold text-white bg-primary shadow-lg shadow-primary/20' : 'font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'}`}>Table</button>
+                        {/* Table option hidden as requested, but keeping here for future removal if needed */}
+                        {/* <button onClick={() => setViewMode('table')} className={`px-4 py-1.5 text-sm transition-colors rounded-md ${viewMode === 'table' ? 'font-semibold text-white bg-primary shadow-lg shadow-primary/20' : 'font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'}`}>Table</button> */}
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -980,7 +983,7 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
         <table className="w-full text-left border-collapse">
             <thead>
                 <tr className="bg-slate-100 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
-                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Company</th>
+                    <th className="px-6 py-4 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Company</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Job Title</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Location</th>
                     <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Salary</th>

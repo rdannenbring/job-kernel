@@ -1,3 +1,64 @@
+// ─── Dynamic Debug Logger Monkeypatch ────────────────────────────────────────
+(function() {
+  let isDebugEnabled = false;
+
+  const initDebug = () => {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.get(['enableDebug'], (result) => {
+          isDebugEnabled = !!result.enableDebug;
+        });
+        
+        chrome.storage.onChanged.addListener((changes, namespace) => {
+          if (namespace === 'local' && changes.enableDebug) {
+            isDebugEnabled = !!changes.enableDebug.newValue;
+          }
+        });
+      }
+    } catch (e) {}
+  };
+  initDebug();
+
+  const originalLog = console.log;
+  const originalError = console.error;
+
+  console.log = function(...args) {
+    originalLog.apply(console, args);
+    try {
+      if (isDebugEnabled && args[0] && typeof args[0] === 'string' && args[0].startsWith('[JobKernel-Debug]')) {
+        const message = args[0];
+        const context = args.slice(1);
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+          chrome.runtime.sendMessage({
+            action: 'log',
+            level: 'DEBUG',
+            message: `[Content-Debug] ${message}`,
+            context: context.length > 0 ? JSON.stringify(context) : null
+          }).catch(() => {});
+        }
+      }
+    } catch (e) {}
+  };
+
+  console.error = function(...args) {
+    originalError.apply(console, args);
+    try {
+      if (isDebugEnabled && args[0] && typeof args[0] === 'string' && args[0].startsWith('[JobKernel-Debug]')) {
+        const message = args[0];
+        const context = args.slice(1);
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+          chrome.runtime.sendMessage({
+            action: 'log',
+            level: 'ERROR',
+            message: `[Content-Error] ${message}`,
+            context: context.length > 0 ? JSON.stringify(context) : null
+          }).catch(() => {});
+        }
+      }
+    } catch (e) {}
+  };
+})();
+
 // ─── Utility helpers ────────────────────────────────────────────────────────
 function getDynamicLeftPanel() {
     const cards = Array.from(document.querySelectorAll('li[data-occludable-job-id], div[data-job-id], .job-card-container, [class*="job-card-list"]'));
@@ -1551,7 +1612,12 @@ function updateButtonState(btn, isOpen) {
 
 function isExtValid() {
   try {
-    return typeof chrome !== 'undefined' && chrome.runtime && !!chrome.runtime.id;
+    if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id) {
+      return false;
+    }
+    // Accessing getManifest will throw an exception if the extension context is invalidated.
+    chrome.runtime.getManifest();
+    return true;
   } catch (e) {
     return false;
   }
@@ -2121,6 +2187,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const matches = findFields();
     injectMagicUI(matches, message.profile);
     sendResponse({ found: matches.length });
+  } else if (message.action === 'LINKEDIN_SYNC_COMPLETE') {
+    connectionCache.clear();
+    document.querySelectorAll('[data-kernel-processed-company]').forEach(el => {
+      delete el.dataset.kernelProcessedCompany;
+    });
+    processLinkedInConnections();
+    sendResponse({ success: true });
   }
 });
 
@@ -2131,8 +2204,17 @@ let lastActiveJobId = null;
 
 async function getMatches(companyId, companyName) {
   const key = companyId || companyName;
-  if (!key) return [];
-  if (connectionCache.has(key)) return connectionCache.get(key);
+  if (!key) {
+    console.log('[JobKernel-Debug] getMatches: Empty key. Skipping query.');
+    return [];
+  }
+  if (connectionCache.has(key)) {
+    const cachedVal = connectionCache.get(key);
+    console.log('[JobKernel-Debug] getMatches: cache HIT for key "' + key + '". Cached matches count:', cachedVal?.length || 0);
+    return cachedVal;
+  }
+
+  console.log('[JobKernel-Debug] getMatches: cache MISS for key "' + key + '". Querying backend...', { companyId, companyName });
 
   return new Promise((resolve) => {
     // Strategy: Try ID first if available. If no matches, try Name.
@@ -2140,13 +2222,18 @@ async function getMatches(companyId, companyName) {
       const action = id ? 'CHECK_CONNECTIONS' : 'CHECK_CONNECTIONS_BY_NAME';
       const params = id ? { companyId: id } : { companyName: name };
       
+      console.log('[JobKernel-Debug] getMatches: sending message to background...', { action, params });
+      
       safeSendMessage({ action, ...params }, (response) => {
         const matches = response?.matches || [];
+        console.log('[JobKernel-Debug] getMatches: received response for key "' + key + '". Action used:', action, 'Matches count:', matches.length, matches);
+        
         if (matches.length > 0 || !name || (id && !name)) {
           connectionCache.set(key, matches);
           resolve(matches);
         } else if (id && name) {
           // Fallback to name search
+          console.log('[JobKernel-Debug] getMatches: ID search returned 0 matches for "' + key + '". Falling back to Name query:', name);
           tryQuery(null, name);
         } else {
           connectionCache.set(key, []);
@@ -2160,31 +2247,46 @@ async function getMatches(companyId, companyName) {
 }
 
 async function processLinkedInConnections() {
-  if (!isExtValid()) return;
-  if (!LINKEDIN_SCRAPER.isJobPage()) return;
-  if (isProcessingConnections) return;
+  console.log('[JobKernel-Debug] processLinkedInConnections triggered. Pathname:', window.location.pathname, 'isJobPage:', LINKEDIN_SCRAPER.isJobPage(), 'isProcessingConnections:', isProcessingConnections);
+  if (!isExtValid()) {
+    console.log('[JobKernel-Debug] processLinkedInConnections aborted: extension not valid.');
+    return;
+  }
+  if (!LINKEDIN_SCRAPER.isJobPage()) {
+    console.log('[JobKernel-Debug] processLinkedInConnections aborted: not a job page.');
+    return;
+  }
+  if (isProcessingConnections) {
+    console.log('[JobKernel-Debug] processLinkedInConnections aborted: already processing.');
+    return;
+  }
   isProcessingConnections = true;
   try {
     // 1. Current Job Banner
     const jobId = new URLSearchParams(window.location.search).get('currentJobId');
+    console.log('[JobKernel-Debug] processLinkedInConnections: jobId from URL:', jobId, 'lastActiveJobId:', lastActiveJobId);
     if (jobId && (jobId !== lastActiveJobId || !document.getElementById('kernel-connection-banner'))) {
       const companyName = LINKEDIN_SCRAPER.company();
       const companyId = LINKEDIN_SCRAPER.companyId();
+      console.log('[JobKernel-Debug] processLinkedInConnections: scraped top card details:', { companyName, companyId });
 
       if (companyName || companyId) {
         lastActiveJobId = jobId;
         const matches = await getMatches(companyId, companyName);
+        console.log('[JobKernel-Debug] processLinkedInConnections: got matches for top card banner:', matches?.length);
         renderConnectionBanner(matches, companyName);
       }
     }
 
     // 2. Proactively update side panel on-page connections
     const onPage = LINKEDIN_SCRAPER.networking?.() || [];
+    console.log('[JobKernel-Debug] processLinkedInConnections: scraped onPage connections count:', onPage.length);
     if (onPage.length > 0) {
       chrome.storage.local.get(['latestJobData'], (result) => {
         if (result.latestJobData) {
           const updatedData = { ...result.latestJobData, onPageConnections: onPage };
           chrome.storage.local.set({ latestJobData: updatedData }, () => {
+            console.log('[JobKernel-Debug] processLinkedInConnections: stored on-page connections in local storage');
             safeSendMessage({ action: 'refresh_on_page_connections', onPageConnections: onPage });
           });
         }
@@ -2192,6 +2294,7 @@ async function processLinkedInConnections() {
     }
 
     // 3. Job List Highlights (rate-limited separately)
+    console.log('[JobKernel-Debug] processLinkedInConnections: calling highlightConnectionsInList');
     highlightConnectionsInList();
   } finally {
     isProcessingConnections = false;
@@ -2242,45 +2345,216 @@ function renderConnectionBanner(matches, companyName) {
 }
 
 let lastListHighlight = 0;
-const LIST_HIGHLIGHT_INTERVAL = 5000; // At most once per 5 seconds
+const LIST_HIGHLIGHT_INTERVAL = 200; // Throttle reduced to 200ms to eliminate startup/rendering race conditions
 
-async function highlightConnectionsInList() {
-  const now = Date.now();
-  if (now - lastListHighlight < LIST_HIGHLIGHT_INTERVAL) return;
-  lastListHighlight = now;
+function getLeftPanelJobLinks() {
+  const allLinks = Array.from(document.querySelectorAll('a[href*="/jobs/view/"], a[href*="currentJobId="]'));
+  return allLinks.filter(a => {
+    const rect = a.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0 && rect.left < window.innerWidth * 0.5;
+  });
+}
 
-  const listItems = document.querySelectorAll('.jobs-search-results-list__item, .scaffold-layout__list-item, .job-card-container');
+function getClosestCommonAncestor(elements) {
+  if (elements.length === 0) return null;
+  if (elements.length === 1) return elements[0].parentElement;
   
-  for (const item of listItems) {
-    if (item.dataset.kernelProcessed) continue;
-    
-    const companyLink = item.querySelector('a[href*="/company/"]');
-    const companyNameEl = item.querySelector('.job-card-container__company-name, .artdeco-entity-lockup__subtitle, .job-card-container__primary-description');
-    
-    if (!companyLink && !companyNameEl) continue;
-    
-    // Mark as processed to avoid double-querying immediately
-    item.dataset.kernelProcessed = 'true';
-    
-    const companyIdMatch = companyLink ? companyLink.href.match(/\/company\/([^/?#]+)/) : null;
-    const companyId = companyIdMatch ? companyIdMatch[1] : null;
-    
-    const companyName = companyNameEl?.innerText?.trim();
-    
-    if (companyId || companyName) {
-      const matches = await getMatches(companyId, companyName);
-      if (matches && matches.length > 0) {
-        addConnectionIndicator(item, matches);
+  let parents = [];
+  let p = elements[0].parentElement;
+  while (p) {
+    parents.push(p);
+    p = p.parentElement;
+  }
+  
+  for (const parent of parents) {
+    let isCommon = true;
+    for (let i = 1; i < elements.length; i++) {
+      if (!parent.contains(elements[i])) {
+        isCommon = false;
+        break;
       }
-    } else {
-      delete item.dataset.kernelProcessed;
     }
+    if (isCommon) {
+      return parent;
+    }
+  }
+  return null;
+}
+
+function addLeftPaneScrollListener(resolvedContainer = null) {
+  const leftPane = resolvedContainer || 
+                   document.querySelector('.jobs-search-results-list, [class*="scaffold-layout__list"], [class*="jobs-search-results__list"]');
+  if (leftPane && !leftPane.dataset.kernelScrollWatched) {
+    leftPane.dataset.kernelScrollWatched = 'true';
+    leftPane.addEventListener('scroll', () => {
+      const now = Date.now();
+      if (now - lastConnectionProcess > THROTTLE_MS) {
+        lastConnectionProcess = now;
+        processLinkedInConnections();
+      }
+    }, { passive: true });
+    console.log('[JobKernel] Registered left pane scroll listener on container:', leftPane.tagName, leftPane.className);
   }
 }
 
+async function highlightConnectionsInList() {
+  const now = Date.now();
+  console.log('[JobKernel-Debug] highlightConnectionsInList: lastListHighlight diff:', now - lastListHighlight, 'INTERVAL:', LIST_HIGHLIGHT_INTERVAL);
+  if (now - lastListHighlight < LIST_HIGHLIGHT_INTERVAL) {
+    console.log('[JobKernel-Debug] highlightConnectionsInList: aborted due to throttle interval.');
+    return;
+  }
+  lastListHighlight = now;
+
+  let listItems = Array.from(document.querySelectorAll(
+    '.jobs-search-results-list__item, .scaffold-layout__list-item, .job-card-container, li[data-occludable-job-id], div[data-job-id], [class*="job-card-list"], [class*="_258fed07"], [class*="_13ea86fc"], [class*="ba6a2084"]'
+  ));
+  console.log('[JobKernel-Debug] highlightConnectionsInList: querySelectorAll found items:', listItems.length);
+
+  let resolvedContainer = null;
+  if (listItems.length === 0) {
+    console.log('[JobKernel-Debug] highlightConnectionsInList: listItems is 0. Running dynamic container fallback...');
+    try {
+      const leftLinks = getLeftPanelJobLinks();
+      console.log('[JobKernel-Debug] Dynamic resolver found left panel links count:', leftLinks.length);
+      resolvedContainer = getClosestCommonAncestor(leftLinks);
+      if (resolvedContainer) {
+        console.log('[JobKernel-Debug] Dynamic resolver found list container:', resolvedContainer.tagName, resolvedContainer.className);
+        const cards = [];
+        Array.from(resolvedContainer.children).forEach(child => {
+          const hasLink = leftLinks.some(link => child.contains(link));
+          if (hasLink) {
+            cards.push(child);
+          }
+        });
+        listItems = cards;
+        console.log('[JobKernel-Debug] Dynamic resolver successfully resolved cards count:', listItems.length);
+      }
+    } catch (e) {
+      console.error('[JobKernel-Debug] Error in dynamic card resolver:', e);
+    }
+  }
+  
+  // Register scroll listener on the left pane container for real-time responsiveness
+  addLeftPaneScrollListener(resolvedContainer);
+    
+    // 1. Diagnostic Link Finder
+    try {
+      const allLinks = Array.from(document.querySelectorAll('a'));
+      const jobLinks = allLinks.filter(a => a.href && (a.href.includes('/jobs/view/') || a.href.includes('currentJobId=')));
+      console.log('[JobKernel-Debug] Diagnostic job links found count:', jobLinks.length);
+      if (jobLinks.length > 0) {
+        jobLinks.slice(0, 5).forEach((a, idx) => {
+          const classStr = a.className ? `.${a.className.split(/\s+/).join('.')}` : '';
+          const parentClassStr = a.parentElement?.className ? `.${a.parentElement.className.split(/\s+/).join('.')}` : '';
+          const grandClassStr = a.parentElement?.parentElement?.className ? `.${a.parentElement.parentElement.className.split(/\s+/).join('.')}` : '';
+          console.log(`[JobKernel-Debug] Diagnostic job link[${idx}]: href: ${a.href} | text: "${a.innerText.trim().replace(/\s+/g, ' ').substring(0, 40)}" | a${classStr} > parent: ${a.parentElement?.tagName}${parentClassStr} > grandparent: ${a.parentElement?.parentElement?.tagName}${grandClassStr}`);
+        });
+      }
+    } catch (e) {
+      console.error('[JobKernel-Debug] Error running link diagnostics:', e);
+    }
+
+    // 2. Text node search for visible entities
+    try {
+      const searchTerms = ['S&P Global', 'BOI (Board of Innovation)', 'Bristol Myers Squibb', 'PwC', 'Citi', 'Client Technology'];
+      searchTerms.forEach(term => {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let node;
+        while ((node = walker.nextNode())) {
+          if (node.nodeValue && node.nodeValue.includes(term)) {
+            let parent = node.parentElement;
+            const hierarchyStrs = [];
+            let depth = 0;
+            while (parent && depth < 6) {
+              const classStr = parent.className ? `.${parent.className.split(/\s+/).join('.')}` : '';
+              const idStr = parent.id ? `#${parent.id}` : '';
+              const jobIdStr = (parent.getAttribute('data-job-id') || parent.getAttribute('data-occludable-job-id')) ? `[data-job-id="${parent.getAttribute('data-job-id') || parent.getAttribute('data-occludable-job-id')}"]` : '';
+              hierarchyStrs.push(`${parent.tagName}${idStr}${classStr}${jobIdStr}`);
+              parent = parent.parentElement;
+              depth++;
+            }
+            console.log(`[JobKernel-Debug] Diagnostic match for text "${term}" hierarchy: ` + hierarchyStrs.reverse().join(' > '));
+          }
+        }
+      });
+    } catch (e) {
+      console.error('[JobKernel-Debug] Error running text diagnostics:', e);
+    }
+  }
+  
+  // Register scroll listener on the left pane container for real-time responsiveness
+  addLeftPaneScrollListener();
+
+  // Process all list items in parallel to eliminate sequential blocking and race conditions
+  listItems.forEach(async (item, idx) => {
+    const companyLink = item.querySelector('a[href*="/company/"]');
+    const companyNameEl = item.querySelector(
+      '.job-card-container__company-name, .artdeco-entity-lockup__subtitle, .job-card-container__primary-description, [class*="company-name"], [class*="primary-description"]'
+    );
+    
+    // Fallback: If both are missing, clean up and skip
+    if (!companyLink && !companyNameEl) {
+      console.log(`[JobKernel-Debug] listItem[${idx}]: both companyLink and companyNameEl missing. ClassName: "${item.className}"`);
+      const existingIndicator = item.querySelector('.kernel-list-indicator');
+      if (existingIndicator) existingIndicator.remove();
+      item.classList.remove('kernel-match-highlight');
+      delete item.dataset.kernelProcessedCompany;
+      return;
+    }
+    
+    const companyIdMatch = companyLink ? companyLink.href.match(/\/company\/([^/?#]+)/) : null;
+    const companyId = companyIdMatch ? companyIdMatch[1] : null;
+    const companyName = (companyNameEl?.innerText || companyLink?.innerText || '').trim();
+    
+    const currentCompanyKey = companyId || companyName;
+    console.log(`[JobKernel-Debug] listItem[${idx}]: companyId: "${companyId}", companyName: "${companyName}", currentCompanyKey: "${currentCompanyKey}"`);
+    
+    if (!currentCompanyKey) {
+      console.log(`[JobKernel-Debug] listItem[${idx}]: currentCompanyKey empty. Cleaning up.`);
+      const existingIndicator = item.querySelector('.kernel-list-indicator');
+      if (existingIndicator) existingIndicator.remove();
+      item.classList.remove('kernel-match-highlight');
+      delete item.dataset.kernelProcessedCompany;
+      return;
+    }
+    
+    // If already processed for this exact company, do nothing
+    if (item.dataset.kernelProcessedCompany === currentCompanyKey) {
+      console.log(`[JobKernel-Debug] listItem[${idx}]: already processed for company key "${currentCompanyKey}". Skipping.`);
+      return;
+    }
+    
+    // Mark as processed for this company to avoid duplicate calls
+    console.log(`[JobKernel-Debug] listItem[${idx}]: processing key "${currentCompanyKey}". Processing matches.`);
+    item.dataset.kernelProcessedCompany = currentCompanyKey;
+    
+    // Clean up any stale indicators/highlights from recycling
+    const existingIndicator = item.querySelector('.kernel-list-indicator');
+    if (existingIndicator) existingIndicator.remove();
+    item.classList.remove('kernel-match-highlight');
+    
+    try {
+      const matches = await getMatches(companyId, companyName);
+      console.log(`[JobKernel-Debug] listItem[${idx}]: matches fetched for "${currentCompanyKey}":`, matches?.length);
+      if (matches && matches.length > 0) {
+        addConnectionIndicator(item, matches);
+      }
+    } catch (err) {
+      console.warn('[JobKernel] Error checking connections for ' + currentCompanyKey, err);
+      // Reset processed state on error to allow retry
+      delete item.dataset.kernelProcessedCompany;
+    }
+  });
+}
+
 function addConnectionIndicator(item, matches) {
-  // Check if indicator already exists
-  if (item.querySelector('.kernel-list-indicator')) return;
+  console.log('[JobKernel-Debug] addConnectionIndicator called. Matches count:', matches.length, 'Item element:', item);
+  // Check if indicator already exists (prevent duplicates)
+  if (item.querySelector('.kernel-list-indicator')) {
+    console.log('[JobKernel-Debug] addConnectionIndicator aborted: indicator already exists.');
+    return;
+  }
   
   const count = matches.length;
   // Get names, cap at 3 for tooltip
@@ -2302,17 +2576,13 @@ function addConnectionIndicator(item, matches) {
     </svg>
   `;
 
-  // Find a good spot to place it - usually near the company logo or title
-  const target = item.querySelector('.job-card-list__entity-lockup, .job-card-container__content-container, .job-card-list__title');
-  if (target) {
-    target.style.position = 'relative';
-    target.appendChild(indicator);
-    item.classList.add('kernel-match-highlight');
-  } else {
-    // fallback if internal structure is different
-    item.style.position = 'relative';
-    item.appendChild(indicator);
-  }
+  // Place it directly relative to the main card container for absolute reliability and visibility
+  item.style.position = 'relative';
+  item.appendChild(indicator);
+  
+  // Unconditionally add the highlight class to the card
+  item.classList.add('kernel-match-highlight');
+  console.log('[JobKernel-Debug] addConnectionIndicator completed. Added class kernel-match-highlight and appended indicator element.', indicator);
 }
 
 // ── Mutation Observer to handle SPA navigation ──────────────────────────
@@ -2365,20 +2635,27 @@ const connectionObserver = new MutationObserver((mutations) => {
   }
 
   const now = Date.now();
+  console.log('[JobKernel-Debug] MutationObserver triggered. Time since last process:', now - lastConnectionProcess, 'THROTTLE_MS:', THROTTLE_MS, 'isProcessing:', isProcessingConnections);
   if (now - lastConnectionProcess > THROTTLE_MS) {
     lastConnectionProcess = now;
-    if (!isProcessingConnections) processLinkedInConnections();
+    if (!isProcessingConnections) {
+      console.log('[JobKernel-Debug] MutationObserver initiating processLinkedInConnections (immediate)');
+      processLinkedInConnections();
+    }
   } else {
     clearTimeout(connectionTimeout);
     connectionTimeout = setTimeout(() => {
       lastConnectionProcess = Date.now();
-      if (!isProcessingConnections) processLinkedInConnections();
+      if (!isProcessingConnections) {
+        console.log('[JobKernel-Debug] MutationObserver initiating processLinkedInConnections (debounced)');
+        processLinkedInConnections();
+      }
     }, THROTTLE_MS);
   }
 });
 // ── Initial Connection Processing ──────────────────────────────────────────
 
-if (LINKEDIN_SCRAPER.isJobPage()) {
+if (window.location.hostname.includes('linkedin.com')) {
   connectionObserver.observe(document.body, { childList: true, subtree: true });
 
   // Initial run

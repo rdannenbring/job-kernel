@@ -1,15 +1,22 @@
 let API_URL = 'http://localhost:8000';
+let isDebugEnabled = false;
 
 // Listen for settings changes
-chrome.storage.local.get(['jobkernelApiUrl'], (res) => {
+chrome.storage.local.get(['jobkernelApiUrl', 'enableDebug'], (res) => {
   if (res.jobkernelApiUrl) {
     API_URL = res.jobkernelApiUrl;
   }
+  isDebugEnabled = !!res.enableDebug;
 });
 
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === 'local' && changes.jobkernelApiUrl) {
-    API_URL = changes.jobkernelApiUrl.newValue || 'http://localhost:8000';
+  if (namespace === 'local') {
+    if (changes.jobkernelApiUrl) {
+      API_URL = changes.jobkernelApiUrl.newValue || 'http://localhost:8000';
+    }
+    if (changes.enableDebug) {
+      isDebugEnabled = !!changes.enableDebug.newValue;
+    }
   }
 });
 
@@ -19,6 +26,11 @@ async function fetchWithAuthBackground(url, options = {}) {
       const token = result.apiKey || result.token;
       const currentApiUrl = result.jobkernelApiUrl || API_URL;
       const headers = { ...options.headers };
+      const isLoggingEndpoint = url && url.includes('/api/extension/logs');
+      
+      if (!isLoggingEndpoint) {
+        debugLog('fetchWithAuthBackground: checking auth for URL: ' + url + ' | currentApiUrl: ' + currentApiUrl + ' | token exists: ' + !!token);
+      }
       
       if (token && url.startsWith(currentApiUrl)) {
         const isJWT = token.split('.').length === 3;
@@ -35,9 +47,15 @@ async function fetchWithAuthBackground(url, options = {}) {
       }
       
       try {
+        if (!isLoggingEndpoint) {
+          debugLog('fetchWithAuthBackground: initiating fetch for: ' + url);
+        }
         const res = await fetch(url, { ...options, headers });
         resolve(res);
       } catch (err) {
+        if (!isLoggingEndpoint) {
+          debugLog('fetchWithAuthBackground: fetch failed for: ' + url + ' | Error: ' + err.message, err);
+        }
         reject(err);
       }
     });
@@ -81,6 +99,13 @@ async function remoteLog(level, message, context = null) {
   } catch (e) {
     // Fallback if remote logging wrapper itself fails
     console.warn('[JobAutomator] Error in remoteLog wrapper:', e);
+  }
+}
+
+function debugLog(msg, context = null) {
+  console.log(`[JobKernel-Debug] ${msg}`, context || '');
+  if (isDebugEnabled) {
+    remoteLog('DEBUG', `[Background-Debug] ${msg}`, context);
   }
 }
 
@@ -366,24 +391,34 @@ const handleMessage = (message, sender, sendResponse) => {
     return true;
 
   } else if (message.action === 'CHECK_CONNECTIONS') {
+    debugLog('Background received CHECK_CONNECTIONS for companyId: ' + message.companyId + ' using API_URL: ' + API_URL);
     fetchWithAuthBackground(`${API_URL}/api/linkedin/matches/${message.companyId}`)
-      .then(res => res.json())
+      .then(res => {
+        debugLog('Background fetch CHECK_CONNECTIONS HTTP status: ' + res.status);
+        return res.json();
+      })
       .then(data => {
+        debugLog('Background fetch CHECK_CONNECTIONS success, matches count: ' + (data?.matches?.length || 0), data);
         sendResponse({ matches: data.matches });
       })
       .catch(err => {
-        console.error('Error checking connections:', err);
+        debugLog('Error checking connections in background: ' + err.message, err);
         sendResponse({ matches: [] });
       });
     return true;
   } else if (message.action === 'CHECK_CONNECTIONS_BY_NAME') {
+    debugLog('Background received CHECK_CONNECTIONS_BY_NAME for companyName: ' + message.companyName + ' using API_URL: ' + API_URL);
     fetchWithAuthBackground(`${API_URL}/api/linkedin/matches/name/${encodeURIComponent(message.companyName)}`)
-      .then(res => res.json())
+      .then(res => {
+        debugLog('Background fetch CHECK_CONNECTIONS_BY_NAME HTTP status: ' + res.status);
+        return res.json();
+      })
       .then(data => {
+        debugLog('Background fetch CHECK_CONNECTIONS_BY_NAME success, matches count: ' + (data?.matches?.length || 0), data);
         sendResponse({ matches: data.matches });
       })
       .catch(err => {
-        console.error('Error checking connections by name:', err);
+        debugLog('Error checking connections by name in background: ' + err.message, err);
         sendResponse({ matches: [] });
       });
     return true;
@@ -805,6 +840,22 @@ async function fetchConnectionsBatch(start = 0, count = 40) {
         action: 'LINKEDIN_SYNC_COMPLETE',
         count: syncRunningTotal
       }).catch(() => {});
+      
+      // Broadcast sync completion to all tabs (content scripts)
+      try {
+        chrome.tabs.query({}, (tabs) => {
+          (tabs || []).forEach(tab => {
+            if (tab.id) {
+              chrome.tabs.sendMessage(tab.id, { 
+                action: 'LINKEDIN_SYNC_COMPLETE', 
+                count: syncRunningTotal 
+              }).catch(() => {});
+            }
+          });
+        });
+      } catch (err) {
+        console.warn('Error broadcasting sync complete to tabs:', err);
+      }
     }
   } catch (error) {
     isSyncing = false;

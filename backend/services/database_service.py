@@ -19,6 +19,10 @@ class User(Base):
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
     email = Column(String, nullable=True)
+    photo_url = Column(String, nullable=True)
+    photo_zoom = Column(Float, default=1.0)
+    photo_x = Column(Float, default=0.0)
+    photo_y = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     applications = relationship("Application", back_populates="user")
@@ -401,6 +405,10 @@ class DatabaseService:
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "email": user.email,
+                "photo_url": user.photo_url,
+                "photo_zoom": user.photo_zoom,
+                "photo_x": user.photo_x,
+                "photo_y": user.photo_y,
             }
         finally:
             session.close()
@@ -564,6 +572,10 @@ class DatabaseService:
             if 'first_name' in data: user.first_name = data['first_name']
             if 'last_name'  in data: user.last_name  = data['last_name']
             if 'email'      in data: user.email       = data['email']
+            if 'photo_url'  in data: user.photo_url   = data['photo_url']
+            if 'photo_zoom' in data: user.photo_zoom  = data['photo_zoom']
+            if 'photo_x'    in data: user.photo_x     = data['photo_x']
+            if 'photo_y'    in data: user.photo_y     = data['photo_y']
             if data.get('password'):
                 from services.auth_service import AuthService
                 user.hashed_password = AuthService.get_password_hash(data['password'])
@@ -780,6 +792,10 @@ class DatabaseService:
             )
             """,
             "CREATE INDEX IF NOT EXISTS idx_applied_assets_app ON applied_assets(application_id)",
+            "ALTER TABLE users ADD COLUMN photo_url TEXT",
+            "ALTER TABLE users ADD COLUMN photo_zoom REAL DEFAULT 1.0",
+            "ALTER TABLE users ADD COLUMN photo_x REAL DEFAULT 0.0",
+            "ALTER TABLE users ADD COLUMN photo_y REAL DEFAULT 0.0",
         ]
         with self.engine.connect() as conn:
             for sql in migrations:
@@ -1956,14 +1972,23 @@ class DatabaseService:
                 # Pattern: Word boundary, then name, then word boundary.
                 # Avoids matching "ro" in "Metro", "Brooklyn", "Recruiter for..."
                 pattern = re.compile(rf'\b{re.escape(norm_search)}\b', re.IGNORECASE)
+                extra_pattern = None
+                if extra_search:
+                    extra_pattern = re.compile(rf'\b{re.escape(extra_search)}\b', re.IGNORECASE)
                 
                 filtered = []
                 seen_urls = set()
                 for c in conns:
                     if c.profile_url in seen_urls: continue
                     
-                    # Must find the standalone word in Company OR Headline
+                    # Must find the standalone word in Company OR Headline (or extra mapped pattern word)
+                    match_found = False
                     if pattern.search(c.company_name or "") or pattern.search(c.headline or ""):
+                        match_found = True
+                    elif extra_pattern and (extra_pattern.search(c.company_name or "") or extra_pattern.search(c.headline or "")):
+                        match_found = True
+                    
+                    if match_found:
                         filtered.append(c)
                         seen_urls.add(c.profile_url)
                 conns = filtered

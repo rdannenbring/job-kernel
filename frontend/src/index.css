@@ -57,7 +57,29 @@
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;
   --transition-slow: 350ms ease;
+
+  /* Global Layout Padding Variables */
+  --page-px: 3rem;
+  --page-py: 3rem;
+  --lifecycle-padding: 2rem;
 }
+
+@media (max-width: 1024px) {
+  :root {
+    --page-px: 2rem;
+    --page-py: 2rem;
+    --lifecycle-padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --page-px: 1rem;
+    --page-py: 1rem;
+    --lifecycle-padding: 1rem;
+  }
+}
+
 
 /* Light Theme Variables */
 :root[data-theme="light"] {
@@ -167,6 +189,12 @@ body::before {
   margin: 0 auto;
   padding: 2rem;
 }
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+}
+
 
 /* Header */
 .header {

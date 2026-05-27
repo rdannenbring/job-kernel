@@ -787,6 +787,51 @@ async def update_own_account(data: dict, user_id: int = Depends(get_current_user
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "Account updated"}
 
+@app.post("/api/user/upload-photo")
+async def upload_user_photo(
+    photo: UploadFile = File(...),
+    user_id: int = Depends(get_current_user_id)
+):
+    """Upload a profile photo."""
+    try:
+        # Validate file type
+        ext = photo.filename.split('.')[-1].lower() if '.' in photo.filename else 'png'
+        if ext not in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
+            raise HTTPException(status_code=400, detail="Only JPG, JPEG, PNG, GIF, or WEBP images are allowed.")
+        
+        # Ensure target directory exists
+        photo_dir = f"{UPLOADS_DIR}/profile_photos"
+        os.makedirs(photo_dir, exist_ok=True)
+        
+        # Save photo file
+        filename = f"user_{user_id}.{ext}"
+        save_path = f"{photo_dir}/{filename}"
+        
+        content = await photo.read()
+        with open(save_path, "wb") as f:
+            f.write(content)
+            
+        # Update user's photo_url in DB
+        file_url = f"/api/profile/file?path={save_path}"
+        database_service.update_account(user_id, {
+            "photo_url": file_url,
+            "photo_zoom": 1.0,
+            "photo_x": 0.0,
+            "photo_y": 0.0
+        })
+        
+        return {
+            "photo_url": file_url,
+            "photo_zoom": 1.0,
+            "photo_x": 0.0,
+            "photo_y": 0.0
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading photo: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/admin/config")
 async def get_admin_config(user_id: int = Depends(get_admin_user_id)):
     config = database_service.get_config(None)

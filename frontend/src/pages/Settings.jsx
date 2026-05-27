@@ -243,7 +243,7 @@ const Settings = ({ theme: externalTheme, onThemeChange, setScreen }) => {
     };
 
     return (
-        <div style={{ padding: '3rem', maxWidth: '1000px' }}>
+        <div style={{ padding: 'var(--page-py) var(--page-px)', maxWidth: '1000px' }}>
             {/* Modals */}
             {showNameModal && (
                 <NameModal onConfirm={handleCreateKey} onCancel={() => setShowNameModal(false)} />

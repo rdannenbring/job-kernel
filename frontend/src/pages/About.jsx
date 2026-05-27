@@ -2,7 +2,7 @@ import React from 'react';
 
 const About = () => {
     return (
-        <div style={{ padding: '3rem', maxWidth: '800px' }}>
+        <div style={{ padding: 'var(--page-py) var(--page-px)', maxWidth: '800px' }}>
             <header style={{ marginBottom: '2rem' }}>
                 <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '2.2rem', color: 'var(--primary)' }}>info</span>

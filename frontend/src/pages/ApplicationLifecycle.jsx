@@ -4726,6 +4726,7 @@ function DecisionSubStagePanel({ app, onRefresh, onStageChange, navCollapsed, on
 
 function AcceptedSubStagePanel({ app, onRefresh, onStageChange, initialSubStage = 'offer_received', navCollapsed, onToggleNav, hideNav }) {
   const [activeSubStage, setActiveSubStage] = useState(initialSubStage);
+  useEffect(() => { if (initialSubStage) setActiveSubStage(initialSubStage); }, [initialSubStage]);
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
@@ -6062,7 +6063,7 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, onStartFullGe
   const stageProgress = computeStageProgress(app);
 
   return (
-    <div className="lifecycle-container" style={{ padding: hideHeader ? '0' : '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="lifecycle-container" style={{ padding: hideHeader ? '0' : 'var(--lifecycle-padding)', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Header */}
       {!hideHeader && (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem', gap: '1rem' }}>
@@ -6474,3 +6475,4 @@ function ApplicationLifecycle({ app: initialApp, onBack, onUpdate, onStartFullGe
 }
 
 export default ApplicationLifecycle;
+export { GeneratedSubStagePanel, AppliedSubStagePanel, InterviewingSubStagePanel, DecisionSubStagePanel, AcceptedSubStagePanel };

@@ -3,6 +3,7 @@ import CustomDropdown from '../components/CustomDropdown';
 import CustomMultiSelect from '../components/CustomMultiSelect';
 import ProcessVisualization from '../ProcessVisualization';
 import { useAuth } from '../context/AuthContext';
+import ProfilePhotoModal from '../components/ProfilePhotoModal';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
@@ -99,8 +100,16 @@ const CollapsibleCard = ({ title, defaultExpanded = false, onAdd, addTitle, chil
 };
 
 const Profile = () => {
-    const { fetchWithAuth } = useAuth();
+    const { fetchWithAuth, user: authUser } = useAuth();
     const [loading, setLoading] = useState(true);
+    const [photoData, setPhotoData] = useState({
+        photo_url: '',
+        photo_zoom: 1.0,
+        photo_x: 0,
+        photo_y: 0
+    });
+    
+    const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
 
     const [isRecalculating, setIsRecalculating] = useState(false);
     const [draggedItemIndex, setDraggedItemIndex] = useState(null);
@@ -217,8 +226,33 @@ const Profile = () => {
     const bioRef = useRef(null);
 
     useEffect(() => {
+        const loadAccount = async () => {
+            try {
+                const res = await fetchWithAuth(`${API_URL}/api/auth/me`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setPhotoData({
+                        photo_url: data.photo_url || '',
+                        photo_zoom: data.photo_zoom || 1.0,
+                        photo_x: data.photo_x || 0,
+                        photo_y: data.photo_y || 0,
+                    });
+                }
+            } catch (e) { console.error('Failed to load profile photo data', e); }
+        };
+        loadAccount();
         fetchProfile();
     }, []);
+
+    const handlePhotoSuccess = (data) => {
+        setPhotoData({
+            photo_url: data.photo_url,
+            photo_zoom: data.photo_zoom,
+            photo_x: data.photo_x,
+            photo_y: data.photo_y
+        });
+        setIsDirty(true);
+    };
 
     const fetchProfile = async () => {
         try {
@@ -575,13 +609,26 @@ const Profile = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
-            if (res.ok) {
-                showNotification('Profile saved successfully!', 'success');
+            
+            // Also save the custom photo URL and adjustment offsets
+            const photoRes = await fetchWithAuth(`${API_URL}/api/user/account`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    photo_url: photoData.photo_url.trim() || null,
+                    photo_zoom: parseFloat(photoData.photo_zoom),
+                    photo_x: parseFloat(photoData.photo_x),
+                    photo_y: parseFloat(photoData.photo_y),
+                })
+            });
+
+            if (res.ok && photoRes.ok) {
+                showNotification('Profile and photo saved successfully!', 'success');
                 setIsDirty(false);
                 // Re-fetch to sync server-preserved fields (resume paths, etc.)
                 await fetchProfile();
             } else {
-                showNotification('Error saving profile.', 'error');
+                showNotification('Error saving profile or photo.', 'error');
             }
         } catch {
             showNotification('Error saving profile.', 'error');
@@ -785,7 +832,7 @@ const Profile = () => {
     if (loading) return <div style={{ padding: '3rem' }}>Loading profile...</div>;
 
     return (
-        <div ref={containerRef} className="page-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 3rem 3rem 3rem', position: scanning ? 'fixed' : 'relative' }}>
+        <div ref={containerRef} className="page-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 var(--page-px) var(--page-py) var(--page-px)', position: scanning ? 'fixed' : 'relative' }}>
             {scanning && (
                 <div className="modal-overlay" style={{ background: 'var(--bg-overlay)', backdropFilter: 'blur(8px)' }}>
                     <div style={{ width: '100%', maxWidth: '800px', padding: '2rem' }}>
@@ -803,9 +850,9 @@ const Profile = () => {
                 zIndex: 100,
                 background: isSticky ? 'var(--bg-primary)' : 'transparent',
                 padding: '1rem 0',
-                margin: '0 -3rem 2rem -3rem',
-                paddingLeft: '3rem',
-                paddingRight: '3rem',
+                margin: '0 calc(-1 * var(--page-px)) 2rem calc(-1 * var(--page-px))',
+                paddingLeft: 'var(--page-px)',
+                paddingRight: 'var(--page-px)',
                 borderBottom: isSticky ? '1px solid var(--border-color)' : 'none',
                 transition: 'all var(--transition-base)'
             }}>
@@ -1611,6 +1658,70 @@ const Profile = () => {
 
                     <section className="card">
                         <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: 'var(--primary-light)', fontWeight: 600 }}>Personal Info</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap', background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                            <div 
+                                onClick={() => setIsPhotoModalOpen(true)}
+                                title="Click to edit profile photo"
+                                style={{
+                                    width: '80px', height: '80px', borderRadius: '50%',
+                                    background: 'var(--primary)', color: 'white',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '1.75rem', fontWeight: 700, flexShrink: 0,
+                                    overflow: 'hidden', position: 'relative',
+                                    cursor: 'pointer',
+                                    border: '2px solid var(--border-color)',
+                                    boxShadow: 'var(--shadow-glow)',
+                                    transition: 'transform 0.2s ease'
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1.0)'; }}
+                            >
+                                {photoData.photo_url ? (
+                                    <img
+                                        src={photoData.photo_url.startsWith('http') ? photoData.photo_url : `${API_URL}${photoData.photo_url}`}
+                                        alt="Avatar"
+                                        style={{
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'cover',
+                                            transform: `scale(${photoData.photo_zoom}) translate(${photoData.photo_x}px, ${photoData.photo_y}px)`,
+                                            transformOrigin: 'center center',
+                                            pointerEvents: 'none',
+                                        }}
+                                        onError={(e) => { e.target.style.display = 'none'; }}
+                                    />
+                                ) : null}
+                                {(!photoData.photo_url) && (
+                                    [formData.first_name?.[0], formData.last_name?.[0]].filter(Boolean).join('').toUpperCase() || authUser?.username?.[0]?.toUpperCase() || 'U'
+                                )}
+                                
+                                {/* Hover edit overlay */}
+                                <div style={{
+                                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                                    background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center',
+                                    justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s ease',
+                                    borderRadius: '50%'
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.opacity = 1; }}
+                                onMouseLeave={e => { e.currentTarget.style.opacity = 0; }}
+                                >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1.5rem', color: 'white' }}>edit</span>
+                                </div>
+                            </div>
+                            
+                            <div style={{ flex: 1, minWidth: '180px' }}>
+                                <button 
+                                    type="button" 
+                                    className="btn btn-secondary" 
+                                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                                    onClick={() => setIsPhotoModalOpen(true)}
+                                >
+                                    <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>photo_camera</span>
+                                    {photoData.photo_url ? 'Edit Profile Photo' : 'Add Profile Photo'}
+                                </button>
+                            </div>
+                        </div>
+
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
                             <InputGroup label="First Name">
                                 <Input className="input-premium" name="first_name" value={formData.first_name} onChange={handleChange} placeholder="e.g. John" />
@@ -2020,6 +2131,18 @@ const Profile = () => {
 
                 </div>
             </CollapsibleSection>
+
+            <ProfilePhotoModal
+                isOpen={isPhotoModalOpen}
+                onClose={() => setIsPhotoModalOpen(false)}
+                onSuccess={(newPhoto) => {
+                    setPhotoData(newPhoto);
+                }}
+                initialPhotoUrl={photoData.photo_url}
+                initialZoom={photoData.photo_zoom}
+                initialX={photoData.photo_x}
+                initialY={photoData.photo_y}
+            />
         </div >
     );
 };

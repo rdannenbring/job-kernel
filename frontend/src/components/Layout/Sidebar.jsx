@@ -3,8 +3,15 @@ import logoImgDark from '../../assets/jobkernel-logo-dark.png';
 import logoImgLight from '../../assets/jobkernel-logo-light.png';
 import { useNotifications } from '../../context/NotificationContext';
 
-const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle, user, onLogout }) => {
-    const [collapsed, setCollapsed] = useState(false);
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+
+const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle, user, onLogout, onCollapsedChange }) => {
+    const [collapsed, setCollapsedState] = useState(false);
+
+    const setCollapsed = (val) => {
+        setCollapsedState(val);
+        if (onCollapsedChange) onCollapsedChange(val);
+    };
     const { unreadCount, centerOpen, setCenterOpen } = useNotifications();
     
     // Auto-collapse based on window width
@@ -325,9 +332,24 @@ const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle, user, onLogou
                             width: '28px', height: '28px', borderRadius: '50%',
                             background: 'var(--primary)', color: 'white',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '0.75rem', fontWeight: 700, flexShrink: 0
+                            fontSize: '0.75rem', fontWeight: 700, flexShrink: 0,
+                            overflow: 'hidden', position: 'relative'
                         }}>
-                            {user?.username?.charAt(0).toUpperCase() || 'U'}
+                            {user?.photo_url ? (
+                                <img
+                                    src={user.photo_url.startsWith('http') ? user.photo_url : `${API_URL}${user.photo_url}`}
+                                    alt="Avatar"
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover',
+                                        transform: `scale(${user.photo_zoom || 1.0}) translate(${user.photo_x || 0}px, ${user.photo_y || 0}px)`,
+                                        transformOrigin: 'center center',
+                                    }}
+                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                            ) : null}
+                            {(!user?.photo_url) && (user?.username?.charAt(0).toUpperCase() || 'U')}
                         </div>
                         {!collapsed && (
                             <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>

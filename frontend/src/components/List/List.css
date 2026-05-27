@@ -8,7 +8,6 @@
 /* ─── Token aliases (scoped so dark/light are inherited) ─── */
 .jk-list {
   --bg:           var(--bg-primary);
-  --bg-card:      var(--bg-card);
   --bg-hover:     var(--bg-tertiary);
   --bg-panel:     var(--bg-panel);
 
@@ -283,7 +282,7 @@
   position: relative;
   transition: 120ms;
 }
-.jk-list .lpipe-step.is-passed { background: var(--primary); }
+.jk-list .lpipe-step.is-passed { background: var(--success); }
 .jk-list .lpipe-step.is-current {
   background: var(--primary);
   box-shadow: 0 0 0 2px var(--primary-soft);
@@ -377,6 +376,11 @@
   font-size: 12px; color: var(--txt-mute); font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.jk-list .lmeta-clip { max-width: 100%; display: block; }
+.jk-list .lrating {
+  font-size: 12px; color: var(--warn); font-weight: 700;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 
 /* Next action hint */
@@ -511,7 +515,7 @@
 /* ─── Popovers ─── */
 .jk-list .l-popover {
   position: absolute;
-  background: var(--bg-card);
+  background: #1e2d42;
   border: 1px solid var(--line);
   border-radius: 10px;
   box-shadow: var(--shadow-pop);
@@ -519,6 +523,7 @@
   z-index: 50;
   font-size: 13px;
 }
+:root[data-theme="light"] .jk-list .l-popover { background: #ffffff; }
 .jk-list .l-popover-item {
   display: flex; align-items: center; gap: 10px;
   padding: 7px 10px; border-radius: 6px;
@@ -644,17 +649,25 @@
 
 /* ─── Column manager ─── */
 .jk-list .cmgr-row {
-  display: grid; grid-template-columns: 18px 18px 1fr 36px;
+  display: grid; grid-template-columns: 18px 1fr 20px;
   align-items: center; gap: 8px;
   padding: 6px 8px; border-radius: 6px;
-  cursor: grab;
+  cursor: pointer; transition: background 100ms;
 }
 .jk-list .cmgr-row:hover { background: var(--bg-hover); }
-.jk-list .cmgr-row.is-locked { cursor: not-allowed; color: var(--txt-dim); }
+.jk-list .cmgr-row.is-locked { cursor: not-allowed; }
 .jk-list .cmgr-grip { color: var(--txt-faint); display: inline-grid; place-items: center; }
 .jk-list .cmgr-grip.is-locked { opacity: 0; }
-.jk-list .cmgr-name { font-size: 12.5px; font-weight: 600; color: var(--txt-2); }
+.jk-list .cmgr-name { font-size: 12.5px; font-weight: 600; color: var(--txt-dim); transition: color 100ms; }
+.jk-list .cmgr-row.is-on .cmgr-name { color: var(--txt); }
 .jk-list .cmgr-row.is-locked .cmgr-name { color: var(--txt-dim); }
+.jk-list .cmgr-eye {
+  font-size: 15px;
+  color: var(--txt-faint);
+  transition: color 100ms;
+  justify-self: end;
+}
+.jk-list .cmgr-row.is-on .cmgr-eye { color: var(--primary); }
 
 /* ─── Shortcuts cheatsheet ─── */
 .jk-list .cheat {
@@ -680,20 +693,21 @@
 /* ─── Modal overlay (shortcuts + confirm) ─── */
 .jk-list .l-overlay {
   position: absolute; inset: 0;
-  background: rgba(15,23,42,0.40);
+  background: rgba(15,23,42,0.65);
   backdrop-filter: blur(2px);
   display: grid; place-items: center;
   z-index: 100;
 }
-:root[data-theme="light"] .jk-list .l-overlay { background: rgba(0,0,0,0.30); }
+:root[data-theme="light"] .jk-list .l-overlay { background: rgba(0,0,0,0.50); }
 .jk-list .l-modal {
   width: 420px; max-width: 92%;
-  background: var(--bg-card);
+  background: #1e2d42;
   border: 1px solid var(--line);
   border-radius: 14px;
   box-shadow: var(--shadow-pop);
   padding: 20px;
 }
+:root[data-theme="light"] .jk-list .l-modal { background: #ffffff; }
 .jk-list .l-modal.l-modal-wide { width: 540px; }
 
 /* ─── Utility row / col helpers (internal use) ─── */

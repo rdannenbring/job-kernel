@@ -10,8 +10,19 @@ export const DEFAULT_COLUMNS = [
   { id: 'stars',    label: 'Interest',    width: 80,  locked: false, sortable: true,  visible: true },
   { id: 'docs',     label: 'Docs',        width: 100, locked: false, sortable: false, visible: true },
   { id: 'loc',      label: 'Location',    width: 130, locked: false, sortable: true,  visible: true },
-  { id: 'posted',   label: 'Added',       width: 78,  locked: false, sortable: true,  visible: true },
-  { id: 'hint',     label: 'Next action', width: 240, locked: false, sortable: false, visible: true },
+  { id: 'posted',     label: 'Added',            width: 78,  locked: false, sortable: true,  visible: true  },
+  { id: 'hint',       label: 'Next action',      width: 240, locked: false, sortable: false, visible: true  },
+  // Extended columns — hidden by default
+  { id: 'job_type',   label: 'Job type',         width: 110, locked: false, sortable: true,  visible: false },
+  { id: 'loc_type',   label: 'Location type',    width: 120, locked: false, sortable: true,  visible: false },
+  { id: 'commute',    label: 'Commute',          width: 100, locked: false, sortable: true,  visible: false },
+  { id: 'relocation', label: 'Relocation',       width: 100, locked: false, sortable: false, visible: false },
+  { id: 'glassdoor',  label: 'Glassdoor',        width: 90,  locked: false, sortable: true,  visible: false },
+  { id: 'indeed',     label: 'Indeed',           width: 80,  locked: false, sortable: true,  visible: false },
+  { id: 'linkedin',   label: 'LinkedIn',         width: 90,  locked: false, sortable: true,  visible: false },
+  { id: 'source',     label: 'Source',           width: 110, locked: false, sortable: true,  visible: false },
+  { id: 'priority',   label: 'Priority',         width: 90,  locked: false, sortable: false, visible: false },
+  { id: 'remarks',    label: 'Remarks',          width: 200, locked: false, sortable: false, visible: false },
 ];
 
 // Minimum row width to show all columns

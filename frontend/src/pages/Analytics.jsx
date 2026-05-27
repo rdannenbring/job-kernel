@@ -328,7 +328,7 @@ const Analytics = ({ setScreen }) => {
   const weeklyTotal = data?.weekly_activity?.reduce((s, d) => s + d.count, 0) ?? 0;
 
   return (
-    <div style={{ padding: '2.5rem 3rem', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ padding: 'var(--page-py) var(--page-px)', maxWidth: '1200px', margin: '0 auto' }}>
 
       {/* Header */}
       <header style={{ marginBottom: '2rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>

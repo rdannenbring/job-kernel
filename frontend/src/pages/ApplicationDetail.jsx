@@ -1,4 +1,5 @@
 import React from 'react';
+import ApplicationDetailMobile, { useIsMobile } from './ApplicationDetailMobile';
 import CustomDropdown from '../components/CustomDropdown';
 import LocationAutocomplete from '../components/LocationAutocomplete';
 import InterestStars from '../components/InterestStars';
@@ -686,6 +687,7 @@ const LogoPickerModal = ({ companyName, onSelect, onClose }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate, onViewLifecycle, onStartFullGeneration, avgScore, isEnrichingGlobal = false }) => {
+    const isMobile = useIsMobile();
     const headerSentinelRef = React.useRef(null);
     const [showStickyHeaderSummary, setShowStickyHeaderSummary] = React.useState(false);
 
@@ -1305,11 +1307,12 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
         }
     };
 
-
+    if (isMobile) {
+        return <ApplicationDetailMobile app={app} onBack={onBack} onUpdate={onUpdate} onStartFullGeneration={onStartFullGeneration} />;
+    }
 
     return (
         <div style={{ maxWidth: '1600px', width: '100%', margin: '0 auto', background: 'var(--bg-primary)', position: 'relative' }}>
-            {/* Sticky Mini Header — CSS media queries for responsive metadata visibility and theme variables */}
             <style>{`
                 :root {
                     --bg-glass-custom: rgba(15, 23, 42, 0.85);
@@ -1317,6 +1320,29 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     --salary-not-listed-bg-custom: rgba(255, 255, 255, 0.02);
                     --btn-hover-bg: rgba(255, 255, 255, 0.06);
                 }
+                .sticky-header-container {
+                    padding: 0 24px;
+                }
+                .detail-main-layout {
+                    padding: 16px 24px 24px 24px;
+                }
+                @media (max-width: 1024px) {
+                    .sticky-header-container {
+                        padding: 0 16px !important;
+                    }
+                    .detail-main-layout {
+                        padding: 16px 16px 24px 16px !important;
+                    }
+                }
+                @media (max-width: 768px) {
+                    .sticky-header-container {
+                        padding: 0 12px !important;
+                    }
+                    .detail-main-layout {
+                        padding: 12px 12px 24px 12px !important;
+                    }
+                }
+
                 :root[data-theme="light"] {
                     --bg-glass-custom: rgba(255, 255, 255, 0.85);
                     --badge-bg-custom: rgba(15, 23, 42, 0.04);
@@ -1382,7 +1408,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                 overflow: 'visible',
                 zIndex: 10001,
             }}>
-                <div style={{
+                <div className="sticky-header-container" style={{
                     position: 'absolute',
                     top: 0,
                     left: 0,
@@ -1396,7 +1422,6 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '0 24px',
                     transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, visibility 0.4s ease',
                     transform: showStickyHeaderSummary ? 'translateY(0)' : 'translateY(-100%)',
                     opacity: showStickyHeaderSummary ? 1 : 0,
@@ -1651,7 +1676,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
             </div>
 
             {/* Main layout — compact header + two-column workspace */}
-            <div style={{ padding: '16px 24px 24px 24px', overflowX: 'hidden' }}>
+            <div className="detail-main-layout" style={{ overflowX: 'hidden' }}>
                 {/* Delete Confirmation Modal */}
                 {showDeleteConfirm && (
                     <div style={{

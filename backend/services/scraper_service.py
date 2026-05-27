@@ -123,6 +123,7 @@ class ScraperService:
         'smartrecruiters': [r'smartrecruiters\.com', r'jobs\.smartrecruiters'],
         'jobvite':         [r'jobvite\.com', r'jobs\.jobvite'],
         'ashby':           [r'ashbyhq\.com', r'jobs\.ashby'],
+        'workable':        [r'apply\.workable\.com', r'workable\.com/'],
     }
 
     def _detect_ats(self, html: str, url: str) -> Optional[str]:
@@ -202,6 +203,101 @@ class ScraperService:
                         loc = j.get('location', '')
                         link = j.get('jobUrl', '')
                         lines.append(f"• {title} — {loc}\n  Apply: {link}")
+                    return f"Found {len(jobs)} open positions:\n\n" + "\n\n".join(lines)
+        except Exception:
+            pass
+        return None
+
+    def _extract_workday_jobs(self, html: str, url: str, job_title: str = "") -> Optional[str]:
+        """Try Workday's internal JSON API for job listings via POST."""
+        # Match patterns like: company.wd5.myworkdayjobs.com or company.myworkdayjobs.com
+        match = re.search(r'([\w-]+)\.(wd\d+\.)?myworkdayjobs\.com(?:/[^/]*/([^/\s"\'?]+))?', html + ' ' + url)
+        if not match:
+            return None
+        company = match.group(1)
+        wd_instance = match.group(2) or 'wd5.'
+        # Try to extract the site name (e.g., "External", "en-US") from the URL path
+        site_name = match.group(3) or 'External'
+        
+        try:
+            api_url = f"https://{company}.{wd_instance}myworkdayjobs.com/wday/cxs/{company}/{site_name}/jobs"
+            headers = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            # Try blank search first, then with job title
+            for search_text in ["", job_title]:
+                payload = {"limit": 20, "offset": 0, "searchText": search_text}
+                resp = requests.post(api_url, json=payload, headers=headers, timeout=15)
+                if resp.ok:
+                    data = resp.json()
+                    jobs = data.get('jobPostings', [])
+                    total = data.get('total', len(jobs))
+                    if jobs:
+                        lines = []
+                        for j in jobs:
+                            title = j.get('title', 'Unknown')
+                            loc_parts = []
+                            for loc_key in ['locationsText', 'bulletFields']:
+                                v = j.get(loc_key)
+                                if v:
+                                    loc_parts.append(str(v) if isinstance(v, str) else ', '.join(v))
+                            loc = ' | '.join(loc_parts) if loc_parts else ''
+                            ext_path = j.get('externalPath', '')
+                            link = f"https://{company}.{wd_instance}myworkdayjobs.com{ext_path}" if ext_path else ''
+                            lines.append(f"• {title} — {loc}\n  Apply: {link}")
+                        return f"Found {total} open positions (showing {len(jobs)}):\n\n" + "\n\n".join(lines)
+        except Exception:
+            pass
+        return None
+
+    def _extract_smartrecruiters_jobs(self, html: str, url: str) -> Optional[str]:
+        """Try SmartRecruiters public Posting API for job listings."""
+        # Match: careers.smartrecruiters.com/CompanyName or jobs.smartrecruiters.com/CompanyName
+        match = re.search(r'(?:careers|jobs)\.smartrecruiters\.com/([^/\s"\'?]+)', html + ' ' + url)
+        if not match:
+            return None
+        company = match.group(1)
+        try:
+            api_url = f"https://api.smartrecruiters.com/v1/companies/{company}/postings"
+            resp = requests.get(api_url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
+            if resp.ok:
+                data = resp.json()
+                jobs = data.get('content', [])
+                if jobs:
+                    lines = []
+                    for j in jobs:
+                        title = j.get('name', 'Unknown')
+                        loc = j.get('location', {})
+                        loc_str = f"{loc.get('city', '')} {loc.get('region', '')} {loc.get('country', '')}".strip()
+                        dept = j.get('department', {}).get('label', '')
+                        link = j.get('ref', j.get('applyUrl', ''))
+                        lines.append(f"• {title} — {loc_str} ({dept})\n  Apply: {link}")
+                    return f"Found {len(jobs)} open positions:\n\n" + "\n\n".join(lines)
+        except Exception:
+            pass
+        return None
+
+    def _extract_workable_jobs(self, html: str, url: str) -> Optional[str]:
+        """Try Workable's public widget API for job listings."""
+        match = re.search(r'apply\.workable\.com/(?:api/v\d+/widget/accounts/)?([^/\s"\'?]+)', html + ' ' + url)
+        if not match:
+            return None
+        company = match.group(1)
+        try:
+            api_url = f"https://apply.workable.com/api/v1/widget/accounts/{company}"
+            resp = requests.get(api_url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
+            if resp.ok:
+                data = resp.json()
+                jobs = data.get('jobs', [])
+                if jobs:
+                    lines = []
+                    for j in jobs:
+                        title = j.get('title', 'Unknown')
+                        loc = j.get('location', '')
+                        link = j.get('url', '')
+                        dept = j.get('department', '')
+                        lines.append(f"• {title} — {loc} ({dept})\n  Apply: {link}")
                     return f"Found {len(jobs)} open positions:\n\n" + "\n\n".join(lines)
         except Exception:
             pass

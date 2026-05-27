@@ -15,7 +15,7 @@ const ICON_MAP = {
   update:  { icon: 'sync',         color: '#06b6d4' },
 };
 
-const NotificationCenter = ({ onNavigate }) => {
+const NotificationCenter = ({ onNavigate, sidebarCollapsed = true }) => {
   const {
     notifications, unreadCount, centerOpen, setCenterOpen,
     showAll, setShowAll, markAsRead, markAllAsRead,
@@ -77,12 +77,13 @@ const NotificationCenter = ({ onNavigate }) => {
       <div
         ref={panelRef}
         style={{
-          position: 'fixed', top: 0, left: '68px', bottom: 0,
-          width: '380px', maxWidth: 'calc(100vw - 80px)',
+          position: 'fixed', top: 0, left: sidebarCollapsed ? '68px' : '240px', bottom: 0,
+          width: '380px', maxWidth: `calc(100vw - ${sidebarCollapsed ? '80px' : '252px'})`,
           background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-color)',
           zIndex: 8001, display: 'flex', flexDirection: 'column',
           boxShadow: '8px 0 32px rgba(0,0,0,0.25)',
           animation: 'slideRight 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          transition: 'left 0.25s ease, max-width 0.25s ease',
         }}
       >
         {/* Header */}

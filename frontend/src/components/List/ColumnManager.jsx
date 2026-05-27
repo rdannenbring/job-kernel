@@ -26,25 +26,27 @@ export default function ColumnManager({ cols, onChange, onClose }) {
       style={{ top: 'calc(100% + 6px)', right: 0, width: 240, zIndex: 60 }}
     >
       <div className="l-popover-label" style={{ padding: '4px 8px 6px' }}>Columns · toggle to show/hide</div>
-      {cols.map(c => (
-        <div key={c.id} className={`cmgr-row${c.locked ? ' is-locked' : ''}`}>
-          <span className={`cmgr-grip${c.locked ? ' is-locked' : ''}`}>
-            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>drag_indicator</span>
-          </span>
-          <input
-            type="checkbox"
-            className="lcb"
-            checked={c.visible !== false}
-            disabled={c.locked}
-            onChange={() => !c.locked && toggle(c.id)}
-            onClick={e => e.stopPropagation()}
-          />
-          <span className="cmgr-name">{c.label || '—'}</span>
-          <span style={{ fontSize: 10, color: 'var(--txt-dim)', fontWeight: 700, textAlign: 'right' }}>
-            {c.locked ? 'Locked' : ''}
-          </span>
-        </div>
-      ))}
+      {cols.map(c => {
+        const isOn = c.visible !== false;
+        return (
+          <div
+            key={c.id}
+            className={`cmgr-row${c.locked ? ' is-locked' : ''}${isOn ? ' is-on' : ''}`}
+            onClick={() => !c.locked && toggle(c.id)}
+          >
+            <span className={`cmgr-grip${c.locked ? ' is-locked' : ''}`}>
+              <span className="material-symbols-outlined" style={{ fontSize: 14 }}>drag_indicator</span>
+            </span>
+            <span className="cmgr-name">{c.label || '—'}</span>
+            <span
+              className="material-symbols-outlined cmgr-eye"
+              style={{ fontVariationSettings: isOn ? "'FILL' 1" : "'FILL' 0" }}
+            >
+              {isOn ? 'visibility' : 'visibility_off'}
+            </span>
+          </div>
+        );
+      })}
       <div className="l-popover-divider" />
       <div className="l-row" style={{ padding: '4px 6px 2px' }}>
         <button

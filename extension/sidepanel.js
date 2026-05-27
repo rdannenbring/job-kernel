@@ -147,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputJobKernelAppUrl = document.getElementById('setting-jobkernel-app-url');
   const inputJobKernelApiUrl = document.getElementById('setting-jobkernel-api-url');
   const inputJobKernelApiKey = document.getElementById('setting-jobkernel-api-key');
+  const inputEnableDebug = document.getElementById('setting-enable-debug');
   const btnSaveConnection = document.getElementById('btn-save-connection');
   const connectionStatus = document.getElementById('connection-status');
   
@@ -162,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load connection settings asynchronously and expose a promise
   const settingsPromise = new Promise((resolve) => {
-    chrome.storage.local.get(['jobkernelAppUrl', 'jobkernelApiUrl', 'apiKey', 'token'], (res) => {
+    chrome.storage.local.get(['jobkernelAppUrl', 'jobkernelApiUrl', 'apiKey', 'token', 'enableDebug'], (res) => {
       if (res.jobkernelAppUrl) {
         APP_URL = res.jobkernelAppUrl;
         if (inputJobKernelAppUrl) inputJobKernelAppUrl.value = APP_URL;
@@ -178,6 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (res.apiKey || res.token) {
         if (inputJobKernelApiKey) inputJobKernelApiKey.value = res.apiKey || res.token;
       }
+      if (inputEnableDebug) {
+        inputEnableDebug.checked = !!res.enableDebug;
+      }
       resolve();
     });
   });
@@ -187,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const appUrl = inputJobKernelAppUrl.value.trim().replace(/\/$/, '');
       const apiUrl = inputJobKernelApiUrl.value.trim().replace(/\/$/, '');
       const key = inputJobKernelApiKey.value.trim();
+      const enableDebug = inputEnableDebug ? inputEnableDebug.checked : false;
       const testResultEl = document.getElementById('connection-test-result');
       
       if (!appUrl || !apiUrl || !key) {
@@ -217,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // Success! Save to storage.
           APP_URL = appUrl;
           API_URL = apiUrl;
-          chrome.storage.local.set({ jobkernelAppUrl: appUrl, jobkernelApiUrl: apiUrl, apiKey: key }, () => {
+          chrome.storage.local.set({ jobkernelAppUrl: appUrl, jobkernelApiUrl: apiUrl, apiKey: key, enableDebug: enableDebug }, () => {
             connectionStatus.textContent = 'Connection settings saved!';
             connectionStatus.style.color = 'var(--success, #10b981)';
             testResultEl.textContent = 'Connection successful!';

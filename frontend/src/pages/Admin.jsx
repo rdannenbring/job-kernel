@@ -370,7 +370,7 @@ const Admin = () => {
     }
 
     return (
-        <div style={{ padding: '3rem', maxWidth: '1100px' }}>
+        <div style={{ padding: 'var(--page-py) var(--page-px)', maxWidth: '1100px' }}>
             {editingUser && (
                 <EditUserModal
                     targetUser={editingUser}

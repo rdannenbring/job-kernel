@@ -231,6 +231,72 @@ export default function ListRow({
             />
           </div>
         );
+      case 'job_type':
+        return (
+          <div key={col.id} className="lcell" style={{ width: col.width }}>
+            <span className="lmeta">{app.job_type || '—'}</span>
+          </div>
+        );
+      case 'loc_type':
+        return (
+          <div key={col.id} className="lcell" style={{ width: col.width }}>
+            <span className="lmeta">{app.location_type || '—'}</span>
+          </div>
+        );
+      case 'commute': {
+        const mins = app.commute_time_mins;
+        const miles = app.commute_distance_miles;
+        const commuteText = mins != null
+          ? (miles != null ? `${mins} min · ${Math.round(miles)} mi` : `${mins} min`)
+          : '—';
+        return (
+          <div key={col.id} className="lcell" style={{ width: col.width }}>
+            <span className="lmeta">{commuteText}</span>
+          </div>
+        );
+      }
+      case 'relocation':
+        return (
+          <div key={col.id} className="lcell" style={{ width: col.width }}>
+            <span className="lmeta">{app.relocation || '—'}</span>
+          </div>
+        );
+      case 'glassdoor':
+        return (
+          <div key={col.id} className="lcell" style={{ width: col.width }}>
+            <span className="lrating">{app.glassdoor_rating ? `${app.glassdoor_rating} ★` : '—'}</span>
+          </div>
+        );
+      case 'indeed':
+        return (
+          <div key={col.id} className="lcell" style={{ width: col.width }}>
+            <span className="lrating">{app.indeed_rating ? `${app.indeed_rating} ★` : '—'}</span>
+          </div>
+        );
+      case 'linkedin':
+        return (
+          <div key={col.id} className="lcell" style={{ width: col.width }}>
+            <span className="lrating">{app.linkedin_rating ? `${app.linkedin_rating} ★` : '—'}</span>
+          </div>
+        );
+      case 'source':
+        return (
+          <div key={col.id} className="lcell" style={{ width: col.width }}>
+            <span className="lmeta">{app.source || '—'}</span>
+          </div>
+        );
+      case 'priority':
+        return (
+          <div key={col.id} className="lcell" style={{ width: col.width }}>
+            <span className="lmeta">{app.prioritization_ranking || '—'}</span>
+          </div>
+        );
+      case 'remarks':
+        return (
+          <div key={col.id} className="lcell" style={{ width: col.width }}>
+            <span className="lmeta lmeta-clip" title={app.remarks}>{app.remarks || '—'}</span>
+          </div>
+        );
       default:
         return null;
     }

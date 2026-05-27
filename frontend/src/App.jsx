@@ -51,6 +51,7 @@ function App() {
   const [apps, setApps] = useState([]);
   const [uiConfigTheme, setUiConfigTheme] = useState('system');
   const [isEnriching, setIsEnriching] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
 
   // Profile dirty-state ref — Profile.jsx sets window.__profileIsDirty = true/false
@@ -549,6 +550,7 @@ function App() {
           onThemeToggle={handleThemeToggle} 
           user={user}
           onLogout={logout}
+          onCollapsedChange={setSidebarCollapsed}
         />
       )}
 
@@ -559,7 +561,7 @@ function App() {
 
       {/* Notification system - global overlays */}
       <NotificationToast onNavigate={handleNotificationNavigate} />
-      <NotificationCenter onNavigate={handleNotificationNavigate} />
+      <NotificationCenter onNavigate={handleNotificationNavigate} sidebarCollapsed={sidebarCollapsed} />
     </div>
   )
 }
