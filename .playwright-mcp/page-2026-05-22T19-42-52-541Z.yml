@@ -1,0 +1,932 @@
+- generic [ref=e27]:
+  - complementary [ref=e28]:
+    - generic [ref=e29]:
+      - generic [ref=e30]:
+        - generic [ref=e32] [cursor=pointer]:
+          - img "JobKernel logo" [ref=e33]
+          - heading "JobKernel" [level=1] [ref=e34]
+        - button "chevron_left" [ref=e35] [cursor=pointer]:
+          - generic [ref=e36]: chevron_left
+      - button "add New Application" [ref=e37] [cursor=pointer]:
+        - generic [ref=e38]: add
+        - generic [ref=e39]: New Application
+      - navigation [ref=e40]:
+        - button "dashboard Dashboard" [ref=e41] [cursor=pointer]:
+          - generic [ref=e42]: dashboard
+          - generic [ref=e43]: Dashboard
+        - button "person Profile" [ref=e44] [cursor=pointer]:
+          - generic [ref=e45]: person
+          - generic [ref=e46]: Profile
+        - button "leaderboard Analytics" [ref=e47] [cursor=pointer]:
+          - generic [ref=e48]: leaderboard
+          - generic [ref=e49]: Analytics
+      - button "notifications Notifications" [ref=e50] [cursor=pointer]:
+        - generic [ref=e52]: notifications
+        - generic [ref=e53]: Notifications
+      - button "dark_mode Dark Theme" [ref=e55] [cursor=pointer]:
+        - generic [ref=e56]: dark_mode
+        - generic [ref=e57]: Dark Theme
+      - navigation [ref=e58]:
+        - button "admin_panel_settings Admin" [ref=e59] [cursor=pointer]:
+          - generic [ref=e60]: admin_panel_settings
+          - generic [ref=e61]: Admin
+        - button "settings Settings" [ref=e62] [cursor=pointer]:
+          - generic [ref=e63]: settings
+          - generic [ref=e64]: Settings
+      - generic [ref=e65]:
+        - button "A admin Administrator" [ref=e66] [cursor=pointer]:
+          - generic [ref=e67]: A
+          - generic [ref=e68]:
+            - generic [ref=e69]: admin
+            - generic [ref=e70]: Administrator
+        - button "logout Logout" [ref=e71] [cursor=pointer]:
+          - generic [ref=e72]: logout
+          - generic [ref=e73]: Logout
+  - main [ref=e74]:
+    - generic [ref=e75]:
+      - generic [ref=e76]:
+        - generic [ref=e77]:
+          - heading "Dashboard" [level=2] [ref=e78]
+          - generic [ref=e79]:
+            - button "Board" [ref=e80] [cursor=pointer]
+            - button "List" [ref=e81] [cursor=pointer]
+            - button "Table" [ref=e82] [cursor=pointer]
+        - button "add Add Job" [ref=e84] [cursor=pointer]:
+          - generic [ref=e85]: add
+          - generic [ref=e86]: Add Job
+      - generic [ref=e88]:
+        - generic [ref=e89]:
+          - generic [ref=e90]:
+            - generic: search
+            - textbox "Search all job details..." [ref=e91]
+          - button "filter_list Filter Jobs expand_more" [ref=e93] [cursor=pointer]:
+            - generic [ref=e94]: filter_list
+            - generic [ref=e95]: Filter Jobs
+            - generic [ref=e96]: expand_more
+          - button "sort Newest expand_more" [ref=e98] [cursor=pointer]:
+            - generic [ref=e99]: sort
+            - generic [ref=e100]: Newest
+            - generic [ref=e101]: expand_more
+        - generic [ref=e102]:
+          - button "visibility_off Accepted" [ref=e103] [cursor=pointer]:
+            - generic [ref=e104]: visibility_off
+            - generic [ref=e105]: Accepted
+          - button "visibility_off Declined/Cancelled" [ref=e106] [cursor=pointer]:
+            - generic [ref=e107]: visibility_off
+            - generic [ref=e108]: Declined/Cancelled
+          - button "visibility_off Archive" [ref=e109] [cursor=pointer]:
+            - generic [ref=e110]: visibility_off
+            - generic [ref=e111]: Archive
+          - generic [ref=e112]: Showing 27 of 27
+      - generic [ref=e114]:
+        - generic [ref=e116]:
+          - heading "Saved (0)" [level=3] [ref=e117]:
+            - text: Saved
+            - generic [ref=e119]: (0)
+          - button "more_horiz" [ref=e120] [cursor=pointer]:
+            - generic [ref=e121]: more_horiz
+        - generic [ref=e123]:
+          - generic [ref=e124]:
+            - heading "Generated (22)" [level=3] [ref=e125]:
+              - text: Generated
+              - generic [ref=e127]: (22)
+            - button "more_horiz" [ref=e128] [cursor=pointer]:
+              - generic [ref=e129]: more_horiz
+          - generic [ref=e130]:
+            - generic [ref=e131] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 86 — ↑ 3 pts above your avg (83)"':
+                  - text: "86"
+                  - generic: ▲
+                - generic:
+                  - generic: bolt
+                  - text: "79"
+              - generic:
+                - generic:
+                  - img "Johnson & Johnson"
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Director, Chief Architect, Architecture" [level=4]
+                - paragraph: Johnson & Johnson
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Norwalk, CT (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$150,000.00 - $258,750.00"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e132] [cursor=pointer]:
+              - generic:
+                - generic:
+                  - generic: bolt
+                  - text: "50"
+              - generic:
+                - generic:
+                  - img "Hagerty"
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "People you can reach out to" [level=4]
+                - paragraph: Hagerty
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Remote (Remote)
+                  - generic: check_circle
+                - generic:
+                  - generic: "-"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e133] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 71 — ↓ 12 pts below your avg (83)"':
+                  - text: "71"
+                  - generic: ▼
+                - generic:
+                  - generic: bolt
+                  - text: "50"
+              - generic:
+                - generic:
+                  - img "American Express"
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Mgr-Enterprise Architecture" [level=4]
+                - paragraph: American Express
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: New York, NY (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$123K/yr - $215.2K/yr"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e134] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 75 — ↓ 8 pts below your avg (83)"':
+                  - text: "75"
+                  - generic: ▼
+                - generic:
+                  - generic: bolt
+                  - text: "50"
+              - generic:
+                - generic:
+                  - img "Sectra"
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Technical Solutions Architect - Enterprise Imaging" [level=4]
+                - paragraph: Sectra
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Shelton, CT (On-site)
+                  - generic: check_circle
+                - generic:
+                  - generic "$120,000–$150,000"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e135] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 84 (avg 83)"': "84"
+                - generic:
+                  - generic: bolt
+                  - text: "76"
+              - generic:
+                - generic:
+                  - img "Diageo"
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Regional Enterprise Architect, North America" [level=4]
+                - paragraph: Diageo
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Stamford, CT (On-site)
+                  - generic: check_circle
+                - generic:
+                  - generic "$154/hr"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Contract
+            - generic [ref=e136] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 85 — ↑ 2 pts above your avg (83)"':
+                  - text: "85"
+                  - generic: ▲
+              - generic:
+                - generic:
+                  - img "New York Power Authority"
+                - generic:
+                  - generic:
+                    - generic "1 LinkedIn Connection(s)":
+                      - generic: group
+                      - text: "1"
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Senior Emerging & AI Technology Architect" [level=4]
+                - paragraph: New York Power Authority
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: White Plains, NY (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$160,000-$200,000"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e137] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 62 — ↓ 21 pts below your avg (83)"':
+                  - text: "62"
+                  - generic: ▼
+                - generic:
+                  - generic: bolt
+                  - text: "50"
+              - generic:
+                - generic:
+                  - img "Scouut"
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Principal Software Engineer (Relocate to Australia)" [level=4]
+                - paragraph: Scouut
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: New York, NY (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$300K/yr - $400K/yr"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e138] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 79 — ↓ 4 pts below your avg (83)"':
+                  - text: "79"
+                  - generic: ▼
+              - generic:
+                - generic:
+                  - img "Coda Search│Staffing"
+                - generic:
+                  - generic:
+                    - generic "1 LinkedIn Connection(s)":
+                      - generic: group
+                      - text: "1"
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Principal Engineer" [level=4]
+                - paragraph: Coda Search│Staffing
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: New York City Metropolitan Area (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic: "-"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Contract
+            - generic [ref=e139] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 80 — ↓ 3 pts below your avg (83)"':
+                  - text: "80"
+                  - generic: ▼
+              - generic:
+                - generic:
+                  - img "Programmers.io"
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Lead Application Architect" [level=4]
+                - paragraph: Programmers.io
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: New York, NY (On-site)
+                  - generic: check_circle
+                - generic:
+                  - generic: "-"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e140] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 84 (avg 83)"': "84"
+              - generic:
+                - generic:
+                  - img "Mastercard"
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Principal Software Engineer, Senior Architect" [level=4]
+                - paragraph: Mastercard
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Purchase, NY (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$195,000 - $323,000"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e141] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 86 — ↑ 3 pts above your avg (83)"':
+                  - text: "86"
+                  - generic: ▲
+              - generic:
+                - generic:
+                  - img "Ro"
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Staff Software Engineer, Backend" [level=4]
+                - paragraph: Ro
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: New York, NY (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$211,700 to $292,000,"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e142] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 70 — ↓ 13 pts below your avg (83)"':
+                  - text: "70"
+                  - generic: ▼
+              - generic:
+                - generic:
+                  - img "On"
+                - generic:
+                  - generic:
+                    - generic "4 LinkedIn Connection(s)":
+                      - generic: group
+                      - text: "4"
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Principal Workday Integration Architect (AI & Automation)" [level=4]
+                - paragraph: "On"
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: New York, NY (Remote)
+                  - generic: check_circle
+                - generic:
+                  - generic "$152,000-$190,000"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e143] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 85 — ↑ 2 pts above your avg (83)"':
+                  - text: "85"
+                  - generic: ▲
+              - generic:
+                - generic:
+                  - img "Deloitte"
+                - generic:
+                  - generic:
+                    - generic "1 LinkedIn Connection(s)":
+                      - generic: group
+                      - text: "1"
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "GenAI Solutions Architect - SFL Scientific" [level=4]
+                - paragraph: Deloitte
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Stamford, CT (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$107,600 to $198,400"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e144] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 88 — ↑ 5 pts above your avg (83)"':
+                  - text: "88"
+                  - generic: ▲
+              - generic:
+                - generic:
+                  - img "Regeneron"
+                - generic:
+                  - generic:
+                    - generic "1 LinkedIn Connection(s)":
+                      - generic: group
+                      - text: "1"
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Principal Software Engineer" [level=4]
+                - paragraph: Regeneron
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Tarrytown, NY (On-site)
+                  - generic: check_circle
+                - generic:
+                  - generic "$128,600"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e145] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 82 — ↓ 1 pts below your avg (83)"':
+                  - text: "82"
+                  - generic: ▼
+              - generic:
+                - generic:
+                  - img "PwC"
+                - generic:
+                  - generic:
+                    - generic "1 LinkedIn Connection(s)":
+                      - generic: group
+                      - text: "1"
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Senior Manager, Solution Architect" [level=4]
+                - paragraph: PwC
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Melville, NY (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$124,000 - $280,000"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e146] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 94 — ↑ 11 pts above your avg (83)"':
+                  - text: "94"
+                  - generic: ▲
+              - generic:
+                - generic:
+                  - img "MTA"
+                - generic:
+                  - generic:
+                    - generic "19 LinkedIn Connection(s)":
+                      - generic: group
+                      - text: "19"
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Manager, Product Development" [level=4]
+                - paragraph: MTA
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Jamaica, NY, United States (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$160,963 - $189,990"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e147] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 80 — ↓ 3 pts below your avg (83)"':
+                  - text: "80"
+                  - generic: ▼
+              - generic:
+                - generic:
+                  - img "PwC"
+                - generic:
+                  - generic:
+                    - generic "1 LinkedIn Connection(s)":
+                      - generic: group
+                      - text: "1"
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Forward Deployed Software Engineer- Palantir Foundry- Senior Manager" [level=4]
+                - paragraph: PwC
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Stamford, CT (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$124,000 - $280,000"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e148] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 82 — ↓ 1 pts below your avg (83)"':
+                  - text: "82"
+                  - generic: ▼
+                - generic:
+                  - generic: bolt
+                  - text: "50"
+              - generic:
+                - generic:
+                  - img "PwC"
+                - generic:
+                  - generic:
+                    - generic "1 LinkedIn Connection(s)":
+                      - generic: group
+                      - text: "1"
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Manager, Solution Architect" [level=4]
+                - paragraph: PwC
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Stamford, CT (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$99,000 - $232,000"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e149] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 85 — ↑ 2 pts above your avg (83)"':
+                  - text: "85"
+                  - generic: ▲
+              - generic:
+                - generic:
+                  - img "Deloitte"
+                - generic:
+                  - generic:
+                    - generic "1 LinkedIn Connection(s)":
+                      - generic: group
+                      - text: "1"
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Solution Architect (Senior Consultant)" [level=4]
+                - paragraph: Deloitte
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Stamford, CT (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$107,600 to $198,400"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e150] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 83 (avg 83)"': "83"
+                - generic:
+                  - generic: bolt
+                  - text: "74"
+              - generic:
+                - generic:
+                  - img "hackajob"
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Senior Director, Fellow, Enterprise Architect" [level=4]
+                - paragraph: hackajob
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: New York, NY (On-site)
+                  - generic: check_circle
+                - generic:
+                  - generic "$136.5K/yr - $300K/yr"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e151] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 90 — ↑ 7 pts above your avg (83)"':
+                  - text: "90"
+                  - generic: ▲
+              - generic:
+                - generic:
+                  - generic: corporate_fare
+                - generic:
+                  - generic:
+                    - generic "1 LinkedIn Connection(s)":
+                      - generic: group
+                      - text: "1"
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Unqork Solution Architect" [level=4]
+                - paragraph: Deloitte
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Stamford, CT (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$107,600 to $198,400"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e152] [cursor=pointer]:
+              - generic:
+                - generic:
+                  - generic: bolt
+                  - text: "73"
+              - generic:
+                - generic:
+                  - generic: corporate_fare
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Director Site Reliability Engineering" [level=4]
+                - paragraph: Webster Bank
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Stamford, CT (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$135,000"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+        - generic [ref=e153]:
+          - generic [ref=e154]:
+            - heading "Applied (5)" [level=3] [ref=e155]:
+              - text: Applied
+              - generic [ref=e157]: (5)
+            - button "more_horiz" [ref=e158] [cursor=pointer]:
+              - generic [ref=e159]: more_horiz
+          - generic [ref=e160]:
+            - generic [ref=e161] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 92 — ↑ 9 pts above your avg (83)"':
+                  - text: "92"
+                  - generic: ▲
+                - generic:
+                  - generic: bolt
+                  - text: "50"
+              - generic:
+                - generic:
+                  - img "PRI Technology"
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Senior Lead Software Architect" [level=4]
+                - paragraph: PRI Technology
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: United States (Remote)
+                  - generic: check_circle
+                - generic:
+                  - generic "Not Listed": "-"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e162] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 96 — ↑ 13 pts above your avg (83)"':
+                  - text: "96"
+                  - generic: ▲
+                - generic:
+                  - generic: bolt
+                  - text: "81"
+              - generic:
+                - generic:
+                  - img "Amtrak"
+                - generic:
+                  - generic:
+                    - generic "1 LinkedIn Connection(s)":
+                      - generic: group
+                      - text: "1"
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Dir EA Infra & Compliance - 90399170 - Remote" [level=4]
+                - paragraph: Amtrak
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: New York, NY (Remote)
+                  - generic: check_circle
+                - generic:
+                  - generic "$163,000.00 – $211,140.00"
+                  - generic:
+                    - generic: cancel
+                    - generic: Part-time
+            - generic [ref=e163] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 73 — ↓ 10 pts below your avg (83)"':
+                  - text: "73"
+                  - generic: ▼
+                - generic:
+                  - generic: bolt
+                  - text: "50"
+              - generic:
+                - generic:
+                  - img "Gong"
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Global Head of Solutions Engineering" [level=4]
+                - paragraph: Gong
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: New York, NY (Remote)
+                  - generic: check_circle
+                - generic:
+                  - generic "$340,000 - $357,000"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e164] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 93 — ↑ 10 pts above your avg (83)"':
+                  - text: "93"
+                  - generic: ▲
+                - generic:
+                  - generic: bolt
+                  - text: "73"
+              - generic:
+                - generic:
+                  - img "CAST"
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Senior Consultant / Architect – AI-Driven Modernization (North America) (Engineering / Architecture → Customer Ownership)" [level=4]
+                - paragraph: CAST
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: Northeast, NY (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "Not Listed": "-"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+            - generic [ref=e165] [cursor=pointer]:
+              - generic:
+                - 'generic "Match Score: 93 — ↑ 10 pts above your avg (83)"':
+                  - text: "93"
+                  - generic: ▲
+                - generic:
+                  - generic: bolt
+                  - text: "50"
+              - generic:
+                - generic:
+                  - img "MTA"
+                - generic:
+                  - generic:
+                    - generic "19 LinkedIn Connection(s)":
+                      - generic: group
+                      - text: "19"
+                  - generic:
+                    - generic:
+                      - generic: star
+                      - generic: star
+                      - generic: star
+              - generic:
+                - heading "Manager, Product Development" [level=4]
+                - paragraph: MTA
+              - generic:
+                - generic:
+                  - generic: location_on
+                  - generic: New York, NY, United States (Hybrid)
+                  - generic: check_circle
+                - generic:
+                  - generic "$160,963 - $189,990"
+                  - generic:
+                    - generic: check_circle
+                    - generic: Full-time
+        - generic [ref=e167]:
+          - heading "Interviewing (0)" [level=3] [ref=e168]:
+            - text: Interviewing
+            - generic [ref=e170]: (0)
+          - button "more_horiz" [ref=e171] [cursor=pointer]:
+            - generic [ref=e172]: more_horiz
+        - generic [ref=e175]:
+          - heading "Rejected (0)" [level=3] [ref=e176]:
+            - text: Rejected
+            - generic [ref=e178]: (0)
+          - button "more_horiz" [ref=e179] [cursor=pointer]:
+            - generic [ref=e180]: more_horiz
+        - generic [ref=e183]:
+          - heading "Offered (0)" [level=3] [ref=e184]:
+            - text: Offered
+            - generic [ref=e186]: (0)
+          - button "more_horiz" [ref=e187] [cursor=pointer]:
+            - generic [ref=e188]: more_horiz

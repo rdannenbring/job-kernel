@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>JobKernel — Profile Redesign</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="list.css" />
+<link rel="stylesheet" href="profile.css" />
+
+<style>
+  html, body { height: 100%; background: #faf8f4; }
+  body { margin: 0; }
+  #root { width: 100vw; height: 100vh; }
+
+  /* Artboard frame override for design canvas */
+  .p-artboard { width: 100%; height: 100%; overflow: hidden; }
+  .p-artboard .app { width: 100%; height: 100%; position: relative; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Shared components from prior phases -->
+<script type="text/babel" src="shared.jsx"></script>
+
+<!-- Profile primitives -->
+<script type="text/babel" src="profile-shared.jsx"></script>
+
+<!-- Variations -->
+<script type="text/babel" src="profile-anchored.jsx"></script>
+<script type="text/babel" src="profile-split.jsx"></script>
+<script type="text/babel" src="profile-hub.jsx"></script>
+<script type="text/babel" src="profile-states.jsx"></script>
+<script type="text/babel" src="profile-empty.jsx"></script>
+<script type="text/babel" src="profile-anatomy.jsx"></script>
+
+<!-- Design canvas + tweaks shell -->
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "light",
+  "density": "comfy",
+  "showMatchChips": true,
+  "editMode": false,
+  "completeness": "empty",
+  "featuredVariation": "anchored",
+  "sectionFocus": "all",
+  "showFold": false
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  // Density / fold class on document
+  React.useEffect(() => {
+    document.body.classList.toggle('fold-show', !!t.showFold);
+  }, [t.showFold]);
+
+  // Active section for anchored rail follows sectionFocus tweak
+  const activeSection = t.sectionFocus && t.sectionFocus !== 'all' ? t.sectionFocus : 'identity';
+  const splitActive   = t.sectionFocus && t.sectionFocus !== 'all' ? t.sectionFocus : 'match';
+
+  // For empty completeness state, override
+  const empty = t.completeness === 'empty';
+  const full  = t.completeness === 'complete';
+
+  // Patch window.PROFILE.completeness based on tweak
+  React.useEffect(() => {
+    if (empty) window.PROFILE.completeness = 12;
+    else if (full) window.PROFILE.completeness = 100;
+    else window.PROFILE.completeness = 78;
+  }, [t.completeness]);
+
+  return (
+    <>
+      <DesignCanvas title="JobKernel — Profile Redesign"
+        subtitle="3 layouts · interaction states · row anatomy">
+
+        <DCSection id="layouts" title="Layouts"
+          subtitle="Three navigation patterns. Same tokens, same density, same components.">
+          <DCArtboard id="anchored" label="A · Anchored rail (single scroll)"
+            width={1280} height={2200}>
+            {t.completeness === 'empty' ? (
+              <ProfileEmptyFull theme={t.theme} density={t.density} showMatchChips={t.showMatchChips} />
+            ) : (
+              <ProfileAnchored
+                theme={t.theme}
+                density={t.density}
+                showMatchChips={t.showMatchChips}
+                isEditing={t.editMode}
+                activeSection={activeSection}
+              />
+            )}
+          </DCArtboard>
+
+          <DCArtboard id="split" label="B · Split-pane (one section at a time)"
+            width={1280} height={1100}>
+            <ProfileSplit
+              theme={t.theme}
+              density={t.density}
+              showMatchChips={t.showMatchChips}
+              isEditing={t.editMode}
+              activeSection={splitActive}
+            />
+          </DCArtboard>
+
+          <DCArtboard id="hub" label="C · Hub + drill-in (live summaries)"
+            width={1280} height={900}>
+            <ProfileHub
+              theme={t.theme}
+              density={t.density}
+              showMatchChips={t.showMatchChips}
+            />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="firstrun" title="First-run · empty profile"
+          subtitle="The full Profile page for a brand-new user — NOT a modal. Same rail + same six sections as the populated screen, each in its first-run empty state.">
+          <DCArtboard id="empty-full" label="Empty profile · full page (light)"
+            width={1280} height={1840}>
+            <ProfileEmptyFull theme={t.theme} density={t.density} showMatchChips={t.showMatchChips} />
+          </DCArtboard>
+
+          <DCArtboard id="empty-full-dark" label="Empty profile · full page (dark)"
+            width={1280} height={1840}>
+            <ProfileEmptyFull theme="dark" density={t.density} showMatchChips={t.showMatchChips} />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="states" title="Interaction states"
+          subtitle="Section-level affordances applied consistently across all 3 layouts.">
+          <DCArtboard id="state-edit" label="Section edit mode (save/cancel)"
+            width={760} height={560}>
+            <StateEdit theme={t.theme} />
+          </DCArtboard>
+
+          <DCArtboard id="state-popover" label="Inline popover (skill weight)"
+            width={760} height={520}>
+            <StateInlinePopover theme={t.theme} />
+          </DCArtboard>
+
+          <DCArtboard id="state-confirm" label="Destructive confirm (delete account)"
+            width={760} height={560}>
+            <StateConfirm theme={t.theme} />
+          </DCArtboard>
+
+          <DCArtboard id="state-upload" label="Document upload (drop · uploading · done)"
+            width={760} height={560}>
+            <StateUpload theme={t.theme} />
+          </DCArtboard>
+
+          <DCArtboard id="state-integration" label="Integrations connect flow"
+            width={760} height={620}>
+            <StateIntegrations theme={t.theme} />
+          </DCArtboard>
+
+          <DCArtboard id="state-empty" label="Empty profile (brand-new user)"
+            width={760} height={760}>
+            <StateEmpty theme={t.theme} />
+          </DCArtboard>
+
+          <DCArtboard id="state-delta" label="Match-score impact preview"
+            width={760} height={700}>
+            <StateScoreDelta theme={t.theme} />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="anatomy" title="Row anatomy"
+          subtitle="Two ways to render a single field row · same data, different density rhythm.">
+          <DCArtboard id="anatomy-stacked" label="A · Stacked label-over-value (2-col grid)"
+            width={760} height={460}>
+            <AnatomyStacked theme={t.theme} />
+          </DCArtboard>
+
+          <DCArtboard id="anatomy-inline" label="B · Inline label-left value-right"
+            width={760} height={500}>
+            <AnatomyInline theme={t.theme} />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="dark" title="Dark theme parity"
+          subtitle="Same artboards in dark. Toggle the Theme tweak to flip all artboards.">
+          <DCArtboard id="anchored-dark" label="A · Anchored rail · dark"
+            width={1280} height={1400}>
+            <ProfileAnchored
+              theme="dark"
+              density={t.density}
+              showMatchChips={t.showMatchChips}
+              activeSection="match"
+            />
+          </DCArtboard>
+
+          <DCArtboard id="hub-dark" label="C · Hub · dark"
+            width={1280} height={900}>
+            <ProfileHub
+              theme="dark"
+              density={t.density}
+              showMatchChips={t.showMatchChips}
+            />
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="Theme & density" />
+        <TweakRadio label="Theme" value={t.theme}
+          options={['light', 'dark']}
+          onChange={(v) => setTweak('theme', v)} />
+        <TweakRadio label="Density" value={t.density}
+          options={['compact', 'comfy', 'relaxed']}
+          onChange={(v) => setTweak('density', v)} />
+
+        <TweakSection label="Layout focus" />
+        <TweakSelect label="Featured variation" value={t.featuredVariation}
+          options={[
+            { value: 'anchored', label: 'A · Anchored rail' },
+            { value: 'split',    label: 'B · Split-pane' },
+            { value: 'hub',      label: 'C · Hub' },
+          ]}
+          onChange={(v) => {
+            setTweak('featuredVariation', v);
+            // jump the canvas to the matching artboard
+            const evt = new CustomEvent('dc-focus-artboard', { detail: { id: v } });
+            window.dispatchEvent(evt);
+          }} />
+        <TweakSelect label="Section focus" value={t.sectionFocus}
+          options={[
+            { value: 'all',          label: 'All visible' },
+            { value: 'identity',     label: 'Identity' },
+            { value: 'match',        label: 'Match profile' },
+            { value: 'ai',           label: 'AI generation' },
+            { value: 'documents',    label: 'Documents' },
+            { value: 'integrations', label: 'Integrations' },
+            { value: 'account',      label: 'Account' },
+          ]}
+          onChange={(v) => setTweak('sectionFocus', v)} />
+
+        <TweakSection label="Match scoring" />
+        <TweakToggle label="Show 'Affects matching' chips" value={t.showMatchChips}
+          onChange={(v) => setTweak('showMatchChips', v)} />
+
+        <TweakSection label="Profile state" />
+        <TweakRadio label="Completeness" value={t.completeness}
+          options={['empty', 'partial', 'complete']}
+          onChange={(v) => setTweak('completeness', v)} />
+        <TweakToggle label="Edit mode on" value={t.editMode}
+          onChange={(v) => setTweak('editMode', v)} />
+
+        <TweakSection label="Annotations" />
+        <TweakToggle label="Show fold markers" value={t.showFold}
+          onChange={(v) => setTweak('showFold', v)} />
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+</body>
+</html>

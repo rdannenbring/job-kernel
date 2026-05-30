@@ -1,0 +1,282 @@
+- generic [ref=e3]:
+  - complementary [ref=e7]:
+    - generic [ref=e8]:
+      - img "JobKernel logo" [ref=e169] [cursor=pointer]
+      - button "chevron_right" [ref=e170] [cursor=pointer]:
+        - generic [ref=e171]: chevron_right
+      - button "add" [ref=e172] [cursor=pointer]:
+        - generic [ref=e17]: add
+      - navigation [ref=e19]:
+        - button "dashboard" [ref=e173] [cursor=pointer]:
+          - generic [ref=e21]: dashboard
+        - button "person" [ref=e174] [cursor=pointer]:
+          - generic [ref=e24]: person
+        - button "leaderboard" [ref=e175] [cursor=pointer]:
+          - generic [ref=e27]: leaderboard
+      - button "notifications" [ref=e176] [cursor=pointer]:
+        - generic [ref=e31]: notifications
+      - button "settings_brightness" [ref=e177] [cursor=pointer]:
+        - generic [ref=e35]: settings_brightness
+      - navigation [ref=e37]:
+        - button "admin_panel_settings" [ref=e178] [cursor=pointer]:
+          - generic [ref=e39]: admin_panel_settings
+        - button "settings" [ref=e179] [cursor=pointer]:
+          - generic [ref=e42]: settings
+      - generic [ref=e44]:
+        - button "A" [ref=e180] [cursor=pointer]:
+          - generic [ref=e46]: A
+        - button "logout" [ref=e181] [cursor=pointer]:
+          - generic [ref=e51]: logout
+  - main [ref=e53]:
+    - generic [ref=e183]:
+      - generic [ref=e184]:
+        - button "arrow_back Back to Dashboard" [ref=e185] [cursor=pointer]:
+          - generic [ref=e186]: arrow_back
+          - text: Back to Dashboard
+        - generic [ref=e187]:
+          - button "edit Edit Info" [ref=e188] [cursor=pointer]:
+            - generic [ref=e189]: edit
+            - text: Edit Info
+          - button "archive Archive" [ref=e190] [cursor=pointer]:
+            - generic [ref=e191]: archive
+            - text: Archive
+          - button "delete Delete" [ref=e192] [cursor=pointer]:
+            - generic [ref=e193]: delete
+            - text: Delete
+      - generic [ref=e195]:
+        - generic "Click to set a logo" [ref=e196] [cursor=pointer]:
+          - img "Johnson & Johnson" [ref=e197]
+        - generic [ref=e198]:
+          - generic [ref=e199]:
+            - heading "Director, Chief Architect, Architecture" [level=1] [ref=e200]
+            - generic [ref=e201]: saved
+          - generic [ref=e203]:
+            - link "Johnson & Johnson arrow_outward" [ref=e204] [cursor=pointer]:
+              - /url: https://www.jnj.com
+              - text: Johnson & Johnson
+              - generic [ref=e205]: arrow_outward
+            - generic [ref=e206]:
+              - generic [ref=e207]: payments
+              - text: $150,000.00 - $258,750.00
+            - generic [ref=e208]:
+              - generic [ref=e209]: Interest
+              - generic [ref=e210]:
+                - generic [ref=e211] [cursor=pointer]: star
+                - generic [ref=e212] [cursor=pointer]: star
+                - generic [ref=e213] [cursor=pointer]: star
+          - generic [ref=e214]:
+            - generic [ref=e215]:
+              - generic [ref=e216]: location_on
+              - text: Norwalk, CT
+            - generic [ref=e217]: ·
+            - generic [ref=e218]:
+              - generic [ref=e219]: work
+              - text: Full-time
+            - generic [ref=e220]: ·
+            - link "open_in_new Visit Listing" [ref=e221] [cursor=pointer]:
+              - /url: https://www.linkedin.com/jobs/search-results/?currentJobId=4409560647&eBP=CwEAAAGeQuiXSwwSXu-BMWIP0eA0hJjYSZdb3sfWzGD3H82bMOJdb9fLLKTmLvwTV8CFbitGGJLR3bkROHKlhi6spgxCpFMHdjHYjgjALrcmXckjDyhS__xE2mjd-cxuKTZR4rZmk4UCoboJsDy1t1q-yXHJDNHbxMbW-_OTZKEOwHqp_DrfM8cPrJRS3Wdjy0CqArKAa-nqb_4yEydxUqLAxU0qpETwXlwDBBY3QqJ5LWmAify8kQRwaLMcrUGJxNFanFuU4CdxURHKsqHdHnhgFS3MPUSAFf0AxqB_KMu7joZLiEu3iJVv3ogtv7798IXQ_k5TKPyMF61utMc7Hadhpxn_tfQ7afXPgNmqZTBwWHptMZOGo-e7YKS4sJlDJNqDKM7lYn2WB_cUherGTr0JGLOt0XWP-2AzpnxkbxjwWE66ifFOvJ6NX6BV3oLB0Vh2N4t2NkUpD4thnT7ROr78M75DxBi7OI5KIBUsMowc5autWZ9F-aB3&refId=hu1f6lX1PiNvb4%2B1pfTwkA%3D%3D&trackingId=C%2ByaT8vMpLe1eTrIUkqgjA%3D%3D&showHowYouFit=HOW_YOU_FIT&keywords=Director%20of%20Solutions%20Architecture&origin=QUALIFICATION_LANDING&originToLandingJobPostings=4368900622%2C4414219455%2C4383248284%2C4383176787&geoId=90000070
+              - generic [ref=e222]: open_in_new
+              - text: Visit Listing
+            - generic [ref=e223]: ·
+            - link "rocket_launch Direct Apply" [ref=e224] [cursor=pointer]:
+              - /url: https://www.linkedin.com/jobs/search-results/?currentJobId=4409560647&eBP=CwEAAAGeQuiXSwwSXu-BMWIP0eA0hJjYSZdb3sfWzGD3H82bMOJdb9fLLKTmLvwTV8CFbitGGJLR3bkROHKlhi6spgxCpFMHdjHYjgjALrcmXckjDyhS__xE2mjd-cxuKTZR4rZmk4UCoboJsDy1t1q-yXHJDNHbxMbW-_OTZKEOwHqp_DrfM8cPrJRS3Wdjy0CqArKAa-nqb_4yEydxUqLAxU0qpETwXlwDBBY3QqJ5LWmAify8kQRwaLMcrUGJxNFanFuU4CdxURHKsqHdHnhgFS3MPUSAFf0AxqB_KMu7joZLiEu3iJVv3ogtv7798IXQ_k5TKPyMF61utMc7Hadhpxn_tfQ7afXPgNmqZTBwWHptMZOGo-e7YKS4sJlDJNqDKM7lYn2WB_cUherGTr0JGLOt0XWP-2AzpnxkbxjwWE66ifFOvJ6NX6BV3oLB0Vh2N4t2NkUpD4thnT7ROr78M75DxBi7OI5KIBUsMowc5autWZ9F-aB3&refId=hu1f6lX1PiNvb4%2B1pfTwkA%3D%3D&trackingId=C%2ByaT8vMpLe1eTrIUkqgjA%3D%3D&showHowYouFit=HOW_YOU_FIT&keywords=Director%20of%20Solutions%20Architecture&origin=QUALIFICATION_LANDING&originToLandingJobPostings=4368900622%2C4414219455%2C4383248284%2C4383176787&geoId=90000070
+              - generic [ref=e225]: rocket_launch
+              - text: Direct Apply
+          - generic [ref=e227]:
+            - generic [ref=e228]: Docs
+            - button "description Resume check_circle OK" [ref=e229] [cursor=pointer]:
+              - generic [ref=e230]: description
+              - generic [ref=e231]: Resume
+              - generic [ref=e232]:
+                - generic [ref=e233]: check_circle
+                - text: OK
+            - button "mail Cover check_circle OK" [ref=e234] [cursor=pointer]:
+              - generic [ref=e235]: mail
+              - generic [ref=e236]: Cover
+              - generic [ref=e237]:
+                - generic [ref=e238]: check_circle
+                - text: OK
+            - button "folder Context check_circle OK" [ref=e239] [cursor=pointer]:
+              - generic [ref=e240]: folder
+              - generic [ref=e241]: Context
+              - generic [ref=e242]:
+                - generic [ref=e243]: check_circle
+                - text: OK
+            - button "article View full job details chevron_right" [ref=e244] [cursor=pointer]:
+              - generic [ref=e245]: article
+              - text: View full job details
+              - generic [ref=e246]: chevron_right
+        - generic [ref=e247]:
+          - generic [ref=e248]:
+            - img [ref=e249]
+            - generic [ref=e252]: "86"
+          - generic [ref=e253]: ↑ 3 vs avg
+      - generic [ref=e254]:
+        - generic [ref=e255]:
+          - generic [ref=e256]: Pipeline
+          - generic [ref=e257]:
+            - generic [ref=e258] [cursor=pointer]:
+              - generic [ref=e262]: Saved
+              - generic [ref=e263]: 5/5 · in progress
+            - generic [ref=e264]:
+              - button "check_circle Job Analysis" [ref=e265] [cursor=pointer]:
+                - generic [ref=e266]: check_circle
+                - generic [ref=e267]: Job Analysis
+              - button "check_circle Reviewed" [ref=e268] [cursor=pointer]:
+                - generic [ref=e269]: check_circle
+                - generic [ref=e270]: Reviewed
+              - button "check_circle Network Contacts" [ref=e271] [cursor=pointer]:
+                - generic [ref=e272]: check_circle
+                - generic [ref=e273]: Network Contacts
+              - button "domain Company Research chevron_right" [active] [ref=e491] [cursor=pointer]:
+                - generic [ref=e275]: domain
+                - generic [ref=e276]: Company Research
+                - generic [ref=e492]: chevron_right
+              - button "check_circle Prioritize" [ref=e277] [cursor=pointer]:
+                - generic [ref=e278]: check_circle
+                - generic [ref=e279]: Prioritize
+            - generic [ref=e280] [cursor=pointer]:
+              - generic [ref=e283]: Generated
+              - generic [ref=e284]: 2/4
+            - generic [ref=e285] [cursor=pointer]:
+              - generic [ref=e288]: Applied
+              - generic [ref=e289]: 2/4
+            - generic [ref=e290] [cursor=pointer]:
+              - generic [ref=e293]: Interviewing
+              - generic [ref=e294]: 0/5
+            - generic [ref=e295] [cursor=pointer]:
+              - generic [ref=e298]: Decision
+              - generic [ref=e299]: 0/5
+            - generic [ref=e300] [cursor=pointer]:
+              - generic [ref=e303]: Accepted
+              - generic [ref=e304]: 0/5
+          - generic [ref=e305]: End states
+          - button "block Rejected arrow_outward" [ref=e308] [cursor=pointer]:
+            - generic [ref=e309]: block
+            - generic [ref=e310]: Rejected
+            - generic [ref=e311]: arrow_outward
+          - button "do_not_disturb_on Declined arrow_outward" [ref=e312] [cursor=pointer]:
+            - generic [ref=e313]: do_not_disturb_on
+            - generic [ref=e314]: Declined
+            - generic [ref=e315]: arrow_outward
+          - button "cancel Withdrawn arrow_outward" [ref=e316] [cursor=pointer]:
+            - generic [ref=e317]: cancel
+            - generic [ref=e318]: Withdrawn
+            - generic [ref=e319]: arrow_outward
+        - generic [ref=e359]:
+          - generic [ref=e493]:
+            - generic [ref=e494]:
+              - heading "Company Research" [level=3] [ref=e495]
+              - paragraph [ref=e496]: Johnson & Johnson
+            - generic [ref=e497]:
+              - button "work_update REFRESH CAREER MATCHES" [ref=e498] [cursor=pointer]:
+                - generic [ref=e499]: work_update
+                - text: REFRESH CAREER MATCHES
+              - button "refresh REFRESH ALL COMPANY RESEARCH" [ref=e500] [cursor=pointer]:
+                - generic [ref=e501]: refresh
+                - text: REFRESH ALL COMPANY RESEARCH
+          - generic [ref=e360]:
+            - generic [ref=e361]:
+              - generic [ref=e502]:
+                - button "first_page" [ref=e504] [cursor=pointer]:
+                  - generic [ref=e505]: first_page
+                - navigation [ref=e506]:
+                  - button "dashboard Company Overview" [ref=e507] [cursor=pointer]:
+                    - generic [ref=e508]: dashboard
+                    - generic [ref=e509]: Company Overview
+                  - button "manage_search Detailed Research chevron_right" [ref=e511] [cursor=pointer]:
+                    - generic [ref=e512]: manage_search
+                    - generic [ref=e513]: Detailed Research
+                    - generic [ref=e514]: chevron_right
+                  - button "bar_chart Financials & Market chevron_right" [ref=e515] [cursor=pointer]:
+                    - generic [ref=e516]: bar_chart
+                    - generic [ref=e517]: Financials & Market
+                    - generic [ref=e518]: chevron_right
+                  - button "view_headline Competitor Matrix chevron_right" [ref=e519] [cursor=pointer]:
+                    - generic [ref=e520]: view_headline
+                    - generic [ref=e521]: Competitor Matrix
+                    - generic [ref=e522]: chevron_right
+                  - button "work Career Matches chevron_right" [ref=e523] [cursor=pointer]:
+                    - generic [ref=e524]: work
+                    - generic [ref=e525]: Career Matches
+                    - generic [ref=e526]: chevron_right
+              - generic [ref=e527]:
+                - generic [ref=e529]: format_quote
+                - heading "Mission" [level=4] [ref=e530]
+                - paragraph [ref=e531]: "\"To blend heart, science, and ingenuity to profoundly change the trajectory of health for humanity, guided by the values of Our Credo.\""
+            - generic [ref=e532]:
+              - generic [ref=e533]:
+                - generic [ref=e534]:
+                  - generic [ref=e535]: Mission
+                  - paragraph [ref=e536]: "\"To blend heart, science, and ingenuity to profoundly change the trajectory of health for humanity, guided by the values of Our Credo.\""
+                  - generic [ref=e537]:
+                    - generic [ref=e538]:
+                      - generic [ref=e539]: work
+                      - generic [ref=e540]: Healthcare / Medical Devices & Pharmaceuticals
+                    - link "launch Careers Page" [ref=e541] [cursor=pointer]:
+                      - /url: https://careers.jnj.com
+                      - generic [ref=e542]: launch
+                      - generic [ref=e543]: Careers Page
+                - generic [ref=e544]: format_quote
+              - generic [ref=e545]:
+                - generic [ref=e546]:
+                  - generic [ref=e548]: group
+                  - generic [ref=e549]:
+                    - generic [ref=e550]: Employees
+                    - generic [ref=e551]: ~130,000
+                - generic [ref=e552]:
+                  - generic [ref=e554]: calendar_today
+                  - generic [ref=e555]:
+                    - generic [ref=e556]: Founded
+                    - generic [ref=e557]: "1886"
+                - generic [ref=e558]:
+                  - generic [ref=e560]: location_city
+                  - generic [ref=e561]:
+                    - generic [ref=e562]: HQ
+                    - generic [ref=e563]: New Brunswick, NJ, USA
+                - generic [ref=e564]:
+                  - generic [ref=e566]: show_chart
+                  - generic [ref=e567]:
+                    - generic [ref=e568]: Stage
+                    - generic [ref=e569]: Public
+              - generic [ref=e570]:
+                - generic [ref=e571]:
+                  - generic [ref=e572]: Core Values
+                  - generic [ref=e573]:
+                    - generic [ref=e574]:
+                      - generic [ref=e575]: diamond
+                      - generic [ref=e576]: Our Credo
+                    - generic [ref=e577]:
+                      - generic [ref=e578]: diamond
+                      - generic [ref=e579]: Patient Safety & Quality
+                    - generic [ref=e580]:
+                      - generic [ref=e581]: diamond
+                      - generic [ref=e582]: Innovation & Science
+                    - generic [ref=e583]:
+                      - generic [ref=e584]: diamond
+                      - generic [ref=e585]: Diversity, Equity & Inclusion
+                - generic [ref=e586]:
+                  - generic [ref=e587]: Glassdoor Rating
+                  - generic [ref=e588]: "4.1"
+                  - generic [ref=e589]: out of 5.0
+                  - generic [ref=e590]:
+                    - generic [ref=e591]: Business Model
+                    - paragraph [ref=e592]: J&J generates revenue by developing, manufacturing, and selling innovative medicines and medical technologies (MedTech) globally to healthcare providers and consumers.
+              - generic [ref=e593]:
+                - generic [ref=e594]: Leadership Team
+                - generic [ref=e595]:
+                  - generic [ref=e596]:
+                    - generic [ref=e598]: person
+                    - generic [ref=e599]:
+                      - generic [ref=e600]: CEO
+                      - generic [ref=e601]: Joaquin Duato
+                  - generic [ref=e602]:
+                    - generic [ref=e604]: person
+                    - generic [ref=e605]:
+                      - generic [ref=e606]: CTO
+                      - generic [ref=e607]: Jim Swanson
+                  - generic [ref=e608]:
+                    - generic [ref=e610]: person
+                    - generic [ref=e611]:
+                      - generic [ref=e612]: CPO
+                      - generic [ref=e613]: Unknown

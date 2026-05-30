@@ -1,0 +1,136 @@
+- generic [ref=e3]:
+  - complementary [ref=e7]:
+    - generic [ref=e8]:
+      - img "JobKernel logo" [ref=e11] [cursor=pointer]
+      - button "chevron_right" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: chevron_right
+      - button "add" [ref=e14] [cursor=pointer]:
+        - generic [ref=e15]: add
+      - navigation [ref=e16]:
+        - button "dashboard" [ref=e17] [cursor=pointer]:
+          - generic [ref=e18]: dashboard
+        - button "person" [ref=e19] [cursor=pointer]:
+          - generic [ref=e20]: person
+        - button "leaderboard" [ref=e21] [cursor=pointer]:
+          - generic [ref=e22]: leaderboard
+      - button "notifications" [ref=e23] [cursor=pointer]:
+        - generic [ref=e25]: notifications
+      - button "light_mode" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: light_mode
+      - navigation [ref=e29]:
+        - button "admin_panel_settings" [ref=e30] [cursor=pointer]:
+          - generic [ref=e31]: admin_panel_settings
+        - button "settings" [ref=e32] [cursor=pointer]:
+          - generic [ref=e33]: settings
+      - generic [ref=e34]:
+        - button "A" [ref=e35] [cursor=pointer]:
+          - generic [ref=e36]: A
+        - button "logout" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]: logout
+  - main [ref=e39]:
+    - generic [ref=e258]:
+      - generic [ref=e259]:
+        - button "Back" [ref=e260] [cursor=pointer]:
+          - generic [ref=e261]: arrow_back
+        - generic [ref=e262]:
+          - generic [ref=e263]: Diageo
+          - generic [ref=e264]: Regional Enterprise Architect, North America
+        - button "More options" [ref=e265] [cursor=pointer]:
+          - generic [ref=e266]: more_vert
+      - generic [ref=e267]:
+        - generic [ref=e268]:
+          - generic [ref=e269]:
+            - img "Diageo" [ref=e270]
+            - generic [ref=e271]:
+              - heading "Regional Enterprise Architect, North America" [level=1] [ref=e272]
+              - link "Diageo arrow_outward" [ref=e273] [cursor=pointer]:
+                - /url: https://www.diageo.com
+                - text: Diageo
+                - generic [ref=e274]: arrow_outward
+            - generic [ref=e276]:
+              - img [ref=e277]
+              - generic [ref=e280]: –
+          - generic [ref=e281]:
+            - generic [ref=e282]: Generated
+            - generic [ref=e283]:
+              - generic [ref=e284]: payments
+              - text: $154/hr
+            - generic [ref=e285]:
+              - generic [ref=e286]: Interest
+              - generic [ref=e287]:
+                - generic [ref=e288] [cursor=pointer]: star
+                - generic [ref=e289] [cursor=pointer]: star
+                - generic [ref=e290] [cursor=pointer]: star
+          - generic [ref=e291]:
+            - generic [ref=e292]:
+              - generic [ref=e293]: work
+              - generic [ref=e294]: Contract
+            - link "open_in_new Visit listing" [ref=e295] [cursor=pointer]:
+              - /url: https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4400014402&discover=recommended&discoveryOrigin=JOBS_HOME_JYMBII
+              - generic [ref=e296]: open_in_new
+              - generic [ref=e297]: Visit listing
+          - generic [ref=e299]:
+            - button "description Resume" [ref=e300] [cursor=pointer]:
+              - generic [ref=e302]: description
+              - generic [ref=e303]: Resume
+            - button "mail Cover Letter" [ref=e305] [cursor=pointer]:
+              - generic [ref=e307]: mail
+              - generic [ref=e308]: Cover Letter
+            - button "question_answer Answers" [ref=e310] [cursor=pointer]:
+              - generic [ref=e312]: question_answer
+              - generic [ref=e313]: Answers
+          - button "article View full job details chevron_right" [ref=e315] [cursor=pointer]:
+            - generic [ref=e316]: article
+            - text: View full job details
+            - generic [ref=e317]: chevron_right
+        - generic [ref=e318]:
+          - generic [ref=e319]:
+            - generic [ref=e320]:
+              - generic [ref=e321]: Generated
+              - generic [ref=e322]: 0/4
+            - button "All stages expand_more" [ref=e323] [cursor=pointer]:
+              - text: All stages
+              - generic [ref=e324]: expand_more
+          - tablist "Pipeline stages" [ref=e325]:
+            - tab "Saved stage" [ref=e326] [cursor=pointer]
+            - tab "Generated stage" [selected] [ref=e327] [cursor=pointer]
+            - tab "Applied stage" [ref=e328] [cursor=pointer]
+            - tab "Interviewing stage" [ref=e329] [cursor=pointer]
+            - tab "Decision stage" [ref=e330] [cursor=pointer]
+            - tab "Accepted stage" [ref=e331] [cursor=pointer]
+          - tablist "Substages" [ref=e333]:
+            - tab "description Resume" [selected] [ref=e334] [cursor=pointer]:
+              - generic [ref=e335]: description
+              - text: Resume
+            - tab "mail Cover Letter" [ref=e336] [cursor=pointer]:
+              - generic [ref=e337]: mail
+              - text: Cover Letter
+            - tab "question_answer Answers" [ref=e338] [cursor=pointer]:
+              - generic [ref=e339]: question_answer
+              - text: Answers
+            - tab "inventory_2 Prep" [ref=e340] [cursor=pointer]:
+              - generic [ref=e341]: inventory_2
+              - text: Prep
+        - generic [ref=e342]:
+          - generic [ref=e344]:
+            - heading "Resume" [level=3] [ref=e345]
+            - generic [ref=e346]: Your tailored resume for this application
+          - generic [ref=e348]:
+            - generic [ref=e349]: description
+            - generic [ref=e350]: Resume in progress
+      - generic:
+        - button "send Mark as Applied" [ref=e351] [cursor=pointer]:
+          - generic [ref=e352]: send
+          - text: Mark as Applied
+        - button "More actions" [ref=e353] [cursor=pointer]:
+          - generic [ref=e354]: more_horiz
+      - dialog "Full job details" [ref=e356]:
+        - generic [ref=e358]:
+          - generic [ref=e359]: Full Job Details
+          - button "Close job details" [active] [ref=e360] [cursor=pointer]:
+            - generic [ref=e361]: close
+        - generic [ref=e362]:
+          - generic [ref=e363]:
+            - heading "Regional Enterprise Architect, North America" [level=2] [ref=e364]
+            - generic [ref=e365]: Diageo
+          - generic [ref=e366]: About the job Temporary work opportunities align well with people who are looking for career flexibility and less traditional ways of working, but at the same time are people driven to deliver amazing work in high-profile situations. Magnit Direct Sourcing is a service offered by Magnit Global that provides top talent directly to industry leading clients who have flexible temporary assignments that work on a variety of projects and unlock opportunities for exciting work. As a temporary contractor, you’ll be employed by our Managed Service Provider, Magnit Global, who manages most of our temporary contract hiring. You will not be employed by Diageo. This temporary assignment will be working with Diageo. Diageo is the world’s leading premium drinks company with an outstanding collection of brands, such as Johnnie Walker, Smirnoff, Baileys, Captain Morgan, Tanqueray, and Guinness. With over 200 brands in 180 countries and a global network of entrepreneurial individuals, our teams blend a diverse range of experience, knowledge, and skills. We connect customers and consumers to our iconic products and create innovate experiences that bring people together to celebrate life. Visit Diageo’s global responsible drinking resource, Drink IQ, for information, initiatives, and ways to share best practices. Celebrating life, every day, everywhere. Regional Enterprise Architect About Us With over 200 brands sold in nearly 180 countries, we’re the world’s leading premium drinks company. Bring your passion and use your curiosity as you explore, collaborate, and innovate to build brands consumers love. Together with passionate people from all over the world, you’ll test new ideas, learn and grow, and unlock a brighter, more exciting future. Join us to create a career worth celebrating. About The Function Our Digital and Technology (D&T) team are innovators, delivering ground-breaking solutions that will help shape the future of our iconic brands. Technology touches every part of our business, from the sourcing of sustainable ingredients to marketing and development of our online platforms. We utilise data insights to build competitive advantage, supporting our people to deliver value faster. Our D&T team includes some of the most talented digital professionals in the industry. Every day, we come together to push boundaries and innovate, shaping the digital solutions of tomorrow. Whatever your passion, we’ll help you become the best you can be, creating career-defining work and delivering breakthrough thinking. About The Role The Regional Enterprise Architect shapes and guides the regional and market technology strategies and landscapes for North America, aligning them with global standards and local business objectives. About The Team Within D&T, Diageo has a Global Architecture team which is a trusted and strategic partner to our business to create new digital experiences fueled by connected data. We create the vision and strategic roadmaps for transforming our business performance through technology, whilst also driving consistency of standards and simplifying our landscape. Purpose Of The Role To engage with business and technology stakeholders to develop holistic plans for effective business solutions which are fueled by connected data. Role Responsibilities Defining and driving the regional and market architecture strategy for North America, ensuring alignment with the business and D&T strategies. Collaborating with key stakeholders, including business leaders, D&T Regional Director, Enterprise Architects and Value Streams, to understand business needs. Partnering with the business and Regional D&T team to define the region and markets’ current level of maturity according to Diageo’s global process taxonomy, and update roadmaps to accordingly Collaborating with the Solution Architects to ensure solution designs for the region and markets are aligned with the roadmaps. Maintaining a documented view of the regional and market as-is architectures and roadmaps to facilitate communication and decision-making. Monitoring and reporting on the effectiveness of the regional enterprise architecture, using KPIs to identify opportunities for improvement and continuous optimization. Participating in the architecture governance process. Driving opportunities for reuse and simplification in the region and markets. Skills Required 8+ years demonstrated expertise in enterprise architecture, IT strategy development and solution design, preferably in a global or regional capacity at an FMCG Strong understanding of enterprise technology solutions, data management and infrastructure technologies. Strong knowledge of business process modelling techniques and experience in optimizing processes to improve efficiency and effectiveness. Proven experience with architecting, designing and implementing large scale cloud-based solutions. A proven track record of working effectively with cross-functional teams and building strong relationships with stakeholders in various departments and geographies. Excellent written and verbal communication skills, with the ability to articulate complex technical concepts and business processes to diverse audiences and facilitate consensus-building across stakeholders. Flexibility to adapt to changing business needs, technology trends and regional/market requirements while maintaining a consistent architectural vision. Knowledge of architectural frameworks such as TOGAF is preferred Education Hold at least a bachelor’s degree, preferably in IT or Computer Science or a related field Flexibility is key to our success. Talk to us about what flexibility means to you so that you’re supported to manage your wellbeing and balance your priorities from day one. Our purpose is to celebrate life, every day, everywhere. And creating an inclusive culture, where everyone feels valued and that they can belong, is a crucial part of this. We embrace diversity in the broadest possible sense. This means that you’ll be welcomed and celebrated for who you are just by being you. You’ll be part of and help build and champion an inclusive culture that celebrates people of different gender, ethnicity, ability, age, sexual orientation, social class, educational backgrounds, experiences, mindsets, and more. Our ambition is to create the best performing, most trusted and respected consumer products companies in the world. Join us and help transform our business as we take our brands to new heights and build new ones as part of shaping the next generation of celebrations for consumers around the world. Feel inspired? Then this may be the opportunity for you. If you require a reasonable adjustment, please ensure that you capture this information when you submit your application.

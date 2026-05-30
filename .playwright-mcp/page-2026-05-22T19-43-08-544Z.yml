@@ -1,0 +1,305 @@
+- generic [ref=e27]:
+  - complementary [ref=e28]:
+    - generic [ref=e29]:
+      - img "JobKernel logo" [ref=e190] [cursor=pointer]
+      - button "chevron_right" [ref=e191] [cursor=pointer]:
+        - generic [ref=e192]: chevron_right
+      - button "add" [ref=e193] [cursor=pointer]:
+        - generic [ref=e38]: add
+      - navigation [ref=e40]:
+        - button "dashboard" [ref=e194] [cursor=pointer]:
+          - generic [ref=e42]: dashboard
+        - button "person" [ref=e195] [cursor=pointer]:
+          - generic [ref=e45]: person
+        - button "leaderboard" [ref=e196] [cursor=pointer]:
+          - generic [ref=e48]: leaderboard
+      - button "notifications" [ref=e197] [cursor=pointer]:
+        - generic [ref=e52]: notifications
+      - button "dark_mode" [ref=e198] [cursor=pointer]:
+        - generic [ref=e56]: dark_mode
+      - navigation [ref=e58]:
+        - button "admin_panel_settings" [ref=e199] [cursor=pointer]:
+          - generic [ref=e60]: admin_panel_settings
+        - button "settings" [ref=e200] [cursor=pointer]:
+          - generic [ref=e63]: settings
+      - generic [ref=e65]:
+        - button "A" [ref=e201] [cursor=pointer]:
+          - generic [ref=e67]: A
+        - button "logout" [ref=e202] [cursor=pointer]:
+          - generic [ref=e72]: logout
+  - main [ref=e74]:
+    - generic [ref=e204]:
+      - generic [ref=e205]:
+        - button "arrow_back Back to Dashboard" [ref=e206] [cursor=pointer]:
+          - generic [ref=e207]: arrow_back
+          - text: Back to Dashboard
+        - generic [ref=e208]:
+          - button "edit Edit Info" [ref=e209] [cursor=pointer]:
+            - generic [ref=e210]: edit
+            - text: Edit Info
+          - button "archive Archive" [ref=e211] [cursor=pointer]:
+            - generic [ref=e212]: archive
+            - text: Archive
+          - button "delete Delete" [ref=e213] [cursor=pointer]:
+            - generic [ref=e214]: delete
+            - text: Delete
+      - generic [ref=e216]:
+        - generic "Click to set a logo" [ref=e217] [cursor=pointer]:
+          - img "Johnson & Johnson" [ref=e218]
+        - generic [ref=e219]:
+          - generic [ref=e220]:
+            - heading "Director, Chief Architect, Architecture" [level=1] [ref=e221]
+            - generic [ref=e222]: generated
+          - generic [ref=e224]:
+            - link "Johnson & Johnson arrow_outward" [ref=e225] [cursor=pointer]:
+              - /url: https://www.jnj.com
+              - text: Johnson & Johnson
+              - generic [ref=e226]: arrow_outward
+            - generic [ref=e227]:
+              - generic [ref=e228]: payments
+              - text: $150,000.00 - $258,750.00
+            - generic [ref=e229]:
+              - generic [ref=e230]: Interest
+              - generic [ref=e231]:
+                - generic [ref=e232] [cursor=pointer]: star
+                - generic [ref=e233] [cursor=pointer]: star
+                - generic [ref=e234] [cursor=pointer]: star
+          - generic [ref=e235]:
+            - generic [ref=e236]:
+              - generic [ref=e237]: location_on
+              - text: Norwalk, CT
+            - generic [ref=e238]: ·
+            - generic [ref=e239]:
+              - generic [ref=e240]: work
+              - text: Full-time
+            - generic [ref=e241]: ·
+            - link "open_in_new Visit Listing" [ref=e242] [cursor=pointer]:
+              - /url: https://www.linkedin.com/jobs/search-results/?currentJobId=4409560647&eBP=CwEAAAGeQuiXSwwSXu-BMWIP0eA0hJjYSZdb3sfWzGD3H82bMOJdb9fLLKTmLvwTV8CFbitGGJLR3bkROHKlhi6spgxCpFMHdjHYjgjALrcmXckjDyhS__xE2mjd-cxuKTZR4rZmk4UCoboJsDy1t1q-yXHJDNHbxMbW-_OTZKEOwHqp_DrfM8cPrJRS3Wdjy0CqArKAa-nqb_4yEydxUqLAxU0qpETwXlwDBBY3QqJ5LWmAify8kQRwaLMcrUGJxNFanFuU4CdxURHKsqHdHnhgFS3MPUSAFf0AxqB_KMu7joZLiEu3iJVv3ogtv7798IXQ_k5TKPyMF61utMc7Hadhpxn_tfQ7afXPgNmqZTBwWHptMZOGo-e7YKS4sJlDJNqDKM7lYn2WB_cUherGTr0JGLOt0XWP-2AzpnxkbxjwWE66ifFOvJ6NX6BV3oLB0Vh2N4t2NkUpD4thnT7ROr78M75DxBi7OI5KIBUsMowc5autWZ9F-aB3&refId=hu1f6lX1PiNvb4%2B1pfTwkA%3D%3D&trackingId=C%2ByaT8vMpLe1eTrIUkqgjA%3D%3D&showHowYouFit=HOW_YOU_FIT&keywords=Director%20of%20Solutions%20Architecture&origin=QUALIFICATION_LANDING&originToLandingJobPostings=4368900622%2C4414219455%2C4383248284%2C4383176787&geoId=90000070
+              - generic [ref=e243]: open_in_new
+              - text: Visit Listing
+            - generic [ref=e244]: ·
+            - link "rocket_launch Direct Apply" [ref=e245] [cursor=pointer]:
+              - /url: https://www.linkedin.com/jobs/search-results/?currentJobId=4409560647&eBP=CwEAAAGeQuiXSwwSXu-BMWIP0eA0hJjYSZdb3sfWzGD3H82bMOJdb9fLLKTmLvwTV8CFbitGGJLR3bkROHKlhi6spgxCpFMHdjHYjgjALrcmXckjDyhS__xE2mjd-cxuKTZR4rZmk4UCoboJsDy1t1q-yXHJDNHbxMbW-_OTZKEOwHqp_DrfM8cPrJRS3Wdjy0CqArKAa-nqb_4yEydxUqLAxU0qpETwXlwDBBY3QqJ5LWmAify8kQRwaLMcrUGJxNFanFuU4CdxURHKsqHdHnhgFS3MPUSAFf0AxqB_KMu7joZLiEu3iJVv3ogtv7798IXQ_k5TKPyMF61utMc7Hadhpxn_tfQ7afXPgNmqZTBwWHptMZOGo-e7YKS4sJlDJNqDKM7lYn2WB_cUherGTr0JGLOt0XWP-2AzpnxkbxjwWE66ifFOvJ6NX6BV3oLB0Vh2N4t2NkUpD4thnT7ROr78M75DxBi7OI5KIBUsMowc5autWZ9F-aB3&refId=hu1f6lX1PiNvb4%2B1pfTwkA%3D%3D&trackingId=C%2ByaT8vMpLe1eTrIUkqgjA%3D%3D&showHowYouFit=HOW_YOU_FIT&keywords=Director%20of%20Solutions%20Architecture&origin=QUALIFICATION_LANDING&originToLandingJobPostings=4368900622%2C4414219455%2C4383248284%2C4383176787&geoId=90000070
+              - generic [ref=e246]: rocket_launch
+              - text: Direct Apply
+          - generic [ref=e248]:
+            - generic [ref=e249]: Docs
+            - button "description Resume check_circle OK" [ref=e250] [cursor=pointer]:
+              - generic [ref=e251]: description
+              - generic [ref=e252]: Resume
+              - generic [ref=e253]:
+                - generic [ref=e254]: check_circle
+                - text: OK
+            - button "mail Cover check_circle OK" [ref=e255] [cursor=pointer]:
+              - generic [ref=e256]: mail
+              - generic [ref=e257]: Cover
+              - generic [ref=e258]:
+                - generic [ref=e259]: check_circle
+                - text: OK
+            - button "folder Context check_circle OK" [ref=e260] [cursor=pointer]:
+              - generic [ref=e261]: folder
+              - generic [ref=e262]: Context
+              - generic [ref=e263]:
+                - generic [ref=e264]: check_circle
+                - text: OK
+            - button "article View full job details chevron_right" [ref=e265] [cursor=pointer]:
+              - generic [ref=e266]: article
+              - text: View full job details
+              - generic [ref=e267]: chevron_right
+        - generic [ref=e268]:
+          - generic [ref=e269]:
+            - img [ref=e270]
+            - generic [ref=e273]: "86"
+          - generic [ref=e274]: ↑ 3 vs avg
+      - generic [ref=e275]:
+        - generic [ref=e276]:
+          - generic [ref=e277]: Pipeline
+          - generic [ref=e278]:
+            - generic [ref=e279] [cursor=pointer]:
+              - generic [ref=e282]: ✓
+              - generic [ref=e283]: Saved
+              - generic [ref=e284]: 5/5 · done
+            - generic [ref=e285] [cursor=pointer]:
+              - generic [ref=e289]: Generated
+              - generic [ref=e290]: 2/4 · in progress
+            - generic [ref=e291]:
+              - generic [ref=e292]:
+                - generic [ref=e293]: check_circle
+                - generic [ref=e294]: Resume
+              - generic [ref=e295]:
+                - generic [ref=e296]: check_circle
+                - generic [ref=e297]: Cover Letter
+              - generic [ref=e298]:
+                - generic [ref=e299]: question_answer
+                - generic [ref=e300]: Answers
+              - generic [ref=e301]:
+                - generic [ref=e302]: inventory_2
+                - generic [ref=e303]: Prep Artifacts
+            - generic [ref=e304] [cursor=pointer]:
+              - generic [ref=e307]: Applied
+              - generic [ref=e308]: 2/4
+            - generic [ref=e309] [cursor=pointer]:
+              - generic [ref=e312]: Interviewing
+              - generic [ref=e313]: 0/5
+            - generic [ref=e314] [cursor=pointer]:
+              - generic [ref=e317]: Decision
+              - generic [ref=e318]: 0/5
+            - generic [ref=e319] [cursor=pointer]:
+              - generic [ref=e322]: Accepted
+              - generic [ref=e323]: 0/5
+          - generic [ref=e324]: End states
+          - button "block Rejected arrow_outward" [ref=e327] [cursor=pointer]:
+            - generic [ref=e328]: block
+            - generic [ref=e329]: Rejected
+            - generic [ref=e330]: arrow_outward
+          - button "do_not_disturb_on Declined arrow_outward" [ref=e331] [cursor=pointer]:
+            - generic [ref=e332]: do_not_disturb_on
+            - generic [ref=e333]: Declined
+            - generic [ref=e334]: arrow_outward
+          - button "cancel Withdrawn arrow_outward" [ref=e335] [cursor=pointer]:
+            - generic [ref=e336]: cancel
+            - generic [ref=e337]: Withdrawn
+            - generic [ref=e338]: arrow_outward
+        - generic [ref=e341]:
+          - generic [ref=e342]:
+            - button "first_page" [ref=e344] [cursor=pointer]:
+              - generic [ref=e345]: first_page
+            - heading "Artifacts" [level=3] [ref=e346]
+            - button "description Resume check_circle" [ref=e347] [cursor=pointer]:
+              - generic [ref=e348]:
+                - generic [ref=e349]: description
+                - generic [ref=e350]: Resume
+              - generic [ref=e352]: check_circle
+            - button "mail Cover Letter check_circle" [ref=e353] [cursor=pointer]:
+              - generic [ref=e354]:
+                - generic [ref=e355]: mail
+                - generic [ref=e356]: Cover Letter
+              - generic [ref=e358]: check_circle
+            - button "question_answer Answers" [ref=e359] [cursor=pointer]:
+              - generic [ref=e360]:
+                - generic [ref=e361]: question_answer
+                - generic [ref=e362]: Answers
+            - button "inventory_2 Prep Artifacts" [ref=e363] [cursor=pointer]:
+              - generic [ref=e364]:
+                - generic [ref=e365]: inventory_2
+                - generic [ref=e366]: Prep Artifacts
+            - generic [ref=e368]:
+              - paragraph [ref=e369]: Strategy Ready
+              - paragraph [ref=e370]:
+                - text: Documents are tailored to
+                - strong [ref=e371]: 86%
+                - text: match accuracy.
+          - generic [ref=e373]:
+            - generic [ref=e374]:
+              - generic [ref=e375]:
+                - heading "Job Requirements Alignment" [level=3] [ref=e376]
+                - paragraph [ref=e378]: No specific requirements parsed yet. Try enriching the application.
+              - generic [ref=e379]:
+                - heading "Detected Skills & Keywords" [level=3] [ref=e380]
+                - generic [ref=e381]:
+                  - generic [ref=e382]: Enterprise Architecture
+                  - generic [ref=e383]: Technical Leadership
+                  - generic [ref=e384]: System Design
+                - generic [ref=e386]:
+                  - generic [ref=e387]: 86%
+                  - text: Overall Match Score
+              - generic [ref=e388]:
+                - generic [ref=e389]:
+                  - generic [ref=e391]: auto_awesome
+                  - heading "Optimization Tips" [level=3] [ref=e392]
+                - generic [ref=e393]:
+                  - generic [ref=e396] [cursor=pointer]: Highlight any experience with corporate spin-offs, divestitures, carve-outs, or mergers & acquisitions (M&A). Since DePuy Synthes is transitioning to a standalone company, demonstrating your ability to architect for organizational separation is a massive selling point.
+                  - generic [ref=e399] [cursor=pointer]: If you hold a formal TOGAF certification, explicitly list it under your 'Education & Certifications' section rather than just listing 'TOGAF' in your technical toolkit, as enterprise architecture roles at this level highly value formal framework credentials.
+                  - generic [ref=e402] [cursor=pointer]: Elevate your MedTech and healthcare compliance experience (HIPAA, FDA/MedTech regulations) to the very top of your professional experience bullet points to instantly capture the interest of the J&J MedTech hiring team.
+                  - generic [ref=e405] [cursor=pointer]: Add metrics or bullet points that demonstrate your experience presenting to and collaborating with C-suite executives and business unit presidents, reinforcing your readiness for a high-level strategic leadership role.
+                - button "Apply Selected Improvements" [disabled] [ref=e406]
+            - generic [ref=e407]:
+              - generic [ref=e408]:
+                - generic [ref=e409]:
+                  - generic [ref=e410]:
+                    - generic [ref=e411]: description
+                    - generic [ref=e412]: base_resume_Robert-Dannenbring-Resume-Base_tailored.docx
+                  - generic [ref=e413]:
+                    - button "fullscreen" [ref=e414] [cursor=pointer]:
+                      - generic [ref=e415]: fullscreen
+                    - button "refresh REGENERATE" [ref=e416] [cursor=pointer]:
+                      - generic [ref=e417]: refresh
+                      - text: REGENERATE
+                    - button "edit EDIT" [ref=e418] [cursor=pointer]:
+                      - generic [ref=e419]: edit
+                      - text: EDIT
+                    - link "download DOWNLOAD" [ref=e420] [cursor=pointer]:
+                      - /url: /api/download/base_resume_Robert-Dannenbring-Resume-Base_tailored.docx
+                      - generic [ref=e421]: download
+                      - text: DOWNLOAD
+                - generic [ref=e424] [cursor=pointer]:
+                  - generic [ref=e425]:
+                    - heading "ROBERT DANNENBRING" [level=1] [ref=e426]
+                    - generic [ref=e427]:
+                      - generic [ref=e428]: robert.dannenbring@gmail.com
+                      - generic [ref=e429]: linkedin.com/in/rob-dannenbring | www.robdannenbring.com
+                      - generic [ref=e430]: Stamford, CT, 06903 | 917-693-8433
+                  - generic [ref=e431]:
+                    - heading "DIRECTOR, CHIEF ARCHITECT | ENTERPRISE ARCHITECTURE & HEALTHCARE INNOVATION" [level=2] [ref=e432]
+                    - paragraph [ref=e433]: 20+ Years Leading Enterprise Architecture and Delivering Mission-Critical Healthcare & Operational Systems
+                  - generic [ref=e434]:
+                    - heading "EXECUTIVE SUMMARY" [level=2] [ref=e435]
+                    - paragraph [ref=e436]: Strategic technology leader with 20+ years of experience directing enterprise architecture and delivering scalable systems across healthcare, aviation, and transportation. Expert in aligning IT strategy with business capabilities, establishing robust governance frameworks, and driving digital transformation. Proven track record of leading high-performing architecture teams, managing complex integrations, and ensuring regulatory compliance in highly regulated environments.
+                  - heading "CORE COMPETENCIES" [level=2] [ref=e438]
+                  - 'heading "Leadership & Strategy: Enterprise IT Architecture, IT Roadmap Development, Digital Transformation, and Business Alignment." [level=2] [ref=e440]'
+                  - 'heading "Enterprise Governance: Application, Data, Integration, and Security Governance, TOGAF Frameworks, and Technical Debt Reduction." [level=2] [ref=e442]'
+                  - 'heading "Solutions Architecture: Cloud-Native Platforms (Azure/AWS), Microservices, Event-Driven Design, and Enterprise Application Integration (EAI)." [level=2] [ref=e444]'
+                  - 'heading "Data Engineering & Emerging Tech: Vector-Ready Data Modeling, High-Frequency Systems, and AI/LLM Orchestration." [level=2] [ref=e446]'
+                  - 'heading "Compliance & Risk Management: MedTech Regulations, HIPAA, FAA, FRA, and Cybersecurity Standards (ISMS)." [level=2] [ref=e448]'
+                  - generic [ref=e449]:
+                    - heading "PROFESSIONAL EXPERIENCE" [level=2] [ref=e450]
+                    - paragraph [ref=e451]: Owner and Principal, Solutions Architect
+                    - paragraph [ref=e452]: DANNENBRING BROTHERS, LLC | Stamford, CT May 2021 – Present
+                    - paragraph [ref=e453]: Provide technical leadership and enterprise architecture direction for healthcare and laboratory operations, focusing on system modernization, data integrity, and compliance.
+                    - paragraph [ref=e454]: Architected a real-time Sample Tracking platform handling high-frequency time-series data and complex audit history, ensuring strict alignment with healthcare regulatory standards.
+                    - paragraph [ref=e455]: Integrated automated scanning workflows and enterprise application integration (EAI) patterns to ingest QR code data, validate batch integrity, and reconcile inventory.
+                    - paragraph [ref=e456]: Built secure, HIPAA-compliant RESTful APIs and cloud-native interfaces for cross-organization medical data exchange, mitigating cybersecurity and privacy risks.
+                    - paragraph [ref=e457]: Director of Business Services (Senior Solutions Architect)
+                    - paragraph [ref=e458]: ATLAS AIR WORLDWIDE | White Plains, NY Jun 2020 – Jun 2025
+                    - paragraph [ref=e459]: Acted as the primary technology partner and chief architect for global flight operations, aligning IT strategy and enterprise architecture with complex business goals.
+                    - paragraph [ref=e460]: Architected cross-system operational dashboards and integration solutions using Power Platform and Azure SQL to centralize real-time, data-driven decision making.
+                    - paragraph [ref=e461]: Deployed AI-based models and automated document interpretation systems, establishing architecture standards and reference patterns to reduce technical debt.
+                    - paragraph [ref=e462]: Defined a three-year enterprise technology roadmap and cloud migration strategy using Azure and hybrid cloud environments to support business growth.
+                  - generic [ref=e463]:
+                    - heading "Senior Manager — Flight/System Ops (Solutions Architect)" [level=2] [ref=e464]
+                    - paragraph [ref=e465]: ATLAS AIR WORLDWIDE | White Plains, NY Jun 2017 – Jun 2020
+                    - paragraph [ref=e466]: Led the technical transition of a global control center to a remote-accessible architecture in two weeks, demonstrating inclusive leadership and zero operational disruption.
+                    - paragraph [ref=e467]: Designed and deployed the proprietary Hawk Browser application, establishing application integration standards to circumvent legacy device limitations.
+                  - generic [ref=e468]:
+                    - heading "Business Service Manager — Operations (Solution Architect)" [level=2] [ref=e469]
+                    - paragraph [ref=e470]: ATLAS AIR WORLDWIDE | White Plains, NY May 2014 – Jun 2017
+                    - paragraph [ref=e471]: Architected mobile data systems for digital document access, achieving over $1M in annual cost savings through process improvements and technical debt reduction.
+                    - paragraph [ref=e472]: Designed and implemented Salesforce-based workflow systems to transform manual processes into streamlined digital pipelines, aligning business capabilities with IT.
+                    - paragraph [ref=e473]: Assistant Director — Operations Systems (Solutions Architect)
+                    - paragraph [ref=e474]: METRO-NORTH RAILROAD | New York, NY Jan 2011 – May 2014
+                    - paragraph [ref=e475]: Managed the architecture, implementation, and governance of major field applications for a regional commuter rail network.
+                    - paragraph [ref=e476]: Spearheaded the mobile ticketing initiative, leading the RFP process, vendor management, and integration strategy for barcode-based validation.
+                    - paragraph [ref=e477]: Re-architected legacy ticketing systems into a modern iOS-based platform with PCI-compliant design, ensuring robust information security risk management.
+                  - generic [ref=e478]:
+                    - heading "TECHNICAL TOOLKIT" [level=2] [ref=e479]
+                    - paragraph [ref=e480]: "AI/ML: Ollama, OpenWebUI, AI Builder, Azure Cognitive Services, Prompt Engineering."
+                    - paragraph [ref=e481]: "Cloud/DevOps: Microsoft Azure, AWS, Docker, Kubernetes, CI/CD, GitHub Actions, Azure DevOps, TOGAF."
+                    - paragraph [ref=e482]: "Languages: Python, SQL, C#, .NET Core, PowerShell, JavaScript (React), Objective-C/Swift, C++, Bash."
+                    - paragraph [ref=e483]: "Databases: Azure SQL, Oracle, SQL Server, NoSQL, SQLite."
+                  - heading "EDUCATION & CERTIFICATIONS" [level=2] [ref=e485]
+                  - heading "Bachelor of Science (BS) in Accounting, Indiana University." [level=2] [ref=e487]
+                  - heading "Microsoft Certified Professional | Microsoft Application Developer." [level=2] [ref=e489]
+              - generic [ref=e490]:
+                - heading "Key Changes & Tailoring" [level=3] [ref=e491]
+                - list [ref=e493]:
+                  - listitem [ref=e494]: Updated professional title and summary to align with the Director, Chief Architect role at Johnson & Johnson MedTech, emphasizing enterprise architecture, healthcare innovation, and governance.
+                  - listitem [ref=e495]: Tailored core competencies to highlight Enterprise IT Governance, TOGAF frameworks, Enterprise Application Integration (EAI), and MedTech/HIPAA compliance.
+                  - listitem [ref=e496]: Reframed professional experience bullet points to emphasize business alignment, technical debt reduction, and risk mitigation in highly regulated environments.
+                  - listitem [ref=e497]: Cleaned personal website URL by removing the 'www.' prefix as requested.
+          - generic [ref=e498]:
+            - generic [ref=e499]:
+              - generic [ref=e501]: check_circle
+              - generic [ref=e502]: Resume and Cover Letter are ready. Ready to Apply?
+            - button "Move to Applied Stage send" [ref=e504] [cursor=pointer]:
+              - text: Move to Applied Stage
+              - generic [ref=e505]: send

@@ -1,0 +1,11 @@
+const betterRegex = /(?:[\$\£\€\¥]|USD|EUR|GBP)?\s*[\d,]+(?:\.\d+)?\s*(?:[kK]|m|M)?\s*(?:\/(?:yr|hr|month|year|hour|annum|wk|week))?\s*(?:[-–]|to|and)\s*(?:[\$\£\€\¥]|USD|EUR|GBP)?\s*[\d,]+(?:\.\d+)?\s*(?:[kK]|m|M)?\s*(?:\/(?:yr|hr|month|year|hour|annum|wk|week))?|(?:[\$\£\€\¥]|USD|EUR|GBP)\s*[\d,]+(?:\.\d+)?\s*(?:[kK]|m|M)?\s*(?:\/(?:yr|hr|month|year|hour|annum|wk|week))?/gi;
+const str1 = "Salary: $150,000 - $180,000";
+const str2 = "Pay is 150k - 180k";
+const str3 = "$180,000/yr";
+const str4 = "$150k/yr - $180k/yr";
+const str5 = "150,000 to 180,000 USD";
+console.log("str1:", str1.match(betterRegex));
+console.log("str2:", str2.match(betterRegex));
+console.log("str3:", str3.match(betterRegex));
+console.log("str4:", str4.match(betterRegex));
+console.log("str5:", str5.match(betterRegex));

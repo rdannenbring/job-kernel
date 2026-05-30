@@ -1,0 +1,145 @@
+- generic [ref=e3]:
+  - complementary [ref=e7]:
+    - generic [ref=e8]:
+      - img "JobKernel logo" [ref=e11] [cursor=pointer]
+      - button "chevron_right" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: chevron_right
+      - button "add" [ref=e14] [cursor=pointer]:
+        - generic [ref=e15]: add
+      - navigation [ref=e16]:
+        - button "dashboard" [ref=e17] [cursor=pointer]:
+          - generic [ref=e18]: dashboard
+        - button "person" [ref=e19] [cursor=pointer]:
+          - generic [ref=e20]: person
+        - button "leaderboard" [ref=e21] [cursor=pointer]:
+          - generic [ref=e22]: leaderboard
+      - button "notifications" [ref=e23] [cursor=pointer]:
+        - generic [ref=e25]: notifications
+      - button "light_mode" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: light_mode
+      - navigation [ref=e29]:
+        - button "admin_panel_settings" [ref=e30] [cursor=pointer]:
+          - generic [ref=e31]: admin_panel_settings
+        - button "settings" [ref=e32] [cursor=pointer]:
+          - generic [ref=e33]: settings
+      - generic [ref=e34]:
+        - button "A" [ref=e35] [cursor=pointer]:
+          - generic [ref=e36]: A
+        - button "logout" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]: logout
+  - main [ref=e39]:
+    - generic [ref=e258]:
+      - generic [ref=e259]:
+        - button "Back" [ref=e260] [cursor=pointer]:
+          - generic [ref=e261]: arrow_back
+        - generic [ref=e262]:
+          - generic [ref=e263]: Diageo
+          - generic [ref=e264]: Regional Enterprise Architect, North America
+        - button "More options" [ref=e265] [cursor=pointer]:
+          - generic [ref=e266]: more_vert
+      - generic [ref=e267]:
+        - generic [ref=e268]:
+          - generic [ref=e269]:
+            - img "Diageo" [ref=e270]
+            - generic [ref=e271]:
+              - heading "Regional Enterprise Architect, North America" [level=1] [ref=e272]
+              - link "Diageo arrow_outward" [ref=e273] [cursor=pointer]:
+                - /url: https://www.diageo.com
+                - text: Diageo
+                - generic [ref=e274]: arrow_outward
+            - generic [ref=e276]:
+              - img [ref=e277]
+              - generic [ref=e280]: –
+          - generic [ref=e281]:
+            - generic [ref=e282]: Generated
+            - generic [ref=e283]:
+              - generic [ref=e284]: payments
+              - text: $154/hr
+            - generic [ref=e285]:
+              - generic [ref=e286]: Interest
+              - generic [ref=e287]:
+                - generic [ref=e288] [cursor=pointer]: star
+                - generic [ref=e289] [cursor=pointer]: star
+                - generic [ref=e290] [cursor=pointer]: star
+          - generic [ref=e291]:
+            - generic [ref=e292]:
+              - generic [ref=e293]: work
+              - generic [ref=e294]: Contract
+            - link "open_in_new Visit listing" [ref=e295] [cursor=pointer]:
+              - /url: https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4400014402&discover=recommended&discoveryOrigin=JOBS_HOME_JYMBII
+              - generic [ref=e296]: open_in_new
+              - generic [ref=e297]: Visit listing
+          - generic [ref=e299]:
+            - button "description Resume" [ref=e300] [cursor=pointer]:
+              - generic [ref=e302]: description
+              - generic [ref=e303]: Resume
+            - button "mail Cover Letter" [ref=e305] [cursor=pointer]:
+              - generic [ref=e307]: mail
+              - generic [ref=e308]: Cover Letter
+            - button "question_answer Answers" [ref=e310] [cursor=pointer]:
+              - generic [ref=e312]: question_answer
+              - generic [ref=e313]: Answers
+          - button "article View full job details chevron_right" [ref=e315] [cursor=pointer]:
+            - generic [ref=e316]: article
+            - text: View full job details
+            - generic [ref=e317]: chevron_right
+        - generic [ref=e318]:
+          - generic [ref=e319]:
+            - generic [ref=e320]:
+              - generic [ref=e321]: Generated
+              - generic [ref=e322]: 0/4
+            - button "All stages expand_more" [ref=e323] [cursor=pointer]:
+              - text: All stages
+              - generic [ref=e324]: expand_more
+          - tablist "Pipeline stages" [ref=e325]:
+            - tab "Saved stage" [ref=e326] [cursor=pointer]
+            - tab "Generated stage" [selected] [ref=e327] [cursor=pointer]
+            - tab "Applied stage" [ref=e328] [cursor=pointer]
+            - tab "Interviewing stage" [ref=e329] [cursor=pointer]
+            - tab "Decision stage" [ref=e330] [cursor=pointer]
+            - tab "Accepted stage" [ref=e331] [cursor=pointer]
+          - tablist "Substages" [ref=e333]:
+            - tab "description Resume" [selected] [ref=e334] [cursor=pointer]:
+              - generic [ref=e335]: description
+              - text: Resume
+            - tab "mail Cover Letter" [ref=e336] [cursor=pointer]:
+              - generic [ref=e337]: mail
+              - text: Cover Letter
+            - tab "question_answer Answers" [ref=e338] [cursor=pointer]:
+              - generic [ref=e339]: question_answer
+              - text: Answers
+            - tab "inventory_2 Prep" [ref=e340] [cursor=pointer]:
+              - generic [ref=e341]: inventory_2
+              - text: Prep
+        - generic [ref=e342]:
+          - generic [ref=e344]:
+            - heading "Resume" [level=3] [ref=e345]
+            - generic [ref=e346]: Your tailored resume for this application
+          - generic [ref=e348]:
+            - generic [ref=e349]: description
+            - generic [ref=e350]: Resume in progress
+      - generic:
+        - button "send Mark as Applied" [ref=e351] [cursor=pointer]:
+          - generic [ref=e352]: send
+          - text: Mark as Applied
+        - button "More actions" [ref=e353] [cursor=pointer]:
+          - generic [ref=e354]: more_horiz
+      - dialog "Resume options" [ref=e368]:
+        - generic [ref=e370]:
+          - generic [ref=e371]:
+            - generic [ref=e372]: description
+            - text: Resume
+          - button "Close Resume" [active] [ref=e373] [cursor=pointer]:
+            - generic [ref=e374]: close
+        - generic [ref=e375]:
+          - generic [ref=e376]:
+            - generic [ref=e377]: AI Generated
+            - generic [ref=e378]: Not generated yet
+            - button "auto_awesome Generate Resume" [ref=e379] [cursor=pointer]:
+              - generic [ref=e380]: auto_awesome
+              - text: Generate Resume
+          - generic [ref=e381]:
+            - generic [ref=e382]: Custom Upload
+            - button "upload Upload custom" [ref=e383] [cursor=pointer]:
+              - generic [ref=e384]: upload
+              - text: Upload custom

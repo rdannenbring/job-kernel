@@ -1,0 +1,513 @@
+/* ──────────────────────────────────────────────────────────────
+   JobKernel — Job Details (Mobile)
+   Mobile-only shell + scoped overrides. Reuses tokens from styles.css.
+   All classes m-* namespaced.
+   ────────────────────────────────────────────────────────────── */
+
+.m-app {
+  position: relative; width: 100%; height: 100%;
+  background: var(--bg); color: var(--txt);
+  font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  /* Reserve space for the iOS status bar that the device frame paints over the top */
+  padding-top: 60px;
+}
+
+/* ─── Top bar ─── */
+.m-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 6px; height: 52px; flex-shrink: 0;
+  background: var(--bg-card); border-bottom: 1px solid var(--line);
+  z-index: 5;
+}
+.m-iconbtn {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: grid; place-items: center; color: var(--txt-2);
+  background: transparent; border: 0; cursor: pointer; padding: 0;
+}
+.m-iconbtn:hover { background: var(--bg-hover); }
+.m-crumb {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 1px; line-height: 1.15; min-width: 0; padding: 0 8px;
+}
+.m-crumb-eyebrow {
+  font-size: 10px; color: var(--txt-mute); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.m-crumb-name {
+  font-size: 13px; color: var(--txt); font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+
+/* ─── Scroll body ─── */
+.m-scroll {
+  flex: 1; overflow: auto;
+  padding: 12px 14px 108px;
+  display: flex; flex-direction: column; gap: 12px;
+  scrollbar-width: thin;
+}
+.m-scroll::-webkit-scrollbar { width: 6px; }
+.m-scroll::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 3px; }
+
+/* ─── Header card (mobile) ─── */
+.m-header {
+  background: var(--bg-card); border: 1px solid var(--line);
+  border-radius: 14px; padding: 14px;
+  box-shadow: var(--shadow-card);
+}
+.m-header-top { display: flex; gap: 12px; align-items: flex-start; }
+.m-header-title {
+  margin: 0; font-size: 19px; font-weight: 800; line-height: 1.22;
+  color: var(--txt); letter-spacing: -0.01em;
+}
+.m-header-company {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 13px; font-weight: 600; color: var(--txt-mute);
+  margin-top: 4px;
+}
+.m-header-company .arrow { color: var(--txt-dim); }
+
+.m-pill-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.m-meta-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px;
+  margin-top: 10px; font-size: 12px; color: var(--txt-2);
+}
+.m-meta-item { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.m-meta-item .icon { color: var(--txt-dim); flex-shrink: 0; }
+.m-meta-item span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-meta-item.is-link { color: var(--primary); font-weight: 600; }
+.m-meta-item.is-link .icon { color: var(--primary); }
+
+.m-header-divider {
+  height: 1px; background: var(--line);
+  margin: 10px -2px 8px;
+}
+
+.m-docs-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+}
+.m-doc {
+  position: relative;
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px 5px 5px;
+  border-radius: 8px;
+  background: var(--bg-card); border: 1px solid var(--line);
+  cursor: pointer; transition: 120ms;
+  font-family: inherit; min-width: 0; text-align: left;
+  overflow: hidden;
+}
+.m-doc:hover { background: var(--bg-hover); border-color: var(--line-strong); }
+.m-doc-icon {
+  width: 22px; height: 22px; border-radius: 6px;
+  display: grid; place-items: center; flex-shrink: 0;
+}
+.m-doc-name {
+  font-size: 11.5px; font-weight: 700; color: var(--txt);
+  flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.m-doc-dot {
+  position: absolute; top: 4px; right: 4px;
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1.5px solid var(--bg-card);
+}
+/* State variants — left-side icon takes a soft tinted fill, top-right dot
+   gives a glanceable status pin. The whole card tints in the missing/attention
+   cases so the urgency is unmissable. */
+.m-doc.is-ok       .m-doc-icon { background: var(--success-soft); color: var(--success); }
+.m-doc.is-ok       .m-doc-dot  { background: var(--success); }
+.m-doc.is-attention { background: rgba(245, 158, 11, 0.06); border-color: rgba(245, 158, 11, 0.22); }
+.m-doc.is-attention .m-doc-icon { background: var(--warn-soft); color: var(--warn); }
+.m-doc.is-attention .m-doc-dot  { background: var(--warn); }
+.m-doc.is-missing  { background: rgba(220, 38, 38, 0.05); border-color: rgba(220, 38, 38, 0.22); }
+.m-doc.is-missing  .m-doc-icon { background: var(--danger-soft); color: var(--danger); }
+.m-doc.is-missing  .m-doc-dot  { background: var(--danger); }
+.m-app[data-theme="dark"] .m-doc.is-attention { background: rgba(245, 158, 11, 0.10); }
+.m-app[data-theme="dark"] .m-doc.is-missing   { background: rgba(239, 68, 68, 0.10); }
+
+.m-view-details {
+  display: flex; width: 100%; justify-content: center; align-items: center; gap: 6px;
+  margin-top: 8px; padding: 8px;
+  border-radius: 8px;
+  background: var(--primary-soft); border: 1px solid var(--primary-edge);
+  color: var(--primary); font-family: inherit; font-size: 12.5px; font-weight: 700;
+  cursor: pointer;
+}
+.m-view-details .icon:last-child { transition: transform 150ms; }
+.m-view-details:hover .icon:last-child { transform: translateX(2px); }
+
+/* ─── Pipeline strip ─── */
+.m-pipe {
+  background: var(--bg-card); border: 1px solid var(--line);
+  border-radius: 14px; padding: 12px 14px;
+  box-shadow: var(--shadow-card);
+}
+.m-pipe-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.m-pipe-stage {
+  display: flex; align-items: baseline; gap: 8px;
+}
+.m-pipe-stage-name {
+  font-size: 14px; font-weight: 800; color: var(--txt);
+  letter-spacing: -0.005em;
+}
+.m-pipe-stage-progress {
+  font-size: 11px; font-weight: 700; color: var(--primary);
+  background: var(--primary-soft); border: 1px solid var(--primary-edge);
+  padding: 2px 7px; border-radius: 999px;
+}
+.m-pipe-expand {
+  background: transparent; border: 0; padding: 4px 6px;
+  color: var(--txt-mute); cursor: pointer; font-family: inherit;
+  font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.m-pipe-expand:hover { color: var(--txt); }
+
+.m-pipe-dots {
+  display: flex; align-items: center; gap: 0;
+  margin-bottom: 12px;
+}
+.m-pipe-dot {
+  flex: 1; height: 6px; background: var(--line);
+  position: relative;
+  border: 0; padding: 0; margin: 0;
+  cursor: pointer;
+  font: inherit;
+  /* Hit slop — expand the tappable area without growing visual height. */
+  box-sizing: content-box;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  background-clip: padding-box;
+  transition: background 120ms;
+}
+.m-pipe-dot:first-child { border-top-left-radius: 9999px; border-bottom-left-radius: 9999px; }
+.m-pipe-dot:last-child { border-top-right-radius: 9999px; border-bottom-right-radius: 9999px; }
+.m-pipe-dot + .m-pipe-dot { margin-left: 2px; }
+.m-pipe-dot:hover { background: var(--line-strong); }
+.m-pipe-dot.is-passed,
+.m-pipe-dot.is-passed:hover { background: var(--primary); }
+.m-pipe-dot.is-current,
+.m-pipe-dot.is-current:hover { background: var(--primary); }
+.m-pipe-dot.is-current::after {
+  content: ''; position: absolute; right: -3px; top: 50%; transform: translateY(-50%);
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px var(--bg-card), 0 0 0 5px var(--primary-soft);
+}
+/* Preview indicator — a hollow amber ring layered over whichever segment
+   the user is peeking at. Separates "what you're viewing" from "where
+   you actually are" without changing the fill semantics. */
+.m-pipe-dot.is-previewing::before {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--warn);
+  background: var(--bg-card);
+  pointer-events: none;
+}
+
+/* ─── Substage pill tabs — horizontal scroll with edge-fade hint ─── */
+/* Wrapper applies a left+right gradient mask so off-screen pills fade
+   under the card edge instead of cutting hard, telling the user the
+   list is scrollable. Mask is one-sided when scrolled to either end. */
+.m-substage-tabs-wrap {
+  position: relative; margin: 0 -14px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%);
+}
+.m-substage-tabs {
+  display: flex; gap: 6px;
+  overflow-x: auto; scrollbar-width: none;
+  padding: 2px 14px 2px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  cursor: grab;
+  user-select: none;
+}
+.m-substage-tabs.is-dragging { cursor: grabbing; scroll-behavior: auto; }
+.m-substage-tabs.is-dragging .m-substage-tab { pointer-events: none; }
+.m-substage-tabs::-webkit-scrollbar { display: none; }
+.m-substage-tab {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 11px; border-radius: 999px;
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  background: var(--bg); border: 1px solid var(--line);
+  color: var(--txt-mute); white-space: nowrap; cursor: pointer;
+  transition: 120ms;
+}
+.m-substage-tab:hover { color: var(--txt-2); }
+.m-substage-tab.is-active {
+  background: var(--primary-soft); border-color: var(--primary-edge);
+  color: var(--primary); font-weight: 700;
+}
+.m-substage-tab.is-done { color: var(--txt-dim); }
+.m-substage-tab.is-done .check { color: var(--success); }
+.m-substage-tab.is-active .icon { color: var(--primary); }
+
+/* ─── Content card (mobile) ─── */
+.m-card {
+  background: var(--bg-card); border: 1px solid var(--line);
+  border-radius: 14px; padding: 14px;
+  box-shadow: var(--shadow-card);
+}
+.m-card-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 10px; margin-bottom: 12px;
+}
+.m-card-title { margin: 0; font-size: 15px; font-weight: 800; color: var(--txt); letter-spacing: -0.005em; }
+.m-card-subtitle { font-size: 12px; color: var(--txt-mute); margin-top: 2px; line-height: 1.35; }
+
+/* Compatibility — compact mobile */
+.m-compat {
+  background: linear-gradient(180deg, rgba(37,106,244,0.06), transparent 80%);
+  border: 1px solid var(--primary-edge);
+  border-radius: 12px; padding: 14px;
+}
+.m-compat-top {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
+}
+.m-compat-stat .lbl {
+  font-size: 11px; font-weight: 800; color: var(--primary); letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.m-compat-stat .msg { font-size: 13px; font-weight: 700; color: var(--txt); margin-top: 2px; }
+.m-dim-row {
+  display: grid; grid-template-columns: 88px 1fr 38px;
+  align-items: center; gap: 10px; padding: 4px 0;
+  font-size: 12px;
+}
+.m-dim-row .name { color: var(--txt-2); font-weight: 600; }
+.m-dim-row .bar { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.m-dim-row .bar > div { height: 100%; border-radius: 3px; }
+.m-dim-row .val { text-align: right; font-weight: 700; color: var(--txt); font-variant-numeric: tabular-nums; }
+.m-dim-row .val .of { color: var(--txt-dim); font-weight: 600; }
+
+.m-summary {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px;
+  margin-top: 4px;
+}
+
+/* ─── Next action (mobile inline) ─── */
+.m-next {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 14px;
+  background: linear-gradient(180deg, #f0f7ff, var(--bg-card));
+  border: 1px solid var(--primary-edge);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+}
+.m-next .head {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--primary);
+}
+.m-next h4 { margin: 2px 0 0; font-size: 15px; font-weight: 800; color: var(--txt); letter-spacing: -0.005em; }
+.m-next p { margin: 4px 0 0; font-size: 12.5px; color: var(--txt-mute); line-height: 1.5; }
+.m-next-actions { display: flex; gap: 8px; margin-top: 10px; }
+.m-next-actions .btn { flex: 1; justify-content: center; padding: 9px; font-size: 13px; }
+
+/* dark variant */
+.m-app[data-theme="dark"] .m-next {
+  background: linear-gradient(180deg, rgba(37,106,244,0.10), rgba(19,28,43,0.4));
+}
+
+/* ─── Inline one-line hint (replaces big Next Action card on most substages) ─── */
+.m-hint {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-card); border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 12.5px; font-weight: 600; color: var(--txt-2);
+  box-shadow: var(--shadow-card);
+}
+
+/* ─── Pipeline preview sub-line (secondary identity in the head) ─── */
+/* Greyed-out line beneath the current-stage title so "current" stays
+   the visual anchor. The × dismisses preview without committing. */
+.m-pipe-preview-line {
+  display: flex; align-items: center; gap: 6px;
+  margin: 2px 0 0;
+  padding: 4px 4px 4px 8px;
+  border-radius: 7px;
+  font-size: 11.5px; font-weight: 600;
+  background: transparent;
+  color: var(--txt-mute);
+  border: 1px dashed var(--line-strong);
+}
+.m-pipe-preview-line b { font-weight: 800; color: var(--txt-2); }
+.m-pipe-preview-line.is-past { color: var(--warn); border-color: rgba(245,158,11,0.35); }
+.m-pipe-preview-line.is-past b { color: var(--warn); }
+.m-pipe-preview-line.is-future { color: var(--primary); border-color: var(--primary-edge); }
+.m-pipe-preview-line.is-future b { color: var(--primary); }
+.m-pipe-preview-close {
+  margin-left: auto;
+  width: 22px; height: 22px; border-radius: 5px;
+  display: grid; place-items: center;
+  background: transparent; border: 0; cursor: pointer;
+  color: currentColor; opacity: 0.7;
+}
+.m-pipe-preview-close:hover { background: rgba(0,0,0,0.06); opacity: 1; }
+.m-app[data-theme="dark"] .m-pipe-preview-close:hover { background: rgba(255,255,255,0.08); }
+
+/* ─── Preview placeholder card (workspace when previewing non-current) ─── */
+.m-preview-card { padding: 18px; }
+.m-preview-card-eyebrow {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--warn);
+  padding: 3px 8px; border-radius: 999px;
+  background: var(--warn-soft); border: 1px solid rgba(245,158,11,0.3);
+  width: fit-content; margin-bottom: 12px;
+}
+.m-app[data-theme="dark"] .m-preview-card-eyebrow { background: rgba(245,158,11,0.12); }
+.m-preview-card-head {
+  display: flex; gap: 14px; align-items: center; margin-bottom: 14px;
+}
+.m-preview-card-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  display: grid; place-items: center; flex-shrink: 0;
+  background: var(--bg); color: var(--txt-mute);
+  border: 1px solid var(--line);
+}
+.m-preview-card-meta {
+  font-size: 13px; color: var(--txt-mute); line-height: 1.5;
+  padding: 12px 14px; background: var(--bg); border-radius: 10px;
+  margin-bottom: 14px;
+}
+.m-preview-card-actions { display: flex; gap: 8px; }
+.m-preview-card-actions .btn { padding: 9px 12px; font-size: 12.5px; }
+
+/* ─── Confirmation modal ─── */
+.m-confirm-backdrop {
+  position: absolute; inset: 0; background: rgba(7,11,22,0.6);
+  z-index: 12; animation: m-fade 180ms;
+}
+.m-confirm {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: calc(100% - 40px); max-width: 340px;
+  background: var(--bg-card); border-radius: 18px;
+  padding: 20px; z-index: 13;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+  border: 1px solid var(--line);
+  animation: m-confirm-in 220ms cubic-bezier(.2,.8,.2,1);
+}
+@keyframes m-confirm-in {
+  from { transform: translate(-50%, -45%) scale(0.96); opacity: 0; }
+}
+.m-confirm-icon {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--primary-soft); color: var(--primary);
+  margin-bottom: 14px;
+}
+.m-confirm-icon.is-destructive {
+  background: var(--warn-soft); color: var(--warn);
+}
+.m-app[data-theme="dark"] .m-confirm-icon.is-destructive { background: rgba(245,158,11,0.14); }
+.m-confirm-title {
+  font-size: 16px; font-weight: 800; color: var(--txt);
+  letter-spacing: -0.005em; margin-bottom: 6px;
+}
+.m-confirm-body {
+  font-size: 13px; color: var(--txt-mute); line-height: 1.5;
+  margin-bottom: 18px;
+}
+.m-confirm-actions { display: flex; gap: 8px; }
+.m-confirm-actions .btn { flex: 1; justify-content: center; padding: 11px; font-size: 13px; font-weight: 700; }
+.btn-danger-solid {
+  background: var(--warn); color: white; border-color: var(--warn);
+  box-shadow: 0 8px 24px -8px rgba(245,158,11,0.5);
+}
+.btn-danger-solid:hover { background: #b45309; border-color: #b45309; }
+
+/* ─── Sticky bottom CTA bar ─── */
+.m-cta-bar {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 12px 14px 36px;
+  background: linear-gradient(180deg, transparent 0%, var(--bg-card) 38%);
+  display: flex; gap: 8px; z-index: 4;
+  pointer-events: none;
+}
+.m-cta-bar > * { pointer-events: auto; }
+.m-cta-bar .btn-primary { flex: 1; justify-content: center; padding: 12px 14px; font-size: 14px; font-weight: 700; }
+.m-cta-bar .btn { padding: 12px; }
+
+/* ─── Bottom sheet (full pipeline view) ─── */
+.m-sheet-backdrop {
+  position: absolute; inset: 0; background: rgba(7, 11, 22, 0.55);
+  z-index: 8; animation: m-fade 180ms;
+}
+@keyframes m-fade { from { opacity: 0; } }
+.m-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 9;
+  background: var(--bg-card);
+  border-top-left-radius: 22px; border-top-right-radius: 22px;
+  padding: 8px 16px 30px;
+  max-height: 82%;
+  display: flex; flex-direction: column;
+  box-shadow: 0 -16px 36px rgba(0,0,0,0.18);
+  animation: m-rise 240ms cubic-bezier(.2,.8,.2,1);
+}
+@keyframes m-rise { from { transform: translateY(20%); opacity: 0; } }
+.m-sheet-handle {
+  width: 40px; height: 4px; border-radius: 2px;
+  background: var(--line-strong);
+  margin: 8px auto 12px;
+  flex-shrink: 0;
+}
+.m-sheet-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2px 12px; flex-shrink: 0;
+}
+.m-sheet-title { font-size: 16px; font-weight: 800; color: var(--txt); letter-spacing: -0.005em; }
+.m-sheet-body { overflow-y: auto; flex: 1; margin: 0 -4px; padding: 0 4px; }
+
+/* In sheet we reuse the vertical rail — but it gets nicer mobile sizing */
+.m-sheet .vrail { gap: 4px; }
+.m-sheet .vstep { padding: 12px 12px 12px 38px; }
+.m-sheet .vstep .vnode { left: 13px; top: 16px; width: 16px; height: 16px; }
+.m-sheet .vstep::before { left: 20px; }
+.m-sheet .vstep .vname { font-size: 13px; }
+.m-sheet .vstep .vsub { font-size: 12px; }
+.m-sheet .vsubs { margin-left: 33px; }
+.m-sheet .vsub { padding: 8px 10px; font-size: 13px; }
+
+.m-sheet .rail-divider {
+  margin: 14px 2px 8px; font-size: 10px;
+}
+.m-sheet .end-state { padding: 10px 12px; font-size: 13px; }
+
+/* ─── Lists in mobile substage content ─── */
+.m-flag-row {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 12px; background: var(--bg);
+  border-radius: 10px;
+  font-size: 12.5px; color: var(--txt); line-height: 1.4;
+}
+.m-research-row {
+  display: flex; gap: 10px; align-items: center;
+  padding: 10px 12px; background: var(--bg);
+  border-radius: 10px;
+}
+.m-research-icon {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: var(--primary-soft); color: var(--primary);
+  display: grid; place-items: center; flex-shrink: 0;
+}
+.m-research-name { font-size: 13px; font-weight: 700; color: var(--txt); }
+.m-research-meta { font-size: 11px; color: var(--txt-mute); font-weight: 500; margin-top: 1px; }
+
+/* Hide scrollbars on horizontal strips even in light theme */
+.m-substage-tabs { -ms-overflow-style: none; }

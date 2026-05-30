@@ -1,0 +1,339 @@
+- generic [ref=e3]:
+  - complementary [ref=e7]:
+    - generic [ref=e8]:
+      - img "JobKernel logo" [ref=e169] [cursor=pointer]
+      - button "chevron_right" [ref=e170] [cursor=pointer]:
+        - generic [ref=e171]: chevron_right
+      - button "add" [ref=e172] [cursor=pointer]:
+        - generic [ref=e17]: add
+      - navigation [ref=e19]:
+        - button "dashboard" [ref=e173] [cursor=pointer]:
+          - generic [ref=e21]: dashboard
+        - button "person" [ref=e174] [cursor=pointer]:
+          - generic [ref=e24]: person
+        - button "leaderboard" [ref=e175] [cursor=pointer]:
+          - generic [ref=e27]: leaderboard
+      - button "notifications" [ref=e176] [cursor=pointer]:
+        - generic [ref=e31]: notifications
+      - button "settings_brightness" [ref=e177] [cursor=pointer]:
+        - generic [ref=e35]: settings_brightness
+      - navigation [ref=e37]:
+        - button "admin_panel_settings" [ref=e178] [cursor=pointer]:
+          - generic [ref=e39]: admin_panel_settings
+        - button "settings" [ref=e179] [cursor=pointer]:
+          - generic [ref=e42]: settings
+      - generic [ref=e44]:
+        - button "A" [ref=e180] [cursor=pointer]:
+          - generic [ref=e46]: A
+        - button "logout" [ref=e181] [cursor=pointer]:
+          - generic [ref=e51]: logout
+  - main [ref=e53]:
+    - generic [ref=e183]:
+      - generic [ref=e184]:
+        - button "arrow_back Back to Dashboard" [ref=e185] [cursor=pointer]:
+          - generic [ref=e186]: arrow_back
+          - text: Back to Dashboard
+        - generic [ref=e187]:
+          - button "edit Edit Info" [ref=e188] [cursor=pointer]:
+            - generic [ref=e189]: edit
+            - text: Edit Info
+          - button "archive Archive" [ref=e190] [cursor=pointer]:
+            - generic [ref=e191]: archive
+            - text: Archive
+          - button "delete Delete" [ref=e192] [cursor=pointer]:
+            - generic [ref=e193]: delete
+            - text: Delete
+      - generic [ref=e195]:
+        - generic "Click to set a logo" [ref=e196] [cursor=pointer]:
+          - img "Johnson & Johnson" [ref=e197]
+        - generic [ref=e198]:
+          - generic [ref=e199]:
+            - heading "Director, Chief Architect, Architecture" [level=1] [ref=e200]
+            - generic [ref=e201]: saved
+          - generic [ref=e203]:
+            - link "Johnson & Johnson arrow_outward" [ref=e204] [cursor=pointer]:
+              - /url: https://www.jnj.com
+              - text: Johnson & Johnson
+              - generic [ref=e205]: arrow_outward
+            - generic [ref=e206]:
+              - generic [ref=e207]: payments
+              - text: $150,000.00 - $258,750.00
+            - generic [ref=e208]:
+              - generic [ref=e209]: Interest
+              - generic [ref=e210]:
+                - generic [ref=e211] [cursor=pointer]: star
+                - generic [ref=e212] [cursor=pointer]: star
+                - generic [ref=e213] [cursor=pointer]: star
+          - generic [ref=e214]:
+            - generic [ref=e215]:
+              - generic [ref=e216]: location_on
+              - text: Norwalk, CT
+            - generic [ref=e217]: ·
+            - generic [ref=e218]:
+              - generic [ref=e219]: work
+              - text: Full-time
+            - generic [ref=e220]: ·
+            - link "open_in_new Visit Listing" [ref=e221] [cursor=pointer]:
+              - /url: https://www.linkedin.com/jobs/search-results/?currentJobId=4409560647&eBP=CwEAAAGeQuiXSwwSXu-BMWIP0eA0hJjYSZdb3sfWzGD3H82bMOJdb9fLLKTmLvwTV8CFbitGGJLR3bkROHKlhi6spgxCpFMHdjHYjgjALrcmXckjDyhS__xE2mjd-cxuKTZR4rZmk4UCoboJsDy1t1q-yXHJDNHbxMbW-_OTZKEOwHqp_DrfM8cPrJRS3Wdjy0CqArKAa-nqb_4yEydxUqLAxU0qpETwXlwDBBY3QqJ5LWmAify8kQRwaLMcrUGJxNFanFuU4CdxURHKsqHdHnhgFS3MPUSAFf0AxqB_KMu7joZLiEu3iJVv3ogtv7798IXQ_k5TKPyMF61utMc7Hadhpxn_tfQ7afXPgNmqZTBwWHptMZOGo-e7YKS4sJlDJNqDKM7lYn2WB_cUherGTr0JGLOt0XWP-2AzpnxkbxjwWE66ifFOvJ6NX6BV3oLB0Vh2N4t2NkUpD4thnT7ROr78M75DxBi7OI5KIBUsMowc5autWZ9F-aB3&refId=hu1f6lX1PiNvb4%2B1pfTwkA%3D%3D&trackingId=C%2ByaT8vMpLe1eTrIUkqgjA%3D%3D&showHowYouFit=HOW_YOU_FIT&keywords=Director%20of%20Solutions%20Architecture&origin=QUALIFICATION_LANDING&originToLandingJobPostings=4368900622%2C4414219455%2C4383248284%2C4383176787&geoId=90000070
+              - generic [ref=e222]: open_in_new
+              - text: Visit Listing
+            - generic [ref=e223]: ·
+            - link "rocket_launch Direct Apply" [ref=e224] [cursor=pointer]:
+              - /url: https://www.linkedin.com/jobs/search-results/?currentJobId=4409560647&eBP=CwEAAAGeQuiXSwwSXu-BMWIP0eA0hJjYSZdb3sfWzGD3H82bMOJdb9fLLKTmLvwTV8CFbitGGJLR3bkROHKlhi6spgxCpFMHdjHYjgjALrcmXckjDyhS__xE2mjd-cxuKTZR4rZmk4UCoboJsDy1t1q-yXHJDNHbxMbW-_OTZKEOwHqp_DrfM8cPrJRS3Wdjy0CqArKAa-nqb_4yEydxUqLAxU0qpETwXlwDBBY3QqJ5LWmAify8kQRwaLMcrUGJxNFanFuU4CdxURHKsqHdHnhgFS3MPUSAFf0AxqB_KMu7joZLiEu3iJVv3ogtv7798IXQ_k5TKPyMF61utMc7Hadhpxn_tfQ7afXPgNmqZTBwWHptMZOGo-e7YKS4sJlDJNqDKM7lYn2WB_cUherGTr0JGLOt0XWP-2AzpnxkbxjwWE66ifFOvJ6NX6BV3oLB0Vh2N4t2NkUpD4thnT7ROr78M75DxBi7OI5KIBUsMowc5autWZ9F-aB3&refId=hu1f6lX1PiNvb4%2B1pfTwkA%3D%3D&trackingId=C%2ByaT8vMpLe1eTrIUkqgjA%3D%3D&showHowYouFit=HOW_YOU_FIT&keywords=Director%20of%20Solutions%20Architecture&origin=QUALIFICATION_LANDING&originToLandingJobPostings=4368900622%2C4414219455%2C4383248284%2C4383176787&geoId=90000070
+              - generic [ref=e225]: rocket_launch
+              - text: Direct Apply
+          - generic [ref=e227]:
+            - generic [ref=e228]: Docs
+            - button "description Resume check_circle OK" [ref=e229] [cursor=pointer]:
+              - generic [ref=e230]: description
+              - generic [ref=e231]: Resume
+              - generic [ref=e232]:
+                - generic [ref=e233]: check_circle
+                - text: OK
+            - button "mail Cover check_circle OK" [ref=e234] [cursor=pointer]:
+              - generic [ref=e235]: mail
+              - generic [ref=e236]: Cover
+              - generic [ref=e237]:
+                - generic [ref=e238]: check_circle
+                - text: OK
+            - button "folder Context check_circle OK" [ref=e239] [cursor=pointer]:
+              - generic [ref=e240]: folder
+              - generic [ref=e241]: Context
+              - generic [ref=e242]:
+                - generic [ref=e243]: check_circle
+                - text: OK
+            - button "article View full job details chevron_right" [ref=e244] [cursor=pointer]:
+              - generic [ref=e245]: article
+              - text: View full job details
+              - generic [ref=e246]: chevron_right
+        - generic [ref=e247]:
+          - generic [ref=e248]:
+            - img [ref=e249]
+            - generic [ref=e252]: "86"
+          - generic [ref=e253]: ↑ 3 vs avg
+      - generic [ref=e254]:
+        - generic [ref=e255]:
+          - generic [ref=e256]: Pipeline
+          - generic [ref=e257]:
+            - generic [ref=e258] [cursor=pointer]:
+              - generic [ref=e262]: Saved
+              - generic [ref=e263]: 5/5 · in progress
+            - generic [ref=e264]:
+              - button "check_circle Job Analysis" [ref=e265] [cursor=pointer]:
+                - generic [ref=e266]: check_circle
+                - generic [ref=e267]: Job Analysis
+              - button "check_circle Reviewed" [ref=e268] [cursor=pointer]:
+                - generic [ref=e269]: check_circle
+                - generic [ref=e270]: Reviewed
+              - button "check_circle Network Contacts" [ref=e271] [cursor=pointer]:
+                - generic [ref=e272]: check_circle
+                - generic [ref=e273]: Network Contacts
+              - button "check_circle Company Research" [ref=e274] [cursor=pointer]:
+                - generic [ref=e275]: check_circle
+                - generic [ref=e276]: Company Research
+              - button "check_circle Prioritize" [ref=e277] [cursor=pointer]:
+                - generic [ref=e278]: check_circle
+                - generic [ref=e279]: Prioritize
+            - generic [ref=e280] [cursor=pointer]:
+              - generic [ref=e283]: Generated
+              - generic [ref=e284]: 2/4
+            - generic [ref=e285] [cursor=pointer]:
+              - generic [ref=e288]: Applied
+              - generic [ref=e289]: 2/4
+            - generic [ref=e290] [cursor=pointer]:
+              - generic [ref=e293]: Interviewing
+              - generic [ref=e294]: 0/5
+            - generic [ref=e295] [cursor=pointer]:
+              - generic [ref=e298]: Decision
+              - generic [ref=e299]: 0/5
+            - generic [ref=e300] [cursor=pointer]:
+              - generic [ref=e303]: Accepted
+              - generic [ref=e304]: 0/5
+          - generic [ref=e305]: End states
+          - button "block Rejected arrow_outward" [ref=e308] [cursor=pointer]:
+            - generic [ref=e309]: block
+            - generic [ref=e310]: Rejected
+            - generic [ref=e311]: arrow_outward
+          - button "do_not_disturb_on Declined arrow_outward" [ref=e312] [cursor=pointer]:
+            - generic [ref=e313]: do_not_disturb_on
+            - generic [ref=e314]: Declined
+            - generic [ref=e315]: arrow_outward
+          - button "cancel Withdrawn arrow_outward" [ref=e316] [cursor=pointer]:
+            - generic [ref=e317]: cancel
+            - generic [ref=e318]: Withdrawn
+            - generic [ref=e319]: arrow_outward
+        - generic [ref=e322]:
+          - generic [ref=e323]:
+            - button "first_page" [ref=e325] [cursor=pointer]:
+              - generic [ref=e326]: first_page
+            - button "analytics Job Analysis (parsed) check_circle" [ref=e327] [cursor=pointer]:
+              - generic [ref=e328]:
+                - generic [ref=e329]: analytics
+                - generic [ref=e330]: Job Analysis (parsed)
+              - generic [ref=e332]: check_circle
+            - button "rule Reviewed check_circle" [ref=e333] [cursor=pointer]:
+              - generic [ref=e334]:
+                - generic [ref=e335]: rule
+                - generic [ref=e336]: Reviewed
+              - generic [ref=e338]: check_circle
+            - button "group Network Contacts 0 check_circle" [ref=e339] [cursor=pointer]:
+              - generic [ref=e340]:
+                - generic [ref=e341]: group
+                - generic [ref=e342]: Network Contacts
+              - generic [ref=e343]:
+                - generic [ref=e344]: "0"
+                - generic [ref=e345]: check_circle
+            - button "business Company Research check_circle" [ref=e346] [cursor=pointer]:
+              - generic [ref=e347]:
+                - generic [ref=e348]: business
+                - generic [ref=e349]: Company Research
+              - generic [ref=e351]: check_circle
+            - button "format_list_numbered Prioritized check_circle" [ref=e352] [cursor=pointer]:
+              - generic [ref=e353]:
+                - generic [ref=e354]: format_list_numbered
+                - generic [ref=e355]: Prioritized
+              - generic [ref=e357]: check_circle
+          - generic [ref=e359]:
+            - generic [ref=e360]:
+              - generic [ref=e361]:
+                - heading "Job Analysis (Parsed)" [level=3] [ref=e362]
+                - paragraph [ref=e363]: Structured data extracted from the job posting
+              - button "refresh Refresh Analysis" [ref=e365] [cursor=pointer]:
+                - generic [ref=e366]: refresh
+                - text: Refresh Analysis
+            - generic [ref=e367]:
+              - generic [ref=e368]:
+                - generic [ref=e369]: analytics
+                - heading "Compatibility Score" [level=3] [ref=e370]
+              - generic [ref=e371]:
+                - generic [ref=e372]:
+                  - generic [ref=e373]: "86"
+                  - generic [ref=e374]: ▲
+                - generic [ref=e375]:
+                  - generic [ref=e376]: Excellent match for your profile!
+                  - generic [ref=e377]:
+                    - generic [ref=e378]: ▲
+                    - text: 3 pts above your avg (83)
+              - generic [ref=e379]:
+                - generic [ref=e380]:
+                  - generic [ref=e381]: core role
+                  - generic [ref=e382]: 19/20
+                - generic [ref=e383]:
+                  - generic [ref=e384]: experience
+                  - generic [ref=e385]: 18/20
+                - generic [ref=e386]:
+                  - generic [ref=e387]: education
+                  - generic [ref=e388]: 14/20
+                - generic [ref=e389]:
+                  - generic [ref=e390]: culture
+                  - generic [ref=e391]: 18/20
+                - generic [ref=e392]:
+                  - generic [ref=e393]: ats keywords
+                  - generic [ref=e394]: 17/20
+            - generic [ref=e395]:
+              - heading "Job Summary" [level=4] [ref=e396]
+              - generic [ref=e397]:
+                - generic [ref=e398]:
+                  - generic [ref=e399]: Job Title
+                  - generic [ref=e400]: Director, Chief Architect, Architecture
+                - generic [ref=e401]:
+                  - img "Logo" [ref=e402]
+                  - generic [ref=e403]:
+                    - generic [ref=e404]: Company
+                    - generic [ref=e405]: Johnson & Johnson
+                - generic [ref=e406]:
+                  - generic [ref=e407]: Location & Type
+                  - generic [ref=e408]: Norwalk, CT • Hybrid
+                - generic [ref=e409]:
+                  - generic [ref=e410]: Job Type & Source
+                  - generic [ref=e411]: Full-time • —
+                - generic [ref=e412]:
+                  - generic [ref=e413]: URL
+                  - link "View Listing" [ref=e415] [cursor=pointer]:
+                    - /url: https://www.linkedin.com/jobs/search-results/?currentJobId=4409560647&eBP=CwEAAAGeQuiXSwwSXu-BMWIP0eA0hJjYSZdb3sfWzGD3H82bMOJdb9fLLKTmLvwTV8CFbitGGJLR3bkROHKlhi6spgxCpFMHdjHYjgjALrcmXckjDyhS__xE2mjd-cxuKTZR4rZmk4UCoboJsDy1t1q-yXHJDNHbxMbW-_OTZKEOwHqp_DrfM8cPrJRS3Wdjy0CqArKAa-nqb_4yEydxUqLAxU0qpETwXlwDBBY3QqJ5LWmAify8kQRwaLMcrUGJxNFanFuU4CdxURHKsqHdHnhgFS3MPUSAFf0AxqB_KMu7joZLiEu3iJVv3ogtv7798IXQ_k5TKPyMF61utMc7Hadhpxn_tfQ7afXPgNmqZTBwWHptMZOGo-e7YKS4sJlDJNqDKM7lYn2WB_cUherGTr0JGLOt0XWP-2AzpnxkbxjwWE66ifFOvJ6NX6BV3oLB0Vh2N4t2NkUpD4thnT7ROr78M75DxBi7OI5KIBUsMowc5autWZ9F-aB3&refId=hu1f6lX1PiNvb4%2B1pfTwkA%3D%3D&trackingId=C%2ByaT8vMpLe1eTrIUkqgjA%3D%3D&showHowYouFit=HOW_YOU_FIT&keywords=Director%20of%20Solutions%20Architecture&origin=QUALIFICATION_LANDING&originToLandingJobPostings=4368900622%2C4414219455%2C4383248284%2C4383176787&geoId=90000070
+                - generic [ref=e416]:
+                  - generic [ref=e417]: Dates
+                  - generic [ref=e418]:
+                    - text: "Date Captured: 5/20/2026"
+                    - text: "Posted: 2026-05-19"
+                    - text: "Expires: —"
+                - generic [ref=e419]:
+                  - generic [ref=e420]: Experience & Seniority
+                  - generic [ref=e421]: Demonstrated experience defining enterprise‑wide architecture strategies and leading architecture governance at scale. • Not specified
+            - generic [ref=e422]:
+              - heading "Compensation Details" [level=4] [ref=e423]
+              - generic [ref=e424]:
+                - generic [ref=e425]:
+                  - generic [ref=e426]: Salary Min/Max
+                  - generic [ref=e427]: $150,000.00 - $258,750.00
+                - generic [ref=e428]:
+                  - generic [ref=e429]: Currency & Interval
+                  - generic [ref=e430]: USD • Annual (Assumed)
+                - generic [ref=e431]:
+                  - generic [ref=e432]: Bonus / Equity
+                  - generic [ref=e433]: Not specified.
+                - generic [ref=e434]:
+                  - generic [ref=e435]: Employment Type
+                  - generic [ref=e436]: Full-time
+                - generic [ref=e437]:
+                  - generic [ref=e438]: Work Model
+                  - generic [ref=e439]: Hybrid
+                - generic [ref=e440]:
+                  - generic [ref=e441]: Office Location(s)
+                  - generic [ref=e442]: Norwalk, CT
+                - generic [ref=e443]:
+                  - generic [ref=e444]: Travel Requirements
+                  - generic [ref=e445]: None specified.
+                - generic [ref=e446]:
+                  - generic [ref=e447]: Relocation Support
+                  - generic [ref=e448]: Not offered
+            - generic [ref=e449]:
+              - heading "Role Overview" [level=4] [ref=e450]
+              - generic [ref=e451]:
+                - generic [ref=e452]:
+                  - generic [ref=e453]: Job Summary / Mission
+                  - generic [ref=e454]: Johnson & Johnson MedTech is dedicated to transforming healthcare and improving patient lives through innovative medical technology solutions. This role is responsible for leading the architectural vision, strategy, and governance across the organization's technology landscape.
+                - generic [ref=e455]:
+                  - generic [ref=e456]: Core Purpose
+                  - generic [ref=e457]: The core purpose of this role is to serve as the Chief Architect, establishing the technical standards, system blueprints, and architectural roadmaps to drive digital transformation.
+                - generic [ref=e458]:
+                  - generic [ref=e459]: Function / Department
+                  - generic [ref=e460]: IT — Enterprise Architecture
+                - generic [ref=e461]:
+                  - generic [ref=e462]: Reporting Line
+                  - generic [ref=e463]: Not specified
+                - generic [ref=e464]:
+                  - generic [ref=e465]: Team Context
+                  - generic [ref=e466]: Not specified
+            - generic [ref=e467]:
+              - heading "Primary Responsibilities" [level=4] [ref=e468]
+              - list [ref=e469]:
+                - listitem [ref=e470]:
+                  - generic [ref=e471]: fiber_manual_record
+                  - text: Job Function
+                - listitem [ref=e472]:
+                  - generic [ref=e473]: fiber_manual_record
+                  - text: Technology Enterprise Strategy & Security
+                - listitem [ref=e474]:
+                  - generic [ref=e475]: fiber_manual_record
+                  - text: Job Sub Function
+                - listitem [ref=e476]:
+                  - generic [ref=e477]: check_circle
+                  - text: Enterprise Architecture
+                - listitem [ref=e478]:
+                  - generic [ref=e479]: fiber_manual_record
+                  - text: Job Category
+            - generic [ref=e480]:
+              - heading "Requirements & Skills" [level=4] [ref=e481]
+              - generic [ref=e482]:
+                - generic [ref=e483]: Target Skills
+                - generic [ref=e484]:
+                  - generic [ref=e485]:
+                    - generic [ref=e486]: check
+                    - text: Enterprise Architecture
+                  - generic [ref=e487]:
+                    - generic [ref=e488]: check
+                    - text: Technical Leadership
+                  - generic [ref=e489]:
+                    - generic [ref=e490]: check
+                    - text: System Design

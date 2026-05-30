@@ -1,0 +1,473 @@
+- generic [ref=e27]:
+  - complementary [ref=e28]:
+    - generic [ref=e29]:
+      - img "JobKernel logo" [ref=e32] [cursor=pointer]
+      - button "chevron_right" [ref=e33] [cursor=pointer]:
+        - generic [ref=e34]: chevron_right
+      - button "add" [ref=e35] [cursor=pointer]:
+        - generic [ref=e36]: add
+      - navigation [ref=e37]:
+        - button "dashboard" [ref=e38] [cursor=pointer]:
+          - generic [ref=e39]: dashboard
+        - button "person" [ref=e40] [cursor=pointer]:
+          - generic [ref=e41]: person
+        - button "leaderboard" [ref=e42] [cursor=pointer]:
+          - generic [ref=e43]: leaderboard
+      - button "notifications" [ref=e44] [cursor=pointer]:
+        - generic [ref=e46]: notifications
+      - button "settings_brightness" [ref=e48] [cursor=pointer]:
+        - generic [ref=e49]: settings_brightness
+      - navigation [ref=e50]:
+        - button "admin_panel_settings" [ref=e51] [cursor=pointer]:
+          - generic [ref=e52]: admin_panel_settings
+        - button "settings" [ref=e53] [cursor=pointer]:
+          - generic [ref=e54]: settings
+      - generic [ref=e55]:
+        - button "Avatar" [ref=e56] [cursor=pointer]:
+          - img "Avatar" [ref=e58]
+        - button "logout" [ref=e59] [cursor=pointer]:
+          - generic [ref=e60]: logout
+  - main [ref=e61]:
+    - generic [ref=e62]:
+      - generic [ref=e63]:
+        - generic [ref=e64]:
+          - generic [ref=e65]: person
+          - generic [ref=e66]: Profile
+        - generic [ref=e67]:
+          - button "link Import from LinkedIn" [ref=e68] [cursor=pointer]:
+            - generic [ref=e69]: link
+            - text: Import from LinkedIn
+          - button "file_upload Import resume" [ref=e70] [cursor=pointer]:
+            - generic [ref=e71]: file_upload
+            - text: Import resume
+          - button "search Jump to… ⌘K" [ref=e72] [cursor=pointer]:
+            - generic [ref=e73]: search
+            - text: Jump to…
+            - generic [ref=e74]: ⌘K
+      - generic [ref=e75]:
+        - complementary [ref=e76]:
+          - button "chevron_right" [ref=e78] [cursor=pointer]:
+            - generic [ref=e79]: chevron_right
+          - img [ref=e83]
+          - generic [ref=e87]:
+            - generic "Identity" [ref=e88] [cursor=pointer]:
+              - generic [ref=e89]: person
+            - generic "Match profile" [ref=e90] [cursor=pointer]:
+              - generic [ref=e91]: auto_awesome
+            - generic "AI generation" [ref=e92] [cursor=pointer]:
+              - generic [ref=e93]: neurology
+            - generic "Documents" [ref=e94] [cursor=pointer]:
+              - generic [ref=e95]: folder
+            - generic "Integrations" [ref=e96] [cursor=pointer]:
+              - generic [ref=e97]: link
+            - generic "Account" [ref=e98] [cursor=pointer]:
+              - generic [ref=e99]: credit_card
+          - button "download" [ref=e101] [cursor=pointer]:
+            - generic [ref=e102]: download
+        - main [ref=e103]:
+          - generic [ref=e104]:
+            - generic [ref=e106]:
+              - heading "Robert Dannenbring" [level=1] [ref=e107]
+              - generic [ref=e108]: Senior Solutions Architect | AI & Data Engineering Specialist
+              - generic [ref=e109]:
+                - generic [ref=e110]:
+                  - generic [ref=e111]: place
+                  - text: Stamford, CT
+                - generic [ref=e112]:
+                  - generic [ref=e113]: mail
+                  - text: robert.dannenbring@gmail.com
+                - generic [ref=e114]:
+                  - generic [ref=e115]: link
+                  - text: 2 links
+            - generic [ref=e116]:
+              - img [ref=e117]
+              - generic [ref=e120]:
+                - generic [ref=e121]: Profile readiness
+                - generic [ref=e122]: 76%
+          - generic [ref=e123]:
+            - generic [ref=e124]:
+              - generic [ref=e126]: person
+              - generic [ref=e127]:
+                - generic [ref=e128]: Identity
+                - generic [ref=e129]: Name, contact, and links the agent uses to author messages.
+              - button "edit Edit" [ref=e131] [cursor=pointer]:
+                - generic [ref=e132]: edit
+                - text: Edit
+            - generic [ref=e133]:
+              - generic [ref=e134]:
+                - generic [ref=e135]:
+                  - generic [ref=e136]: Display name
+                  - generic [ref=e138]: Robert Dannenbring
+                - generic [ref=e139]:
+                  - generic [ref=e140]: Headline
+                  - generic [ref=e142]: Senior Solutions Architect | AI & Data Engineering Specialist
+                - generic [ref=e143]:
+                  - generic [ref=e144]: Email
+                  - generic [ref=e146]: robert.dannenbring@gmail.com
+                - generic [ref=e147]:
+                  - generic [ref=e148]: Phone
+                  - generic [ref=e150]: 917-693-8433
+                - generic [ref=e151]:
+                  - generic [ref=e152]:
+                    - text: Location
+                    - generic [ref=e153]:
+                      - generic [ref=e154]: auto_awesome
+                      - text: Affects matching
+                  - generic [ref=e156]: Stamford, CT
+                - generic [ref=e157]:
+                  - generic [ref=e158]:
+                    - text: Work auth
+                    - generic [ref=e159]:
+                      - generic [ref=e160]: auto_awesome
+                      - text: Affects matching
+                  - generic [ref=e162]: Not set
+              - generic [ref=e165]:
+                - generic [ref=e166]: Bio / summary
+                - generic [ref=e167]: Strategic technology leader with 20+ years of experience architecting and delivering enterprise-scale systems across aviation, healthcare, and transportation. Expert in bridging the gap between legacy operational frameworks and modern cloud/AI architectures. Proven track record of lead-from-the-front engineering, specializing in LLM orchestration, high-frequency data systems, and real-time operational tools.
+              - generic [ref=e169]:
+                - generic [ref=e170]:
+                  - generic [ref=e171]: LinkedIn
+                  - generic [ref=e173]: linkedin.com/in/rob-dannenbring
+                - generic [ref=e174]:
+                  - generic [ref=e175]: GitHub
+                  - generic [ref=e177]: —
+                - generic [ref=e178]:
+                  - generic [ref=e179]: Portfolio
+                  - generic [ref=e181]: robdannenbring.com
+          - generic [ref=e182]:
+            - generic [ref=e183]: auto_awesome
+            - text: Match profile · feeds your score
+            - generic [ref=e184]: Score 86 · top quartile
+          - generic [ref=e185]:
+            - generic [ref=e186]:
+              - generic [ref=e188]: auto_awesome
+              - generic [ref=e189]:
+                - generic [ref=e190]:
+                  - text: Career & compensation
+                  - generic [ref=e191]:
+                    - generic [ref=e192]: auto_awesome
+                    - text: Affects matching
+                - generic [ref=e193]: What you're looking for. Drives every Match Score on Pulse.
+              - button "edit Edit" [ref=e195] [cursor=pointer]:
+                - generic [ref=e196]: edit
+                - text: Edit
+            - generic [ref=e198]:
+              - generic [ref=e199]:
+                - generic [ref=e200]:
+                  - text: Target roles
+                  - generic [ref=e201]:
+                    - generic [ref=e202]: auto_awesome
+                    - text: Affects matching
+                - generic [ref=e205]: Not set
+              - generic [ref=e206]:
+                - generic [ref=e207]:
+                  - text: Seniority
+                  - generic [ref=e208]:
+                    - generic [ref=e209]: auto_awesome
+                    - text: Affects matching
+                - generic [ref=e211]: Not set
+              - generic [ref=e212]:
+                - generic [ref=e213]:
+                  - text: Years of experience
+                  - generic [ref=e214]:
+                    - generic [ref=e215]: auto_awesome
+                    - text: Affects matching
+                - generic [ref=e217]: Not set
+              - generic [ref=e218]:
+                - generic [ref=e219]:
+                  - text: Remote / hybrid
+                  - generic [ref=e220]:
+                    - generic [ref=e221]: auto_awesome
+                    - text: Affects matching
+                - generic [ref=e223]: Any
+              - generic [ref=e224]:
+                - generic [ref=e225]:
+                  - text: Relocation
+                  - generic [ref=e226]:
+                    - generic [ref=e227]: auto_awesome
+                    - text: Affects matching
+                - generic [ref=e229]: Not set
+              - generic [ref=e230]:
+                - generic [ref=e231]:
+                  - text: Compensation
+                  - generic [ref=e232]:
+                    - generic [ref=e233]: auto_awesome
+                    - text: Affects matching
+                - generic [ref=e235]: Not set
+          - generic [ref=e236]:
+            - generic [ref=e237]:
+              - generic [ref=e239]: bolt
+              - generic [ref=e240]:
+                - generic [ref=e241]:
+                  - text: Skills
+                  - generic [ref=e242]:
+                    - generic [ref=e243]: auto_awesome
+                    - text: Affects matching
+                - generic [ref=e244]: 37 skills · weights tell the agent what to highlight first.
+              - generic [ref=e245]:
+                - button "sort Weight" [ref=e246] [cursor=pointer]:
+                  - generic [ref=e247]: sort
+                  - text: Weight
+                - button "add Add" [ref=e248] [cursor=pointer]:
+                  - generic [ref=e249]: add
+                  - text: Add
+            - generic [ref=e250]:
+              - generic [ref=e251]:
+                - button "Ollama Like" [ref=e252] [cursor=pointer]:
+                  - generic [ref=e253]: Ollama
+                  - generic [ref=e254]: Like
+                - button "OpenWebUI Like" [ref=e255] [cursor=pointer]:
+                  - generic [ref=e256]: OpenWebUI
+                  - generic [ref=e257]: Like
+                - button "AI Builder Like" [ref=e258] [cursor=pointer]:
+                  - generic [ref=e259]: AI Builder
+                  - generic [ref=e260]: Like
+                - button "Azure Cognitive Services Like" [ref=e261] [cursor=pointer]:
+                  - generic [ref=e262]: Azure Cognitive Services
+                  - generic [ref=e263]: Like
+                - button "Prompt Engineering Like" [ref=e264] [cursor=pointer]:
+                  - generic [ref=e265]: Prompt Engineering
+                  - generic [ref=e266]: Like
+                - button "Microsoft Azure Like" [ref=e267] [cursor=pointer]:
+                  - generic [ref=e268]: Microsoft Azure
+                  - generic [ref=e269]: Like
+                - button "AWS Like" [ref=e270] [cursor=pointer]:
+                  - generic [ref=e271]: AWS
+                  - generic [ref=e272]: Like
+                - button "Docker Like" [ref=e273] [cursor=pointer]:
+                  - generic [ref=e274]: Docker
+                  - generic [ref=e275]: Like
+                - button "Kubernetes Like" [ref=e276] [cursor=pointer]:
+                  - generic [ref=e277]: Kubernetes
+                  - generic [ref=e278]: Like
+                - button "CI/CD Like" [ref=e279] [cursor=pointer]:
+                  - generic [ref=e280]: CI/CD
+                  - generic [ref=e281]: Like
+                - button "GitHub Actions Like" [ref=e282] [cursor=pointer]:
+                  - generic [ref=e283]: GitHub Actions
+                  - generic [ref=e284]: Like
+                - button "Azure DevOps Like" [ref=e285] [cursor=pointer]:
+                  - generic [ref=e286]: Azure DevOps
+                  - generic [ref=e287]: Like
+                - button "Python Like" [ref=e288] [cursor=pointer]:
+                  - generic [ref=e289]: Python
+                  - generic [ref=e290]: Like
+                - button "SQL Like" [ref=e291] [cursor=pointer]:
+                  - generic [ref=e292]: SQL
+                  - generic [ref=e293]: Like
+                - button "C# Like" [ref=e294] [cursor=pointer]:
+                  - generic [ref=e295]: C#
+                  - generic [ref=e296]: Like
+                - button ".NET Core Like" [ref=e297] [cursor=pointer]:
+                  - generic [ref=e298]: .NET Core
+                  - generic [ref=e299]: Like
+                - button "PowerShell Like" [ref=e300] [cursor=pointer]:
+                  - generic [ref=e301]: PowerShell
+                  - generic [ref=e302]: Like
+                - button "JavaScript (React) Like" [ref=e303] [cursor=pointer]:
+                  - generic [ref=e304]: JavaScript (React)
+                  - generic [ref=e305]: Like
+                - button "Objective-C/Swift Like" [ref=e306] [cursor=pointer]:
+                  - generic [ref=e307]: Objective-C/Swift
+                  - generic [ref=e308]: Like
+                - button "C++ Like" [ref=e309] [cursor=pointer]:
+                  - generic [ref=e310]: C++
+                  - generic [ref=e311]: Like
+                - button "Bash Like" [ref=e312] [cursor=pointer]:
+                  - generic [ref=e313]: Bash
+                  - generic [ref=e314]: Like
+                - button "Azure SQL Like" [ref=e315] [cursor=pointer]:
+                  - generic [ref=e316]: Azure SQL
+                  - generic [ref=e317]: Like
+                - button "Oracle Like" [ref=e318] [cursor=pointer]:
+                  - generic [ref=e319]: Oracle
+                  - generic [ref=e320]: Like
+                - button "SQL Server Like" [ref=e321] [cursor=pointer]:
+                  - generic [ref=e322]: SQL Server
+                  - generic [ref=e323]: Like
+                - button "NoSQL Like" [ref=e324] [cursor=pointer]:
+                  - generic [ref=e325]: NoSQL
+                  - generic [ref=e326]: Like
+                - button "SQLite Like" [ref=e327] [cursor=pointer]:
+                  - generic [ref=e328]: SQLite
+                  - generic [ref=e329]: Like
+                - button "Microservices Like" [ref=e330] [cursor=pointer]:
+                  - generic [ref=e331]: Microservices
+                  - generic [ref=e332]: Like
+                - button "Event-driven design Like" [ref=e333] [cursor=pointer]:
+                  - generic [ref=e334]: Event-driven design
+                  - generic [ref=e335]: Like
+                - button "SOA Like" [ref=e336] [cursor=pointer]:
+                  - generic [ref=e337]: SOA
+                  - generic [ref=e338]: Like
+                - button "Cloud-native platforms Like" [ref=e339] [cursor=pointer]:
+                  - generic [ref=e340]: Cloud-native platforms
+                  - generic [ref=e341]: Like
+                - button "High-frequency time-series data Like" [ref=e342] [cursor=pointer]:
+                  - generic [ref=e343]: High-frequency time-series data
+                  - generic [ref=e344]: Like
+                - button "Vector-ready data modeling Like" [ref=e345] [cursor=pointer]:
+                  - generic [ref=e346]: Vector-ready data modeling
+                  - generic [ref=e347]: Like
+                - button "ETL/ELT pipelines Like" [ref=e348] [cursor=pointer]:
+                  - generic [ref=e349]: ETL/ELT pipelines
+                  - generic [ref=e350]: Like
+                - button "FAA Like" [ref=e351] [cursor=pointer]:
+                  - generic [ref=e352]: FAA
+                  - generic [ref=e353]: Like
+                - button "FRA Like" [ref=e354] [cursor=pointer]:
+                  - generic [ref=e355]: FRA
+                  - generic [ref=e356]: Like
+                - button "HIPAA Like" [ref=e357] [cursor=pointer]:
+                  - generic [ref=e358]: HIPAA
+                  - generic [ref=e359]: Like
+                - button "PCI-DSS Like" [ref=e360] [cursor=pointer]:
+                  - generic [ref=e361]: PCI-DSS
+                  - generic [ref=e362]: Like
+                - button "add Add skill" [ref=e363] [cursor=pointer]:
+                  - generic [ref=e364]: add
+                  - text: Add skill
+              - generic [ref=e365]:
+                - generic [ref=e366]:
+                  - generic [ref=e367]: Core
+                  - text: Highlighted first; counts 3× toward score
+                - generic [ref=e368]:
+                  - generic [ref=e369]: Strong
+                  - text: Counts 2×
+                - generic [ref=e370]:
+                  - generic [ref=e371]: Like
+                  - text: Counts 1×
+          - generic [ref=e372]:
+            - generic [ref=e373]:
+              - generic [ref=e375]: neurology
+              - generic [ref=e376]:
+                - generic [ref=e377]: AI generation
+                - generic [ref=e378]: How the agent writes resumes, cover letters, and outreach in your voice.
+              - button "edit Edit" [ref=e380] [cursor=pointer]:
+                - generic [ref=e381]: edit
+                - text: Edit
+            - generic [ref=e383]:
+              - generic [ref=e384]:
+                - generic [ref=e385]: Tone
+                - generic [ref=e386]:
+                  - generic [ref=e387]:
+                    - generic [ref=e388]: Casual
+                    - generic [ref=e391]: Formal
+                  - generic [ref=e392]:
+                    - generic [ref=e393]: Concise
+                    - generic [ref=e396]: Detailed
+              - generic [ref=e398]:
+                - text: Voice samples
+                - generic [ref=e399]: 0 / 5
+                - generic [ref=e400]: "TODO: backend"
+              - generic [ref=e402]:
+                - text: Things to avoid
+                - generic [ref=e403]: "TODO: backend"
+          - generic [ref=e405]:
+            - generic [ref=e406]:
+              - generic [ref=e408]: folder
+              - generic [ref=e409]:
+                - generic [ref=e410]: Documents
+                - generic [ref=e411]: Master resumes, base cover letters, and the context bank the agent pulls from.
+              - generic [ref=e412]:
+                - button "cloud_upload Upload" [ref=e413] [cursor=pointer]:
+                  - generic [ref=e414]: cloud_upload
+                  - text: Upload
+                - button "open_in_full Open library" [ref=e415] [cursor=pointer]:
+                  - generic [ref=e416]: open_in_full
+                  - text: Open library
+            - generic [ref=e418]:
+              - generic [ref=e419] [cursor=pointer]:
+                - generic [ref=e420]:
+                  - generic [ref=e422]: description
+                  - generic [ref=e423]:
+                    - generic [ref=e424]: Master Resume
+                    - generic [ref=e425]: PDF
+                - generic [ref=e426]:
+                  - generic [ref=e427]:
+                    - generic [ref=e428]: bookmark
+                    - text: Default
+                  - generic [ref=e429]:
+                    - generic [ref=e430]: schedule
+                    - text: on file
+              - button "add Add a document PDF, DOCX up to 10MB" [ref=e431] [cursor=pointer]:
+                - generic [ref=e432]:
+                  - generic [ref=e434]: add
+                  - generic [ref=e435]:
+                    - generic [ref=e436]: Add a document
+                    - generic [ref=e437]: PDF, DOCX up to 10MB
+          - generic [ref=e438]:
+            - generic [ref=e439]:
+              - generic [ref=e441]: link
+              - generic [ref=e442]:
+                - generic [ref=e443]: Integrations
+                - generic [ref=e444]: Connect the apps the agent reads from and writes to.
+            - generic [ref=e446]:
+              - generic [ref=e447]:
+                - generic [ref=e448]: in
+                - generic [ref=e449]:
+                  - generic [ref=e450]: LinkedIn
+                  - generic [ref=e451]: Posts, 1st/2nd-degree contacts, profile sync · since Apr 12
+                - generic [ref=e452]: Connected
+                - button "Manage" [ref=e454] [cursor=pointer]
+              - generic [ref=e455]:
+                - generic [ref=e456]: M
+                - generic [ref=e457]:
+                  - generic [ref=e458]: Gmail
+                  - generic [ref=e459]: Outreach replies · 142 threads tracked
+                - generic [ref=e460]: Connected
+                - button "Manage" [ref=e462] [cursor=pointer]
+              - generic [ref=e463]:
+                - generic [ref=e464]: C
+                - generic [ref=e465]:
+                  - generic [ref=e466]: Google Calendar
+                  - generic [ref=e467]: Auto-schedule interview prep blocks
+                - generic [ref=e468]: Disconnected
+                - button "Connect" [ref=e470] [cursor=pointer]
+              - generic [ref=e471]:
+                - generic [ref=e472]: GH
+                - generic [ref=e473]:
+                  - generic [ref=e474]: Greenhouse ATS
+                  - generic [ref=e475]: Application status sync
+                - generic [ref=e476]: Disconnected
+                - button "Connect" [ref=e478] [cursor=pointer]
+              - generic [ref=e479]:
+                - generic [ref=e480]: JK
+                - generic [ref=e481]:
+                  - generic [ref=e482]: Browser Extension
+                  - generic [ref=e483]: Capture jobs from LinkedIn, Indeed, Otta with one click
+                - generic [ref=e484]: Connecting…
+                - button "Cancel" [ref=e486] [cursor=pointer]
+          - generic [ref=e487]:
+            - generic [ref=e488]:
+              - generic [ref=e490]: credit_card
+              - generic [ref=e491]:
+                - generic [ref=e492]: Account & plan
+                - generic [ref=e493]: Billing, usage, notifications, and data controls.
+            - generic [ref=e494]:
+              - generic [ref=e495]:
+                - generic [ref=e496]: Pro
+                - generic [ref=e500]:
+                  - generic [ref=e501]: 142 / 500 generations
+                  - generic [ref=e502]: $29/mo
+                - button "Manage billing" [ref=e503] [cursor=pointer]
+              - generic [ref=e505]:
+                - generic [ref=e506]:
+                  - generic [ref=e507]: Application limit
+                  - generic [ref=e509]: 38 / 100
+                - generic [ref=e510]:
+                  - generic [ref=e511]: Context bank
+                  - generic [ref=e513]: 6 / 25 docs
+                - generic [ref=e514]:
+                  - generic [ref=e515]: Email digests
+                  - generic [ref=e517]: Weekly, Sunday 7pm
+                - generic [ref=e518]:
+                  - generic [ref=e519]: Quiet hours
+                  - generic [ref=e521]: 9pm – 7am · America/New_York
+              - generic [ref=e523]:
+                - generic [ref=e524]: warning
+                - generic [ref=e525]:
+                  - strong [ref=e526]: Danger zone
+                  - paragraph [ref=e527]: Export everything, or permanently delete your account and all tracked applications.
+                - button "Export data" [ref=e528] [cursor=pointer]
+                - button "Delete account" [ref=e529] [cursor=pointer]

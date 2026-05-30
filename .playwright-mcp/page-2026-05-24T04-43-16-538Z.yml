@@ -1,0 +1,1006 @@
+- generic [ref=e3]:
+  - complementary [ref=e7]:
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e11] [cursor=pointer]:
+          - img "JobKernel logo" [ref=e12]
+          - heading "JobKernel" [level=1] [ref=e13]
+        - button "chevron_left" [ref=e14] [cursor=pointer]:
+          - generic [ref=e15]: chevron_left
+      - button "add New Application" [ref=e16] [cursor=pointer]:
+        - generic [ref=e17]: add
+        - generic [ref=e18]: New Application
+      - navigation [ref=e19]:
+        - button "dashboard Dashboard" [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: dashboard
+          - generic [ref=e22]: Dashboard
+        - button "person Profile" [ref=e23] [cursor=pointer]:
+          - generic [ref=e24]: person
+          - generic [ref=e25]: Profile
+        - button "leaderboard Analytics" [ref=e26] [cursor=pointer]:
+          - generic [ref=e27]: leaderboard
+          - generic [ref=e28]: Analytics
+      - button "notifications Notifications" [ref=e29] [cursor=pointer]:
+        - generic [ref=e31]: notifications
+        - generic [ref=e32]: Notifications
+      - button "dark_mode Dark Theme" [ref=e34] [cursor=pointer]:
+        - generic [ref=e35]: dark_mode
+        - generic [ref=e36]: Dark Theme
+      - navigation [ref=e37]:
+        - button "admin_panel_settings Admin" [ref=e38] [cursor=pointer]:
+          - generic [ref=e39]: admin_panel_settings
+          - generic [ref=e40]: Admin
+        - button "settings Settings" [ref=e41] [cursor=pointer]:
+          - generic [ref=e42]: settings
+          - generic [ref=e43]: Settings
+      - generic [ref=e44]:
+        - button "A admin Administrator" [ref=e45] [cursor=pointer]:
+          - generic [ref=e46]: A
+          - generic [ref=e47]:
+            - generic [ref=e48]: admin
+            - generic [ref=e49]: Administrator
+        - button "logout Logout" [ref=e50] [cursor=pointer]:
+          - generic [ref=e51]: logout
+          - generic [ref=e52]: Logout
+  - main [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - heading "Dashboard" [level=2] [ref=e57]
+          - generic [ref=e58]:
+            - button "Board" [ref=e59] [cursor=pointer]
+            - button "List" [active] [ref=e60] [cursor=pointer]
+            - button "Table" [ref=e61] [cursor=pointer]
+        - button "add Add Job" [ref=e63] [cursor=pointer]:
+          - generic [ref=e64]: add
+          - generic [ref=e65]: Add Job
+      - generic [ref=e245]:
+        - generic [ref=e246]:
+          - generic [ref=e247]:
+            - generic [ref=e248]:
+              - generic: search
+              - textbox "Search all job details..." [ref=e249]
+            - button "filter_list Filter Jobs expand_more" [ref=e251] [cursor=pointer]:
+              - generic [ref=e252]: filter_list
+              - generic [ref=e253]: Filter Jobs
+              - generic [ref=e254]: expand_more
+            - button "sort Interest Level expand_more" [ref=e256] [cursor=pointer]:
+              - generic [ref=e257]: sort
+              - generic [ref=e258]: Interest Level
+              - generic [ref=e259]: expand_more
+          - generic [ref=e260]:
+            - button "visibility_off Rejected" [ref=e261] [cursor=pointer]:
+              - generic [ref=e262]: visibility_off
+              - generic [ref=e263]: Rejected
+            - button "visibility_off Declined" [ref=e264] [cursor=pointer]:
+              - generic [ref=e265]: visibility_off
+              - generic [ref=e266]: Declined
+            - button "visibility_off Withdrawn" [ref=e267] [cursor=pointer]:
+              - generic [ref=e268]: visibility_off
+              - generic [ref=e269]: Withdrawn
+            - button "visibility_off Archive" [ref=e270] [cursor=pointer]:
+              - generic [ref=e271]: visibility_off
+              - generic [ref=e272]: Archive
+            - generic [ref=e273]: Showing 27 of 27
+        - generic [ref=e274]:
+          - generic [ref=e275]: "Active:"
+          - generic [ref=e276]:
+            - generic [ref=e277]: "Sort:"
+            - text: Interest Level
+            - button "close" [ref=e278] [cursor=pointer]
+          - button "Clear All" [ref=e279] [cursor=pointer]
+      - generic [ref=e281]:
+        - generic [ref=e282] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 92 — ↑ 9 pts above your avg (83)"':
+              - text: "92"
+              - generic: ▲
+            - generic:
+              - generic: bolt
+              - text: "60"
+          - generic [ref=e283]:
+            - img "PRI Technology" [ref=e285]
+            - generic [ref=e286]:
+              - generic [ref=e287]:
+                - heading "Senior Lead Software Architect" [level=3] [ref=e288]
+                - generic [ref=e289]: Saved
+                - generic [ref=e291]:
+                  - generic [ref=e292]: star
+                  - generic [ref=e293]: star
+                  - generic [ref=e294]: star
+              - paragraph [ref=e295]: PRI Technology
+              - generic [ref=e296]:
+                - generic [ref=e297]:
+                  - generic [ref=e298]: location_on
+                  - generic [ref=e299]: United States (Remote)
+                  - generic [ref=e300]: check_circle
+                - generic [ref=e301]:
+                  - generic [ref=e302]: work
+                  - generic [ref=e303]: Full-time
+                  - generic [ref=e304]: check_circle
+                - generic [ref=e305]:
+                  - generic [ref=e306]: payments
+                  - generic "Not Listed" [ref=e307]: "-"
+                - generic [ref=e308]:
+                  - generic [ref=e309]: calendar_today
+                  - generic [ref=e310]: 5/20/2026
+        - generic [ref=e311] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 96 — ↑ 13 pts above your avg (83)"':
+              - text: "96"
+              - generic: ▲
+            - generic:
+              - generic: bolt
+              - text: "81"
+          - generic [ref=e312]:
+            - img "Amtrak" [ref=e314]
+            - generic [ref=e315]:
+              - generic [ref=e316]:
+                - heading "Dir EA Infra & Compliance - 90399170 - Remote" [level=3] [ref=e317]
+                - generic [ref=e318]: Saved
+                - generic [ref=e319]:
+                  - generic [ref=e320]: group
+                  - text: 1 Connection
+                - generic [ref=e322]:
+                  - generic [ref=e323]: star
+                  - generic [ref=e324]: star
+                  - generic [ref=e325]: star
+              - paragraph [ref=e326]: Amtrak
+              - generic [ref=e327]:
+                - generic [ref=e328]:
+                  - generic [ref=e329]: location_on
+                  - generic [ref=e330]: New York, NY (Remote)
+                  - generic [ref=e331]: check_circle
+                - generic [ref=e332]:
+                  - generic [ref=e333]: work
+                  - generic [ref=e334]: Part-time
+                  - generic [ref=e335]: cancel
+                - generic [ref=e336]:
+                  - generic [ref=e337]: payments
+                  - generic "$163,000.00 – $211,140.00" [ref=e338]
+                - generic [ref=e339]:
+                  - generic [ref=e340]: calendar_today
+                  - generic [ref=e341]: 5/20/2026
+        - generic [ref=e342] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 73 — ↓ 10 pts below your avg (83)"':
+              - text: "73"
+              - generic: ▼
+            - generic:
+              - generic: bolt
+              - text: "50"
+          - generic [ref=e343]:
+            - img "Gong" [ref=e345]
+            - generic [ref=e346]:
+              - generic [ref=e347]:
+                - heading "Global Head of Solutions Engineering" [level=3] [ref=e348]
+                - generic [ref=e349]: Saved
+                - generic [ref=e351]:
+                  - generic [ref=e352]: star
+                  - generic [ref=e353]: star
+                  - generic [ref=e354]: star
+              - paragraph [ref=e355]: Gong
+              - generic [ref=e356]:
+                - generic [ref=e357]:
+                  - generic [ref=e358]: location_on
+                  - generic [ref=e359]: New York, NY (Remote)
+                  - generic [ref=e360]: check_circle
+                - generic [ref=e361]:
+                  - generic [ref=e362]: work
+                  - generic [ref=e363]: Full-time
+                  - generic [ref=e364]: check_circle
+                - generic [ref=e365]:
+                  - generic [ref=e366]: payments
+                  - generic "$340,000 - $357,000" [ref=e367]
+                - generic [ref=e368]:
+                  - generic [ref=e369]: calendar_today
+                  - generic [ref=e370]: 5/20/2026
+        - generic [ref=e371] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 86 — ↑ 3 pts above your avg (83)"':
+              - text: "86"
+              - generic: ▲
+            - generic:
+              - generic: bolt
+              - text: "79"
+          - generic [ref=e372]:
+            - img "Johnson & Johnson" [ref=e374]
+            - generic [ref=e375]:
+              - generic [ref=e376]:
+                - heading "Director, Chief Architect, Architecture" [level=3] [ref=e377]
+                - generic [ref=e378]: Saved
+                - generic [ref=e380]:
+                  - generic [ref=e381]: star
+                  - generic [ref=e382]: star
+                  - generic [ref=e383]: star
+              - paragraph [ref=e384]: Johnson & Johnson
+              - generic [ref=e385]:
+                - generic [ref=e386]:
+                  - generic [ref=e387]: location_on
+                  - generic [ref=e388]: Norwalk, CT (Hybrid)
+                  - generic [ref=e389]: check_circle
+                - generic [ref=e390]:
+                  - generic [ref=e391]: work
+                  - generic [ref=e392]: Full-time
+                  - generic [ref=e393]: check_circle
+                - generic [ref=e394]:
+                  - generic [ref=e395]: payments
+                  - generic "$150,000.00 - $258,750.00" [ref=e396]
+                - generic [ref=e397]:
+                  - generic [ref=e398]: calendar_today
+                  - generic [ref=e399]: 5/20/2026
+        - generic [ref=e400] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic: bolt
+              - text: "50"
+          - generic [ref=e401]:
+            - img "Hagerty" [ref=e403]
+            - generic [ref=e404]:
+              - generic [ref=e405]:
+                - heading "People you can reach out to" [level=3] [ref=e406]
+                - generic [ref=e407]: Saved
+                - generic [ref=e409]:
+                  - generic [ref=e410]: star
+                  - generic [ref=e411]: star
+                  - generic [ref=e412]: star
+              - paragraph [ref=e413]: Hagerty
+              - generic [ref=e414]:
+                - generic [ref=e415]:
+                  - generic [ref=e416]: location_on
+                  - generic [ref=e417]: Remote (Remote)
+                  - generic [ref=e418]: check_circle
+                - generic [ref=e419]:
+                  - generic [ref=e420]: work
+                  - generic [ref=e421]: Full-time
+                  - generic [ref=e422]: check_circle
+                - generic [ref=e423]:
+                  - generic [ref=e424]: payments
+                  - generic [ref=e425]: "-"
+                - generic [ref=e426]:
+                  - generic [ref=e427]: calendar_today
+                  - generic [ref=e428]: 5/17/2026
+        - generic [ref=e429] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 93 — ↑ 10 pts above your avg (83)"':
+              - text: "93"
+              - generic: ▲
+            - generic:
+              - generic: bolt
+              - text: "73"
+          - generic [ref=e430]:
+            - img "CAST" [ref=e432]
+            - generic [ref=e433]:
+              - generic [ref=e434]:
+                - heading "Senior Consultant / Architect – AI-Driven Modernization (North America) (Engineering / Architecture → Customer Ownership)" [level=3] [ref=e435]
+                - generic [ref=e436]: Saved
+                - generic [ref=e438]:
+                  - generic [ref=e439]: star
+                  - generic [ref=e440]: star
+                  - generic [ref=e441]: star
+              - paragraph [ref=e442]: CAST
+              - generic [ref=e443]:
+                - generic [ref=e444]:
+                  - generic [ref=e445]: location_on
+                  - generic [ref=e446]: Northeast, NY (Hybrid)
+                  - generic [ref=e447]: check_circle
+                - generic [ref=e448]:
+                  - generic [ref=e449]: work
+                  - generic [ref=e450]: Full-time
+                  - generic [ref=e451]: check_circle
+                - generic [ref=e452]:
+                  - generic [ref=e453]: payments
+                  - generic "Not Listed" [ref=e454]: "-"
+                - generic [ref=e455]:
+                  - generic [ref=e456]: calendar_today
+                  - generic [ref=e457]: 5/14/2026
+        - generic [ref=e458] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 71 — ↓ 12 pts below your avg (83)"':
+              - text: "71"
+              - generic: ▼
+            - generic:
+              - generic: bolt
+              - text: "50"
+          - generic [ref=e459]:
+            - img "American Express" [ref=e461]
+            - generic [ref=e462]:
+              - generic [ref=e463]:
+                - heading "Mgr-Enterprise Architecture" [level=3] [ref=e464]
+                - generic [ref=e465]: Saved
+                - generic [ref=e467]:
+                  - generic [ref=e468]: star
+                  - generic [ref=e469]: star
+                  - generic [ref=e470]: star
+              - paragraph [ref=e471]: American Express
+              - generic [ref=e472]:
+                - generic [ref=e473]:
+                  - generic [ref=e474]: location_on
+                  - generic [ref=e475]: New York, NY (Hybrid)
+                  - generic [ref=e476]: check_circle
+                - generic [ref=e477]:
+                  - generic [ref=e478]: work
+                  - generic [ref=e479]: Full-time
+                  - generic [ref=e480]: check_circle
+                - generic [ref=e481]:
+                  - generic [ref=e482]: payments
+                  - generic "$123K/yr - $215.2K/yr" [ref=e483]
+                - generic [ref=e484]:
+                  - generic [ref=e485]: calendar_today
+                  - generic [ref=e486]: 5/14/2026
+        - generic [ref=e487] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 75 — ↓ 8 pts below your avg (83)"':
+              - text: "75"
+              - generic: ▼
+            - generic:
+              - generic: bolt
+              - text: "50"
+          - generic [ref=e488]:
+            - img "Sectra" [ref=e490]
+            - generic [ref=e491]:
+              - generic [ref=e492]:
+                - heading "Technical Solutions Architect - Enterprise Imaging" [level=3] [ref=e493]
+                - generic [ref=e494]: Saved
+                - generic [ref=e496]:
+                  - generic [ref=e497]: star
+                  - generic [ref=e498]: star
+                  - generic [ref=e499]: star
+              - paragraph [ref=e500]: Sectra
+              - generic [ref=e501]:
+                - generic [ref=e502]:
+                  - generic [ref=e503]: location_on
+                  - generic [ref=e504]: Shelton, CT (On-site)
+                  - generic [ref=e505]: check_circle
+                - generic [ref=e506]:
+                  - generic [ref=e507]: work
+                  - generic [ref=e508]: Full-time
+                  - generic [ref=e509]: check_circle
+                - generic [ref=e510]:
+                  - generic [ref=e511]: payments
+                  - generic "$120,000–$150,000" [ref=e512]
+                - generic [ref=e513]:
+                  - generic [ref=e514]: calendar_today
+                  - generic [ref=e515]: 5/14/2026
+        - generic [ref=e516] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 84 (avg 83)"': "84"
+            - generic:
+              - generic: bolt
+              - text: "76"
+          - generic [ref=e517]:
+            - img "Diageo" [ref=e519]
+            - generic [ref=e520]:
+              - generic [ref=e521]:
+                - heading "Regional Enterprise Architect, North America" [level=3] [ref=e522]
+                - generic [ref=e523]: Saved
+                - generic [ref=e525]:
+                  - generic [ref=e526]: star
+                  - generic [ref=e527]: star
+                  - generic [ref=e528]: star
+              - paragraph [ref=e529]: Diageo
+              - generic [ref=e530]:
+                - generic [ref=e531]:
+                  - generic [ref=e532]: location_on
+                  - generic [ref=e533]: Stamford, CT (On-site)
+                  - generic [ref=e534]: check_circle
+                - generic [ref=e535]:
+                  - generic [ref=e536]: work
+                  - generic [ref=e537]: Contract
+                  - generic [ref=e538]: check_circle
+                - generic [ref=e539]:
+                  - generic [ref=e540]: payments
+                  - generic "$154/hr" [ref=e541]
+                - generic [ref=e542]:
+                  - generic [ref=e543]: calendar_today
+                  - generic [ref=e544]: 5/14/2026
+        - generic [ref=e545] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 85 — ↑ 2 pts above your avg (83)"':
+              - text: "85"
+              - generic: ▲
+          - generic [ref=e546]:
+            - img "New York Power Authority" [ref=e548]
+            - generic [ref=e549]:
+              - generic [ref=e550]:
+                - heading "Senior Emerging & AI Technology Architect" [level=3] [ref=e551]
+                - generic [ref=e552]: Saved
+                - generic [ref=e553]:
+                  - generic [ref=e554]: group
+                  - text: 1 Connection
+                - generic [ref=e556]:
+                  - generic [ref=e557]: star
+                  - generic [ref=e558]: star
+                  - generic [ref=e559]: star
+              - paragraph [ref=e560]: New York Power Authority
+              - generic [ref=e561]:
+                - generic [ref=e562]:
+                  - generic [ref=e563]: location_on
+                  - generic [ref=e564]: White Plains, NY (Hybrid)
+                  - generic [ref=e565]: check_circle
+                - generic [ref=e566]:
+                  - generic [ref=e567]: work
+                  - generic [ref=e568]: Full-time
+                  - generic [ref=e569]: check_circle
+                - generic [ref=e570]:
+                  - generic [ref=e571]: payments
+                  - generic "$160,000-$200,000" [ref=e572]
+                - generic [ref=e573]:
+                  - generic [ref=e574]: calendar_today
+                  - generic [ref=e575]: 5/11/2026
+        - generic [ref=e576] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 62 — ↓ 21 pts below your avg (83)"':
+              - text: "62"
+              - generic: ▼
+            - generic:
+              - generic: bolt
+              - text: "50"
+          - generic [ref=e577]:
+            - img "Scouut" [ref=e579]
+            - generic [ref=e580]:
+              - generic [ref=e581]:
+                - heading "Principal Software Engineer (Relocate to Australia)" [level=3] [ref=e582]
+                - generic [ref=e583]: Saved
+                - generic [ref=e585]:
+                  - generic [ref=e586]: star
+                  - generic [ref=e587]: star
+                  - generic [ref=e588]: star
+              - paragraph [ref=e589]: Scouut
+              - generic [ref=e590]:
+                - generic [ref=e591]:
+                  - generic [ref=e592]: location_on
+                  - generic [ref=e593]: New York, NY (Hybrid)
+                  - generic [ref=e594]: check_circle
+                - generic [ref=e595]:
+                  - generic [ref=e596]: work
+                  - generic [ref=e597]: Full-time
+                  - generic [ref=e598]: check_circle
+                - generic [ref=e599]:
+                  - generic [ref=e600]: payments
+                  - generic "$300K/yr - $400K/yr" [ref=e601]
+                - generic [ref=e602]:
+                  - generic [ref=e603]: calendar_today
+                  - generic [ref=e604]: 5/10/2026
+        - generic [ref=e605] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 79 — ↓ 4 pts below your avg (83)"':
+              - text: "79"
+              - generic: ▼
+          - generic [ref=e606]:
+            - img "Coda Search│Staffing" [ref=e608]
+            - generic [ref=e609]:
+              - generic [ref=e610]:
+                - heading "Principal Engineer" [level=3] [ref=e611]
+                - generic [ref=e612]: Saved
+                - generic [ref=e613]:
+                  - generic [ref=e614]: group
+                  - text: 1 Connection
+                - generic [ref=e616]:
+                  - generic [ref=e617]: star
+                  - generic [ref=e618]: star
+                  - generic [ref=e619]: star
+              - paragraph [ref=e620]: Coda Search│Staffing
+              - generic [ref=e621]:
+                - generic [ref=e622]:
+                  - generic [ref=e623]: location_on
+                  - generic [ref=e624]: New York City Metropolitan Area (Hybrid)
+                  - generic [ref=e625]: check_circle
+                - generic [ref=e626]:
+                  - generic [ref=e627]: work
+                  - generic [ref=e628]: Contract
+                  - generic [ref=e629]: check_circle
+                - generic [ref=e630]:
+                  - generic [ref=e631]: payments
+                  - generic [ref=e632]: "-"
+                - generic [ref=e633]:
+                  - generic [ref=e634]: calendar_today
+                  - generic [ref=e635]: 5/10/2026
+        - generic [ref=e636] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 80 — ↓ 3 pts below your avg (83)"':
+              - text: "80"
+              - generic: ▼
+          - generic [ref=e637]:
+            - img "Programmers.io" [ref=e639]
+            - generic [ref=e640]:
+              - generic [ref=e641]:
+                - heading "Lead Application Architect" [level=3] [ref=e642]
+                - generic [ref=e643]: Saved
+                - generic [ref=e645]:
+                  - generic [ref=e646]: star
+                  - generic [ref=e647]: star
+                  - generic [ref=e648]: star
+              - paragraph [ref=e649]: Programmers.io
+              - generic [ref=e650]:
+                - generic [ref=e651]:
+                  - generic [ref=e652]: location_on
+                  - generic [ref=e653]: New York, NY (On-site)
+                  - generic [ref=e654]: check_circle
+                - generic [ref=e655]:
+                  - generic [ref=e656]: work
+                  - generic [ref=e657]: Full-time
+                  - generic [ref=e658]: check_circle
+                - generic [ref=e659]:
+                  - generic [ref=e660]: payments
+                  - generic [ref=e661]: "-"
+                - generic [ref=e662]:
+                  - generic [ref=e663]: calendar_today
+                  - generic [ref=e664]: 5/10/2026
+        - generic [ref=e665] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 84 (avg 83)"': "84"
+          - generic [ref=e666]:
+            - img "Mastercard" [ref=e668]
+            - generic [ref=e669]:
+              - generic [ref=e670]:
+                - heading "Principal Software Engineer, Senior Architect" [level=3] [ref=e671]
+                - generic [ref=e672]: Saved
+                - generic [ref=e674]:
+                  - generic [ref=e675]: star
+                  - generic [ref=e676]: star
+                  - generic [ref=e677]: star
+              - paragraph [ref=e678]: Mastercard
+              - generic [ref=e679]:
+                - generic [ref=e680]:
+                  - generic [ref=e681]: location_on
+                  - generic [ref=e682]: Purchase, NY (Hybrid)
+                  - generic [ref=e683]: check_circle
+                - generic [ref=e684]:
+                  - generic [ref=e685]: work
+                  - generic [ref=e686]: Full-time
+                  - generic [ref=e687]: check_circle
+                - generic [ref=e688]:
+                  - generic [ref=e689]: payments
+                  - generic "$195,000 - $323,000" [ref=e690]
+                - generic [ref=e691]:
+                  - generic [ref=e692]: calendar_today
+                  - generic [ref=e693]: 5/9/2026
+        - generic [ref=e694] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 86 — ↑ 3 pts above your avg (83)"':
+              - text: "86"
+              - generic: ▲
+          - generic [ref=e695]:
+            - img "Ro" [ref=e697]
+            - generic [ref=e698]:
+              - generic [ref=e699]:
+                - heading "Staff Software Engineer, Backend" [level=3] [ref=e700]
+                - generic [ref=e701]: Saved
+                - generic [ref=e703]:
+                  - generic [ref=e704]: star
+                  - generic [ref=e705]: star
+                  - generic [ref=e706]: star
+              - paragraph [ref=e707]: Ro
+              - generic [ref=e708]:
+                - generic [ref=e709]:
+                  - generic [ref=e710]: location_on
+                  - generic [ref=e711]: New York, NY (Hybrid)
+                  - generic [ref=e712]: check_circle
+                - generic [ref=e713]:
+                  - generic [ref=e714]: work
+                  - generic [ref=e715]: Full-time
+                  - generic [ref=e716]: check_circle
+                - generic [ref=e717]:
+                  - generic [ref=e718]: payments
+                  - generic "$211,700 to $292,000," [ref=e719]
+                - generic [ref=e720]:
+                  - generic [ref=e721]: calendar_today
+                  - generic [ref=e722]: 5/9/2026
+        - generic [ref=e723] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 70 — ↓ 13 pts below your avg (83)"':
+              - text: "70"
+              - generic: ▼
+          - generic [ref=e724]:
+            - img "On" [ref=e726]
+            - generic [ref=e727]:
+              - generic [ref=e728]:
+                - heading "Principal Workday Integration Architect (AI & Automation)" [level=3] [ref=e729]
+                - generic [ref=e730]: Saved
+                - generic [ref=e731]:
+                  - generic [ref=e732]: group
+                  - text: 4 Connections
+                - generic [ref=e734]:
+                  - generic [ref=e735]: star
+                  - generic [ref=e736]: star
+                  - generic [ref=e737]: star
+              - paragraph [ref=e738]: "On"
+              - generic [ref=e739]:
+                - generic [ref=e740]:
+                  - generic [ref=e741]: location_on
+                  - generic [ref=e742]: New York, NY (Remote)
+                  - generic [ref=e743]: check_circle
+                - generic [ref=e744]:
+                  - generic [ref=e745]: work
+                  - generic [ref=e746]: Full-time
+                  - generic [ref=e747]: check_circle
+                - generic [ref=e748]:
+                  - generic [ref=e749]: payments
+                  - generic "$152,000-$190,000" [ref=e750]
+                - generic [ref=e751]:
+                  - generic [ref=e752]: calendar_today
+                  - generic [ref=e753]: 5/9/2026
+        - generic [ref=e754] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 85 — ↑ 2 pts above your avg (83)"':
+              - text: "85"
+              - generic: ▲
+          - generic [ref=e755]:
+            - img "Deloitte" [ref=e757]
+            - generic [ref=e758]:
+              - generic [ref=e759]:
+                - heading "GenAI Solutions Architect - SFL Scientific" [level=3] [ref=e760]
+                - generic [ref=e761]: Saved
+                - generic [ref=e762]:
+                  - generic [ref=e763]: group
+                  - text: 1 Connection
+                - generic [ref=e765]:
+                  - generic [ref=e766]: star
+                  - generic [ref=e767]: star
+                  - generic [ref=e768]: star
+              - paragraph [ref=e769]: Deloitte
+              - generic [ref=e770]:
+                - generic [ref=e771]:
+                  - generic [ref=e772]: location_on
+                  - generic [ref=e773]: Stamford, CT (Hybrid)
+                  - generic [ref=e774]: check_circle
+                - generic [ref=e775]:
+                  - generic [ref=e776]: work
+                  - generic [ref=e777]: Full-time
+                  - generic [ref=e778]: check_circle
+                - generic [ref=e779]:
+                  - generic [ref=e780]: payments
+                  - generic "$107,600 to $198,400" [ref=e781]
+                - generic [ref=e782]:
+                  - generic [ref=e783]: calendar_today
+                  - generic [ref=e784]: 5/8/2026
+        - generic [ref=e785] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 88 — ↑ 5 pts above your avg (83)"':
+              - text: "88"
+              - generic: ▲
+          - generic [ref=e786]:
+            - img "Regeneron" [ref=e788]
+            - generic [ref=e789]:
+              - generic [ref=e790]:
+                - heading "Principal Software Engineer" [level=3] [ref=e791]
+                - generic [ref=e792]: Saved
+                - generic [ref=e793]:
+                  - generic [ref=e794]: group
+                  - text: 1 Connection
+                - generic [ref=e796]:
+                  - generic [ref=e797]: star
+                  - generic [ref=e798]: star
+                  - generic [ref=e799]: star
+              - paragraph [ref=e800]: Regeneron
+              - generic [ref=e801]:
+                - generic [ref=e802]:
+                  - generic [ref=e803]: location_on
+                  - generic [ref=e804]: Tarrytown, NY (On-site)
+                  - generic [ref=e805]: check_circle
+                - generic [ref=e806]:
+                  - generic [ref=e807]: work
+                  - generic [ref=e808]: Full-time
+                  - generic [ref=e809]: check_circle
+                - generic [ref=e810]:
+                  - generic [ref=e811]: payments
+                  - generic "$128,600" [ref=e812]
+                - generic [ref=e813]:
+                  - generic [ref=e814]: calendar_today
+                  - generic [ref=e815]: 5/8/2026
+        - generic [ref=e816] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 82 — ↓ 1 pts below your avg (83)"':
+              - text: "82"
+              - generic: ▼
+          - generic [ref=e817]:
+            - img "PwC" [ref=e819]
+            - generic [ref=e820]:
+              - generic [ref=e821]:
+                - heading "Senior Manager, Solution Architect" [level=3] [ref=e822]
+                - generic [ref=e823]: Saved
+                - generic [ref=e824]:
+                  - generic [ref=e825]: group
+                  - text: 1 Connection
+                - generic [ref=e827]:
+                  - generic [ref=e828]: star
+                  - generic [ref=e829]: star
+                  - generic [ref=e830]: star
+              - paragraph [ref=e831]: PwC
+              - generic [ref=e832]:
+                - generic [ref=e833]:
+                  - generic [ref=e834]: location_on
+                  - generic [ref=e835]: Melville, NY (Hybrid)
+                  - generic [ref=e836]: check_circle
+                - generic [ref=e837]:
+                  - generic [ref=e838]: work
+                  - generic [ref=e839]: Full-time
+                  - generic [ref=e840]: check_circle
+                - generic [ref=e841]:
+                  - generic [ref=e842]: payments
+                  - generic "$124,000 - $280,000" [ref=e843]
+                - generic [ref=e844]:
+                  - generic [ref=e845]: calendar_today
+                  - generic [ref=e846]: 5/8/2026
+        - generic [ref=e847] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 94 — ↑ 11 pts above your avg (83)"':
+              - text: "94"
+              - generic: ▲
+          - generic [ref=e848]:
+            - img "MTA" [ref=e850]
+            - generic [ref=e851]:
+              - generic [ref=e852]:
+                - heading "Manager, Product Development" [level=3] [ref=e853]
+                - generic [ref=e854]: Saved
+                - generic [ref=e855]:
+                  - generic [ref=e856]: group
+                  - text: 30 Connections
+                - generic [ref=e857]:
+                  - generic [ref=e858]:
+                    - generic [ref=e859]: star
+                    - generic [ref=e860]: star
+                    - generic [ref=e861]: star
+                  - generic [ref=e862]: High
+              - paragraph [ref=e863]: MTA
+              - generic [ref=e864]:
+                - generic [ref=e865]:
+                  - generic [ref=e866]: location_on
+                  - generic [ref=e867]: Jamaica, NY, United States (Hybrid)
+                  - generic [ref=e868]: check_circle
+                - generic [ref=e869]:
+                  - generic [ref=e870]: work
+                  - generic [ref=e871]: Full-time
+                  - generic [ref=e872]: check_circle
+                - generic [ref=e873]:
+                  - generic [ref=e874]: payments
+                  - generic "$160,963 - $189,990" [ref=e875]
+                - generic [ref=e876]:
+                  - generic [ref=e877]: calendar_today
+                  - generic [ref=e878]: 5/8/2026
+        - generic [ref=e879] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 80 — ↓ 3 pts below your avg (83)"':
+              - text: "80"
+              - generic: ▼
+          - generic [ref=e880]:
+            - img "PwC" [ref=e882]
+            - generic [ref=e883]:
+              - generic [ref=e884]:
+                - heading "Forward Deployed Software Engineer- Palantir Foundry- Senior Manager" [level=3] [ref=e885]
+                - generic [ref=e886]: Saved
+                - generic [ref=e887]:
+                  - generic [ref=e888]: group
+                  - text: 1 Connection
+                - generic [ref=e890]:
+                  - generic [ref=e891]: star
+                  - generic [ref=e892]: star
+                  - generic [ref=e893]: star
+              - paragraph [ref=e894]: PwC
+              - generic [ref=e895]:
+                - generic [ref=e896]:
+                  - generic [ref=e897]: location_on
+                  - generic [ref=e898]: Stamford, CT (Hybrid)
+                  - generic [ref=e899]: check_circle
+                - generic [ref=e900]:
+                  - generic [ref=e901]: work
+                  - generic [ref=e902]: Full-time
+                  - generic [ref=e903]: check_circle
+                - generic [ref=e904]:
+                  - generic [ref=e905]: payments
+                  - generic "$124,000 - $280,000" [ref=e906]
+                - generic [ref=e907]:
+                  - generic [ref=e908]: calendar_today
+                  - generic [ref=e909]: 5/8/2026
+        - generic [ref=e910] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 82 — ↓ 1 pts below your avg (83)"':
+              - text: "82"
+              - generic: ▼
+            - generic:
+              - generic: bolt
+              - text: "50"
+          - generic [ref=e911]:
+            - img "PwC" [ref=e913]
+            - generic [ref=e914]:
+              - generic [ref=e915]:
+                - heading "Manager, Solution Architect" [level=3] [ref=e916]
+                - generic [ref=e917]: Saved
+                - generic [ref=e918]:
+                  - generic [ref=e919]: group
+                  - text: 1 Connection
+                - generic [ref=e921]:
+                  - generic [ref=e922]: star
+                  - generic [ref=e923]: star
+                  - generic [ref=e924]: star
+              - paragraph [ref=e925]: PwC
+              - generic [ref=e926]:
+                - generic [ref=e927]:
+                  - generic [ref=e928]: location_on
+                  - generic [ref=e929]: Stamford, CT (Hybrid)
+                  - generic [ref=e930]: check_circle
+                - generic [ref=e931]:
+                  - generic [ref=e932]: work
+                  - generic [ref=e933]: Full-time
+                  - generic [ref=e934]: check_circle
+                - generic [ref=e935]:
+                  - generic [ref=e936]: payments
+                  - generic "$99,000 - $232,000" [ref=e937]
+                - generic [ref=e938]:
+                  - generic [ref=e939]: calendar_today
+                  - generic [ref=e940]: 5/8/2026
+        - generic [ref=e941] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 85 — ↑ 2 pts above your avg (83)"':
+              - text: "85"
+              - generic: ▲
+          - generic [ref=e942]:
+            - img "Deloitte" [ref=e944]
+            - generic [ref=e945]:
+              - generic [ref=e946]:
+                - heading "Solution Architect (Senior Consultant)" [level=3] [ref=e947]
+                - generic [ref=e948]: Saved
+                - generic [ref=e949]:
+                  - generic [ref=e950]: group
+                  - text: 1 Connection
+                - generic [ref=e952]:
+                  - generic [ref=e953]: star
+                  - generic [ref=e954]: star
+                  - generic [ref=e955]: star
+              - paragraph [ref=e956]: Deloitte
+              - generic [ref=e957]:
+                - generic [ref=e958]:
+                  - generic [ref=e959]: location_on
+                  - generic [ref=e960]: Stamford, CT (Hybrid)
+                  - generic [ref=e961]: check_circle
+                - generic [ref=e962]:
+                  - generic [ref=e963]: work
+                  - generic [ref=e964]: Full-time
+                  - generic [ref=e965]: check_circle
+                - generic [ref=e966]:
+                  - generic [ref=e967]: payments
+                  - generic "$107,600 to $198,400" [ref=e968]
+                - generic [ref=e969]:
+                  - generic [ref=e970]: calendar_today
+                  - generic [ref=e971]: 5/7/2026
+        - generic [ref=e972] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 83 (avg 83)"': "83"
+            - generic:
+              - generic: bolt
+              - text: "74"
+          - generic [ref=e973]:
+            - img "hackajob" [ref=e975]
+            - generic [ref=e976]:
+              - generic [ref=e977]:
+                - heading "Senior Director, Fellow, Enterprise Architect" [level=3] [ref=e978]
+                - generic [ref=e979]: Saved
+                - generic [ref=e981]:
+                  - generic [ref=e982]: star
+                  - generic [ref=e983]: star
+                  - generic [ref=e984]: star
+              - paragraph [ref=e985]: hackajob
+              - generic [ref=e986]:
+                - generic [ref=e987]:
+                  - generic [ref=e988]: location_on
+                  - generic [ref=e989]: New York, NY (On-site)
+                  - generic [ref=e990]: check_circle
+                - generic [ref=e991]:
+                  - generic [ref=e992]: work
+                  - generic [ref=e993]: Full-time
+                  - generic [ref=e994]: check_circle
+                - generic [ref=e995]:
+                  - generic [ref=e996]: payments
+                  - generic "$136.5K/yr - $300K/yr" [ref=e997]
+                - generic [ref=e998]:
+                  - generic [ref=e999]: calendar_today
+                  - generic [ref=e1000]: 5/6/2026
+        - generic [ref=e1001] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 90 — ↑ 7 pts above your avg (83)"':
+              - text: "90"
+              - generic: ▲
+          - generic [ref=e1002]:
+            - generic [ref=e1004]: corporate_fare
+            - generic [ref=e1005]:
+              - generic [ref=e1006]:
+                - heading "Unqork Solution Architect" [level=3] [ref=e1007]
+                - generic [ref=e1008]: Saved
+                - generic [ref=e1009]:
+                  - generic [ref=e1010]: group
+                  - text: 1 Connection
+                - generic [ref=e1011]:
+                  - generic [ref=e1012]:
+                    - generic [ref=e1013]: star
+                    - generic [ref=e1014]: star
+                    - generic [ref=e1015]: star
+                  - generic [ref=e1016]: Low
+              - paragraph [ref=e1017]: Deloitte
+              - generic [ref=e1018]:
+                - generic [ref=e1019]:
+                  - generic [ref=e1020]: location_on
+                  - generic [ref=e1021]: Stamford, CT (Hybrid)
+                  - generic [ref=e1022]: check_circle
+                - generic [ref=e1023]:
+                  - generic [ref=e1024]: work
+                  - generic [ref=e1025]: Full-time
+                  - generic [ref=e1026]: check_circle
+                - generic [ref=e1027]:
+                  - generic [ref=e1028]: payments
+                  - generic "$107,600 to $198,400" [ref=e1029]
+                - generic [ref=e1030]:
+                  - generic [ref=e1031]: calendar_today
+                  - generic [ref=e1032]: 5/3/2026
+        - generic [ref=e1033] [cursor=pointer]:
+          - generic:
+            - 'generic "Match Score: 93 — ↑ 10 pts above your avg (83)"':
+              - text: "93"
+              - generic: ▲
+            - generic:
+              - generic: bolt
+              - text: "50"
+          - generic [ref=e1034]:
+            - img "MTA" [ref=e1036]
+            - generic [ref=e1037]:
+              - generic [ref=e1038]:
+                - heading "Manager, Product Development" [level=3] [ref=e1039]
+                - generic [ref=e1040]: Saved
+                - generic [ref=e1041]:
+                  - generic [ref=e1042]: group
+                  - text: 30 Connections
+                - generic [ref=e1043]:
+                  - generic [ref=e1044]:
+                    - generic [ref=e1045]: star
+                    - generic [ref=e1046]: star
+                    - generic [ref=e1047]: star
+                  - generic [ref=e1048]: High
+              - paragraph [ref=e1049]: MTA
+              - generic [ref=e1050]:
+                - generic [ref=e1051]:
+                  - generic [ref=e1052]: location_on
+                  - generic [ref=e1053]: New York, NY, United States (Hybrid)
+                  - generic [ref=e1054]: check_circle
+                - generic [ref=e1055]:
+                  - generic [ref=e1056]: work
+                  - generic [ref=e1057]: Full-time
+                  - generic [ref=e1058]: check_circle
+                - generic [ref=e1059]:
+                  - generic [ref=e1060]: payments
+                  - generic "$160,963 - $189,990" [ref=e1061]
+                - generic [ref=e1062]:
+                  - generic [ref=e1063]: calendar_today
+                  - generic [ref=e1064]: 4/28/2026
+        - generic [ref=e1065] [cursor=pointer]:
+          - generic:
+            - generic:
+              - generic: bolt
+              - text: "73"
+          - generic [ref=e1066]:
+            - generic [ref=e1068]: corporate_fare
+            - generic [ref=e1069]:
+              - generic [ref=e1070]:
+                - heading "Director Site Reliability Engineering" [level=3] [ref=e1071]
+                - generic [ref=e1072]: Saved
+                - generic [ref=e1073]:
+                  - generic [ref=e1074]:
+                    - generic [ref=e1075]: star
+                    - generic [ref=e1076]: star
+                    - generic [ref=e1077]: star
+                  - generic [ref=e1078]: Low
+              - paragraph [ref=e1079]: Webster Bank
+              - generic [ref=e1080]:
+                - generic [ref=e1081]:
+                  - generic [ref=e1082]: location_on
+                  - generic [ref=e1083]: Stamford, CT (Hybrid)
+                  - generic [ref=e1084]: check_circle
+                - generic [ref=e1085]:
+                  - generic [ref=e1086]: work
+                  - generic [ref=e1087]: Full-time
+                  - generic [ref=e1088]: check_circle
+                - generic [ref=e1089]:
+                  - generic [ref=e1090]: payments
+                  - generic "$135,000" [ref=e1091]
+                - generic [ref=e1092]:
+                  - generic [ref=e1093]: calendar_today
+                  - generic [ref=e1094]: 4/22/2026

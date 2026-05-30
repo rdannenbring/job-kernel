@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Midnight Glass | Prioritized Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#f43f5e",
+                        "on-tertiary-container": "#fb7185",
+                        "surface-variant": "#1e293b",
+                        "on-surface": "#f1f5f9",
+                        "secondary-container": "#1e293b",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#256af433",
+                        "primary-fixed": "#dbeafe",
+                        "inverse-on-surface": "#0f172a",
+                        "surface-container-high": "#1e293b99",
+                        "tertiary-fixed": "#ffe4e6",
+                        "outline-variant": "#1e293b",
+                        "primary-fixed-dim": "#bfdbfe",
+                        "on-primary": "#ffffff",
+                        "error-container": "#450a0a",
+                        "on-tertiary-fixed": "#4c0519",
+                        "background": "#101622",
+                        "surface-container": "#1e293b80",
+                        "secondary-fixed": "#e2e8f0",
+                        "on-primary-fixed": "#1e3a8a",
+                        "on-background": "#f1f5f9",
+                        "on-error": "#ffffff",
+                        "inverse-primary": "#60a5fa",
+                        "error": "#ef4444",
+                        "tertiary-fixed-dim": "#fecdd3",
+                        "surface-container-lowest": "#080c14",
+                        "secondary": "#334155",
+                        "primary": "#256af4",
+                        "on-error-container": "#fca5a5",
+                        "surface-bright": "#1e293b",
+                        "surface": "#101622",
+                        "outline": "#334155",
+                        "on-tertiary-fixed-variant": "#9f1239",
+                        "surface-container-highest": "#2d3748",
+                        "surface-tint": "#256af4",
+                        "on-surface-variant": "#94a3b8",
+                        "surface-container-low": "#1e293b66",
+                        "surface-dim": "#0b0f18",
+                        "on-secondary-fixed-variant": "#334155",
+                        "on-secondary": "#f8fafc",
+                        "on-secondary-container": "#cbd5e1",
+                        "secondary-fixed-dim": "#cbd5e1",
+                        "on-secondary-fixed": "#0f172a",
+                        "on-primary-container": "#60a5fa",
+                        "inverse-surface": "#f8fafc",
+                        "on-primary-fixed-variant": "#1d4ed8",
+                        "tertiary-container": "#f43f5e22"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .neon-glow {
+            text-shadow: 0 0 10px rgba(37, 106, 244, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen selection:bg-primary/30">
+<!-- Persistent Collapsed SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-20 bg-slate-900 border-r border-white/5 flex flex-col items-center py-6 gap-8 z-50">
+<div class="font-black text-blue-500 text-2xl tracking-tighter">MG</div>
+<nav class="flex flex-col gap-6">
+<!-- Labels from JSON used as logic: Saved is Active -->
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-100 bg-blue-500/10 border-r-4 border-blue-500 transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="bookmark" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+</button>
+</nav>
+<div class="mt-auto flex flex-col gap-6">
+<button class="text-slate-400 hover:text-blue-400"><span class="material-symbols-outlined" data-icon="help">help</span></button>
+<button class="text-slate-400 hover:text-blue-400"><span class="material-symbols-outlined" data-icon="archive">archive</span></button>
+</div>
+</aside>
+<!-- Main Workspace Container -->
+<main class="ml-20 min-h-screen">
+<!-- Top Navigation -->
+<header class="fixed top-0 right-0 left-20 h-16 bg-slate-950/40 backdrop-blur-xl border-b border-white/10 flex items-center px-8 z-40 justify-between">
+<div class="flex items-center gap-4">
+<nav class="flex items-center gap-2 text-sm font-medium tracking-tight">
+<span class="text-slate-400">Saved</span>
+<span class="text-slate-600">/</span>
+<span class="text-blue-400 font-bold neon-glow">Prioritized</span>
+</nav>
+</div>
+<!-- Phase Progress Bar -->
+<div class="flex-1 max-w-xl mx-12">
+<div class="flex justify-between mb-2 px-1">
+<span class="text-[10px] uppercase tracking-widest text-blue-400 font-bold">Saved</span>
+<span class="text-[10px] uppercase tracking-widest text-slate-500">Generated</span>
+<span class="text-[10px] uppercase tracking-widest text-slate-500">Applied</span>
+<span class="text-[10px] uppercase tracking-widest text-slate-500">Decision</span>
+</div>
+<div class="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-1/4 shadow-[0_0_8px_rgba(37,106,244,0.6)]"></div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400 hover:text-blue-400 cursor-pointer" data-icon="notifications">notifications</span>
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-white/10" data-alt="A professional close-up portrait of a designer with a confident expression, set against a dark, moody background with subtle blue rim lighting. The style is cinematic and high-end, mirroring a sleek SaaS aesthetic with a focus on human-centric professionalism." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDctC7gGYKRLIRen5BCetMa7j41LFNq5j8qCy1Xli6TRpNmPpb_ZPmqiE6tnAy1tOS4B1RTwURAahydzmqly9piobsJSqcR0GY7obt4a0endLA-ANQMU0hn6lekJceh4iY5wIpqYX6hKwxQxZuCvB1lAs8bdBm4UxIyXdIa1pTBp2BwQBe1qaZmvNGQKavr1tH-wnZndTWkZV6x0uXOReD-JhjLkebHLLF0ILyootUGRCFc9dCt9c3nhIC4yjGLIiQvdr6TWoLhWbU"/>
+</div>
+</header>
+<!-- Page Content -->
+<div class="pt-24 px-8 pb-12 flex gap-8">
+<!-- Sub-stage Sidebar -->
+<aside class="w-64 flex-shrink-0 flex flex-col gap-2">
+<h3 class="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold px-4 mb-4">Pipeline Steps</h3>
+<a class="px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="analytics">analytics</span>
+<span class="text-sm font-medium">Parsed</span>
+</a>
+<a class="px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
+<span class="text-sm font-medium">Reviewed</span>
+</a>
+<a class="px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="group">group</span>
+<span class="text-sm font-medium">Network Contacts</span>
+</a>
+<a class="px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="search">search</span>
+<span class="text-sm font-medium">Company Research</span>
+</a>
+<a class="px-4 py-3 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-sm font-bold">Prioritized</span>
+</a>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 space-y-8">
+<!-- Section 1: Configuration & Weighting -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-2xl font-bold tracking-tight text-slate-100">Curation Strategy &amp; Weighting</h2>
+<p class="text-slate-400 text-sm mt-1">Define what matters most for your next career move.</p>
+</div>
+<button class="px-4 py-2 bg-slate-800 text-slate-200 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-700 transition-all">
+                            Reset Defaults
+                        </button>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+<!-- Criteria Cards -->
+<div class="glass-panel p-4 rounded-2xl border-blue-500/20 bg-blue-500/5">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-blue-400" data-icon="work">work</span>
+<span class="text-[10px] font-bold text-blue-500">ACTIVE</span>
+</div>
+<p class="text-xs font-bold uppercase tracking-widest text-slate-300">Role Fit</p>
+<div class="mt-4 flex items-center gap-2">
+<span class="text-[10px] text-slate-500">WEIGHT:</span>
+<span class="text-xs font-bold text-white">4x</span>
+</div>
+</div>
+<div class="glass-panel p-4 rounded-2xl border-white/5">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-slate-500" data-icon="trending_up">trending_up</span>
+<input checked="" class="rounded border-slate-700 bg-slate-900 text-blue-500 focus:ring-0" type="checkbox"/>
+</div>
+<p class="text-xs font-bold uppercase tracking-widest text-slate-300">Growth</p>
+<div class="mt-4 flex items-center gap-2">
+<span class="text-[10px] text-slate-500">WEIGHT:</span>
+<span class="text-xs font-bold text-white">5x</span>
+</div>
+</div>
+<div class="glass-panel p-4 rounded-2xl border-white/5 opacity-50 grayscale">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-slate-500" data-icon="payments">payments</span>
+<input class="rounded border-slate-700 bg-slate-900 text-blue-500 focus:ring-0" type="checkbox"/>
+</div>
+<p class="text-xs font-bold uppercase tracking-widest text-slate-300">Comp</p>
+<div class="mt-4 flex items-center gap-2">
+<span class="text-[10px] text-slate-500">-</span>
+</div>
+</div>
+<!-- Repeat more as needed -->
+<div class="glass-panel p-4 rounded-2xl border-blue-500/20 bg-blue-500/5">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-blue-400" data-icon="balance">balance</span>
+<span class="text-[10px] font-bold text-blue-500">ACTIVE</span>
+</div>
+<p class="text-xs font-bold uppercase tracking-widest text-slate-300">WLB</p>
+<div class="mt-4 flex items-center gap-2">
+<span class="text-[10px] text-slate-500">WEIGHT:</span>
+<span class="text-xs font-bold text-white">3x</span>
+</div>
+</div>
+<div class="glass-panel p-4 rounded-2xl border-white/5">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-slate-500" data-icon="groups">groups</span>
+<input checked="" class="rounded border-slate-700 bg-slate-900 text-blue-500 focus:ring-0" type="checkbox"/>
+</div>
+<p class="text-xs font-bold uppercase tracking-widest text-slate-300">Team</p>
+<div class="mt-4 flex items-center gap-2">
+<span class="text-[10px] text-slate-500">WEIGHT:</span>
+<span class="text-xs font-bold text-white">2x</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Scoring Matrix -->
+<section class="glass-panel rounded-3xl overflow-hidden">
+<!-- Job Header -->
+<div class="p-6 bg-white/5 border-b border-white/10 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-black rounded-xl flex items-center justify-center p-2 border border-white/10">
+<img alt="Spotify Logo" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuzZbslyjhAwjorAth-19h51XUqLN_f17gUH__AvwHpvOcPKSl8sX9q95K80vtgI_I6ovUJmXtUVMBx2V7ixMzpwe7JDW2-yQUBwRCSscc11kwtBlarNR2Ojc_O-0brhhsvgV3bggvCE1fdcYGWWYTNFbPiDBjCgvJEB1BdwmD_IxBgeYYww_ULygRheOkyebY-KjVR3R6KSd3IZx0tzoUsDejiducVosWv8dvql3qckcK9vRo8mCoATZ60m30u1dT0LsW9wuHoHo"/>
+</div>
+<div>
+<h3 class="text-lg font-bold text-slate-100">Senior Product Designer</h3>
+<p class="text-slate-400 text-xs font-medium tracking-tight">Spotify • Content Experience Team</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Last Scored</span>
+<p class="text-xs text-slate-300">2 hours ago</p>
+</div>
+</div>
+<!-- Matrix Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="border-b border-white/5">
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Criterion</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Rating (1-10)</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center">Weight</th>
+<th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-right">Calculated</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<tr class="hover:bg-white/5 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-blue-500"></div>
+<span class="text-sm font-semibold text-slate-200">Role Fit</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<input class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500" type="range" value="9"/>
+</td>
+<td class="px-6 py-5 text-center text-sm font-bold text-slate-400">4x</td>
+<td class="px-6 py-5 text-right font-mono text-blue-400 font-bold">36</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-blue-400"></div>
+<span class="text-sm font-semibold text-slate-200">Career Growth</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<input class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500" type="range" value="8"/>
+</td>
+<td class="px-6 py-5 text-center text-sm font-bold text-slate-400">5x</td>
+<td class="px-6 py-5 text-right font-mono text-blue-400 font-bold">40</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-blue-300"></div>
+<span class="text-sm font-semibold text-slate-200">Work-Life Balance</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<input class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500" type="range" value="4"/>
+</td>
+<td class="px-6 py-5 text-center text-sm font-bold text-slate-400">3x</td>
+<td class="px-6 py-5 text-right font-mono text-blue-400 font-bold">12</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Section 3: Priority Intelligence Output -->
+<section class="grid grid-cols-3 gap-8">
+<!-- Score Circle -->
+<div class="glass-panel p-8 rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group">
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/10 blur-3xl group-hover:bg-blue-500/20 transition-all"></div>
+<span class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-4">Priority Score</span>
+<div class="relative">
+<svg class="w-32 h-32 transform -rotate-90">
+<circle class="text-slate-800" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-blue-500 drop-shadow-[0_0_8px_rgba(37,106,244,0.6)]" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-dasharray="364.4" stroke-dashoffset="43.7" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-4xl font-black text-white">88</span>
+<span class="text-[10px] text-slate-500 font-bold">/ 100</span>
+</div>
+</div>
+<div class="mt-6">
+<span class="bg-blue-500/20 text-blue-400 text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest border border-blue-500/30">High Energy Priority</span>
+</div>
+</div>
+<!-- Qualitative Notes -->
+<div class="col-span-2 glass-panel p-8 rounded-3xl flex flex-col justify-between">
+<div class="grid grid-cols-2 gap-8">
+<div>
+<h4 class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Non-Negotiables</h4>
+<ul class="space-y-2">
+<li class="flex items-start gap-2 text-sm text-slate-200">
+<span class="material-symbols-outlined text-blue-500 text-xs mt-1" data-icon="check_circle">check_circle</span>
+                                        Fully remote structure
+                                    </li>
+<li class="flex items-start gap-2 text-sm text-slate-200">
+<span class="material-symbols-outlined text-blue-500 text-xs mt-1" data-icon="check_circle">check_circle</span>
+                                        Equity package inclusion
+                                    </li>
+</ul>
+</div>
+<div>
+<h4 class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Recommendation</h4>
+<p class="text-sm text-slate-300 leading-relaxed">
+                                    This role aligns with 88% of your core values. <span class="text-white font-bold italic">Proceed to Generation phase immediately</span> to capitalize on early application advantage.
+                                </p>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-white/5 flex gap-4">
+<button class="flex-1 py-4 bg-primary text-white rounded-2xl font-bold text-sm hover:brightness-110 shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+                                Lock Priority &amp; Move to Generated Phase
+                                <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<button class="px-6 py-4 bg-slate-800 text-slate-300 rounded-2xl font-bold text-sm hover:bg-slate-700 transition-all">
+                                Compare Roles
+                            </button>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- Visual Texture Accents -->
+<div class="fixed top-0 right-0 -z-10 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="fixed bottom-0 left-0 -z-10 w-[400px] h-[400px] bg-blue-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+</body></html>

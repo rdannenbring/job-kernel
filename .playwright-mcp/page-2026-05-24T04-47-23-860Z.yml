@@ -1,0 +1,1325 @@
+- generic [ref=e3]:
+  - complementary [ref=e7]:
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e11] [cursor=pointer]:
+          - img "JobKernel logo" [ref=e12]
+          - heading "JobKernel" [level=1] [ref=e13]
+        - button "chevron_left" [ref=e14] [cursor=pointer]:
+          - generic [ref=e15]: chevron_left
+      - button "add New Application" [ref=e16] [cursor=pointer]:
+        - generic [ref=e17]: add
+        - generic [ref=e18]: New Application
+      - navigation [ref=e19]:
+        - button "dashboard Dashboard" [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: dashboard
+          - generic [ref=e22]: Dashboard
+        - button "person Profile" [ref=e23] [cursor=pointer]:
+          - generic [ref=e24]: person
+          - generic [ref=e25]: Profile
+        - button "leaderboard Analytics" [ref=e26] [cursor=pointer]:
+          - generic [ref=e27]: leaderboard
+          - generic [ref=e28]: Analytics
+      - button "notifications Notifications" [ref=e29] [cursor=pointer]:
+        - generic [ref=e31]: notifications
+        - generic [ref=e32]: Notifications
+      - button "dark_mode Dark Theme" [ref=e34] [cursor=pointer]:
+        - generic [ref=e35]: dark_mode
+        - generic [ref=e36]: Dark Theme
+      - navigation [ref=e37]:
+        - button "admin_panel_settings Admin" [ref=e38] [cursor=pointer]:
+          - generic [ref=e39]: admin_panel_settings
+          - generic [ref=e40]: Admin
+        - button "settings Settings" [ref=e41] [cursor=pointer]:
+          - generic [ref=e42]: settings
+          - generic [ref=e43]: Settings
+      - generic [ref=e44]:
+        - button "A admin Administrator" [ref=e45] [cursor=pointer]:
+          - generic [ref=e46]: A
+          - generic [ref=e47]:
+            - generic [ref=e48]: admin
+            - generic [ref=e49]: Administrator
+        - button "logout Logout" [ref=e50] [cursor=pointer]:
+          - generic [ref=e51]: logout
+          - generic [ref=e52]: Logout
+  - main [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - heading "Dashboard" [level=2] [ref=e57]
+          - generic [ref=e58]:
+            - button "Board" [ref=e59] [cursor=pointer]
+            - button "List" [active] [ref=e60] [cursor=pointer]
+            - button "Table" [ref=e61] [cursor=pointer]
+        - button "add Add Job" [ref=e63] [cursor=pointer]:
+          - generic [ref=e64]: add
+          - generic [ref=e65]: Add Job
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - generic [ref=e69]: search
+            - textbox "Search companies, roles, location…" [ref=e70]
+            - generic [ref=e71]: /
+          - button "splitscreen Group by expand_more" [ref=e74] [cursor=pointer]:
+            - generic [ref=e75]: splitscreen
+            - generic [ref=e76]: Group by
+            - generic [ref=e77]: expand_more
+          - button "view_column" [ref=e79] [cursor=pointer]:
+            - generic [ref=e80]: view_column
+          - button "visibility" [ref=e81] [cursor=pointer]:
+            - generic [ref=e82]: visibility
+          - button "density_small" [ref=e83] [cursor=pointer]:
+            - generic [ref=e84]: density_small
+          - button "density_medium" [ref=e85] [cursor=pointer]:
+            - generic [ref=e86]: density_medium
+          - button "density_large" [ref=e87] [cursor=pointer]:
+            - generic [ref=e88]: density_large
+          - button "keyboard" [ref=e89] [cursor=pointer]:
+            - generic [ref=e90]: keyboard
+        - generic [ref=e92]:
+          - generic [ref=e93]:
+            - checkbox "Select all" [ref=e95] [cursor=pointer]
+            - generic [ref=e96] [cursor=pointer]:
+              - generic [ref=e97]: Company
+              - generic [ref=e99]: arrow_downward
+            - generic [ref=e100] [cursor=pointer]:
+              - generic [ref=e101]: Journey
+              - generic [ref=e103]: arrow_downward
+            - generic [ref=e104] [cursor=pointer]:
+              - generic [ref=e105]: Score
+              - generic [ref=e107]: arrow_downward
+            - generic [ref=e109]: Salary
+            - generic [ref=e110] [cursor=pointer]:
+              - generic [ref=e111]: Interest
+              - generic [ref=e113]: arrow_downward
+            - generic [ref=e115]: Docs
+            - generic [ref=e116] [cursor=pointer]:
+              - generic [ref=e117]: Location
+              - generic [ref=e119]: arrow_downward
+            - generic [ref=e120] [cursor=pointer]:
+              - generic [ref=e121]: Added
+              - generic [ref=e123]: arrow_downward
+            - generic [ref=e125]: Next action
+          - generic [ref=e126]:
+            - generic [ref=e128] [cursor=pointer]:
+              - checkbox "Select Amtrak" [ref=e130]
+              - generic [ref=e132]:
+                - img "Amtrak" [ref=e134]
+                - generic [ref=e135]:
+                  - generic [ref=e136]: Amtrak
+                  - generic [ref=e137]: Dir EA Infra & Compliance - 90399170 - Remote
+              - generic "Click to change stage" [ref=e138]:
+                - generic [ref=e139]:
+                  - generic [ref=e140]:
+                    - generic "Saved" [ref=e141]
+                    - generic "Generated" [ref=e142]
+                    - generic "Applied" [ref=e143]
+                    - generic "Interviewing" [ref=e144]
+                    - generic "Decision" [ref=e145]
+                    - generic "Accepted" [ref=e146]
+                  - generic [ref=e147]: Saved [object Object]/5
+              - generic [ref=e148]:
+                - generic [ref=e149]:
+                  - img [ref=e150]
+                  - generic [ref=e153]: "96"
+                - generic [ref=e154]: "+13"
+              - generic [ref=e156]:
+                - generic [ref=e157]: payments
+                - text: $163,000.00 – $211,140.00
+              - generic [ref=e159]:
+                - generic [ref=e160]: star
+                - generic [ref=e161]: star
+                - generic [ref=e162]: star
+              - generic [ref=e164]:
+                - generic [ref=e165]: check_circle
+                - text: All ready
+              - generic "New York, NY" [ref=e167]
+              - generic [ref=e169]: 3d
+              - generic [ref=e170]:
+                - generic [ref=e171]:
+                  - generic [ref=e172]: bolt
+                  - generic [ref=e173]: Ready to generate materials
+                - generic "Expand preview" [ref=e174]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e176] [cursor=pointer]:
+              - checkbox "Select MTA" [ref=e178]
+              - generic [ref=e180]:
+                - img "MTA" [ref=e182]
+                - generic [ref=e183]:
+                  - generic [ref=e184]: MTA
+                  - generic [ref=e185]: Manager, Product Development
+              - generic "Click to change stage" [ref=e186]:
+                - generic [ref=e187]:
+                  - generic [ref=e188]:
+                    - generic "Saved" [ref=e189]
+                    - generic "Generated" [ref=e190]
+                    - generic "Applied" [ref=e191]
+                    - generic "Interviewing" [ref=e192]
+                    - generic "Decision" [ref=e193]
+                    - generic "Accepted" [ref=e194]
+                  - generic [ref=e195]: Generated [object Object]/4
+              - generic [ref=e196]:
+                - generic [ref=e197]:
+                  - img [ref=e198]
+                  - generic [ref=e201]: "94"
+                - generic [ref=e202]: "+11"
+              - generic [ref=e204]:
+                - generic [ref=e205]: payments
+                - text: $160,963 - $189,990
+              - generic [ref=e207]:
+                - generic [ref=e208]: star
+                - generic [ref=e209]: star
+                - generic [ref=e210]: star
+              - generic [ref=e212]:
+                - generic [ref=e213]: check_circle
+                - text: All ready
+              - generic "Jamaica, NY, United States" [ref=e215]
+              - generic [ref=e217]: 2w
+              - generic [ref=e218]:
+                - generic [ref=e219]:
+                  - generic [ref=e220]: bolt
+                  - generic [ref=e221]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e222]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e224] [cursor=pointer]:
+              - checkbox "Select CAST" [ref=e226]
+              - generic [ref=e228]:
+                - img "CAST" [ref=e230]
+                - generic [ref=e231]:
+                  - generic [ref=e232]: CAST
+                  - generic [ref=e233]: Senior Consultant / Architect – AI-Driven Modernization (North America) (Engineering / Architecture → Customer Ownership)
+              - generic "Click to change stage" [ref=e234]:
+                - generic [ref=e235]:
+                  - generic [ref=e236]:
+                    - generic "Saved" [ref=e237]
+                    - generic "Generated" [ref=e238]
+                    - generic "Applied" [ref=e239]
+                    - generic "Interviewing" [ref=e240]
+                    - generic "Decision" [ref=e241]
+                    - generic "Accepted" [ref=e242]
+                  - generic [ref=e243]: Applied [object Object]/4
+              - generic [ref=e244]:
+                - generic [ref=e245]:
+                  - img [ref=e246]
+                  - generic [ref=e249]: "93"
+                - generic [ref=e250]: "+10"
+              - generic [ref=e252]: —
+              - generic [ref=e254]:
+                - generic [ref=e255]: star
+                - generic [ref=e256]: star
+                - generic [ref=e257]: star
+              - generic [ref=e259]:
+                - generic [ref=e260]: check_circle
+                - text: All ready
+              - generic "Northeast, NY" [ref=e262]
+              - generic [ref=e264]: 1w
+              - generic [ref=e265]:
+                - generic [ref=e266]:
+                  - generic [ref=e267]: schedule
+                  - generic [ref=e268]: Follow up if no response in 5 days
+                - generic "Expand preview" [ref=e269]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e271] [cursor=pointer]:
+              - checkbox "Select MTA" [ref=e273]
+              - generic [ref=e275]:
+                - img "MTA" [ref=e277]
+                - generic [ref=e278]:
+                  - generic [ref=e279]: MTA
+                  - generic [ref=e280]: Manager, Product Development
+              - generic "Click to change stage" [ref=e281]:
+                - generic [ref=e282]:
+                  - generic [ref=e283]:
+                    - generic "Saved" [ref=e284]
+                    - generic "Generated" [ref=e285]
+                    - generic "Applied" [ref=e286]
+                    - generic "Interviewing" [ref=e287]
+                    - generic "Decision" [ref=e288]
+                    - generic "Accepted" [ref=e289]
+                  - generic [ref=e290]: Applied [object Object]/4
+              - generic [ref=e291]:
+                - generic [ref=e292]:
+                  - img [ref=e293]
+                  - generic [ref=e296]: "93"
+                - generic [ref=e297]: "+10"
+              - generic [ref=e299]:
+                - generic [ref=e300]: payments
+                - text: $160,963 - $189,990
+              - generic [ref=e302]:
+                - generic [ref=e303]: star
+                - generic [ref=e304]: star
+                - generic [ref=e305]: star
+              - generic [ref=e307]:
+                - generic [ref=e308]: check_circle
+                - text: All ready
+              - generic "New York, NY, United States" [ref=e310]
+              - generic [ref=e312]: 3w
+              - generic [ref=e313]:
+                - generic [ref=e314]:
+                  - generic [ref=e315]: schedule
+                  - generic [ref=e316]: Follow up if no response in 5 days
+                - generic "Expand preview" [ref=e317]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e319] [cursor=pointer]:
+              - checkbox "Select PRI Technology" [ref=e321]
+              - generic [ref=e323]:
+                - img "PRI Technology" [ref=e325]
+                - generic [ref=e326]:
+                  - generic [ref=e327]: PRI Technology
+                  - generic [ref=e328]: Senior Lead Software Architect
+              - generic "Click to change stage" [ref=e329]:
+                - generic [ref=e330]:
+                  - generic [ref=e331]:
+                    - generic "Saved" [ref=e332]
+                    - generic "Generated" [ref=e333]
+                    - generic "Applied" [ref=e334]
+                    - generic "Interviewing" [ref=e335]
+                    - generic "Decision" [ref=e336]
+                    - generic "Accepted" [ref=e337]
+                  - generic [ref=e338]: Decision [object Object]/5
+              - generic [ref=e339]:
+                - generic [ref=e340]:
+                  - img [ref=e341]
+                  - generic [ref=e344]: "92"
+                - generic [ref=e345]: "+9"
+              - generic [ref=e347]: —
+              - generic [ref=e349]:
+                - generic [ref=e350]: star
+                - generic [ref=e351]: star
+                - generic [ref=e352]: star
+              - generic [ref=e354]:
+                - generic [ref=e355]: check_circle
+                - text: All ready
+              - generic "United States" [ref=e357]
+              - generic [ref=e359]: 3d
+              - generic [ref=e360]:
+                - generic [ref=e361]:
+                  - generic [ref=e362]: schedule
+                  - generic [ref=e363]: Evaluate offer / negotiate if needed
+                - generic "Expand preview" [ref=e364]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e366] [cursor=pointer]:
+              - checkbox "Select Deloitte" [ref=e368]
+              - generic [ref=e370]:
+                - generic [ref=e372]: DE
+                - generic [ref=e373]:
+                  - generic [ref=e374]: Deloitte
+                  - generic [ref=e375]: Unqork Solution Architect
+              - generic "Click to change stage" [ref=e376]:
+                - generic [ref=e377]:
+                  - generic [ref=e378]:
+                    - generic "Saved" [ref=e379]
+                    - generic "Generated" [ref=e380]
+                    - generic "Applied" [ref=e381]
+                    - generic "Interviewing" [ref=e382]
+                    - generic "Decision" [ref=e383]
+                    - generic "Accepted" [ref=e384]
+                  - generic [ref=e385]: Generated [object Object]/4
+              - generic [ref=e386]:
+                - generic [ref=e387]:
+                  - img [ref=e388]
+                  - generic [ref=e391]: "90"
+                - generic [ref=e392]: "+7"
+              - generic [ref=e394]:
+                - generic [ref=e395]: payments
+                - text: $107,600 to $198,400
+              - generic [ref=e397]:
+                - generic [ref=e398]: star
+                - generic [ref=e399]: star
+                - generic [ref=e400]: star
+              - generic [ref=e402]:
+                - generic [ref=e403]: check_circle
+                - text: All ready
+              - generic "Stamford, CT" [ref=e405]
+              - generic [ref=e407]: 2w
+              - generic [ref=e408]:
+                - generic [ref=e409]:
+                  - generic [ref=e410]: bolt
+                  - generic [ref=e411]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e412]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e414] [cursor=pointer]:
+              - checkbox "Select Regeneron" [ref=e416]
+              - generic [ref=e418]:
+                - img "Regeneron" [ref=e420]
+                - generic [ref=e421]:
+                  - generic [ref=e422]: Regeneron
+                  - generic [ref=e423]: Principal Software Engineer
+              - generic "Click to change stage" [ref=e424]:
+                - generic [ref=e425]:
+                  - generic [ref=e426]:
+                    - generic "Saved" [ref=e427]
+                    - generic "Generated" [ref=e428]
+                    - generic "Applied" [ref=e429]
+                    - generic "Interviewing" [ref=e430]
+                    - generic "Decision" [ref=e431]
+                    - generic "Accepted" [ref=e432]
+                  - generic [ref=e433]: Generated [object Object]/4
+              - generic [ref=e434]:
+                - generic [ref=e435]:
+                  - img [ref=e436]
+                  - generic [ref=e439]: "88"
+                - generic [ref=e440]: "+5"
+              - generic [ref=e442]:
+                - generic [ref=e443]: payments
+                - text: $128,600
+              - generic [ref=e445]:
+                - generic [ref=e446]: star
+                - generic [ref=e447]: star
+                - generic [ref=e448]: star
+              - generic [ref=e450]:
+                - generic [ref=e451]: check_circle
+                - text: All ready
+              - generic "Tarrytown, NY" [ref=e453]
+              - generic [ref=e455]: 2w
+              - generic [ref=e456]:
+                - generic [ref=e457]:
+                  - generic [ref=e458]: bolt
+                  - generic [ref=e459]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e460]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e462] [cursor=pointer]:
+              - checkbox "Select Johnson & Johnson" [ref=e464]
+              - generic [ref=e466]:
+                - img "Johnson & Johnson" [ref=e468]
+                - generic [ref=e469]:
+                  - generic [ref=e470]: Johnson & Johnson
+                  - generic [ref=e471]: Director, Chief Architect, Architecture
+              - generic "Click to change stage" [ref=e472]:
+                - generic [ref=e473]:
+                  - generic [ref=e474]:
+                    - generic "Saved" [ref=e475]
+                    - generic "Generated" [ref=e476]
+                    - generic "Applied" [ref=e477]
+                    - generic "Interviewing" [ref=e478]
+                    - generic "Decision" [ref=e479]
+                    - generic "Accepted" [ref=e480]
+                  - generic [ref=e481]: Accepted [object Object]/5
+              - generic [ref=e482]:
+                - generic [ref=e483]:
+                  - img [ref=e484]
+                  - generic [ref=e487]: "86"
+                - generic [ref=e488]: "+3"
+              - generic [ref=e490]:
+                - generic [ref=e491]: payments
+                - text: $150,000.00 - $258,750.00
+              - generic [ref=e493]:
+                - generic [ref=e494]: star
+                - generic [ref=e495]: star
+                - generic [ref=e496]: star
+              - generic [ref=e498]:
+                - generic [ref=e499]: check_circle
+                - text: All ready
+              - generic "Norwalk, CT" [ref=e501]
+              - generic [ref=e503]: 3d
+              - generic [ref=e504]:
+                - generic [ref=e505]:
+                  - generic [ref=e506]: schedule
+                  - generic [ref=e507]: Onboarding — confirm start date
+                - generic "Expand preview" [ref=e508]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e510] [cursor=pointer]:
+              - checkbox "Select Ro" [ref=e512]
+              - generic [ref=e514]:
+                - img "Ro" [ref=e516]
+                - generic [ref=e517]:
+                  - generic [ref=e518]: Ro
+                  - generic [ref=e519]: Staff Software Engineer, Backend
+              - generic "Click to change stage" [ref=e520]:
+                - generic [ref=e521]:
+                  - generic [ref=e522]:
+                    - generic "Saved" [ref=e523]
+                    - generic "Generated" [ref=e524]
+                    - generic "Applied" [ref=e525]
+                    - generic "Interviewing" [ref=e526]
+                    - generic "Decision" [ref=e527]
+                    - generic "Accepted" [ref=e528]
+                  - generic [ref=e529]: Generated [object Object]/4
+              - generic [ref=e530]:
+                - generic [ref=e531]:
+                  - img [ref=e532]
+                  - generic [ref=e535]: "86"
+                - generic [ref=e536]: "+3"
+              - generic [ref=e538]:
+                - generic [ref=e539]: payments
+                - text: $211,700 to $292,000,
+              - generic [ref=e541]:
+                - generic [ref=e542]: star
+                - generic [ref=e543]: star
+                - generic [ref=e544]: star
+              - generic [ref=e546]:
+                - generic [ref=e547]: check_circle
+                - text: All ready
+              - generic "New York, NY" [ref=e549]
+              - generic [ref=e551]: 2w
+              - generic [ref=e552]:
+                - generic [ref=e553]:
+                  - generic [ref=e554]: bolt
+                  - generic [ref=e555]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e556]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e558] [cursor=pointer]:
+              - checkbox "Select New York Power Authority" [ref=e560]
+              - generic [ref=e562]:
+                - img "New York Power Authority" [ref=e564]
+                - generic [ref=e565]:
+                  - generic [ref=e566]: New York Power Authority
+                  - generic [ref=e567]: Senior Emerging & AI Technology Architect
+              - generic "Click to change stage" [ref=e568]:
+                - generic [ref=e569]:
+                  - generic [ref=e570]:
+                    - generic "Saved" [ref=e571]
+                    - generic "Generated" [ref=e572]
+                    - generic "Applied" [ref=e573]
+                    - generic "Interviewing" [ref=e574]
+                    - generic "Decision" [ref=e575]
+                    - generic "Accepted" [ref=e576]
+                  - generic [ref=e577]: Generated [object Object]/4
+              - generic [ref=e578]:
+                - generic [ref=e579]:
+                  - img [ref=e580]
+                  - generic [ref=e583]: "85"
+                - generic [ref=e584]: "+2"
+              - generic [ref=e586]:
+                - generic [ref=e587]: payments
+                - text: $160,000-$200,000
+              - generic [ref=e589]:
+                - generic [ref=e590]: star
+                - generic [ref=e591]: star
+                - generic [ref=e592]: star
+              - generic [ref=e594]:
+                - generic [ref=e595]: check_circle
+                - text: All ready
+              - generic "White Plains, NY" [ref=e597]
+              - generic [ref=e599]: 1w
+              - generic [ref=e600]:
+                - generic [ref=e601]:
+                  - generic [ref=e602]: bolt
+                  - generic [ref=e603]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e604]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e606] [cursor=pointer]:
+              - checkbox "Select Deloitte" [ref=e608]
+              - generic [ref=e610]:
+                - img "Deloitte" [ref=e612]
+                - generic [ref=e613]:
+                  - generic [ref=e614]: Deloitte
+                  - generic [ref=e615]: GenAI Solutions Architect - SFL Scientific
+              - generic "Click to change stage" [ref=e616]:
+                - generic [ref=e617]:
+                  - generic [ref=e618]:
+                    - generic "Saved" [ref=e619]
+                    - generic "Generated" [ref=e620]
+                    - generic "Applied" [ref=e621]
+                    - generic "Interviewing" [ref=e622]
+                    - generic "Decision" [ref=e623]
+                    - generic "Accepted" [ref=e624]
+                  - generic [ref=e625]: Generated [object Object]/4
+              - generic [ref=e626]:
+                - generic [ref=e627]:
+                  - img [ref=e628]
+                  - generic [ref=e631]: "85"
+                - generic [ref=e632]: "+2"
+              - generic [ref=e634]:
+                - generic [ref=e635]: payments
+                - text: $107,600 to $198,400
+              - generic [ref=e637]:
+                - generic [ref=e638]: star
+                - generic [ref=e639]: star
+                - generic [ref=e640]: star
+              - generic [ref=e642]:
+                - generic [ref=e643]: check_circle
+                - text: All ready
+              - generic "Stamford, CT" [ref=e645]
+              - generic [ref=e647]: 2w
+              - generic [ref=e648]:
+                - generic [ref=e649]:
+                  - generic [ref=e650]: bolt
+                  - generic [ref=e651]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e652]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e654] [cursor=pointer]:
+              - checkbox "Select Deloitte" [ref=e656]
+              - generic [ref=e658]:
+                - img "Deloitte" [ref=e660]
+                - generic [ref=e661]:
+                  - generic [ref=e662]: Deloitte
+                  - generic [ref=e663]: Solution Architect (Senior Consultant)
+              - generic "Click to change stage" [ref=e664]:
+                - generic [ref=e665]:
+                  - generic [ref=e666]:
+                    - generic "Saved" [ref=e667]
+                    - generic "Generated" [ref=e668]
+                    - generic "Applied" [ref=e669]
+                    - generic "Interviewing" [ref=e670]
+                    - generic "Decision" [ref=e671]
+                    - generic "Accepted" [ref=e672]
+                  - generic [ref=e673]: Generated [object Object]/4
+              - generic [ref=e674]:
+                - generic [ref=e675]:
+                  - img [ref=e676]
+                  - generic [ref=e679]: "85"
+                - generic [ref=e680]: "+2"
+              - generic [ref=e682]:
+                - generic [ref=e683]: payments
+                - text: $107,600 to $198,400
+              - generic [ref=e685]:
+                - generic [ref=e686]: star
+                - generic [ref=e687]: star
+                - generic [ref=e688]: star
+              - generic [ref=e690]:
+                - generic [ref=e691]: check_circle
+                - text: All ready
+              - generic "Stamford, CT" [ref=e693]
+              - generic [ref=e695]: 2w
+              - generic [ref=e696]:
+                - generic [ref=e697]:
+                  - generic [ref=e698]: bolt
+                  - generic [ref=e699]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e700]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e702] [cursor=pointer]:
+              - checkbox "Select Diageo" [ref=e704]
+              - generic [ref=e706]:
+                - img "Diageo" [ref=e708]
+                - generic [ref=e709]:
+                  - generic [ref=e710]: Diageo
+                  - generic [ref=e711]: Regional Enterprise Architect, North America
+              - generic "Click to change stage" [ref=e712]:
+                - generic [ref=e713]:
+                  - generic [ref=e714]:
+                    - generic "Saved" [ref=e715]
+                    - generic "Generated" [ref=e716]
+                    - generic "Applied" [ref=e717]
+                    - generic "Interviewing" [ref=e718]
+                    - generic "Decision" [ref=e719]
+                    - generic "Accepted" [ref=e720]
+                  - generic [ref=e721]: Generated [object Object]/4
+              - generic [ref=e722]:
+                - generic [ref=e723]:
+                  - img [ref=e724]
+                  - generic [ref=e727]: "84"
+                - generic [ref=e728]: "+1"
+              - generic [ref=e730]:
+                - generic [ref=e731]: payments
+                - text: $154/hr
+              - generic [ref=e733]:
+                - generic [ref=e734]: star
+                - generic [ref=e735]: star
+                - generic [ref=e736]: star
+              - generic [ref=e738]:
+                - generic [ref=e739]: check_circle
+                - text: All ready
+              - generic "Stamford, CT" [ref=e741]
+              - generic [ref=e743]: 1w
+              - generic [ref=e744]:
+                - generic [ref=e745]:
+                  - generic [ref=e746]: bolt
+                  - generic [ref=e747]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e748]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e750] [cursor=pointer]:
+              - checkbox "Select Mastercard" [ref=e752]
+              - generic [ref=e754]:
+                - img "Mastercard" [ref=e756]
+                - generic [ref=e757]:
+                  - generic [ref=e758]: Mastercard
+                  - generic [ref=e759]: Principal Software Engineer, Senior Architect
+              - generic "Click to change stage" [ref=e760]:
+                - generic [ref=e761]:
+                  - generic [ref=e762]:
+                    - generic "Saved" [ref=e763]
+                    - generic "Generated" [ref=e764]
+                    - generic "Applied" [ref=e765]
+                    - generic "Interviewing" [ref=e766]
+                    - generic "Decision" [ref=e767]
+                    - generic "Accepted" [ref=e768]
+                  - generic [ref=e769]: Generated [object Object]/4
+              - generic [ref=e770]:
+                - generic [ref=e771]:
+                  - img [ref=e772]
+                  - generic [ref=e775]: "84"
+                - generic [ref=e776]: "+1"
+              - generic [ref=e778]:
+                - generic [ref=e779]: payments
+                - text: $195,000 - $323,000
+              - generic [ref=e781]:
+                - generic [ref=e782]: star
+                - generic [ref=e783]: star
+                - generic [ref=e784]: star
+              - generic [ref=e786]:
+                - generic [ref=e787]: check_circle
+                - text: All ready
+              - generic "Purchase, NY" [ref=e789]
+              - generic [ref=e791]: 2w
+              - generic [ref=e792]:
+                - generic [ref=e793]:
+                  - generic [ref=e794]: bolt
+                  - generic [ref=e795]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e796]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e798] [cursor=pointer]:
+              - checkbox "Select hackajob" [ref=e800]
+              - generic [ref=e802]:
+                - img "hackajob" [ref=e804]
+                - generic [ref=e805]:
+                  - generic [ref=e806]: hackajob
+                  - generic [ref=e807]: Senior Director, Fellow, Enterprise Architect
+              - generic "Click to change stage" [ref=e808]:
+                - generic [ref=e809]:
+                  - generic [ref=e810]:
+                    - generic "Saved" [ref=e811]
+                    - generic "Generated" [ref=e812]
+                    - generic "Applied" [ref=e813]
+                    - generic "Interviewing" [ref=e814]
+                    - generic "Decision" [ref=e815]
+                    - generic "Accepted" [ref=e816]
+                  - generic [ref=e817]: Generated [object Object]/4
+              - generic [ref=e818]:
+                - generic [ref=e819]:
+                  - img [ref=e820]
+                  - generic [ref=e823]: "83"
+                - generic [ref=e824]: "0"
+              - generic [ref=e826]:
+                - generic [ref=e827]: payments
+                - text: $136.5K/yr - $300K/yr
+              - generic [ref=e829]:
+                - generic [ref=e830]: star
+                - generic [ref=e831]: star
+                - generic [ref=e832]: star
+              - generic [ref=e834]:
+                - generic [ref=e835]: check_circle
+                - text: All ready
+              - generic "New York, NY" [ref=e837]
+              - generic [ref=e839]: 2w
+              - generic [ref=e840]:
+                - generic [ref=e841]:
+                  - generic [ref=e842]: bolt
+                  - generic [ref=e843]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e844]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e846] [cursor=pointer]:
+              - checkbox "Select PwC" [ref=e848]
+              - generic [ref=e850]:
+                - img "PwC" [ref=e852]
+                - generic [ref=e853]:
+                  - generic [ref=e854]: PwC
+                  - generic [ref=e855]: Senior Manager, Solution Architect
+              - generic "Click to change stage" [ref=e856]:
+                - generic [ref=e857]:
+                  - generic [ref=e858]:
+                    - generic "Saved" [ref=e859]
+                    - generic "Generated" [ref=e860]
+                    - generic "Applied" [ref=e861]
+                    - generic "Interviewing" [ref=e862]
+                    - generic "Decision" [ref=e863]
+                    - generic "Accepted" [ref=e864]
+                  - generic [ref=e865]: Generated [object Object]/4
+              - generic [ref=e866]:
+                - generic [ref=e867]:
+                  - img [ref=e868]
+                  - generic [ref=e871]: "82"
+                - generic [ref=e872]: "-1"
+              - generic [ref=e874]:
+                - generic [ref=e875]: payments
+                - text: $124,000 - $280,000
+              - generic [ref=e877]:
+                - generic [ref=e878]: star
+                - generic [ref=e879]: star
+                - generic [ref=e880]: star
+              - generic [ref=e882]:
+                - generic [ref=e883]: check_circle
+                - text: All ready
+              - generic "Melville, NY" [ref=e885]
+              - generic [ref=e887]: 2w
+              - generic [ref=e888]:
+                - generic [ref=e889]:
+                  - generic [ref=e890]: bolt
+                  - generic [ref=e891]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e892]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e894] [cursor=pointer]:
+              - checkbox "Select PwC" [ref=e896]
+              - generic [ref=e898]:
+                - img "PwC" [ref=e900]
+                - generic [ref=e901]:
+                  - generic [ref=e902]: PwC
+                  - generic [ref=e903]: Manager, Solution Architect
+              - generic "Click to change stage" [ref=e904]:
+                - generic [ref=e905]:
+                  - generic [ref=e906]:
+                    - generic "Saved" [ref=e907]
+                    - generic "Generated" [ref=e908]
+                    - generic "Applied" [ref=e909]
+                    - generic "Interviewing" [ref=e910]
+                    - generic "Decision" [ref=e911]
+                    - generic "Accepted" [ref=e912]
+                  - generic [ref=e913]: Generated [object Object]/4
+              - generic [ref=e914]:
+                - generic [ref=e915]:
+                  - img [ref=e916]
+                  - generic [ref=e919]: "82"
+                - generic [ref=e920]: "-1"
+              - generic [ref=e922]:
+                - generic [ref=e923]: payments
+                - text: $99,000 - $232,000
+              - generic [ref=e925]:
+                - generic [ref=e926]: star
+                - generic [ref=e927]: star
+                - generic [ref=e928]: star
+              - generic [ref=e930]:
+                - generic [ref=e931]: check_circle
+                - text: All ready
+              - generic "Stamford, CT" [ref=e933]
+              - generic [ref=e935]: 2w
+              - generic [ref=e936]:
+                - generic [ref=e937]:
+                  - generic [ref=e938]: bolt
+                  - generic [ref=e939]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e940]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e942] [cursor=pointer]:
+              - checkbox "Select Programmers.io" [ref=e944]
+              - generic [ref=e946]:
+                - img "Programmers.io" [ref=e948]
+                - generic [ref=e949]:
+                  - generic [ref=e950]: Programmers.io
+                  - generic [ref=e951]: Lead Application Architect
+              - generic "Click to change stage" [ref=e952]:
+                - generic [ref=e953]:
+                  - generic [ref=e954]:
+                    - generic "Saved" [ref=e955]
+                    - generic "Generated" [ref=e956]
+                    - generic "Applied" [ref=e957]
+                    - generic "Interviewing" [ref=e958]
+                    - generic "Decision" [ref=e959]
+                    - generic "Accepted" [ref=e960]
+                  - generic [ref=e961]: Generated [object Object]/4
+              - generic [ref=e962]:
+                - generic [ref=e963]:
+                  - img [ref=e964]
+                  - generic [ref=e967]: "80"
+                - generic [ref=e968]: "-3"
+              - generic [ref=e970]: —
+              - generic [ref=e972]:
+                - generic [ref=e973]: star
+                - generic [ref=e974]: star
+                - generic [ref=e975]: star
+              - generic [ref=e977]:
+                - generic [ref=e978]: check_circle
+                - text: All ready
+              - generic "New York, NY" [ref=e980]
+              - generic [ref=e982]: 1w
+              - generic [ref=e983]:
+                - generic [ref=e984]:
+                  - generic [ref=e985]: bolt
+                  - generic [ref=e986]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e987]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e989] [cursor=pointer]:
+              - checkbox "Select PwC" [ref=e991]
+              - generic [ref=e993]:
+                - img "PwC" [ref=e995]
+                - generic [ref=e996]:
+                  - generic [ref=e997]: PwC
+                  - generic [ref=e998]: Forward Deployed Software Engineer- Palantir Foundry- Senior Manager
+              - generic "Click to change stage" [ref=e999]:
+                - generic [ref=e1000]:
+                  - generic [ref=e1001]:
+                    - generic "Saved" [ref=e1002]
+                    - generic "Generated" [ref=e1003]
+                    - generic "Applied" [ref=e1004]
+                    - generic "Interviewing" [ref=e1005]
+                    - generic "Decision" [ref=e1006]
+                    - generic "Accepted" [ref=e1007]
+                  - generic [ref=e1008]: Generated [object Object]/4
+              - generic [ref=e1009]:
+                - generic [ref=e1010]:
+                  - img [ref=e1011]
+                  - generic [ref=e1014]: "80"
+                - generic [ref=e1015]: "-3"
+              - generic [ref=e1017]:
+                - generic [ref=e1018]: payments
+                - text: $124,000 - $280,000
+              - generic [ref=e1020]:
+                - generic [ref=e1021]: star
+                - generic [ref=e1022]: star
+                - generic [ref=e1023]: star
+              - generic [ref=e1025]:
+                - generic [ref=e1026]: check_circle
+                - text: All ready
+              - generic "Stamford, CT" [ref=e1028]
+              - generic [ref=e1030]: 2w
+              - generic [ref=e1031]:
+                - generic [ref=e1032]:
+                  - generic [ref=e1033]: bolt
+                  - generic [ref=e1034]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e1035]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e1037] [cursor=pointer]:
+              - checkbox "Select Coda Search│Staffing" [ref=e1039]
+              - generic [ref=e1041]:
+                - img "Coda Search│Staffing" [ref=e1043]
+                - generic [ref=e1044]:
+                  - generic [ref=e1045]: Coda Search│Staffing
+                  - generic [ref=e1046]: Principal Engineer
+              - generic "Click to change stage" [ref=e1047]:
+                - generic [ref=e1048]:
+                  - generic [ref=e1049]:
+                    - generic "Saved" [ref=e1050]
+                    - generic "Generated" [ref=e1051]
+                    - generic "Applied" [ref=e1052]
+                    - generic "Interviewing" [ref=e1053]
+                    - generic "Decision" [ref=e1054]
+                    - generic "Accepted" [ref=e1055]
+                  - generic [ref=e1056]: Generated [object Object]/4
+              - generic [ref=e1057]:
+                - generic [ref=e1058]:
+                  - img [ref=e1059]
+                  - generic [ref=e1062]: "79"
+                - generic [ref=e1063]: "-4"
+              - generic [ref=e1065]: —
+              - generic [ref=e1067]:
+                - generic [ref=e1068]: star
+                - generic [ref=e1069]: star
+                - generic [ref=e1070]: star
+              - generic [ref=e1072]:
+                - generic [ref=e1073]: check_circle
+                - text: All ready
+              - generic "New York City Metropolitan Area" [ref=e1075]
+              - generic [ref=e1077]: 1w
+              - generic [ref=e1078]:
+                - generic [ref=e1079]:
+                  - generic [ref=e1080]: bolt
+                  - generic [ref=e1081]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e1082]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e1084] [cursor=pointer]:
+              - checkbox "Select Sectra" [ref=e1086]
+              - generic [ref=e1088]:
+                - img "Sectra" [ref=e1090]
+                - generic [ref=e1091]:
+                  - generic [ref=e1092]: Sectra
+                  - generic [ref=e1093]: Technical Solutions Architect - Enterprise Imaging
+              - generic "Click to change stage" [ref=e1094]:
+                - generic [ref=e1095]:
+                  - generic [ref=e1096]:
+                    - generic "Saved" [ref=e1097]
+                    - generic "Generated" [ref=e1098]
+                    - generic "Applied" [ref=e1099]
+                    - generic "Interviewing" [ref=e1100]
+                    - generic "Decision" [ref=e1101]
+                    - generic "Accepted" [ref=e1102]
+                  - generic [ref=e1103]: Saved [object Object]/5
+              - generic [ref=e1104]:
+                - generic [ref=e1105]:
+                  - img [ref=e1106]
+                  - generic [ref=e1109]: "75"
+                - generic [ref=e1110]: "-8"
+              - generic [ref=e1112]:
+                - generic [ref=e1113]: payments
+                - text: $120,000–$150,000
+              - generic [ref=e1115]:
+                - generic [ref=e1116]: star
+                - generic [ref=e1117]: star
+                - generic [ref=e1118]: star
+              - generic [ref=e1120]:
+                - generic [ref=e1121]: check_circle
+                - text: All ready
+              - generic "Shelton, CT" [ref=e1123]
+              - generic [ref=e1125]: 1w
+              - generic [ref=e1126]:
+                - generic [ref=e1127]:
+                  - generic [ref=e1128]: bolt
+                  - generic [ref=e1129]: Ready to generate materials
+                - generic "Expand preview" [ref=e1130]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e1132] [cursor=pointer]:
+              - checkbox "Select Gong" [ref=e1134]
+              - generic [ref=e1136]:
+                - img "Gong" [ref=e1138]
+                - generic [ref=e1139]:
+                  - generic [ref=e1140]: Gong
+                  - generic [ref=e1141]: Global Head of Solutions Engineering
+              - generic "Click to change stage" [ref=e1142]:
+                - generic [ref=e1143]:
+                  - generic [ref=e1144]:
+                    - generic "Saved" [ref=e1145]
+                    - generic "Generated" [ref=e1146]
+                    - generic "Applied" [ref=e1147]
+                    - generic "Interviewing" [ref=e1148]
+                    - generic "Decision" [ref=e1149]
+                    - generic "Accepted" [ref=e1150]
+                  - generic [ref=e1151]: Applied [object Object]/4
+              - generic [ref=e1152]:
+                - generic [ref=e1153]:
+                  - img [ref=e1154]
+                  - generic [ref=e1157]: "73"
+                - generic [ref=e1158]: "-10"
+              - generic [ref=e1160]:
+                - generic [ref=e1161]: payments
+                - text: $340,000 - $357,000
+              - generic [ref=e1163]:
+                - generic [ref=e1164]: star
+                - generic [ref=e1165]: star
+                - generic [ref=e1166]: star
+              - generic [ref=e1168]:
+                - generic [ref=e1169]: check_circle
+                - text: All ready
+              - generic "New York, NY" [ref=e1171]
+              - generic [ref=e1173]: 3d
+              - generic [ref=e1174]:
+                - generic [ref=e1175]:
+                  - generic [ref=e1176]: schedule
+                  - generic [ref=e1177]: Follow up if no response in 5 days
+                - generic "Expand preview" [ref=e1178]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e1180] [cursor=pointer]:
+              - checkbox "Select American Express" [ref=e1182]
+              - generic [ref=e1184]:
+                - img "American Express" [ref=e1186]
+                - generic [ref=e1187]:
+                  - generic [ref=e1188]: American Express
+                  - generic [ref=e1189]: Mgr-Enterprise Architecture
+              - generic "Click to change stage" [ref=e1190]:
+                - generic [ref=e1191]:
+                  - generic [ref=e1192]:
+                    - generic "Saved" [ref=e1193]
+                    - generic "Generated" [ref=e1194]
+                    - generic "Applied" [ref=e1195]
+                    - generic "Interviewing" [ref=e1196]
+                    - generic "Decision" [ref=e1197]
+                    - generic "Accepted" [ref=e1198]
+                  - generic [ref=e1199]: Applied [object Object]/4
+              - generic [ref=e1200]:
+                - generic [ref=e1201]:
+                  - img [ref=e1202]
+                  - generic [ref=e1205]: "71"
+                - generic [ref=e1206]: "-12"
+              - generic [ref=e1208]:
+                - generic [ref=e1209]: payments
+                - text: $123K/yr - $215.2K/yr
+              - generic [ref=e1211]:
+                - generic [ref=e1212]: star
+                - generic [ref=e1213]: star
+                - generic [ref=e1214]: star
+              - generic [ref=e1216]:
+                - generic [ref=e1217]: check_circle
+                - text: All ready
+              - generic "New York, NY" [ref=e1219]
+              - generic [ref=e1221]: 1w
+              - generic [ref=e1222]:
+                - generic [ref=e1223]:
+                  - generic [ref=e1224]: schedule
+                  - generic [ref=e1225]: Follow up if no response in 5 days
+                - generic "Expand preview" [ref=e1226]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e1228] [cursor=pointer]:
+              - checkbox "Select On" [ref=e1230]
+              - generic [ref=e1232]:
+                - img "On" [ref=e1234]
+                - generic [ref=e1235]:
+                  - generic [ref=e1236]: "On"
+                  - generic [ref=e1237]: Principal Workday Integration Architect (AI & Automation)
+              - generic "Click to change stage" [ref=e1238]:
+                - generic [ref=e1239]:
+                  - generic [ref=e1240]:
+                    - generic "Saved" [ref=e1241]
+                    - generic "Generated" [ref=e1242]
+                    - generic "Applied" [ref=e1243]
+                    - generic "Interviewing" [ref=e1244]
+                    - generic "Decision" [ref=e1245]
+                    - generic "Accepted" [ref=e1246]
+                  - generic [ref=e1247]: Generated [object Object]/4
+              - generic [ref=e1248]:
+                - generic [ref=e1249]:
+                  - img [ref=e1250]
+                  - generic [ref=e1253]: "70"
+                - generic [ref=e1254]: "-13"
+              - generic [ref=e1256]:
+                - generic [ref=e1257]: payments
+                - text: $152,000-$190,000
+              - generic [ref=e1259]:
+                - generic [ref=e1260]: star
+                - generic [ref=e1261]: star
+                - generic [ref=e1262]: star
+              - generic [ref=e1264]:
+                - generic [ref=e1265]: check_circle
+                - text: All ready
+              - generic "New York, NY" [ref=e1267]
+              - generic [ref=e1269]: 2w
+              - generic [ref=e1270]:
+                - generic [ref=e1271]:
+                  - generic [ref=e1272]: bolt
+                  - generic [ref=e1273]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e1274]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e1276] [cursor=pointer]:
+              - checkbox "Select Scouut" [ref=e1278]
+              - generic [ref=e1280]:
+                - img "Scouut" [ref=e1282]
+                - generic [ref=e1283]:
+                  - generic [ref=e1284]: Scouut
+                  - generic [ref=e1285]: Principal Software Engineer (Relocate to Australia)
+              - generic "Click to change stage" [ref=e1286]:
+                - generic [ref=e1287]:
+                  - generic [ref=e1288]:
+                    - generic "Saved" [ref=e1289]
+                    - generic "Generated" [ref=e1290]
+                    - generic "Applied" [ref=e1291]
+                    - generic "Interviewing" [ref=e1292]
+                    - generic "Decision" [ref=e1293]
+                    - generic "Accepted" [ref=e1294]
+                  - generic [ref=e1295]: Generated [object Object]/4
+              - generic [ref=e1296]:
+                - generic [ref=e1297]:
+                  - img [ref=e1298]
+                  - generic [ref=e1301]: "62"
+                - generic [ref=e1302]: "-21"
+              - generic [ref=e1304]:
+                - generic [ref=e1305]: payments
+                - text: $300K/yr - $400K/yr
+              - generic [ref=e1307]:
+                - generic [ref=e1308]: star
+                - generic [ref=e1309]: star
+                - generic [ref=e1310]: star
+              - generic [ref=e1312]:
+                - generic [ref=e1313]: check_circle
+                - text: All ready
+              - generic "New York, NY" [ref=e1315]
+              - generic [ref=e1317]: 1w
+              - generic [ref=e1318]:
+                - generic [ref=e1319]:
+                  - generic [ref=e1320]: bolt
+                  - generic [ref=e1321]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e1322]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e1324] [cursor=pointer]:
+              - checkbox "Select Hagerty" [ref=e1326]
+              - generic [ref=e1328]:
+                - img "Hagerty" [ref=e1330]
+                - generic [ref=e1331]:
+                  - generic [ref=e1332]: Hagerty
+                  - generic [ref=e1333]: People you can reach out to
+              - generic "Click to change stage" [ref=e1334]:
+                - generic [ref=e1335]:
+                  - generic [ref=e1336]:
+                    - generic "Saved" [ref=e1337]
+                    - generic "Generated" [ref=e1338]
+                    - generic "Applied" [ref=e1339]
+                    - generic "Interviewing" [ref=e1340]
+                    - generic "Decision" [ref=e1341]
+                    - generic "Accepted" [ref=e1342]
+                  - generic [ref=e1343]: Applied [object Object]/4
+              - generic [ref=e1347]: —
+              - generic [ref=e1349]:
+                - generic [ref=e1350]: star
+                - generic [ref=e1351]: star
+                - generic [ref=e1352]: star
+              - generic [ref=e1354]:
+                - generic [ref=e1355]: 2 ok
+                - generic [ref=e1357]: 1 todo
+              - generic [ref=e1359]: —
+              - generic [ref=e1361]: 6d
+              - generic [ref=e1362]:
+                - generic [ref=e1363]:
+                  - generic [ref=e1364]: schedule
+                  - generic [ref=e1365]: Follow up if no response in 5 days
+                - generic "Expand preview" [ref=e1366]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
+            - generic [ref=e1368] [cursor=pointer]:
+              - checkbox "Select Webster Bank" [ref=e1370]
+              - generic [ref=e1372]:
+                - generic [ref=e1374]: WE
+                - generic [ref=e1375]:
+                  - generic [ref=e1376]: Webster Bank
+                  - generic [ref=e1377]: Director Site Reliability Engineering
+              - generic "Click to change stage" [ref=e1378]:
+                - generic [ref=e1379]:
+                  - generic [ref=e1380]:
+                    - generic "Saved" [ref=e1381]
+                    - generic "Generated" [ref=e1382]
+                    - generic "Applied" [ref=e1383]
+                    - generic "Interviewing" [ref=e1384]
+                    - generic "Decision" [ref=e1385]
+                    - generic "Accepted" [ref=e1386]
+                  - generic [ref=e1387]: Generated [object Object]/4
+              - generic [ref=e1391]:
+                - generic [ref=e1392]: payments
+                - text: $135,000
+              - generic [ref=e1394]:
+                - generic [ref=e1395]: star
+                - generic [ref=e1396]: star
+                - generic [ref=e1397]: star
+              - generic [ref=e1399]:
+                - generic [ref=e1400]: check_circle
+                - text: All ready
+              - generic "Stamford, CT" [ref=e1402]
+              - generic [ref=e1404]: 4w
+              - generic [ref=e1405]:
+                - generic [ref=e1406]:
+                  - generic [ref=e1407]: bolt
+                  - generic [ref=e1408]: Ready to submit — review before applying
+                - generic "Expand preview" [ref=e1409]: expand_more
+                - generic:
+                  - button "open_in_new":
+                    - generic: open_in_new
+                  - button "swap_horiz":
+                    - generic: swap_horiz
+                  - button "archive":
+                    - generic: archive
