@@ -23,6 +23,7 @@ class User(Base):
     photo_zoom = Column(Float, default=1.0)
     photo_x = Column(Float, default=0.0)
     photo_y = Column(Float, default=0.0)
+    is_approved = Column(Integer, default=1) # 1 for approved/active, 0 for pending
     created_at = Column(DateTime, default=datetime.utcnow)
     
     applications = relationship("Application", back_populates="user")
@@ -300,7 +301,6 @@ class Notification(Base):
 
     user = relationship("User")
 
-# Import remaining sqlalchemy types
 # ── Job Discovery Models ─────────────────────────────────────────────────────
 
 class SavedSearch(Base):
@@ -372,6 +372,7 @@ class ProviderRateLimitLog(Base):
     last_called_at = Column(String, nullable=True)
 
 
+# Import remaining sqlalchemy types
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -393,13 +394,15 @@ class DatabaseService:
         self.Session = sessionmaker(bind=self.engine)
 
     def create_user(self, username: str, hashed_password: str, is_admin: int = 0,
-                    first_name: str = None, last_name: str = None, email: str = None) -> int:
+                    first_name: str = None, last_name: str = None, email: str = None,
+                    is_approved: int = 1) -> int:
         session = self.Session()
         try:
             user = User(
                 username=username, hashed_password=hashed_password,
                 is_admin=is_admin, first_name=first_name,
-                last_name=last_name, email=email
+                last_name=last_name, email=email,
+                is_approved=is_approved
             )
             session.add(user)
             session.commit()
@@ -444,7 +447,8 @@ class DatabaseService:
                 "id": user.id,
                 "username": user.username,
                 "hashed_password": user.hashed_password,
-                "is_admin": user.is_admin
+                "is_admin": user.is_admin,
+                "is_approved": user.is_approved
             }
         finally:
             session.close()
@@ -459,7 +463,8 @@ class DatabaseService:
                 "username": user.username,
                 "hashed_password": user.hashed_password,
                 "is_admin": user.is_admin,
-                "email": user.email
+                "email": user.email,
+                "is_approved": user.is_approved
             }
         finally:
             session.close()
@@ -480,6 +485,7 @@ class DatabaseService:
                 "photo_zoom": user.photo_zoom,
                 "photo_x": user.photo_x,
                 "photo_y": user.photo_y,
+                "is_approved": user.is_approved
             }
         finally:
             session.close()
@@ -582,7 +588,8 @@ class DatabaseService:
                 "last_name": u.last_name,
                 "email": u.email,
                 "created_at": u.created_at.isoformat() if u.created_at else None,
-                "has_api_key": u.api_key is not None
+                "has_api_key": u.api_key is not None,
+                "is_approved": u.is_approved
             } for u in users]
         finally:
             session.close()
@@ -623,6 +630,7 @@ class DatabaseService:
             if 'last_name'  in data: user.last_name  = data['last_name']
             if 'email'      in data: user.email       = data['email']
             if 'is_admin'   in data: user.is_admin    = 1 if data['is_admin'] else 0
+            if 'is_approved' in data: user.is_approved = 1 if data['is_approved'] else 0
             if data.get('password'):
                 from services.auth_service import AuthService
                 user.hashed_password = AuthService.get_password_hash(data['password'])
@@ -867,6 +875,7 @@ class DatabaseService:
             "ALTER TABLE users ADD COLUMN photo_zoom REAL DEFAULT 1.0",
             "ALTER TABLE users ADD COLUMN photo_x REAL DEFAULT 0.0",
             "ALTER TABLE users ADD COLUMN photo_y REAL DEFAULT 0.0",
+            "ALTER TABLE users ADD COLUMN is_approved INTEGER DEFAULT 1",
         ]
         with self.engine.connect() as conn:
             for sql in migrations:
@@ -1283,15 +1292,6 @@ class DatabaseService:
         finally:
             session.close()
 
-    def get_config(self, user_id: int = None) -> Dict[str, Any]:
-        """Fetch configuration for a specific user, falling back to global config if needed."""
-        # Always start with global config as base
-        config = self._load_global_config()
-        
-        if user_id is None:
-            return config
-            
-        session = self.Session()
     def find_duplicate_application(
         self,
         user_id: int,
@@ -1331,6 +1331,15 @@ class DatabaseService:
         finally:
             session.close()
 
+    def get_config(self, user_id: int = None) -> Dict[str, Any]:
+        """Fetch configuration for a specific user, falling back to global config if needed."""
+        # Always start with global config as base
+        config = self._load_global_config()
+        
+        if user_id is None:
+            return config
+            
+        session = self.Session()
         try:
             user_record = session.query(Config).filter(Config.user_id == user_id).first()
             if user_record:
@@ -2306,8 +2315,6 @@ class DatabaseService:
             session.close()
 
 
-if __name__ == "__main__":
-    pass
     # ── Saved Searches ──────────────────────────────────────────────────────────
 
     def create_saved_search(self, user_id: int, data: dict) -> dict:
@@ -2829,3 +2836,5 @@ if __name__ == "__main__":
             session.close()
 
 
+if __name__ == "__main__":
+    pass

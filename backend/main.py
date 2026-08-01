@@ -528,28 +528,67 @@ async def root():
 
 @app.get("/api/auth/has-admin")
 async def check_has_admin():
-    return {"has_admin": database_service.has_admin()}
+    has_admin = database_service.has_admin()
+    allow_registration = False
+    if has_admin:
+        global_config = database_service.get_config(None)
+        allow_registration = global_config.get("allow_registration", False)
+    else:
+        # If no admin exists yet, we must allow registration for initial setup
+        allow_registration = True
+        
+    return {
+        "has_admin": has_admin,
+        "allow_registration": allow_registration
+    }
 
 @app.post("/api/auth/register")
 async def register(req: RegisterRequest):
-    # Self-registration is only allowed during initial setup (no admin exists yet)
-    if database_service.has_admin():
-        raise HTTPException(
-            status_code=403,
-            detail="Registration is closed. Contact your administrator to create an account."
-        )
-
     # Check if user already exists
     existing = database_service.get_user_by_username(req.username)
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
-    
-    # First user always becomes admin
+
+    has_admin = database_service.has_admin()
+    is_approved = 1
+    is_admin = 0
+
+    if has_admin:
+        global_config = database_service.get_config(None)
+        allow_reg = global_config.get("allow_registration", False)
+        if not allow_reg:
+            raise HTTPException(
+                status_code=403,
+                detail="Registration is closed. Contact your administrator to create an account."
+            )
+        
+        require_approval = global_config.get("require_registration_approval", False)
+        if require_approval:
+            is_approved = 0
+    else:
+        # First user always becomes approved admin
+        is_admin = 1
+
+    # Create the user
     hashed_pw = AuthService.get_password_hash(req.password)
-    user_id = database_service.create_user(req.username, hashed_pw, is_admin=1)
+    user_id = database_service.create_user(
+        req.username, hashed_pw, is_admin=is_admin, is_approved=is_approved
+    )
     
+    if is_approved == 0:
+        return {
+            "message": "Registration successful! Your account is pending approval by the administrator.",
+            "approved": False
+        }
+        
     token = AuthService.create_access_token({"sub": str(user_id)})
-    return {"access_token": token, "token_type": "bearer", "user_id": user_id, "is_admin": 1}
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user_id": user_id,
+        "is_admin": is_admin,
+        "approved": True
+    }
 
 @app.post("/api/auth/login")
 async def login(req: LoginRequest):
@@ -557,6 +596,12 @@ async def login(req: LoginRequest):
     if not user or not AuthService.verify_password(req.password, user["hashed_password"]):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     
+    if not user.get("is_approved", True):
+        raise HTTPException(
+            status_code=403,
+            detail="Your account is pending admin approval."
+        )
+        
     token = AuthService.create_access_token({"sub": str(user["id"])})
     return {"access_token": token, "token_type": "bearer", "user_id": user["id"], "is_admin": user["is_admin"]}
 

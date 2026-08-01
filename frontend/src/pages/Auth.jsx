@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const Auth = () => {
-  const { login, hasAdmin, loading: authLoading, refreshHasAdmin } = useAuth();
+  const { login, hasAdmin, allowRegistration, loading: authLoading, refreshHasAdmin } = useAuth();
   const [authMode, setAuthMode] = useState('login'); // 'login', 'register', 'forgot'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -17,9 +17,11 @@ const Auth = () => {
     if (hasAdmin === false) {
       setAuthMode('register');
     } else if (hasAdmin === true) {
-      setAuthMode('login');
+      if (!allowRegistration && authMode === 'register') {
+        setAuthMode('login');
+      }
     }
-  }, [hasAdmin]);
+  }, [hasAdmin, allowRegistration, authMode]);
 
   const isLogin = authMode === 'login';
   const isRegister = authMode === 'register';
@@ -57,6 +59,11 @@ const Auth = () => {
         if (isForgot) {
           setMessage(data.message);
           setEmail('');
+        } else if (data.approved === false) {
+          setMessage(data.message);
+          setUsername('');
+          setPassword('');
+          setAuthMode('login');
         } else {
           login({ id: data.user_id, username, is_admin: data.is_admin }, data.access_token);
         }
@@ -156,10 +163,23 @@ const Auth = () => {
             ) : (
               <>
                 <p>
-                  {isLogin ? "Don't have an account? " : "Already have an account? "}
-                  <button onClick={() => setAuthMode(isLogin ? 'register' : 'login')} className="link-button">
-                    {isLogin ? 'Sign Up' : 'Sign In'}
-                  </button>
+                  {isLogin ? (
+                    allowRegistration ? (
+                      <>
+                        Don't have an account?{" "}
+                        <button onClick={() => setAuthMode('register')} className="link-button">
+                          Sign Up
+                        </button>
+                      </>
+                    ) : null
+                  ) : (
+                    <>
+                      Already have an account?{" "}
+                      <button onClick={() => setAuthMode('login')} className="link-button">
+                        Sign In
+                      </button>
+                    </>
+                  )}
                 </p>
                 {isLogin && (
                   <p style={{ marginTop: '1rem' }}>

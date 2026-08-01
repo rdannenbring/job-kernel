@@ -345,6 +345,26 @@ const Admin = () => {
         } catch (e) { setMessage('Error deleting user'); }
     };
 
+    const approveUser = async (userId) => {
+        try {
+            const res = await fetchWithAuth(`${API_URL}/api/admin/users/${userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_approved: true })
+            });
+            if (res.ok) {
+                setMessage('User registration approved successfully!');
+                fetchUsers();
+                setTimeout(() => setMessage(''), 3000);
+            } else {
+                const data = await res.json();
+                setMessage(data.detail || 'Failed to approve user');
+            }
+        } catch (e) {
+            setMessage('Error approving user');
+        }
+    };
+
     const promptLabels = {
         analyze_job:          'Analyze Job Description',
         tailor_resume:        'Tailor Resume',
@@ -412,6 +432,57 @@ const Admin = () => {
             {/* ── Users Tab ────────────────────────────────────────────────── */}
             {activeTab === 'users' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    {/* Registration Settings Card */}
+                    <div className="card">
+                        <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>how_to_reg</span>
+                            User Registration Settings
+                        </h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <input 
+                                    type="checkbox" 
+                                    id="allow-registration" 
+                                    checked={globalConfig.allow_registration || false}
+                                    onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        setGlobalConfig(prev => ({
+                                            ...prev,
+                                            allow_registration: checked,
+                                            require_registration_approval: checked ? prev.require_registration_approval : false
+                                        }));
+                                    }}
+                                />
+                                <label htmlFor="allow-registration" style={{ fontWeight: 600, cursor: 'pointer', userSelect: 'none' }}>
+                                    Allow public user registration
+                                </label>
+                            </div>
+                            
+                            {globalConfig.allow_registration && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingLeft: '1.5rem', animation: 'fadeIn 0.2s' }}>
+                                    <input 
+                                        type="checkbox" 
+                                        id="require-approval" 
+                                        checked={globalConfig.require_registration_approval || false}
+                                        onChange={(e) => setGlobalConfig(prev => ({
+                                            ...prev,
+                                            require_registration_approval: e.target.checked
+                                        }))}
+                                    />
+                                    <label htmlFor="require-approval" style={{ fontWeight: 600, cursor: 'pointer', userSelect: 'none' }}>
+                                        Require administrator approval for new registrations
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+                            <button className="btn btn-primary" onClick={saveGlobalConfig} disabled={loading}>
+                                Save Registration Settings
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Create User Form */}
                     <div className="card">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -539,12 +610,36 @@ const Admin = () => {
                                                 }}>
                                                     {u.is_admin ? 'Admin' : 'User'}
                                                 </span>
+                                                {u.is_approved === 0 && (
+                                                    <span style={{
+                                                        marginLeft: '0.5rem', padding: '2px 10px', borderRadius: '99px', fontSize: '0.75rem', fontWeight: 600,
+                                                        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                                                        color: '#f87171',
+                                                        border: '1px solid rgba(239, 68, 68, 0.25)'
+                                                    }}>
+                                                        Pending Approval
+                                                    </span>
+                                                )}
                                             </td>
                                             <td style={{ padding: '0.875rem 1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                                                 {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
                                             </td>
                                             <td style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem' }}>
+                                                    {u.is_approved === 0 && (
+                                                        <button
+                                                            onClick={() => approveUser(u.id)}
+                                                            className="btn btn-primary"
+                                                            title="Approve user registration"
+                                                            style={{
+                                                                padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '0.3rem',
+                                                                fontSize: '0.8rem', backgroundColor: '#10b981', color: 'white', border: 'none'
+                                                            }}
+                                                        >
+                                                            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>check_circle</span>
+                                                            Approve
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={() => setEditingUser(u)}
                                                         className="btn btn-secondary"

@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
   const [hasAdmin, setHasAdmin] = useState(null);
+  const [allowRegistration, setAllowRegistration] = useState(false);
 
   const VITE_API_URL = import.meta.env.VITE_API_URL;
   const API_URL = (VITE_API_URL !== undefined && VITE_API_URL !== null) ? VITE_API_URL : 'http://localhost:8000';
@@ -19,13 +20,16 @@ export const AuthProvider = ({ children }) => {
       if (res.ok) {
         const data = await res.json();
         setHasAdmin(data.has_admin);
+        setAllowRegistration(!!data.allow_registration);
         return data.has_admin;
       }
       setHasAdmin(true);
+      setAllowRegistration(false);
       return true;
     } catch (e) {
       console.error("Failed to check admin status", e);
       setHasAdmin(true);
+      setAllowRegistration(false);
       return true;
     }
   };
@@ -103,6 +107,7 @@ export const AuthProvider = ({ children }) => {
     token,
     loading,
     hasAdmin,
+    allowRegistration,
     login,
     logout,
     fetchWithAuth,
