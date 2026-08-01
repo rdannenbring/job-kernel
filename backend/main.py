@@ -25,6 +25,7 @@ from services.ai_service import AIService
 from services.scraper_service import ScraperService
 from services.database_service import DatabaseService
 from services.auth_service import AuthService, get_current_user_id, get_admin_user_id
+from services.workflow_prefs import normalize_workflow_config
 from routes.applied import router as applied_router
 from routes.job_search import router as job_search_router
 import logging
@@ -674,6 +675,7 @@ async def get_merged_config(user_id: int):
     # 3. Merge: User UI settings + Global AI settings
     config = {
         "ui_config": user_config.get("ui_config", {"font_size": 15, "theme": "dark"}),
+        "workflow_config": normalize_workflow_config(user_config.get("workflow_config")),
         "ai_config": global_config.get("ai_config", {}),
         "prompts": global_config.get("prompts", ai_service.prompts)
     }
@@ -700,10 +702,12 @@ async def update_app_config(config: dict, user_id: int = Depends(get_current_use
     """Update application configuration (User UI settings)"""
     try:
         existing = database_service.get_config(user_id)
-        # Regular users only allowed to update UI config
+        # Regular users only allowed to update UI and workflow config
         if "ui_config" in config:
             existing["ui_config"] = config["ui_config"]
-        
+        if "workflow_config" in config:
+            existing["workflow_config"] = normalize_workflow_config(config["workflow_config"])
+
         database_service.save_config(existing, user_id)
         return {"message": "User settings updated"}
     except Exception as e:
@@ -2295,7 +2299,11 @@ async def get_analytics(user_id: int = Depends(get_current_user_id)):
 @app.put("/api/applications/{app_id}/status")
 async def update_application_status(app_id: int, request: StatusUpdateRequest, user_id: int = Depends(get_current_user_id)):
     try:
-        success = database_service.update_application_status(app_id, request.status, user_id)
+        # force=True: stage moves are never blocked by default (see
+        # documentation/product-direction.md). Every other UI path already
+        # passes force, so without this the only effect of the progression
+        # check here was to turn a legitimate backward move into a 404.
+        success = database_service.update_application_status(app_id, request.status, user_id, force=True)
         if success:
             return {"message": "Application status updated successfully"}
         else:

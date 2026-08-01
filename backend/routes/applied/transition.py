@@ -2,10 +2,12 @@
 
 Owner task: T13b. Promotes the application from Applied to
 Interviewing via ``services.applied.transition.transition_to_interviewing``.
-When the readiness gate fails, this endpoint re-computes
-``compute_next_steps`` on the same row and returns 422 with the
-structured blocker list so the frontend can surface specific
-reasons (per the dispatch guidance).
+
+Readiness is advisory unless the user opted into guided mode for the
+Applied stage (see ``services.workflow_prefs``). When it *is* enforced and
+the gate fails, this endpoint re-computes ``compute_next_steps`` on the same
+row and returns 422 with the structured blocker list so the frontend can
+surface specific reasons (per the dispatch guidance).
 """
 from __future__ import annotations
 
@@ -18,6 +20,7 @@ from services.applied.derivations import compute_next_steps
 from services.applied.transition import transition_to_interviewing
 from services.auth_service import get_current_user_id
 from services.database_service import Application
+from services.workflow_prefs import is_stage_gated
 
 from . import router
 
@@ -31,11 +34,14 @@ async def transition_to_interviewing_endpoint(
     application_id: int,
     user_id: int = Depends(get_current_user_id),
 ) -> dict[str, Any]:
-    """Run the readiness gate, flip pipeline_stage, emit the event."""
+    """Flip pipeline_stage and emit the event, gating only if opted in."""
     from main import database_service
+    enforce = is_stage_gated(user_id, "applied")
     session = database_service.Session()
     try:
-        result = transition_to_interviewing(session, application_id, user_id)
+        result = transition_to_interviewing(
+            session, application_id, user_id, enforce=enforce
+        )
         session.commit()
         return result
     except ValueError as e:

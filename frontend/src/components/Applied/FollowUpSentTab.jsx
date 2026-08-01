@@ -1,11 +1,15 @@
 // T18: Wires the Follow-up Sent substage panel to:
 //   GET  /applied/activity-log              (timeline events)
-//   GET  /applied/next-steps                (readiness gate)
+//   GET  /applied/next-steps                (readiness signals)
 //   POST /applied/transition-to-interviewing (promote on click)
 // Completion bar now reads appliedState.completion.percentage so the
-// number lines up with the backend's derivation. The Move-to-
-// Interviewing button is disabled when next_steps.can_transition is
-// false (decision D7), with the blocker list surfaced as a tooltip.
+// number lines up with the backend's derivation.
+//
+// Readiness is ADVISORY by default (see documentation/product-direction.md).
+// The checklist always renders as suggestions, and Move to Interviewing stays
+// enabled. Only when next_steps.enforced is true — i.e. the user turned on
+// guided mode for the Applied stage in Settings — does an unmet checklist
+// disable the button and surface the blocker list as a tooltip.
 import React, { useCallback, useEffect, useState } from 'react';
 
 const READINESS_LABEL = {
@@ -118,10 +122,16 @@ export default function FollowUpSentTab({
 
   const canTransition = nextSteps?.can_transition === true;
   const blockers = nextSteps?.blockers || [];
+  // Guided mode is opt-in; absent an explicit `true` we never block.
+  const enforced = nextSteps?.enforced === true;
+  const blocked = enforced && !canTransition;
+  const suggestionList = blockers.map((b) => READINESS_LABEL[b] || b).join(', ');
   const tooltip = canTransition
     ? 'All readiness checks met. Promote to Interviewing.'
     : (blockers.length
-        ? `Blocked by: ${blockers.map((b) => READINESS_LABEL[b] || b).join(', ')}`
+        ? (enforced
+            ? `Guided mode is on. Blocked by: ${suggestionList}`
+            : `Suggested first: ${suggestionList} — you can move on anyway.`)
         : 'Readiness assessment loading…');
 
   // All four checkbox items, with state from next_steps.
@@ -198,7 +208,7 @@ export default function FollowUpSentTab({
           </div>
         </div>
 
-        {/* Right Column: Next Steps — backend-driven readiness gate */}
+        {/* Right Column: Next Steps — advisory unless guided mode is on */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="card glass" style={{ padding: '1.5rem', borderRadius: '1.5rem', border: '1px solid rgba(37, 106, 244, 0.2)', background: 'linear-gradient(to bottom right, rgba(37, 106, 244, 0.05), transparent)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div>
@@ -208,7 +218,14 @@ export default function FollowUpSentTab({
               </p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ready to move to Interviewing?</p>
+              <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                {enforced ? 'Required before Interviewing' : 'Suggested before Interviewing'}
+              </p>
+              {nextSteps && !enforced && (
+                <p style={{ margin: '-0.5rem 0 0', fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                  Optional — none of these block the move. Turn on guided mode in Settings to enforce them.
+                </p>
+              )}
               {readinessRows.map((k) => {
                 const met = reasonsMet.has(k);
                 return (
@@ -240,14 +257,14 @@ export default function FollowUpSentTab({
               <button
                 className="btn-primary"
                 onClick={transition}
-                disabled={!canTransition || transitioning}
+                disabled={blocked || transitioning}
                 title={tooltip}
                 style={{
                   padding: '0.875rem', borderRadius: '0.75rem', fontWeight: 800,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
                   boxShadow: canTransition ? '0 0 20px rgba(37, 106, 244, 0.2)' : 'none',
-                  opacity: (!canTransition || transitioning) ? 0.55 : 1,
-                  cursor: (!canTransition || transitioning) ? 'not-allowed' : 'pointer',
+                  opacity: (blocked || transitioning) ? 0.55 : 1,
+                  cursor: (blocked || transitioning) ? 'not-allowed' : 'pointer',
                 }}
               >
                 <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>forward</span>

@@ -15,6 +15,7 @@ from models.applied_models import NextStepsOut
 from services.applied.derivations import compute_next_steps
 from services.auth_service import get_current_user_id
 from services.database_service import Application
+from services.workflow_prefs import is_stage_gated
 
 from . import router
 
@@ -37,6 +38,11 @@ async def get_next_steps_endpoint(
             raise HTTPException(status_code=404, detail="application not found")
         if app.user_id is not None and app.user_id != user_id:
             raise HTTPException(status_code=403, detail="not your application")
-        return compute_next_steps(app, contacts=app.contacts)
+        # The signals are computed the same way regardless; ``enforced`` tells
+        # the client whether they actually block the Move to Interviewing CTA.
+        return {
+            **compute_next_steps(app, contacts=app.contacts),
+            "enforced": is_stage_gated(user_id, "applied"),
+        }
     finally:
         session.close()

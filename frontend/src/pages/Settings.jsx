@@ -145,7 +145,22 @@ const Settings = ({ theme: externalTheme, onThemeChange, setScreen }) => {
         action:  { badge: true, toast: true },
         update:  { badge: true, toast: true },
     };
+    // Stages that can carry an optional gate. Mirrors GATEABLE_STAGES in
+    // backend/services/workflow_prefs.py — keep the two lists in sync.
+    const gateableStages = [
+        { id: 'saved',        label: 'Saved',        desc: 'Parsed, reviewed, contacts, research, prioritized' },
+        { id: 'generated',    label: 'Generated',    desc: 'Resume, cover letter, answers, prep' },
+        { id: 'applied',      label: 'Applied',      desc: 'Submitted, confirmed, follow-up due, follow-up sent' },
+        { id: 'interviewing', label: 'Interviewing', desc: 'Recruiter screen, hiring manager, technical, panel, final' },
+        { id: 'decision',     label: 'Decision',     desc: 'Awaiting decision, references, offer tracking' },
+        { id: 'accepted',     label: 'Accepted',     desc: 'Offer review, acceptance, closing other pipelines' },
+    ];
+    const defaultWorkflowConfig = {
+        guided_mode: false,
+        stage_gates: { saved: false, generated: false, applied: true, interviewing: false, decision: false, accepted: false },
+    };
     const [uiConfig, setUiConfig] = useState({ font_size: 14.5, theme: 'system', notification_prefs: defaultNotifPrefs });
+    const [workflowConfig, setWorkflowConfig] = useState(defaultWorkflowConfig);
     const [apiKeys, setApiKeys] = useState([]);
     const [revealedKeys, setRevealedKeys] = useState({}); // keyId -> bool
     const [loading, setLoading] = useState(false);
@@ -167,7 +182,25 @@ const Settings = ({ theme: externalTheme, onThemeChange, setScreen }) => {
             const res = await fetchWithAuth(`${API_URL}/api/config`);
             const data = await res.json();
             if (data.ui_config) setUiConfig(prev => ({ ...prev, ...data.ui_config }));
+            if (data.workflow_config) {
+                setWorkflowConfig(prev => ({
+                    ...prev,
+                    ...data.workflow_config,
+                    stage_gates: { ...prev.stage_gates, ...(data.workflow_config.stage_gates || {}) },
+                }));
+            }
         } catch (e) { console.error('Failed to load config', e); }
+    };
+
+    const toggleGuidedMode = () => {
+        setWorkflowConfig(prev => ({ ...prev, guided_mode: !prev.guided_mode }));
+    };
+
+    const toggleStageGate = (stageId) => {
+        setWorkflowConfig(prev => ({
+            ...prev,
+            stage_gates: { ...prev.stage_gates, [stageId]: !prev.stage_gates?.[stageId] },
+        }));
     };
 
     const fetchApiKeys = async () => {
@@ -230,7 +263,7 @@ const Settings = ({ theme: externalTheme, onThemeChange, setScreen }) => {
             const res = await fetchWithAuth(`${API_URL}/api/config`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ui_config: uiConfig })
+                body: JSON.stringify({ ui_config: uiConfig, workflow_config: workflowConfig })
             });
             if (!res.ok) throw new Error('Failed to save');
             setMessage('Settings saved!');
@@ -265,6 +298,7 @@ const Settings = ({ theme: externalTheme, onThemeChange, setScreen }) => {
                 <div style={{ display: 'flex' }}>
                     {[
                         { id: 'extension',     label: 'API Keys' },
+                        { id: 'workflow',      label: 'Workflow' },
                         { id: 'notifications', label: 'Notifications' },
                         { id: 'appearance',    label: 'Appearance' },
                         { id: 'about',         label: 'About' },
@@ -384,6 +418,111 @@ const Settings = ({ theme: externalTheme, onThemeChange, setScreen }) => {
                                 ))}
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* ── Workflow Tab ──────────────────────────────────────────────── */}
+            {activeTab === 'workflow' && (
+                <div className="card">
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span className="material-symbols-outlined" style={{ color: 'var(--primary)' }}>conveyor_belt</span>
+                        Workflow
+                    </h3>
+                    <p style={{ margin: '0 0 1.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                        By default nothing blocks you — move an application to any stage at any time, and treat
+                        sub-stages as optional detail you fill in when it's useful. Turn on guided mode if you'd
+                        rather the app hold you to finishing each stage before advancing.
+                    </p>
+
+                    {/* Master toggle */}
+                    <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem',
+                        padding: '1rem', borderRadius: '0.75rem', background: 'var(--bg-tertiary)',
+                    }}>
+                        <div>
+                            <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                Guided mode
+                            </div>
+                            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: 1.4, marginTop: '0.15rem' }}>
+                                Require sub-stage completion before advancing. Off by default.
+                            </div>
+                        </div>
+                        <button
+                            onClick={toggleGuidedMode}
+                            aria-pressed={!!workflowConfig.guided_mode}
+                            title={workflowConfig.guided_mode ? 'Click to disable guided mode' : 'Click to enable guided mode'}
+                            style={{
+                                flexShrink: 0,
+                                width: '44px', height: '24px', borderRadius: '12px', border: 'none',
+                                cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
+                                background: workflowConfig.guided_mode ? 'var(--primary)' : 'var(--bg-secondary)',
+                            }}
+                        >
+                            <div style={{
+                                width: '18px', height: '18px', borderRadius: '50%',
+                                background: 'white', position: 'absolute', top: '3px',
+                                left: workflowConfig.guided_mode ? '23px' : '3px',
+                                transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                            }} />
+                        </button>
+                    </div>
+
+                    {/* Per-stage gates — only meaningful while guided mode is on */}
+                    {workflowConfig.guided_mode && (
+                        <div style={{ marginTop: '1.25rem' }}>
+                            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                                Enforce readiness on these stages
+                            </div>
+                            {gateableStages.map(stage => {
+                                const on = !!workflowConfig.stage_gates?.[stage.id];
+                                return (
+                                    <div key={stage.id} style={{
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                        gap: '1rem', padding: '0.7rem 0.25rem',
+                                        borderBottom: '1px solid var(--border-color)',
+                                    }}>
+                                        <div>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                                {stage.label}
+                                            </div>
+                                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3, marginTop: '0.1rem' }}>
+                                                {stage.desc}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => toggleStageGate(stage.id)}
+                                            aria-pressed={on}
+                                            title={on ? `Stop enforcing readiness on ${stage.label}` : `Enforce readiness on ${stage.label}`}
+                                            style={{
+                                                flexShrink: 0,
+                                                width: '44px', height: '24px', borderRadius: '12px', border: 'none',
+                                                cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
+                                                background: on ? 'var(--primary)' : 'var(--bg-tertiary)',
+                                            }}
+                                        >
+                                            <div style={{
+                                                width: '18px', height: '18px', borderRadius: '50%',
+                                                background: 'white', position: 'absolute', top: '3px',
+                                                left: on ? '23px' : '3px',
+                                                transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                                            }} />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                            <p style={{ margin: '1rem 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.5, padding: '0.75rem', background: 'var(--bg-tertiary)', borderRadius: '0.5rem' }}>
+                                Only <strong>Applied</strong> currently has readiness rules wired to the backend
+                                (follow-up sent, a contact on record, and a 7-day response window). The other
+                                stages are listed so the preference survives as their checks are built.
+                            </p>
+                        </div>
+                    )}
+
+                    <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button className="btn btn-primary" onClick={saveConfig} disabled={loading}>
+                            {loading ? 'Saving...' : 'Save Workflow'}
+                        </button>
                     </div>
                 </div>
             )}

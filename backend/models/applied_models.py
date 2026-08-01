@@ -309,6 +309,10 @@ class NextStepsOut(BaseModel):
     reasons_met: list[str] = Field(default_factory=list)
     blockers: list[str] = Field(default_factory=list)
     recommended_action: str
+    # Whether the user opted into guided mode for the Applied stage. When
+    # False (the default), the readiness signals above are advisory only and
+    # the transition endpoint will not refuse the move.
+    enforced: bool = False
 
 
 class TransitionResultOut(BaseModel):

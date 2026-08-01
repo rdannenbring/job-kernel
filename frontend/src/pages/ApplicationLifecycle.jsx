@@ -1163,9 +1163,13 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, onStartFullGene
         </div>
       )}
 
-      {/* Sticky CTA Footer */}
-      {app?.tailored_resume_path && app?.cover_letter_path && (
-        <div style={{ 
+      {/* Sticky CTA Footer — always available. Generating documents is
+          encouraged, not required: a user who already applied elsewhere must
+          still be able to record it. See documentation/product-direction.md. */}
+      {(() => {
+        const docsReady = Boolean(app?.tailored_resume_path && app?.cover_letter_path);
+        return (
+        <div style={{
           position: 'fixed', 
           bottom: 0, 
           left: navCollapsed ? '100px' : '280px', 
@@ -1186,20 +1190,24 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, onStartFullGene
               width: '32px', 
               height: '32px', 
               borderRadius: '50%', 
-              background: 'rgba(16, 185, 129, 0.1)', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center' 
+              background: docsReady ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-tertiary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}>
-              <span className="material-symbols-outlined" style={{ color: '#10b981', fontSize: '1.25rem' }}>check_circle</span>
+              <span className="material-symbols-outlined" style={{ color: docsReady ? '#10b981' : 'var(--text-muted)', fontSize: '1.25rem' }}>
+                {docsReady ? 'check_circle' : 'info'}
+              </span>
             </div>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-              Resume and Cover Letter are ready. Ready to Apply?
+              {docsReady
+                ? 'Resume and Cover Letter are ready. Ready to Apply?'
+                : 'Documents not generated yet — optional. Already applied? Move it along.'}
             </span>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <button 
-              className="btn-primary" 
+            <button
+              className="btn-primary"
               onClick={() => onStageChange('applied')}
               style={{ padding: '0.6rem 1.5rem', borderRadius: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
@@ -1208,7 +1216,8 @@ function GeneratedSubStagePanel({ app, onRefresh, onStageChange, onStartFullGene
             </button>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

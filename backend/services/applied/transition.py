@@ -1,13 +1,17 @@
 """Transition to Interviewing.
 
-Owner task: T3h.
+Owner task: T3h. Readiness semantics revised per
+``documentation/product-direction.md``.
 
-Validates readiness via ``derivations.compute_next_steps``; refuses
-to transition when ``can_transition == False``. On success, sets
-``applications.pipeline_stage = 'interviewing'`` and emits a
-``moved_to_interviewing`` event with structured readiness metadata.
-Does not refresh the substage cache -- the row is leaving the Applied
-stage and ``applied_substage`` becomes a historical marker.
+Always computes readiness via ``derivations.compute_next_steps``, but only
+*enforces* it when the caller passes ``enforce=True`` -- which the route
+layer derives from the user's opt-in guided-mode preferences. The product
+default is fast: readiness is advisory and the transition succeeds
+regardless. On success, sets ``applications.pipeline_stage = 'interviewing'``
+and emits a ``moved_to_interviewing`` event with structured readiness
+metadata (recorded either way, so the signal survives even when it does not
+block). Does not refresh the substage cache -- the row is leaving the
+Applied stage and ``applied_substage`` becomes a historical marker.
 """
 from __future__ import annotations
 
@@ -26,14 +30,19 @@ def transition_to_interviewing(
     session: Session,
     app_id: int,
     user_id: int,
+    enforce: bool = False,
 ) -> dict[str, Any]:
-    """Promote the application from Applied to Interviewing if the
-    readiness rules in ``compute_next_steps`` are all met.
+    """Promote the application from Applied to Interviewing.
+
+    ``enforce`` decides whether the readiness rules in
+    ``compute_next_steps`` block the move. It defaults to ``False`` so the
+    fast path is the default path; the route layer passes ``True`` only when
+    the user has opted into guided mode for the Applied stage.
 
     Raises ``ValueError`` if the row is not currently in the Applied
-    stage. Raises ``PermissionError`` if readiness checks fail or if
-    the user does not own the application. The route layer maps the
-    latter to HTTP 422 / 403 respectively.
+    stage. Raises ``PermissionError`` if the user does not own the
+    application, or -- when ``enforce`` is set -- if readiness checks fail.
+    The route layer maps those to HTTP 403 / 422 respectively.
     """
     app = session.get(Application, app_id)
     if app is None:
@@ -44,7 +53,7 @@ def transition_to_interviewing(
         raise ValueError("application is not in Applied stage")
 
     next_steps = derivations.compute_next_steps(app, contacts=app.contacts)
-    if not next_steps["can_transition"]:
+    if enforce and not next_steps["can_transition"]:
         blockers = ", ".join(next_steps["blockers"]) or "unknown"
         raise PermissionError(f"readiness checks not met: {blockers}")
 
