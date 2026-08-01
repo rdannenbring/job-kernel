@@ -105,6 +105,22 @@ function NewApplication({ onComplete }) {
     useEffect(() => {
         fetchProfile()
         
+        // Check for a job imported from the Discover page
+        const discoverImportStr = localStorage.getItem('discover_import_prefill')
+        if (discoverImportStr) {
+            try {
+                const importJob = JSON.parse(discoverImportStr)
+                localStorage.removeItem('discover_import_prefill')
+                if (importJob.url) {
+                    setJobUrl(importJob.url)
+                    setInputMode('url')
+                } else if (importJob.description) {
+                    setJobDescription(importJob.description)
+                    setInputMode('text')
+                }
+            } catch(e) { console.error('Discover import parse error', e) }
+        }
+
         // First check for extension data
         const extDataStr = sessionStorage.getItem('extensionJobData')
         if (extDataStr) {

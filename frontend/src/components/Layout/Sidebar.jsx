@@ -5,13 +5,18 @@ import { useNotifications } from '../../context/NotificationContext';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
-const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle, user, onLogout, onCollapsedChange }) => {
+const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle, user, onLogout, onCollapsedChange, forceCollapsed }) => {
     const [collapsed, setCollapsedState] = useState(false);
 
     const setCollapsed = (val) => {
         setCollapsedState(val);
         if (onCollapsedChange) onCollapsedChange(val);
     };
+
+    // Auto-collapse when the shell requests it (e.g. Discover detail pane open)
+    React.useEffect(() => {
+        if (forceCollapsed) setCollapsed(true);
+    }, [forceCollapsed]);
     const { unreadCount, centerOpen, setCenterOpen } = useNotifications();
     
     // Auto-collapse based on window width
@@ -54,6 +59,7 @@ const Sidebar = ({ currentScreen, setScreen, theme, onThemeToggle, user, onLogou
 
     const topMenuItems = [
         { id: 'dashboard',  label: 'Dashboard',  icon: 'dashboard' },
+        { id: 'discover',   label: 'Discover',   icon: 'travel_explore' },
         { id: 'profile',    label: 'Profile',    icon: 'person' },
         { id: 'analytics',  label: 'Analytics',  icon: 'leaderboard' },
     ];

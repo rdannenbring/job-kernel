@@ -13,6 +13,7 @@ import Auth from './pages/Auth'
 import ResetPassword from './pages/ResetPassword'
 import Admin from './pages/Admin'
 import Account from './pages/Account'
+import Discover from './pages/Discover'
 import { useAuth } from './context/AuthContext'
 import NotificationToast from './components/NotificationToast'
 import NotificationCenter from './components/NotificationCenter'
@@ -31,6 +32,7 @@ const SCREEN_TO_HASH = {
   capture: '#capture',
   admin: '#admin',
   account: '#account',
+  discover: '#discover',
 };
 const HASH_TO_SCREEN = Object.fromEntries(
   Object.entries(SCREEN_TO_HASH).map(([k, v]) => [v, k])
@@ -52,6 +54,7 @@ function App() {
   const [uiConfigTheme, setUiConfigTheme] = useState('system');
   const [isEnriching, setIsEnriching] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [discoverPaneOpen, setDiscoverPaneOpen] = useState(false);
 
 
   // Profile dirty-state ref — Profile.jsx sets window.__profileIsDirty = true/false
@@ -264,6 +267,13 @@ function App() {
       setScreen('dashboard', { replace: true });
     }
   }, [currentScreen, selectedApp]);
+
+  // Guard: if currentScreen is 'admin' but user is not admin, redirect to dashboard
+  useEffect(() => {
+    if (currentScreen === 'admin' && user && !user.is_admin) {
+      setScreen('dashboard', { replace: true });
+    }
+  }, [currentScreen, user]);
 
   // Apply and listen to theme changes
   useEffect(() => {
@@ -489,6 +499,8 @@ function App() {
         return <Admin />
       case 'account':
         return <Account setScreen={setScreen} />
+      case 'discover':
+        return <Discover user={user} setScreen={setScreen} onPaneOpenChange={setDiscoverPaneOpen} onApplicationsChanged={loadApplications} />
       default:
         return <Dashboard apps={apps} onStartNew={handleStartNew} onViewApp={handleViewApp} onStatusUpdate={handleStatusUpdate} onUpdate={handleAppUpdate} />
     }
@@ -551,6 +563,7 @@ function App() {
           user={user}
           onLogout={logout}
           onCollapsedChange={setSidebarCollapsed}
+          forceCollapsed={discoverPaneOpen}
         />
       )}
 

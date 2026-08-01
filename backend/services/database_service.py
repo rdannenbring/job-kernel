@@ -301,6 +301,77 @@ class Notification(Base):
     user = relationship("User")
 
 # Import remaining sqlalchemy types
+# ── Job Discovery Models ─────────────────────────────────────────────────────
+
+class SavedSearch(Base):
+    __tablename__ = 'saved_searches'
+
+    id            = Column(Integer, primary_key=True)
+    user_id       = Column(Integer, ForeignKey('users.id'), nullable=True)
+    name          = Column(String)
+    keywords      = Column(String)
+    location      = Column(String)
+    remote_filter = Column(String, default='any')
+    providers     = Column(Text)        # JSON array string
+    ai_scoring    = Column(Integer, default=1)
+    is_active     = Column(Integer, default=1)
+    alerts        = Column(Integer, default=0)
+    last_run_at   = Column(String, nullable=True)
+    created_at    = Column(String)
+
+
+class DiscoveredJob(Base):
+    __tablename__ = 'discovered_jobs'
+
+    id               = Column(Integer, primary_key=True)
+    user_id          = Column(Integer, ForeignKey('users.id'), nullable=True)
+    saved_search_id  = Column(Integer, ForeignKey('saved_searches.id'), nullable=True)
+    source_provider  = Column(String)
+    external_id      = Column(String, nullable=True)
+    url              = Column(String)
+    title            = Column(String)
+    company          = Column(String, nullable=True)
+    location         = Column(String, nullable=True)
+    remote_type      = Column(String, nullable=True)
+    salary_min       = Column(Float, nullable=True)
+    salary_max       = Column(Float, nullable=True)
+    salary_currency  = Column(String, nullable=True)
+    description      = Column(Text, nullable=True)
+    ai_match_score   = Column(Float, nullable=True)
+    ai_match_summary = Column(Text, nullable=True)
+    raw_data         = Column(Text, nullable=True)
+    discovered_at    = Column(String)
+    is_dismissed     = Column(Integer, default=0)
+    is_saved         = Column(Integer, default=0)
+    is_imported      = Column(Integer, default=0)
+
+
+class SearchRunLog(Base):
+    __tablename__ = 'search_run_log'
+
+    id              = Column(Integer, primary_key=True)
+    saved_search_id = Column(Integer, ForeignKey('saved_searches.id'), nullable=True)
+    user_id         = Column(Integer, ForeignKey('users.id'), nullable=True)
+    run_at          = Column(String)
+    jobs_found      = Column(Integer, default=0)
+    new_jobs        = Column(Integer, default=0)
+    status          = Column(String)
+    error_message   = Column(Text, nullable=True)
+
+
+class ProviderRateLimitLog(Base):
+    __tablename__ = 'provider_rate_limit_log'
+
+    id             = Column(Integer, primary_key=True)
+    user_id        = Column(Integer, ForeignKey('users.id'), nullable=True)
+    provider       = Column(String)
+    window_type    = Column(String)
+    window_start   = Column(String)
+    calls_used     = Column(Integer, default=0)
+    calls_limit    = Column(Integer)
+    last_called_at = Column(String, nullable=True)
+
+
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -1221,6 +1292,45 @@ class DatabaseService:
             return config
             
         session = self.Session()
+    def find_duplicate_application(
+        self,
+        user_id: int,
+        job_url: str = "",
+        job_title: str = "",
+        company: str = "",
+    ) -> Optional[Dict[str, Any]]:
+        """Return an existing application that looks like a duplicate, or None.
+
+        Matches on a non-empty job_url first, then falls back to a
+        case-insensitive (job_title, company) match. Drafts are ignored.
+        """
+        from sqlalchemy import func
+        session = self.Session()
+        try:
+            base = session.query(Application).filter(
+                Application.user_id == user_id,
+                Application.status != "Draft",
+            )
+
+            if job_url:
+                match = base.filter(Application.job_url == job_url).first()
+                if match:
+                    return self._app_to_dict(match)
+
+            title = (job_title or "").strip().lower()
+            comp = (company or "").strip().lower()
+            if title and comp:
+                match = base.filter(
+                    func.lower(Application.job_title) == title,
+                    func.lower(Application.company) == comp,
+                ).first()
+                if match:
+                    return self._app_to_dict(match)
+
+            return None
+        finally:
+            session.close()
+
         try:
             user_record = session.query(Config).filter(Config.user_id == user_id).first()
             if user_record:
@@ -2198,3 +2308,524 @@ class DatabaseService:
 
 if __name__ == "__main__":
     pass
+    # ── Saved Searches ──────────────────────────────────────────────────────────
+
+    def create_saved_search(self, user_id: int, data: dict) -> dict:
+        """Create a new saved search. data keys: name, keywords, location, remote_filter,
+        providers (list), ai_scoring (bool). Returns the created record as dict."""
+        session = self.Session()
+        try:
+            providers = data.get('providers', [])
+            if isinstance(providers, list):
+                providers = json.dumps(providers)
+            now = datetime.utcnow().isoformat()
+            record = SavedSearch(
+                user_id=user_id,
+                name=data.get('name', ''),
+                keywords=data.get('keywords', ''),
+                location=data.get('location', ''),
+                remote_filter=data.get('remote_filter', 'any'),
+                providers=providers,
+                ai_scoring=1 if data.get('ai_scoring', True) else 0,
+                is_active=1,
+                alerts=0,
+                last_run_at=None,
+                created_at=now,
+            )
+            session.add(record)
+            session.commit()
+            return {
+                'id': record.id,
+                'user_id': record.user_id,
+                'name': record.name,
+                'keywords': record.keywords,
+                'location': record.location,
+                'remote_filter': record.remote_filter,
+                'providers': json.loads(record.providers) if record.providers else [],
+                'ai_scoring': record.ai_scoring,
+                'is_active': record.is_active,
+                'alerts': bool(record.alerts),
+                'last_run_at': record.last_run_at,
+                'created_at': record.created_at,
+            }
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def get_saved_searches(self, user_id: int) -> list:
+        """Return all saved searches for a user, ordered by created_at desc. providers returned as list."""
+        session = self.Session()
+        try:
+            records = (session.query(SavedSearch)
+                       .filter(SavedSearch.user_id == user_id)
+                       .order_by(SavedSearch.created_at.desc())
+                       .all())
+            return [{
+                'id': r.id,
+                'user_id': r.user_id,
+                'name': r.name,
+                'keywords': r.keywords,
+                'location': r.location,
+                'remote_filter': r.remote_filter,
+                'providers': json.loads(r.providers) if r.providers else [],
+                'ai_scoring': r.ai_scoring,
+                'is_active': r.is_active,
+                'alerts': bool(r.alerts),
+                'last_run_at': r.last_run_at,
+                'created_at': r.created_at,
+            } for r in records]
+        finally:
+            session.close()
+
+    def update_saved_search(self, search_id: int, user_id: int, data: dict) -> bool:
+        """Update a saved search. Updatable fields: name, keywords, location, remote_filter,
+        providers (list->JSON), ai_scoring, is_active. Returns True if updated."""
+        session = self.Session()
+        try:
+            record = session.query(SavedSearch).filter(
+                SavedSearch.id == search_id,
+                SavedSearch.user_id == user_id
+            ).first()
+            if not record:
+                return False
+            if 'name' in data: record.name = data['name']
+            if 'keywords' in data: record.keywords = data['keywords']
+            if 'location' in data: record.location = data['location']
+            if 'remote_filter' in data: record.remote_filter = data['remote_filter']
+            if 'providers' in data:
+                p = data['providers']
+                record.providers = json.dumps(p) if isinstance(p, list) else p
+            if 'ai_scoring' in data: record.ai_scoring = 1 if data['ai_scoring'] else 0
+            if 'is_active' in data: record.is_active = 1 if data['is_active'] else 0
+            if 'alerts' in data: record.alerts = 1 if data['alerts'] else 0
+            if 'last_run_at' in data: record.last_run_at = data['last_run_at']
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def get_saved_search(self, search_id: int, user_id: int) -> dict:
+        """Return a single saved search by id and user_id. Returns None if not found."""
+        session = self.Session()
+        try:
+            record = session.query(SavedSearch).filter(
+                SavedSearch.id == search_id,
+                SavedSearch.user_id == user_id
+            ).first()
+            if not record:
+                return None
+            return {
+                'id': record.id,
+                'user_id': record.user_id,
+                'name': record.name,
+                'keywords': record.keywords,
+                'location': record.location,
+                'remote_filter': record.remote_filter,
+                'providers': json.loads(record.providers) if record.providers else [],
+                'ai_scoring': bool(record.ai_scoring),
+                'is_active': bool(record.is_active),
+                'alerts': bool(record.alerts),
+                'last_run_at': record.last_run_at,
+                'created_at': record.created_at,
+            }
+        finally:
+            session.close()
+
+    def delete_saved_search(self, search_id: int, user_id: int) -> bool:
+        """Delete a saved search and all its discovered_jobs. Returns True if deleted."""
+        session = self.Session()
+        try:
+            record = session.query(SavedSearch).filter(
+                SavedSearch.id == search_id,
+                SavedSearch.user_id == user_id
+            ).first()
+            if not record:
+                return False
+            # Delete related discovered jobs first
+            session.query(DiscoveredJob).filter(
+                DiscoveredJob.saved_search_id == search_id
+            ).delete(synchronize_session=False)
+            session.delete(record)
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    # ── Discovered Jobs ─────────────────────────────────────────────────────────
+
+    def upsert_discovered_jobs(self, jobs: list) -> dict:
+        """Insert new jobs, skip duplicates by url+user_id.
+        jobs is a list of dicts with keys matching DiscoveredJob columns.
+        Returns {"new": int, "duplicates": int}"""
+        session = self.Session()
+        new_count = 0
+        dup_count = 0
+        try:
+            for job in jobs:
+                user_id = job.get('user_id')
+                url = job.get('url', '')
+                existing = session.query(DiscoveredJob).filter(
+                    DiscoveredJob.user_id == user_id,
+                    DiscoveredJob.url == url
+                ).first()
+                if existing:
+                    dup_count += 1
+                    continue
+                raw = job.get('raw_data')
+                if isinstance(raw, (dict, list)):
+                    raw = json.dumps(raw)
+                record = DiscoveredJob(
+                    user_id=user_id,
+                    saved_search_id=job.get('saved_search_id'),
+                    source_provider=job.get('source_provider', ''),
+                    external_id=job.get('external_id'),
+                    url=url,
+                    title=job.get('title', ''),
+                    company=job.get('company'),
+                    location=job.get('location'),
+                    remote_type=job.get('remote_type'),
+                    salary_min=job.get('salary_min'),
+                    salary_max=job.get('salary_max'),
+                    salary_currency=job.get('salary_currency'),
+                    description=job.get('description'),
+                    ai_match_score=job.get('ai_match_score'),
+                    ai_match_summary=job.get('ai_match_summary'),
+                    raw_data=raw,
+                    discovered_at=job.get('discovered_at', datetime.utcnow().isoformat()),
+                    is_dismissed=int(bool(job.get('is_dismissed', 0))),
+                    is_saved=int(bool(job.get('is_saved', 0))),
+                    is_imported=int(bool(job.get('is_imported', 0))),
+                )
+                session.add(record)
+                new_count += 1
+            session.commit()
+            return {'new': new_count, 'duplicates': dup_count}
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def get_discovered_jobs(self, user_id: int, filters: dict = None) -> list:
+        """Return discovered jobs for a user.
+        filters keys (all optional): saved_search_id, is_dismissed (bool), is_saved (bool),
+        is_imported (bool), min_score (float).
+        Ordered by discovered_at desc, limit 200."""
+        session = self.Session()
+        try:
+            query = session.query(DiscoveredJob).filter(DiscoveredJob.user_id == user_id)
+            if filters:
+                if 'saved_search_id' in filters:
+                    query = query.filter(DiscoveredJob.saved_search_id == filters['saved_search_id'])
+                if 'is_dismissed' in filters:
+                    query = query.filter(DiscoveredJob.is_dismissed == (1 if filters['is_dismissed'] else 0))
+                if 'is_saved' in filters:
+                    query = query.filter(DiscoveredJob.is_saved == (1 if filters['is_saved'] else 0))
+                if 'is_imported' in filters:
+                    query = query.filter(DiscoveredJob.is_imported == (1 if filters['is_imported'] else 0))
+                if 'min_score' in filters and filters['min_score'] is not None:
+                    query = query.filter(DiscoveredJob.ai_match_score >= filters['min_score'])
+            records = query.order_by(DiscoveredJob.discovered_at.desc()).limit(200).all()
+            # Deduplicate by (title, company, source_provider) — same role posted multiple
+            # times on the same board (e.g. RemoteOK re-posts) should show only once.
+            # Keep the most recently discovered entry (first in desc order).
+            seen_roles = set()
+            deduped = []
+            for r in records:
+                role_key = (
+                    (r.title or '').strip().lower(),
+                    (r.company or '').strip().lower(),
+                    r.source_provider or '',
+                )
+                if role_key in seen_roles:
+                    continue
+                seen_roles.add(role_key)
+                deduped.append(r)
+            return [self._discovered_job_to_dict(r) for r in deduped]
+        finally:
+            session.close()
+
+    def _extract_original_source(self, source_provider: str, raw_data: dict) -> str:
+        """Derive the original job board name from provider-specific raw_data fields."""
+        if not raw_data:
+            return source_provider or ''
+        if source_provider == 'jsearch':
+            publisher = raw_data.get('job_publisher', '') or ''
+            # Normalise "Jobs via LinkedIn" → "LinkedIn", "Jobs via Indeed" → "Indeed", etc.
+            for prefix in ('Jobs via ', 'Job via ', 'Via '):
+                if publisher.lower().startswith(prefix.lower()):
+                    publisher = publisher[len(prefix):]
+            return publisher or 'JSearch'
+        if source_provider == 'adzuna':
+            return 'Adzuna'
+        if source_provider == 'themuse':
+            return 'The Muse'
+        if source_provider == 'remoteok':
+            return 'RemoteOK'
+        return source_provider or ''
+
+    def _discovered_job_to_dict(self, r) -> dict:
+        raw = json.loads(r.raw_data) if r.raw_data else None
+        return {
+            'id': r.id,
+            'user_id': r.user_id,
+            'saved_search_id': r.saved_search_id,
+            'source_provider': r.source_provider,
+            'original_source': self._extract_original_source(r.source_provider, raw),
+            'external_id': r.external_id,
+            'url': r.url,
+            'title': r.title,
+            'company': r.company,
+            'location': r.location,
+            'remote_type': r.remote_type,
+            'salary_min': r.salary_min,
+            'salary_max': r.salary_max,
+            'salary_currency': r.salary_currency,
+            'description': r.description,
+            'ai_match_score': r.ai_match_score,
+            'ai_match_summary': r.ai_match_summary,
+            'raw_data': raw,
+            'discovered_at': r.discovered_at,
+            'is_dismissed': bool(r.is_dismissed),
+            'is_saved': bool(r.is_saved),
+            'is_imported': bool(r.is_imported),
+        }
+
+    def update_discovered_job(self, job_id: int, user_id: int, data: dict) -> bool:
+        """Update a discovered job. Updatable fields: is_dismissed, is_saved, is_imported,
+        ai_match_score, ai_match_summary. Returns True if updated."""
+        session = self.Session()
+        try:
+            record = session.query(DiscoveredJob).filter(
+                DiscoveredJob.id == job_id,
+                DiscoveredJob.user_id == user_id
+            ).first()
+            if not record:
+                return False
+            if 'is_dismissed' in data: record.is_dismissed = 1 if data['is_dismissed'] else 0
+            if 'is_saved' in data: record.is_saved = 1 if data['is_saved'] else 0
+            if 'is_imported' in data: record.is_imported = 1 if data['is_imported'] else 0
+            if 'ai_match_score' in data: record.ai_match_score = data['ai_match_score']
+            if 'ai_match_summary' in data: record.ai_match_summary = data['ai_match_summary']
+            session.commit()
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def get_discovered_job(self, job_id: int, user_id: int) -> dict:
+        """Return a single discovered job by id. Returns None if not found."""
+        session = self.Session()
+        try:
+            record = session.query(DiscoveredJob).filter(
+                DiscoveredJob.id == job_id,
+                DiscoveredJob.user_id == user_id
+            ).first()
+            if not record:
+                return None
+            return self._discovered_job_to_dict(record)
+        finally:
+            session.close()
+
+    # ── Search Run Log ───────────────────────────────────────────────────────────
+
+    def log_search_run(self, user_id: int, saved_search_id: int, stats: dict) -> int:
+        """Log a search run. stats keys: jobs_found, new_jobs, status, error_message (optional).
+        Returns the new log entry id."""
+        session = self.Session()
+        try:
+            record = SearchRunLog(
+                saved_search_id=saved_search_id,
+                user_id=user_id,
+                run_at=datetime.utcnow().isoformat(),
+                jobs_found=stats.get('jobs_found', 0),
+                new_jobs=stats.get('new_jobs', 0),
+                status=stats.get('status', 'success'),
+                error_message=stats.get('error_message'),
+            )
+            session.add(record)
+            # Update last_run_at on the saved search
+            saved_search = session.query(SavedSearch).filter(
+                SavedSearch.id == saved_search_id
+            ).first()
+            if saved_search:
+                saved_search.last_run_at = record.run_at
+            session.commit()
+            return record.id
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    # ── Provider Rate Limits ─────────────────────────────────────────────────────
+
+    def get_provider_rate_status(self, user_id: int) -> dict:
+        """Return rate limit status for all providers for this user.
+        Returns dict keyed by provider name."""
+        session = self.Session()
+        try:
+            records = session.query(ProviderRateLimitLog).filter(
+                ProviderRateLimitLog.user_id == user_id
+            ).all()
+
+            # Group by provider
+            by_provider: Dict[str, list] = {}
+            for r in records:
+                by_provider.setdefault(r.provider, []).append(r)
+
+            window_durations = {
+                'minute': 60,
+                'hour': 3600,
+                'day': 86400,
+                'week': 604800,
+                'month': 2592000,
+            }
+
+            now = datetime.utcnow()
+            result = {}
+            for provider, rows in by_provider.items():
+                windows = []
+                exhausted_window = None
+                available = True
+                for row in rows:
+                    duration = window_durations.get(row.window_type, 86400)
+                    try:
+                        ws = datetime.fromisoformat(row.window_start)
+                    except Exception:
+                        ws = now
+                    resets_at_dt = ws + __import__('datetime').timedelta(seconds=duration)
+                    resets_at = resets_at_dt.isoformat()
+                    delta_secs = max(0, (resets_at_dt - now).total_seconds())
+                    if delta_secs > 86400:
+                        days = int(delta_secs // 86400)
+                        resets_in_human = f"in {days} day{'s' if days != 1 else ''}"
+                    elif delta_secs > 3600:
+                        hours = int(delta_secs // 3600)
+                        resets_in_human = f"in {hours} hour{'s' if hours != 1 else ''}"
+                    elif delta_secs > 60:
+                        mins = int(delta_secs // 60)
+                        resets_in_human = f"in {mins} minute{'s' if mins != 1 else ''}"
+                    else:
+                        resets_in_human = "very soon"
+                    pct = (row.calls_used / row.calls_limit * 100.0) if row.calls_limit else 0.0
+                    windows.append({
+                        'window_type': row.window_type,
+                        'calls_used': row.calls_used,
+                        'calls_limit': row.calls_limit,
+                        'pct': round(pct, 1),
+                    })
+                    if row.calls_limit and row.calls_used >= row.calls_limit:
+                        available = False
+                        if exhausted_window is None:
+                            exhausted_window = row.window_type
+
+                # Build summary
+                exhausted_row = None
+                exhausted_resets_at = None
+                exhausted_resets_human = None
+                if not available:
+                    for row in rows:
+                        if row.calls_limit and row.calls_used >= row.calls_limit:
+                            exhausted_row = row
+                            break
+                    if exhausted_row:
+                        duration = window_durations.get(exhausted_row.window_type, 86400)
+                        try:
+                            ws = datetime.fromisoformat(exhausted_row.window_start)
+                        except Exception:
+                            ws = now
+                        resets_at_dt = ws + __import__('datetime').timedelta(seconds=duration)
+                        exhausted_resets_at = resets_at_dt.isoformat()
+                        delta_secs = max(0, (resets_at_dt - now).total_seconds())
+                        if delta_secs > 86400:
+                            days = int(delta_secs // 86400)
+                            exhausted_resets_human = f"in {days} day{'s' if days != 1 else ''}"
+                        elif delta_secs > 3600:
+                            hours = int(delta_secs // 3600)
+                            exhausted_resets_human = f"in {hours} hour{'s' if hours != 1 else ''}"
+                        elif delta_secs > 60:
+                            mins = int(delta_secs // 60)
+                            exhausted_resets_human = f"in {mins} minute{'s' if mins != 1 else ''}"
+                        else:
+                            exhausted_resets_human = "very soon"
+
+                total_used = sum(w['calls_used'] for w in windows)
+                total_limit = max((w['calls_limit'] for w in windows if w['calls_limit']), default=None)
+                result[provider] = {
+                    'available': available,
+                    'exhausted_window': exhausted_window,
+                    'calls_used': total_used,
+                    'calls_limit': total_limit,
+                    'resets_at': exhausted_resets_at,
+                    'resets_in_human': exhausted_resets_human,
+                    'windows': windows,
+                }
+            return result
+        finally:
+            session.close()
+
+    def increment_provider_usage(self, user_id: int, provider: str, window_type: str, calls_limit: int) -> None:
+        """Increment the call counter for a provider/window. If the window has expired
+        (now > window_start + window_duration), reset window_start and calls_used to 1.
+        Window durations: minute=60s, hour=3600s, day=86400s, week=604800s, month=2592000s (30d)"""
+        window_durations = {
+            'minute': 60,
+            'hour': 3600,
+            'day': 86400,
+            'week': 604800,
+            'month': 2592000,
+        }
+        session = self.Session()
+        try:
+            now = datetime.utcnow()
+            now_iso = now.isoformat()
+            record = session.query(ProviderRateLimitLog).filter(
+                ProviderRateLimitLog.user_id == user_id,
+                ProviderRateLimitLog.provider == provider,
+                ProviderRateLimitLog.window_type == window_type
+            ).first()
+
+            if record is None:
+                record = ProviderRateLimitLog(
+                    user_id=user_id,
+                    provider=provider,
+                    window_type=window_type,
+                    window_start=now_iso,
+                    calls_used=1,
+                    calls_limit=calls_limit,
+                    last_called_at=now_iso,
+                )
+                session.add(record)
+            else:
+                duration = window_durations.get(window_type, 86400)
+                try:
+                    ws = datetime.fromisoformat(record.window_start)
+                except Exception:
+                    ws = now
+                window_expired = (now - ws).total_seconds() >= duration
+                if window_expired:
+                    record.window_start = now_iso
+                    record.calls_used = 1
+                else:
+                    record.calls_used = (record.calls_used or 0) + 1
+                record.calls_limit = calls_limit
+                record.last_called_at = now_iso
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+

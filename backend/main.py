@@ -26,6 +26,7 @@ from services.scraper_service import ScraperService
 from services.database_service import DatabaseService
 from services.auth_service import AuthService, get_current_user_id, get_admin_user_id
 from routes.applied import router as applied_router
+from routes.job_search import router as job_search_router
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -112,6 +113,7 @@ database_service = DatabaseService()
 
 # Applied stage router (mounted; endpoint modules fill in routes per Phase B)
 app.include_router(applied_router)
+app.include_router(job_search_router)
 
 
 def run_maintenance_loop():
