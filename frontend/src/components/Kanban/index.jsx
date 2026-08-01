@@ -18,7 +18,6 @@ const DENSITY_KEY = 'kanban_density';
 export default function Kanban({
   apps,             // pre-filtered/sorted by Dashboard
   allAppsCount,     // total unfiltered count for filter bar display
-  onUpdate,
   onViewApp,
   onStartNew,
   updateAppOrders,

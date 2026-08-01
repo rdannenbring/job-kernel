@@ -948,7 +948,10 @@ class DatabaseService:
                     
                     # Track if we should update status/stage based on progression rules
                     new_status = data.get('status')
-                    new_stage = data.get('pipeline_stage') or (self._get_stage_from_status(new_status) if new_status else None)
+                    # Normalize: pipeline_stage is canonically lowercase (see update_application).
+                    _raw_stage = data.get('pipeline_stage')
+                    new_stage = (_raw_stage.lower() if isinstance(_raw_stage, str) and _raw_stage else None) \
+                        or (self._get_stage_from_status(new_status) if new_status else None)
                     
                     should_update_stage = True
                     if new_stage and not force:
@@ -1562,7 +1565,12 @@ class DatabaseService:
             
             # Handle status/stage updates with progression rules
             new_status = data.get('status')
-            new_stage = data.get('pipeline_stage') or (self._get_stage_from_status(new_status) if new_status else None)
+            # Normalize: pipeline_stage is canonically lowercase. Clients that
+            # post a display-cased value ("Applied") would otherwise store it
+            # verbatim and break every `pipeline_stage == 'applied'` comparison.
+            _raw_stage = data.get('pipeline_stage')
+            new_stage = (_raw_stage.lower() if isinstance(_raw_stage, str) and _raw_stage else None) \
+                or (self._get_stage_from_status(new_status) if new_status else None)
             
             should_update_stage = True
             if new_stage and not force:

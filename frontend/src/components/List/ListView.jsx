@@ -112,7 +112,11 @@ export default function ListView({ apps = [], onViewApp, onUpdate, isLoading, is
     setScrolled((scrollRef.current?.scrollTop ?? 0) > 2);
   }, []);
 
-  // Stage move flow
+  // Stage move flow.
+  // Send `status` (the Title-Case KANBAN_COLUMNS value), not `pipeline_stage`.
+  // The API uses a supplied pipeline_stage verbatim but *derives* the canonical
+  // lowercase stage from status — so posting pipeline_stage here would store
+  // "Applied" instead of "applied" and leave status stale. Kanban does the same.
   const handleStageSelect = useCallback((newStage) => {
     const { appId, anchorRect } = stagePopover || {};
     if (!appId) return;
@@ -126,12 +130,12 @@ export default function ListView({ apps = [], onViewApp, onUpdate, isLoading, is
     } else if (isBack(fromStage, newStage)) {
       setMoveConfirm({ app, fromStage, toStage: newStage, kind: 'back' });
     } else {
-      onUpdate(app.id, { pipeline_stage: newStage });
+      onUpdate(app.id, { status: newStage });
     }
   }, [stagePopover, apps, onUpdate, setStagePopover]);
 
   const handleBulkMove = useCallback((newStage) => {
-    selectedIds.forEach(id => onUpdate(id, { pipeline_stage: newStage }));
+    selectedIds.forEach(id => onUpdate(id, { status: newStage }));
     clearSelection();
   }, [selectedIds, onUpdate, clearSelection]);
 
@@ -354,7 +358,7 @@ export default function ListView({ apps = [], onViewApp, onUpdate, isLoading, is
           toStage={moveConfirm.toStage}
           app={moveConfirm.app}
           onConfirm={() => {
-            onUpdate(moveConfirm.app.id, { pipeline_stage: moveConfirm.toStage });
+            onUpdate(moveConfirm.app.id, { status: moveConfirm.toStage });
             setMoveConfirm(null);
           }}
           onCancel={() => setMoveConfirm(null)}

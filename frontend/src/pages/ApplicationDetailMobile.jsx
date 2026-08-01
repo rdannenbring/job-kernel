@@ -1017,6 +1017,7 @@ export default function ApplicationDetailMobile({
   app,
   onBack,
   onUpdate,
+  onPersist,
   onStartFullGeneration,
 }) {
   const { fetchWithAuth } = useAuth();
@@ -1293,7 +1294,7 @@ export default function ApplicationDetailMobile({
             <div className="row gap-2" style={{ marginLeft: 'auto', alignItems: 'center' }}>
               <span className="label" style={{ fontSize: 9 }}>Interest</span>
               <InterestStars level={app?.interest_level} size="14px"
-                onChange={(level) => onUpdate?.(app.id, { interest_level: level })} />
+                onChange={(level) => onPersist?.(app.id, { interest_level: level })} />
             </div>
           </div>
 

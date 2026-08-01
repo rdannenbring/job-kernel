@@ -686,7 +686,7 @@ const LogoPickerModal = ({ companyName, onSelect, onClose }) => {
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate, onViewLifecycle, onStartFullGeneration, avgScore, isEnrichingGlobal = false }) => {
+const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, onUpdate, onPersist, onViewLifecycle, onStartFullGeneration, avgScore, isEnrichingGlobal = false }) => {
     const isMobile = useIsMobile();
     const headerSentinelRef = React.useRef(null);
     const [showStickyHeaderSummary, setShowStickyHeaderSummary] = React.useState(false);
@@ -1308,7 +1308,7 @@ const ApplicationDetail = ({ app, onBack, onDelete, onArchive, onStatusUpdate, o
     };
 
     if (isMobile) {
-        return <ApplicationDetailMobile app={app} onBack={onBack} onUpdate={onUpdate} onStartFullGeneration={onStartFullGeneration} />;
+        return <ApplicationDetailMobile app={app} onBack={onBack} onUpdate={onUpdate} onPersist={onPersist} onStartFullGeneration={onStartFullGeneration} />;
     }
 
     return (

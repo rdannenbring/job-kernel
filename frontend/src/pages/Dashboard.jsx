@@ -102,7 +102,10 @@ function loadDashState() {
     } catch { return {}; }
 }
 
-const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) => {
+// onUpdate  — local-only state patch; the caller owns persistence.
+// onPersist — writes through to the API. Views that don't fetch for themselves
+//             (ListView) must use this one or their edits vanish on reload.
+const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate, onPersist }) => {
     const { fetchWithAuth } = useAuth();
     const saved = loadDashState();
     // Default to 'kanban' if the saved view mode is 'table' (which is hidden)
@@ -952,7 +955,6 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                     <Kanban
                         apps={processedApps}
                         allAppsCount={apps.filter(a => (showArchived ? a.is_archived === 'true' || a.is_archived === true : a.is_archived !== 'true' && a.is_archived !== true) && a.status !== 'Draft').length}
-                        onUpdate={onUpdate}
                         onViewApp={onViewApp}
                         onStartNew={onStartNew}
                         updateAppOrders={updateAppOrders}
@@ -973,7 +975,9 @@ const Dashboard = ({ apps, onStartNew, onViewApp, onStatusUpdate, onUpdate }) =>
                     <ListView
                         apps={processedApps}
                         onViewApp={onViewApp}
-                        onUpdate={onUpdate}
+                        // ListView issues no fetch of its own — it needs the
+                        // persisting handler, not the local-only one.
+                        onUpdate={onPersist}
                         onStartNew={onStartNew}
                     />
                 )}

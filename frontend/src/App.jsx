@@ -355,10 +355,35 @@ function App() {
     }
   }
 
+  // Local-only. Use this to reflect a change the caller has ALREADY persisted
+  // (or is about to persist itself). It does not talk to the API.
   const handleAppUpdate = (appId, updates) => {
     setApps(prev => prev.map(a => a.id === appId ? { ...a, ...updates } : a));
     if (selectedApp && selectedApp.id === appId) {
       setSelectedApp(prev => prev ? { ...prev, ...updates } : null);
+    }
+  }
+
+  // Persisting counterpart to handleAppUpdate: applies the change optimistically,
+  // writes it through to the API, then reconciles with the server's version.
+  // Views that issue their own fetch (Kanban drag, ApplicationDetail saves) should
+  // keep using handleAppUpdate; anything that only calls a callback needs this one.
+  const handleAppPersist = async (appId, updates) => {
+    handleAppUpdate(appId, updates); // optimistic
+    try {
+      const res = await fetchWithAuth(`${API_URL}/api/applications/${appId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        // force: stage moves are never blocked, including backward ones.
+        // See documentation/product-direction.md.
+        body: JSON.stringify({ ...updates, force: true })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const updatedFullApp = await res.json();
+      handleAppUpdate(appId, updatedFullApp);
+    } catch (e) {
+      console.error('Failed to persist application update', e);
+      loadApplications(); // fall back to server truth rather than lying to the user
     }
   }
 
@@ -402,7 +427,7 @@ function App() {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'dashboard':
-        return <Dashboard apps={apps} onStartNew={handleStartNew} onViewApp={handleViewApp} onStatusUpdate={handleStatusUpdate} onUpdate={handleAppUpdate} />
+        return <Dashboard apps={apps} onStartNew={handleStartNew} onViewApp={handleViewApp} onStatusUpdate={handleStatusUpdate} onUpdate={handleAppUpdate} onPersist={handleAppPersist} />
       case 'new_app':
         return <NewApplication onComplete={handleAppComplete} />
       case 'detail': {
@@ -426,8 +451,9 @@ function App() {
                  onBack={() => setScreen('dashboard')} 
                  onDelete={handleDeleteApp} 
                  onArchive={handleArchiveApp} 
-                 onStatusUpdate={handleStatusUpdate} 
-                 onUpdate={handleAppUpdate} 
+                 onStatusUpdate={handleStatusUpdate}
+                 onUpdate={handleAppUpdate}
+                 onPersist={handleAppPersist}
                  onViewLifecycle={() => setScreen('lifecycle')}
                  onStartFullGeneration={(appToGen, resumeInst, clInst) => {
                    sessionStorage.setItem('extensionJobData', JSON.stringify({
@@ -502,7 +528,7 @@ function App() {
       case 'discover':
         return <Discover user={user} setScreen={setScreen} onPaneOpenChange={setDiscoverPaneOpen} onApplicationsChanged={loadApplications} />
       default:
-        return <Dashboard apps={apps} onStartNew={handleStartNew} onViewApp={handleViewApp} onStatusUpdate={handleStatusUpdate} onUpdate={handleAppUpdate} />
+        return <Dashboard apps={apps} onStartNew={handleStartNew} onViewApp={handleViewApp} onStatusUpdate={handleStatusUpdate} onUpdate={handleAppUpdate} onPersist={handleAppPersist} />
     }
   }
 
