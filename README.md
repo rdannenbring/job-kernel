@@ -1,6 +1,8 @@
 # JobKernel
 
-AI-powered job application manager — track applications, tailor resumes, generate cover letters, and stay organized throughout your job search.
+A high-throughput job application workbench — customize, track, and grind through as many applications as possible. Tailor resumes, generate cover letters, and keep an accurate record of your search without any step getting in your way.
+
+> Product direction and the "nothing blocks you by default" principle: [`documentation/product-direction.md`](documentation/product-direction.md).
 
 ---
 
@@ -28,7 +30,8 @@ docker exec -it jobapplicationautomator-backend-1 pip install <package_name>
 
 ## Features
 
-- 📋 **Application Tracking** — Kanban, list & table views with drag-and-drop status updates
+- 📋 **Application Tracking** — Kanban, list & table views with drag-and-drop status updates. Move anything to any stage, any time — no step gates
+- ⚙️ **Optional Guided Mode** — off by default; opt in per stage under Settings → Workflow if you want readiness checks enforced
 - 📄 **Resume Tailoring** — AI rewrites your resume to match each job description, preserving formatting
 - ✉️ **Cover Letter Generation** — AI-drafted cover letters with one click
 - 🗂️ **Archiving** — Archive applications instead of deleting them; toggle archived view on the dashboard

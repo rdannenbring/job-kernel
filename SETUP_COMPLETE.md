@@ -1,3 +1,13 @@
+> # ⚠️ SUPERSEDED — HISTORICAL DOCUMENT
+>
+> This describes **Resume Automator**, the original single-purpose tool that predates the JobKernel pipeline. It is kept as a record of where the project started. **Nothing below is accurate for the current app.**
+>
+> Known inaccuracies: it describes an OpenAI GPT-4o-mini integration (the app uses **Google Gemini**), no database (the app uses **SQLite** with a full application/contact/event schema), and a four-step linear resume wizard (superseded by the **stage pipeline**).
+>
+> For current instructions see [`README.md`](README.md) and [`QUICKSTART.md`](QUICKSTART.md). For product direction see [`documentation/product-direction.md`](documentation/product-direction.md).
+
+---
+
 # 🎉 Resume Automator - Complete!
 
 ## ✅ What's Been Built

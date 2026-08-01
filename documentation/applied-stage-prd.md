@@ -1,5 +1,9 @@
 # Applied Stage PRD
 
+> **Status: IMPLEMENTED.** Tasks T1–T19f are all shipped — see `git log` from `b92938d` (schema) through `246d3fe` (pytest suite). The **Delivery plan** section below reads as forward-looking; it is a historical record of how the work was sequenced, not outstanding work. The data model, API contracts, and JSON shapes in this document are accurate and reflect what is running.
+>
+> **Governing doc: [`product-direction.md`](product-direction.md).** JobKernel is a high-throughput application workbench: *nothing blocks stage advancement by default.* This PRD was written under the earlier evidence-gated framing. The gating language in §6 (Readiness for Interviewing) and in **Transition rules** has been amended below to the opt-in contract. Everything else stands.
+
 ## Overview
 
 This document defines the product requirements, backend behavior, API contracts, data model, and delivery plan for the **Applied** stage in the job application workflow. The existing product already exposes Applied substage UI for `submitted`, `confirmed`, `follow_up_due`, and `follow_up_sent`, and the workflow mapping for the Applied stage lists the primary CTA as “Mark follow-up plan” with secondary CTAs “Add receipt, log contact.” [cite:5]
@@ -33,7 +37,7 @@ The goal of this PRD is to convert the current screen-driven Applied experience 
 
 ### Primary user
 
-- A job seeker tracking applications across multiple companies who needs clear post-application follow-up guidance.
+- A job seeker working a high volume of applications across many companies, whose scarce resource is time-per-application. They need post-application tracking that is fast to record and never gets in the way of sending the next one.
 
 ### Core jobs to be done
 
@@ -42,7 +46,7 @@ The goal of this PRD is to convert the current screen-driven Applied experience 
 - Know when to follow up.
 - Reuse good follow-up wording quickly.
 - Preserve a trustworthy audit trail.
-- Advance to Interviewing only when the available evidence supports it.
+- See at a glance whether the available evidence supports advancing to Interviewing — and advance regardless if they already know it did.
 
 ## Stage model
 
@@ -143,14 +147,25 @@ Required event types:
 
 ### 6. Readiness for Interviewing
 
-The system must compute readiness for the “Move to Interviewing” action using business signals such as:
+The system must compute readiness for the “Move to Interviewing” action using business signals:
 
 - follow-up sent
 - contact exists
-- elapsed waiting window met
+- elapsed waiting window met (7+ days since submission)
 - no unresolved blockers
 
-The UI may present readiness recommendations, but the backend owns the eligibility rules.
+**Readiness is advisory by default.** The split of responsibility is:
+
+| Concern | Owner |
+|---|---|
+| *Calculation* — which signals are satisfied, the blocker list, the readiness score | Backend (`compute_next_steps`). Unchanged; always runs; always returns the full signal set. |
+| *Enforcement* — whether an unsatisfied signal actually prevents the transition | User preferences (`workflow_config.guided_mode` + `workflow_config.stage_gates.applied`). Off by default. |
+
+With enforcement off (the default), `POST …/applied/transition-to-interviewing` succeeds regardless of readiness, the readiness payload still returns its blockers, and the UI renders them as **suggestions** rather than barriers. With the user opted in, the endpoint returns 422 with the structured blocker list as originally specced.
+
+Readiness responses carry an `enforced` flag so the frontend knows which mode it is rendering without a second config round-trip. `readiness_score` is still recorded on the `moved_to_interviewing` event either way — it is a useful signal, just not a barrier.
+
+Read `blockers` as *suggestions* and `can_transition` as *recommended*. See `product-direction.md` §3–§4.
 
 ## Non-functional requirements
 
@@ -192,7 +207,7 @@ If multiple conditions are true at once, the current Applied substage is derived
 
 - The system may persist `applied_substage` for read efficiency.
 - The system must also support recomputing the substage from data.
-- Manual transitions that conflict with data-derived truth must be blocked unless a privileged override mode is introduced later.
+- Manual transitions that conflict with data-derived truth are **allowed by default** and surfaced as a mismatch, not blocked. The user is the authority on what actually happened; the derived substage is an inference. A transition is blocked only when the user has opted into guided mode for this stage (`workflow_config.guided_mode` and `workflow_config.stage_gates.applied` both true). Enforcement code must read that preference rather than hardcode the check, and must fail open on a missing or malformed config. See `product-direction.md` §3.
 - Direct arbitrary field mutation is discouraged; workflow transitions should be driven by explicit business actions rather than generic status updates. Modeling workflow transitions as actions is more explicit and safer than treating them as free-form field edits. [cite:27][cite:30]
 
 ## Data model
@@ -863,24 +878,26 @@ Run on a schedule, for example every 10 minutes:
 - Confirmed screen reads and writes confirmation details and receipt uploads.
 - Follow-up Due screen reads and writes scheduling, overdue, and templates.
 - Follow-up Sent screen reads activity log, completion, and next-step guidance.
-- “Move to Interviewing” honors backend validation.
+- “Move to Interviewing” renders the backend readiness signals. It is disabled only when the user has opted into guided mode for the Applied stage; otherwise it stays enabled and the blockers render as suggestions (see §6).
 
 ## Delivery plan
 
-### Phase 1
+> **All three phases are complete.** Retained as a record of the shipped sequence. Commit trail: schema `b92938d` → models `73bbb3d` → services `c2d5e6b`…`59845c3` → endpoints `1ef5271`…`c24cf05` → sweeper `96c9e9a` → frontend wiring `458501c`…`7325055` → tests `246d3fe`.
+
+### Phase 1 — done
 
 - Add schema changes.
 - Add Pydantic models.
 - Add read endpoint and submission endpoint.
 - Add event enrichment support.
 
-### Phase 2
+### Phase 2 — done
 
 - Add receipt upload and confirmation endpoint.
 - Add SLA computation endpoint.
 - Add follow-up plan and send-log endpoints.
 
-### Phase 3
+### Phase 3 — done
 
 - Add activity log, next-steps, and transition-to-interviewing endpoints.
 - Add background jobs and notifications.
@@ -899,6 +916,6 @@ Run on a schedule, for example every 10 minutes:
 ## Open questions
 
 - Should follow-up template bodies remain deterministic text for v1, with AI personalization added later?
-- Should admin users be allowed to override immutable snapshots or backdate entries?
+- Should admin users be allowed to override immutable snapshots or backdate entries? *(Partly superseded. The **transition-override** half is resolved: enforcement is opt-in per user via `workflow_config`, so every user can already "override" the readiness gate simply by leaving guided mode off — no admin role is involved. The **snapshot-immutability and backdating** half is still open; D3 in the orchestration plan kept the historical lock hard for v1.)*
 - Should overdue follow-up status be purely derived or also persisted for query efficiency?
 - Should a future refactor extract Applied UI logic into dedicated frontend components before full integration?

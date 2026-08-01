@@ -2,17 +2,18 @@
 
 ## 🚀 Getting Started (Docker - Recommended)
 
-The easiest way to run the application is using **Docker**. This sets up the Backend, Frontend, and a production-ready **PostgreSQL** database automatically.
+The easiest way to run the application is using **Docker**. This sets up the Backend, the Frontend, and the **SQLite** database automatically.
 
 ### 1. Prerequisites
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker Engine installed.
-- OpenAI API Key.
+- A Google Gemini API key ([aistudio.google.com](https://aistudio.google.com)).
 
 ### 2. Configuration
-Ensure you have your OpenAI API key set in `backend/.env`:
+Copy the template and fill in your Gemini key:
 ```bash
-OPENAI_API_KEY=sk-your-actual-api-key-here
+cp backend/config.example.json backend/config.json
 ```
+See the [README](README.md#2-configure-the-backend) for the full `config.json` shape. Never commit this file.
 
 ### 3. Launch
 Run the helper script:
@@ -21,14 +22,15 @@ Run the helper script:
 ```
 
 The application will open at: **http://localhost:5173**
-- **Dashboard**: View your saved applications.
-- **Tailor Resume**: Start a new application.
+- **Dashboard**: Kanban, list, and table views of every application.
+- **Discover**: Search job boards and pull listings straight into the pipeline.
+- **New Application**: Start one from a URL, a paste, or the browser extension.
 
 ---
 
 ## 💻 Manual Setup (Legacy / Local Dev)
 
-If you cannot use Docker, you can still run the application locally. It will automatically fallback to a simplified **SQLite** database.
+If you cannot use Docker, you can still run the application locally against the same SQLite database.
 
 ### 1. Run Setup
 ```bash
@@ -42,36 +44,43 @@ If you cannot use Docker, you can still run the application locally. It will aut
 
 ---
 
-## 📋 Usage Instructions
+## 📋 Usage
 
-### Step 1: Upload & Tailor
-- Upload your base resume (`.docx`).
-- Paste the job description or URL.
-- Click **Tailor Resume**.
+JobKernel is a **high-throughput application workbench** — the goal is to get through as many applications as possible without ceremony. Applications move through a pipeline, not a wizard.
 
-### Step 2: Review & Refine
-- Preview your tailored resume.
-- Use the **Diff Toggle** to see exactly what AI changed.
-- Use the **Refinement Chat** to request specific tweaks.
+```
+Saved → Generated → Applied → Interviewing → Decision → Accepted
+                                   └────────→ Rejected / Declined / Withdrawn
+```
 
-### Step 3: Accept & Continue
-- Click **"Accept & Continue"** to lock in your resume.
-- The AI will automatically write a **Cover Letter** matching your resume and the job.
+**Nothing blocks you from moving an application to any stage.** Drag it on the Kanban board, click through the pipeline rail on the detail page, or change it from the list view — at any time, in any order, forwards or backwards. See [`documentation/product-direction.md`](documentation/product-direction.md).
 
-### Step 4: Cover Letter & Save
-- Review and refine your cover letter.
-- Click **"Accept Application"** to save the entire packet (Resume, Cover Letter, Job Details) to your local database.
-- View all your history on the main **Dashboard**.
+### Getting an application into the pipeline
+Use **Discover** to search job boards, paste a job URL or description under **New Application**, or clip a listing with the browser extension. Either way it lands in **Saved**.
+
+### Working an application
+Open it and use whichever sub-stage panels are useful — job analysis, company research, network contacts, priority. **All of these are optional.** The progress ring shows how much detail you have captured, not how much you owe.
+
+### Generating documents
+From the **Generated** stage, tailor your resume against the job description and draft a cover letter. Preview, diff against your base resume, refine with instructions, and export to DOCX / PDF / TXT. You can also skip this entirely and record an application you sent elsewhere.
+
+### After you apply
+The **Applied** stage is the one with full backend support: log what you submitted, attach a confirmation receipt, plan a follow-up, and record it when sent. JobKernel computes a readiness signal for moving to Interviewing and shows it as a **suggestion**. It does not stop you.
+
+### Want the guardrails?
+Turn on **Settings → Workflow → Guided mode** to make readiness checks actually enforce, per stage. Off by default.
 
 ---
 
 ## 📝 Features
 
-✅ **Dashboard**: Track all your saved job applications in one place.  
-✅ **AI Resume Tailoring**: Optimizes your resume for specific job descriptions.  
-✅ **AI Cover Letter**: Generates professional cover letters automatically.  
-✅ **Database Storage**: Persists your data locally (PostgreSQL in Docker, SQLite in manual mode).  
-✅ **Multi-Format Export**: DOCX, PDF, and TXT for all documents.  
+✅ **Pipeline Tracking**: Kanban, list, and table views with drag-and-drop stage changes.
+✅ **Job Discovery**: Search multiple job boards and import listings directly.
+✅ **AI Resume Tailoring**: Rewrites your resume per job description, preserving formatting.
+✅ **AI Cover Letters**: Drafted from your resume and the job posting.
+✅ **Applied-stage tracking**: Submission records, receipts, follow-up plans, activity log.
+✅ **Local Storage**: SQLite on your own machine.
+✅ **Multi-Format Export**: DOCX, PDF, and TXT for all documents.
 
 ---
 

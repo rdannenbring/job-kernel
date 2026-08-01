@@ -3,17 +3,25 @@ name: Applied Stage Orchestration Plan
 description: Multi-agent execution plan to back the Applied stage UI (submitted, confirmed, follow_up_due, follow_up_sent) with real persistence, action-oriented APIs, background jobs, and frontend wiring.
 type: plan
 trackerId: pln_mpfhya1wh5ybmc
-status: in-development
+status: complete
 priority: medium
 startDate: 2026-05-21
-updated: 2026-05-21
-progress: 0
+updated: 2026-07-26
+progress: 100
 prd: documentation/applied-stage-prd.md
 ---
 
 # Applied Stage Orchestration Plan
 
-This is the orchestration plan that downstream coding agents will execute. It maps the [Applied Stage PRD](../../documentation/applied-stage-prd.md) onto the JobKernel repo as it actually exists today, with task boundaries chosen to minimize file collisions between parallel agents.
+> **COMPLETE — historical record. Do not dispatch from this document.**
+>
+> All decisions (D1–D7) and all tasks (T1–T19f) shipped, `b92938d` through `246d3fe`. The checklist below has been reconciled against `git log`.
+>
+> ⚠️ **Superseded gating instructions.** This plan was written under the earlier evidence-gated product framing. Its per-task "do not" guidance — notably *"bypass readiness checks"* (§13 T3h) and *"allow transition when `next-steps.can_transition` is false"* (§13 T13b) — described a **hard** gate. That gate is now **advisory by default** and enforced only when the user opts into guided mode. Read those lines as history, not as live requirements.
+>
+> **Governing doc:** [`documentation/product-direction.md`](../../documentation/product-direction.md). See also [`documentation/workflow-substage-catalog.md`](../../documentation/workflow-substage-catalog.md).
+
+This is the orchestration plan that downstream coding agents executed. It maps the [Applied Stage PRD](../../documentation/applied-stage-prd.md) onto the JobKernel repo as it actually exists today, with task boundaries chosen to minimize file collisions between parallel agents.
 
 > **§13 is the only execution source.**
 >
@@ -24,59 +32,59 @@ This is the orchestration plan that downstream coding agents will execute. It ma
 ## Implementation Progress
 
 Phase 0 — Decisions (blocking; see §13.3)
-- [ ] D1: Contact field naming (`role` vs `title`)
-- [ ] D2: Follow-up template content for v1
-- [ ] D3: Submission snapshot override policy for v1
-- [ ] D4: Overdue persistence (derived only vs cached on row)
-- [ ] D5: `applied_substage` cache write strategy (explicit recompute vs trigger)
-- [ ] D6: SLA endpoint behavior when no baseline exists
-- [ ] D7: Frontend transition-gate UX when `can_transition: false`
+- [x] D1: Contact field naming (`role` vs `title`)
+- [x] D2: Follow-up template content for v1
+- [x] D3: Submission snapshot override policy for v1
+- [x] D4: Overdue persistence (derived only vs cached on row)
+- [x] D5: `applied_substage` cache write strategy (explicit recompute vs trigger)
+- [x] D6: SLA endpoint behavior when no baseline exists
+- [x] D7: Frontend transition-gate UX when `can_transition: false`
 
 Phase A — Foundations
 - [x] T1: Schema + SQLAlchemy model deltas (single-writer: `database_service.py`) — merged b92938d
-- [ ] T2: Pydantic models module (`backend/models/applied_models.py`)
-- [ ] T3.0: Service-package skeleton + region anchors (`backend/services/applied/`)
-- [ ] T3a: Derivations (pure functions) — `applied/derivations.py`
-- [ ] T3b: State assembly — `applied/state.py`
-- [ ] T3c: Submission service — `applied/submission.py`
-- [ ] T3d: Confirmation + receipt service — `applied/confirmation.py`
-- [ ] T3e: Follow-up plan + send-log service — `applied/follow_up.py`
-- [ ] T3f: Follow-up templates — `applied/templates.py`
-- [ ] T3g: Contact upsert — `applied/contact.py`
-- [ ] T3h: Transition-to-interviewing — `applied/transition.py`
-- [ ] T4.0: Router-package skeleton + `include_router` in `main.py` (`backend/routes/applied/`)
+- [x] T2: Pydantic models module (`backend/models/applied_models.py`)
+- [x] T3.0: Service-package skeleton + region anchors (`backend/services/applied/`)
+- [x] T3a: Derivations (pure functions) — `applied/derivations.py`
+- [x] T3b: State assembly — `applied/state.py`
+- [x] T3c: Submission service — `applied/submission.py`
+- [x] T3d: Confirmation + receipt service — `applied/confirmation.py`
+- [x] T3e: Follow-up plan + send-log service — `applied/follow_up.py`
+- [x] T3f: Follow-up templates — `applied/templates.py`
+- [x] T3g: Contact upsert — `applied/contact.py`
+- [x] T3h: Transition-to-interviewing — `applied/transition.py`
+- [x] T4.0: Router-package skeleton + `include_router` in `main.py` (`backend/routes/applied/`)
 
 Phase B — Endpoints (one file per task)
-- [ ] T5: GET `/applied` — `routes/applied/state.py`
-- [ ] T6: PUT `/submission` — `routes/applied/submission.py`
-- [ ] T7a: POST `/confirmation/receipt` — `routes/applied/receipt.py`
-- [ ] T7b: PUT `/confirmation` — `routes/applied/confirmation.py`
-- [ ] T8: GET `/sla` — `routes/applied/sla.py`
-- [ ] T9a: PUT `/follow-up-plan` — `routes/applied/follow_up_plan.py`
-- [ ] T9b: POST `/follow-up/send-log` — `routes/applied/follow_up_sent.py`
-- [ ] T10: GET `/follow-up/templates` — `routes/applied/templates.py`
-- [ ] T11: PUT `/contact` — `routes/applied/contact.py`
-- [ ] T12: GET `/activity-log` — `routes/applied/activity_log.py`
-- [ ] T13a: GET `/next-steps` — `routes/applied/next_steps.py`
-- [ ] T13b: POST `/transition-to-interviewing` — `routes/applied/transition.py`
+- [x] T5: GET `/applied` — `routes/applied/state.py`
+- [x] T6: PUT `/submission` — `routes/applied/submission.py`
+- [x] T7a: POST `/confirmation/receipt` — `routes/applied/receipt.py`
+- [x] T7b: PUT `/confirmation` — `routes/applied/confirmation.py`
+- [x] T8: GET `/sla` — `routes/applied/sla.py`
+- [x] T9a: PUT `/follow-up-plan` — `routes/applied/follow_up_plan.py`
+- [x] T9b: POST `/follow-up/send-log` — `routes/applied/follow_up_sent.py`
+- [x] T10: GET `/follow-up/templates` — `routes/applied/templates.py`
+- [x] T11: PUT `/contact` — `routes/applied/contact.py`
+- [x] T12: GET `/activity-log` — `routes/applied/activity_log.py`
+- [x] T13a: GET `/next-steps` — `routes/applied/next_steps.py`
+- [x] T13b: POST `/transition-to-interviewing` — `routes/applied/transition.py`
 
 Phase C — Automation
-- [ ] T14: Sweeper job module (`backend/jobs/applied_jobs.py`) + 2-line start in `main.py`
+- [x] T14: Sweeper job module (`backend/jobs/applied_jobs.py`) + 2-line start in `main.py`
 
 Phase D — Frontend
-- [ ] T15.0: Refactor — extract substage panels into 4 sibling files (`components/Applied/*Tab.jsx`)
-- [ ] T15: Wire SubmittedTab to backend
-- [ ] T16: Wire ConfirmedTab to backend
-- [ ] T17: Wire FollowUpDueTab to backend
-- [ ] T18: Wire FollowUpSentTab + transition gate to backend
+- [x] T15.0: Refactor — extract substage panels into 4 sibling files (`components/Applied/*Tab.jsx`)
+- [x] T15: Wire SubmittedTab to backend
+- [x] T16: Wire ConfirmedTab to backend
+- [x] T17: Wire FollowUpDueTab to backend
+- [x] T18: Wire FollowUpSentTab + transition gate to backend
 
 Phase E — Verification (split per concern; each in its own file)
-- [ ] T19a: Derivations test (`tests/applied/test_derivations.py`)
-- [ ] T19b: SLA computation test (`tests/applied/test_sla.py`)
-- [ ] T19c: Snapshot lock immutability test (`tests/applied/test_snapshot_lock.py`)
-- [ ] T19d: MIME allow-list test (`tests/applied/test_receipt_mime.py`)
-- [ ] T19e: Overdue + SLA idempotency test (`tests/applied/test_sweeper_idempotency.py`)
-- [ ] T19f: Next-steps readiness test (`tests/applied/test_next_steps.py`)
+- [x] T19a: Derivations test (`tests/applied/test_derivations.py`)
+- [x] T19b: SLA computation test (`tests/applied/test_sla.py`)
+- [x] T19c: Snapshot lock immutability test (`tests/applied/test_snapshot_lock.py`)
+- [x] T19d: MIME allow-list test (`tests/applied/test_receipt_mime.py`)
+- [x] T19e: Overdue + SLA idempotency test (`tests/applied/test_sweeper_idempotency.py`)
+- [x] T19f: Next-steps readiness test (`tests/applied/test_next_steps.py`)
 
 ---
 
